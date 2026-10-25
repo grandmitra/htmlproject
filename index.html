@@ -23,7 +23,7 @@
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
-        /* Transition untuk Hide/Unhide Sidebar Desktop & Mobile */
+        /* Transisi untuk Hide/Unhide Sidebar Desktop & Mobile */
         #sidebar {
             transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -93,7 +93,7 @@
                     
                     <!-- Submenu Items -->
                     <div id="laporan-submenu" class="submenu-content bg-slate-950/40 rounded-b-xl space-y-1 px-3">
-                        <a href="#" onclick="loadPage('framepintar.html', 'FramePintar', event)" class="nav-item flex items-center space-x-3 px-4 py-2.5 my-1 text-xs font-medium rounded-lg text-slate-400 hover:bg-blue-600/20 hover:text-blue-400 transition-all">
+                        <a href="#" onclick="loadPage('dailyreport.html', 'Daily Report', event)" class="nav-item flex items-center space-x-3 px-4 py-2.5 my-1 text-xs font-medium rounded-lg text-slate-400 hover:bg-blue-600/20 hover:text-blue-400 transition-all">
                             <i class="fa-solid fa-calendar-day w-4 text-center"></i>
                             <span>Daily Report</span>
                         </a>
@@ -101,6 +101,8 @@
                             <i class="fa-solid fa-calendar-days w-4 text-center"></i>
                             <span>Monthly Report</span>
                         </a>
+                        <!-- Container Sub-menu Kustom Target Laporan -->
+                        <div id="custom-sub-laporan"></div>
                     </div>
                 </div>
 
@@ -119,7 +121,13 @@
                     <span>Cek Ongkir</span>
                 </a>
 
+                <!-- CONTAINER DINAMIS MENU UTAMA SINGLE / DROPDOWN -->
+                <div id="custom-main-menus" class="space-y-1.5"></div>
+
                 <div class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider my-4">Lainnya</div>
+
+                <!-- CONTAINER SUB-MENU KUSTOM TARGET LAINNYA -->
+                <div id="custom-sub-lainnya" class="space-y-1 mb-1"></div>
 
                 <!-- SINGLE MENU: SETTINGS / DLL -->
                 <a href="#" onclick="loadPage('settings.html', 'Pengaturan Sistem', event)" class="nav-item flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
@@ -215,7 +223,6 @@
             const isMobile = window.innerWidth < 1024;
 
             if (isMobile) {
-                // Modus Mobile Drawer
                 const isClosed = sidebar.classList.contains('-translate-x-full');
                 if (isClosed) {
                     sidebar.classList.remove('-translate-x-full');
@@ -227,7 +234,6 @@
                     setTimeout(() => overlay.classList.add('hidden'), 300);
                 }
             } else {
-                // Modus Desktop Hide/Unhide
                 if (sidebar.classList.contains('lg:translate-x-0')) {
                     sidebar.classList.remove('lg:translate-x-0');
                     sidebar.classList.add('-translate-x-full', 'lg:-ml-72');
@@ -255,14 +261,10 @@
             const loader = document.getElementById('canvas-loader');
             const pageTitle = document.getElementById('page-title');
 
-            // Show Loading Spinner
             loader.classList.remove('opacity-0', 'pointer-events-none');
-
-            // Set Title & iFrame Source
             pageTitle.innerText = title;
             canvas.src = url;
 
-            // Highlight Active Menu Item
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-500/20');
                 item.classList.add('text-slate-300');
@@ -274,7 +276,6 @@
                 target.classList.remove('text-slate-300', 'text-slate-400');
             }
 
-            // Close Mobile Sidebar if opened
             if (window.innerWidth < 1024) {
                 const sidebar = document.getElementById('sidebar');
                 if (!sidebar.classList.contains('-translate-x-full')) {
@@ -297,7 +298,46 @@
             canvas.contentWindow.location.reload();
         }
 
-        // 6. Toggle Light / Dark Mode & Persist with LocalStorage
+        // 6. Load Dynamic Menus from LocalStorage (Sinkronisasi dengan settings.html)
+        function loadDynamicMenus() {
+            const customMainContainer = document.getElementById('custom-main-menus');
+            const customSubLaporan = document.getElementById('custom-sub-laporan');
+            const customSubLainnya = document.getElementById('custom-sub-lainnya');
+
+            // Kosongkan container sebelum render ulang
+            customMainContainer.innerHTML = '';
+            customSubLaporan.innerHTML = '';
+            customSubLainnya.innerHTML = '';
+
+            const menus = JSON.parse(localStorage.getItem('custom_menus')) || [];
+
+            menus.forEach(m => {
+                if (m.type === 'single') {
+                    // Render Menu Utama Single
+                    customMainContainer.innerHTML += `
+                        <a href="#" onclick="loadPage('${m.url}', '${m.label}', event)" class="nav-item flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
+                            <i class="${m.icon} w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
+                            <span>${m.label}</span>
+                        </a>
+                    `;
+                } else if (m.type === 'sub') {
+                    // Render Sub-menu berdasarkan induknya (laporan / lainnya)
+                    const subHtml = `
+                        <a href="#" onclick="loadPage('${m.url}', '${m.label}', event)" class="nav-item flex items-center space-x-3 px-4 py-2.5 my-1 text-xs font-medium rounded-lg text-slate-400 hover:bg-blue-600/20 hover:text-blue-400 transition-all">
+                            <i class="${m.icon} w-4 text-center"></i>
+                            <span>${m.label}</span>
+                        </a>
+                    `;
+                    if (m.parent === 'laporan') {
+                        customSubLaporan.innerHTML += subHtml;
+                    } else if (m.parent === 'lainnya') {
+                        customSubLainnya.innerHTML += subHtml;
+                    }
+                }
+            });
+        }
+
+        // 7. Toggle Light / Dark Mode & Persist with LocalStorage
         function toggleDarkMode() {
             const html = document.documentElement;
             const sunIcon = document.getElementById('theme-icon-sun');
@@ -318,7 +358,6 @@
             }
         }
 
-        // Init Theme Settings
         function initTheme() {
             const savedTheme = localStorage.getItem('theme');
             const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -339,9 +378,10 @@
             }
         }
 
-        // 7. Event Listener Initial Load
+        // 8. Event Listener Initial Load
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
+            loadDynamicMenus(); // Muat menu kustom dari settings.html
 
             // Auto open Laporan dropdown by default
             toggleSubmenu('laporan-submenu', 'laporan-arrow');
