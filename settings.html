@@ -17,7 +17,7 @@
         <div class="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
             <div>
                 <h1 class="text-xl font-bold text-slate-900 tracking-tight">Pengaturan System & Manajemen Akses</h1>
-                <p class="text-xs sm:text-sm text-slate-500 mt-1">Kelola menu dinamis, hak akses pengguna, dan durasi timeout sesi.</p>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">Kelola menu dinamis, hak akses pengguna, durasi timeout, serta ekspor/impor konfigurasi antar PC.</p>
             </div>
             <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg">
                 <i class="fa-solid fa-sliders"></i>
@@ -33,7 +33,7 @@
                 <i class="fa-solid fa-users-gear mr-2"></i>Manajemen Pengguna & Role
             </button>
             <button type="button" onclick="switchTab('tab-system')" id="btn-tab-system" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer whitespace-nowrap">
-                <i class="fa-solid fa-gear mr-2"></i>Konfigurasi Sesi (Timeout)
+                <i class="fa-solid fa-gear mr-2"></i>Konfigurasi Sesi & Backup
             </button>
         </div>
 
@@ -163,23 +163,48 @@
             </div>
         </div>
 
-        <!-- SECTION 3: KONFIGURASI SESI TIMEOUT -->
-        <div id="tab-system" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 max-w-xl hidden">
-            <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center space-x-2">
-                <i class="fa-solid fa-clock text-blue-600"></i>
-                <span>Pengaturan Durasi Timeout Otomatis</span>
-            </h2>
-            <p class="text-xs text-slate-500 mb-6">Tentukan berapa lama waktu tidak aktif (dalam menit) sebelum sesi pengguna secara otomatis berakhir dan keluar ke halaman login.</p>
+        <!-- SECTION 3: KONFIGURASI SESI & SINKRONISASI JSON -->
+        <div id="tab-system" class="space-y-6 hidden">
+            <!-- Form Timeout -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 max-w-xl">
+                <h2 class="text-base font-bold text-slate-800 mb-2 flex items-center space-x-2">
+                    <i class="fa-solid fa-clock text-blue-600"></i>
+                    <span>Pengaturan Durasi Timeout Otomatis</span>
+                </h2>
+                <p class="text-xs text-slate-500 mb-6">Tentukan berapa lama waktu tidak aktif (dalam menit) sebelum sesi pengguna otomatis berakhir.</p>
 
-            <form onsubmit="saveTimeoutConfig(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Durasi Inaktif (Menit)</label>
-                    <input type="number" id="timeout-minutes-input" min="1" max="120" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <form onsubmit="saveTimeoutConfig(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Durasi Inaktif (Menit)</label>
+                        <input type="number" id="timeout-minutes-input" min="1" max="120" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-500/20 transition-all">
+                        Simpan Durasi Timeout
+                    </button>
+                </form>
+            </div>
+
+            <!-- Sync Backup / Restore JSON -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 max-w-xl">
+                <h2 class="text-base font-bold text-slate-800 mb-2 flex items-center space-x-2">
+                    <i class="fa-solid fa-arrow-right-arrow-left text-blue-600"></i>
+                    <span>Sinkronisasi Setting Antar PC (Ekspor / Impor JSON)</span>
+                </h2>
+                <p class="text-xs text-slate-500 mb-4">Unduh file konfigurasi dari PC ini lalu impor ke PC lain agar daftar menu, pengguna, dan hak akses menjadi sama persis.</p>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button onclick="exportConfig()" class="flex-1 py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs shadow-md flex items-center justify-center space-x-2 transition-all">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Ekspor Konfigurasi (.json)</span>
+                    </button>
+
+                    <label class="flex-1 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs shadow-md flex items-center justify-center space-x-2 cursor-pointer transition-all">
+                        <i class="fa-solid fa-upload"></i>
+                        <span>Impor Konfigurasi (.json)</span>
+                        <input type="file" id="import-file" accept=".json" onchange="importConfig(event)" class="hidden">
+                    </label>
                 </div>
-                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-500/20 transition-all">
-                    Simpan Durasi Timeout
-                </button>
-            </form>
+            </div>
         </div>
 
     </div>
@@ -331,7 +356,56 @@
             e.preventDefault();
             const mins = document.getElementById('timeout-minutes-input').value;
             localStorage.setItem('session_timeout_minutes', mins);
-            alert('Durasi timeout berhasil diperbarui! Perubahan akan langsung diterapkan pada sistem.');
+            alert('Durasi timeout berhasil diperbarui!');
+        }
+
+        // FUNGSI EKSPOR CONFIG (.JSON)
+        function exportConfig() {
+            const configData = {
+                custom_menus: getCustomMenus(),
+                system_users: getUsers(),
+                session_timeout_minutes: localStorage.getItem('session_timeout_minutes') || 15
+            };
+
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(configData, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "canvas_dashboard_config.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        // FUNGSI IMPOR CONFIG (.JSON)
+        function importConfig(event) {
+            const fileReader = new FileReader();
+            fileReader.readAsText(event.target.files[0], "UTF-8");
+            fileReader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+
+                    if (importedData.custom_menus) {
+                        localStorage.setItem('custom_menus', JSON.stringify(importedData.custom_menus));
+                    }
+                    if (importedData.system_users) {
+                        localStorage.setItem('system_users', JSON.stringify(importedData.system_users));
+                    }
+                    if (importedData.session_timeout_minutes) {
+                        localStorage.setItem('session_timeout_minutes', importedData.session_timeout_minutes);
+                    }
+
+                    alert('Konfigurasi berhasil diimpor! Sistem akan merefresh data.');
+                    renderTable();
+                    renderUsers();
+                    document.getElementById('timeout-minutes-input').value = importedData.session_timeout_minutes || 15;
+
+                    if (window.parent && typeof window.parent.loadDynamicMenus === 'function') {
+                        window.parent.loadDynamicMenus();
+                    }
+                } catch (err) {
+                    alert('Format file JSON tidak valid!');
+                }
+            };
         }
 
         function openAccessModal(userId) {
@@ -441,7 +515,6 @@
             renderUsers();
             toggleParentDropdown();
 
-            // Set nilai input timeout sesuai data tersimpan (default 15 menit)
             const currentMins = localStorage.getItem('session_timeout_minutes') || 15;
             document.getElementById('timeout-minutes-input').value = currentMins;
         };
