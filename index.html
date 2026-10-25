@@ -2,265 +2,280 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-    <title>Aplikasi Akses Terbatas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Canvas System</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Plus Jakarta Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
     <style>
-        /* Reset CSS & Layout Full Screen */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
-
-        html, body {
-            width: 100%;
-            height: 100%;
+        /* Custom Smooth Transition for Accordion Submenu */
+        .submenu-content {
+            max-height: 0;
             overflow: hidden;
-            background-color: #f8f9fa;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
         }
-
-        /* Container Pembungkus Utama */
-        .app-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-            background-color: #ffffff;
+        .submenu-content.open {
+            max-height: 500px;
+            transition: max-height 0.3s ease-in-out;
         }
-
-        /* Animasi Loader Pemuatan */
-        .app-loader {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: #ffffff;
-            z-index: 10;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
+        .rotate-arrow {
+            transform: rotate(180deg);
         }
-
-        .spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid #2563eb;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
+        /* Custom scrollbar for sidebar */
+        .sidebar-scroll::-webkit-scrollbar {
+            width: 4px;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .loader-text {
-            margin-top: 16px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #64748b;
-            letter-spacing: 0.3px;
-        }
-
-        /* Overlay Login Menu */
-        .login-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(8px);
-            z-index: 20;
-            transition: opacity 0.4s ease, visibility 0.4s ease;
-        }
-
-        .login-card {
-            width: 100%;
-            max-width: 380px;
-            padding: 32px;
-            background: #ffffff;
-            border-radius: 16px;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            text-align: center;
-        }
-
-        .login-card h2 {
-            font-size: 20px;
-            font-weight: 600;
-            color: #1e293b;
-            margin-bottom: 8px;
-        }
-
-        .login-card p {
-            font-size: 13px;
-            color: #64748b;
-            margin-bottom: 24px;
-        }
-
-        .login-input {
-            width: 100%;
-            padding: 12px 16px;
-            font-size: 15px;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
-            margin-bottom: 16px;
-        }
-
-        .login-input:focus {
-            border-color: #2563eb;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 12px;
-            font-size: 15px;
-            font-weight: 500;
-            color: #ffffff;
-            background-color: #2563eb;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: background-color 0.2s;
-        }
-
-        .login-btn:hover {
-            background-color: #1d4ed8;
-        }
-
-        .error-msg {
-            font-size: 12px;
-            color: #dc2626;
-            margin-top: 10px;
-            display: none;
-        }
-
-        /* Tampilan Smooth iFrame */
-        .app-iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            opacity: 0;
-            transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .app-iframe.loaded {
-            opacity: 1;
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
         }
     </style>
 </head>
-<body>
+<body class="bg-slate-100 text-slate-800 antialiased h-screen overflow-hidden">
 
-    <!-- Container Utama -->
-    <div class="app-container">
-      
-        <!-- Overlay Login Menu -->
-        <div class="login-overlay" id="loginOverlay">
-            <div class="login-card">
-                <h2>Akses Terbatas</h2>
-                <p>Masukkan password untuk membuka aplikasi.</p>
-                <input class="login-input" id="appPassword" placeholder="Masukkan Password..." type="password">
-                <button class="login-btn" onclick="handleLogin()">Masuk Aplikasi</button>
-                <div class="error-msg" id="errorMsg">Password salah, silakan coba lagi.</div>
+    <!-- MOBILE OVERLAY BACKDROP -->
+    <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 hidden lg:hidden transition-opacity duration-300 opacity-0"></div>
+
+    <div class="flex h-full w-full">
+
+        <!-- SIDEBAR NAVIGATION -->
+        <aside id="sidebar" class="fixed lg:static top-0 left-0 h-full w-72 bg-slate-900 text-slate-300 flex flex-col z-40 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out shadow-2xl lg:shadow-none">
+            
+            <!-- Brand Logo & Header -->
+            <div class="h-16 flex items-center justify-between px-6 bg-slate-950/80 border-b border-slate-800">
+                <div class="flex items-center space-x-3">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/30">
+                        <i class="fa-solid fa-layer-group text-lg"></i>
+                    </div>
+                    <span class="font-bold text-lg text-white tracking-wide">CANVAS<span class="text-blue-500">ROOT</span></span>
+                </div>
+                <!-- Close Button Mobile -->
+                <button onclick="toggleSidebar()" class="lg:hidden text-slate-400 hover:text-white focus:outline-none">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
             </div>
+
+            <!-- Sidebar Navigation Items -->
+            <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto sidebar-scroll">
+                
+                <div class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Main Navigation</div>
+
+                <!-- DROPDOWN MENU: LAPORAN -->
+                <div class="rounded-xl overflow-hidden">
+                    <button onclick="toggleSubmenu('laporan-submenu', 'laporan-arrow')" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white transition-all group">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid fa-chart-pie w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
+                            <span>Laporan</span>
+                        </div>
+                        <i id="laporan-arrow" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-300"></i>
+                    </button>
+                    
+                    <!-- Submenu Items -->
+                    <div id="laporan-submenu" class="submenu-content bg-slate-950/40 rounded-b-xl space-y-1 px-3">
+                        <a href="#" onclick="loadPage('dailyreport.html', 'Daily Report', event)" class="nav-item flex items-center space-x-3 px-4 py-2.5 my-1 text-xs font-medium rounded-lg text-slate-400 hover:bg-blue-600/20 hover:text-blue-400 transition-all">
+                            <i class="fa-solid fa-calendar-day w-4 text-center"></i>
+                            <span>Daily Report</span>
+                        </a>
+                        <a href="#" onclick="loadPage('monthlyreport.html', 'Monthly Report', event)" class="nav-item flex items-center space-x-3 px-4 py-2.5 my-1 text-xs font-medium rounded-lg text-slate-400 hover:bg-blue-600/20 hover:text-blue-400 transition-all">
+                            <i class="fa-solid fa-calendar-days w-4 text-center"></i>
+                            <span>Monthly Report</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- SINGLE MENU: RFQ -->
+                <a href="#" onclick="loadPage('rfq.html', 'Request For Quotation (RFQ)', event)" class="nav-item flex items-center justify-between px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
+                    <div class="flex items-center space-x-3">
+                        <i class="fa-solid fa-file-contract w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
+                        <span>RFQ</span>
+                    </div>
+                    <span class="bg-blue-500/20 text-blue-400 text-[10px] font-semibold px-2 py-0.5 rounded-full">New</span>
+                </a>
+
+                <!-- SINGLE MENU: ONGKIR -->
+                <a href="#" onclick="loadPage('ongkir.html', 'Cek Ongkos Kirim', event)" class="nav-item flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
+                    <i class="fa-solid fa-truck-fast w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
+                    <span>Cek Ongkir</span>
+                </a>
+
+                <div class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider my-4">Lainnya</div>
+
+                <!-- SINGLE MENU: SETTINGS / DLL -->
+                <a href="#" onclick="loadPage('settings.html', 'Pengaturan Sistem', event)" class="nav-item flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
+                    <i class="fa-solid fa-sliders w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
+                    <span>Pengaturan</span>
+                </a>
+
+            </nav>
+
+            <!-- User Info Footer -->
+            <div class="p-4 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="relative">
+                        <div class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-white font-semibold text-sm border border-slate-600">
+                            SM
+                        </div>
+                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-slate-900"></span>
+                    </div>
+                    <div class="text-xs">
+                        <div class="font-semibold text-slate-200">Sofyan Mujid</div>
+                        <div class="text-slate-500 text-[10px]">Administrator</div>
+                    </div>
+                </div>
+                <button class="text-slate-400 hover:text-red-400 transition-colors p-2">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                </button>
+            </div>
+
+        </aside>
+
+        <!-- MAIN CONTENT CANVAS -->
+        <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+            
+            <!-- TOPBAR HEADER -->
+            <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 z-20">
+                <div class="flex items-center space-x-3">
+                    <!-- Hamburger Toggle Mobile Button -->
+                    <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none">
+                        <i class="fa-solid fa-bars text-lg"></i>
+                    </button>
+                    <!-- Current Page Breadcrumb / Title -->
+                    <div>
+                        <h1 id="page-title" class="text-base lg:text-lg font-bold text-slate-800 tracking-tight">Daily Report</h1>
+                        <p class="text-[11px] text-slate-400 hidden sm:block">Vercel Root Workspace</p>
+                    </div>
+                </div>
+
+                <!-- Header Action Quick Options -->
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <button onclick="reloadCanvas()" title="Refresh Page" class="p-2 rounded-xl text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors">
+                        <i class="fa-solid fa-rotate-right text-sm"></i>
+                    </button>
+                    <div class="h-5 w-px bg-slate-200"></div>
+                    <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span> Live
+                    </span>
+                </div>
+            </header>
+
+            <!-- MAIN CANVAS FRAME WORKSPACE -->
+            <main class="flex-1 p-2 sm:p-4 lg:p-6 bg-slate-100 overflow-hidden relative">
+                
+                <!-- Loading State Indicator -->
+                <div id="canvas-loader" class="absolute inset-0 bg-slate-100/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center transition-opacity duration-200 opacity-0 pointer-events-none">
+                    <div class="w-10 h-10 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin mb-3"></div>
+                    <span class="text-xs font-semibold text-slate-500">Memuat Halaman...</span>
+                </div>
+
+                <div class="w-full h-full bg-white rounded-xl lg:rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
+                    <!-- Dynamic iFrame Canvas Container -->
+                    <iframe id="content-canvas" src="dailyreport.html" class="w-full h-full border-0" onload="hideLoader()"></iframe>
+                </div>
+            </main>
+
         </div>
 
-        <!-- Loader -->
-        <div class="app-loader" id="appLoader">
-            <div class="spinner"></div>
-            <div class="loader-text">Memuat Aplikasi...</div>
-        </div>
-      
-        <!-- iFrame Google Apps Script -->
-        <iframe allow="geolocation; microphone; camera; clipboard-write; autoplay" class="app-iframe" id="appScriptFrame" loading="lazy" onload="onIframeLoaded()" src="https://script.google.com/macros/s/AKfycbyRczraowXVRetgSQ1p2PiriPL1TRJE53Sa-Z840fp93cDa19pDGvkpAUspTMEaBUb1Pg/exec">
-        </iframe>
     </div>
 
-    <!-- JavaScript untuk mengatur loader, iframe, dan login -->
+    <!-- INTERACTIVE JAVASCRIPT LOGIC -->
     <script>
-        function onIframeLoaded() {
-            var loader = document.querySelector('.app-loader');
-            var iframe = document.getElementById('appScriptFrame');
+        // 1. Toggle Mobile Sidebar Drawer & Overlay
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
             
-            if (loader) {
-                loader.style.opacity = '0';
-                loader.style.visibility = 'hidden';
-            }
+            const isClosed = sidebar.classList.contains('-translate-x-full');
             
-            if (iframe) {
-                iframe.classList.add('loaded');
-            }
-        }
-
-        function showLoader() {
-            var loader = document.querySelector('.app-loader');
-            var iframe = document.getElementById('appScriptFrame');
-            
-            if (loader) {
-                loader.style.opacity = '1';
-                loader.style.visibility = 'visible';
-            }
-            
-            if (iframe) {
-                iframe.classList.remove('loaded');
-            }
-        }
-
-        function handleLogin() {
-            var passInput = document.getElementById('appPassword').value;
-            var errorMsg = document.getElementById('errorMsg');
-            var loginOverlay = document.getElementById('loginOverlay');
-            
-            if (passInput === 'mbg212') {
-                sessionStorage.setItem('isLoggedIn', 'true');
-                loginOverlay.style.opacity = '0';
-                loginOverlay.style.visibility = 'hidden';
+            if (isClosed) {
+                // Open Sidebar
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
             } else {
-                errorMsg.style.display = 'block';
-                document.getElementById('appPassword').style.borderColor = '#dc2626';
+                // Close Sidebar
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
             }
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            // Cek jika sudah login sebelumnya di sesi ini
-            if (sessionStorage.getItem('isLoggedIn') === 'true') {
-                var loginOverlay = document.getElementById('loginOverlay');
-                if (loginOverlay) {
-                    loginOverlay.style.display = 'none';
-                }
+        // 2. Toggle Submenu Accordion (Expand / Collapse)
+        function toggleSubmenu(submenuId, arrowId) {
+            const submenu = document.getElementById(submenuId);
+            const arrow = document.getElementById(arrowId);
+            
+            submenu.classList.toggle('open');
+            arrow.classList.toggle('rotate-arrow');
+        }
+
+        // 3. Load Page into iFrame Canvas & Highlight Active Menu
+        function loadPage(url, title, event) {
+            if (event) event.preventDefault();
+
+            const canvas = document.getElementById('content-canvas');
+            const loader = document.getElementById('canvas-loader');
+            const pageTitle = document.getElementById('page-title');
+
+            // Show Loading Spinner
+            loader.classList.remove('opacity-0', 'pointer-events-none');
+
+            // Set Title & iFrame Source
+            pageTitle.innerText = title;
+            canvas.src = url;
+
+            // Highlight Active Menu Item
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-500/20');
+                item.classList.add('text-slate-300');
+            });
+
+            if (event && event.currentTarget) {
+                const target = event.currentTarget;
+                target.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-500/20');
+                target.classList.remove('text-slate-300', 'text-slate-400');
             }
 
-            // Event listener untuk tombol Enter pada input password
-            var passwordInput = document.getElementById('appPassword');
-            if (passwordInput) {
-                passwordInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        handleLogin();
-                    }
-                });
+            // Close Mobile Sidebar if opened
+            if (window.innerWidth < 1024) {
+                toggleSidebar();
             }
+        }
 
-            var iframe = document.getElementById('appScriptFrame');
-            if (iframe) {
-                setTimeout(function() {
-                    if (!iframe.classList.contains('loaded')) {
-                        onIframeLoaded();
-                    }
-                }, 10000);
+        // 4. Hide Loader once iFrame is loaded
+        function hideLoader() {
+            const loader = document.getElementById('canvas-loader');
+            loader.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        // 5. Reload Current Active Canvas iFrame
+        function reloadCanvas() {
+            const canvas = document.getElementById('content-canvas');
+            const loader = document.getElementById('canvas-loader');
+            loader.classList.remove('opacity-0', 'pointer-events-none');
+            canvas.contentWindow.location.reload();
+        }
+
+        // 6. Set Default Active Item on Page Initial Load
+        window.addEventListener('DOMContentLoaded', () => {
+            // Auto open Laporan dropdown by default
+            toggleSubmenu('laporan-submenu', 'laporan-arrow');
+            
+            // Set first child (Daily Report) active by default
+            const firstSubItem = document.querySelector('#laporan-submenu .nav-item');
+            if (firstSubItem) {
+                firstSubItem.classList.add('bg-blue-600', 'text-white');
+                firstSubItem.classList.remove('text-slate-400');
             }
         });
     </script>
-
 </body>
 </html>
