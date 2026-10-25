@@ -28,6 +28,25 @@
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased h-screen overflow-hidden transition-colors duration-300">
 
+    <!-- MODAL SESSION TIMEOUT WARNING -->
+    <div id="timeout-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl text-center space-y-4">
+            <div class="w-14 h-14 rounded-2xl bg-amber-50 dark:bg-amber-950/50 text-amber-500 flex items-center justify-center text-3xl mx-auto shadow-lg shadow-amber-500/10">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white">Sesi Hampir Berakhir</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Anda tidak aktif beberapa saat. Anda akan otomatis keluar dalam:</p>
+            </div>
+            <div class="text-3xl font-extrabold text-amber-600 dark:text-amber-400 font-mono tracking-wider py-2" id="timeout-countdown">
+                01:00
+            </div>
+            <button onclick="extendSession()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-500/20 transition-all">
+                <i class="fa-solid fa-shield-halved mr-2"></i>Tetap Masuk
+            </button>
+        </div>
+    </div>
+
     <!-- MODAL LOGIN -->
     <div id="login-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl">
@@ -53,7 +72,6 @@
                     Masuk Sekarang
                 </button>
             </form>
-            <p class="text-[11px] text-center text-slate-400 mt-4">Default Admin: <span class="font-mono text-blue-500">admin / admin</span></p>
         </div>
     </div>
 
@@ -145,7 +163,16 @@
                     <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Memuat Halaman...</span>
                 </div>
 
-                <div class="w-full h-full bg-white dark:bg-slate-900 rounded-xl lg:rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-colors duration-300">
+                <!-- TAMPILAN AKSES DITOLAK (DENIED GUARD) -->
+                <div id="access-denied-view" class="w-full h-full bg-white dark:bg-slate-900 rounded-xl lg:rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 flex flex-col items-center justify-center p-6 text-center hidden">
+                    <div class="w-20 h-20 rounded-3xl bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400 flex items-center justify-center text-4xl mb-4 shadow-xl shadow-red-500/10">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <h2 class="text-xl font-bold text-slate-900 dark:text-white">Akses Ditolak (403 Forbidden)</h2>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md">Anda tidak memiliki hak akses yang cukup untuk membuka halaman ini. Silakan hubungi Administrator sistem.</p>
+                </div>
+
+                <div id="canvas-container" class="w-full h-full bg-white dark:bg-slate-900 rounded-xl lg:rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-colors duration-300">
                     <iframe id="content-canvas" src="" class="w-full h-full border-0" onload="hideLoader()"></iframe>
                 </div>
             </main>
@@ -156,7 +183,16 @@
 
     <!-- SCRIPT UTAMA -->
     <script>
-        // Init Default System Users Jika Belum Ada
+        let inactivityTimer = null;
+        let warningCountdownTimer = null;
+        let countdownSeconds = 60;
+
+        function getTimeoutDuration() {
+            // Ambil dari localStorage, default ke 15 menit (dalam milidetik) jika belum diatur
+            const minutes = parseInt(localStorage.getItem('session_timeout_minutes')) || 15;
+            return minutes * 60 * 1000;
+        }
+
         function initUsers() {
             if (!localStorage.getItem('system_users')) {
                 const defaultUsers = [
@@ -166,7 +202,6 @@
             }
         }
 
-        // Authentication & Session
         function getCurrentUser() {
             return JSON.parse(localStorage.getItem('active_session')) || null;
         }
@@ -177,12 +212,14 @@
 
             if (!user) {
                 modal.classList.remove('hidden');
+                stopInactivityTracker();
             } else {
                 modal.classList.add('hidden');
                 document.getElementById('user-display-name').innerText = user.name;
                 document.getElementById('user-display-role').innerText = user.role;
                 document.getElementById('user-avatar').innerText = user.name.substring(0, 2).toUpperCase();
                 loadDynamicMenus();
+                startInactivityTracker();
             }
         }
 
@@ -205,13 +242,71 @@
         }
 
         function handleLogout() {
-            if (confirm('Apakah Anda yakin ingin keluar?')) {
-                localStorage.removeItem('active_session');
-                location.reload();
+            localStorage.removeItem('active_session');
+            stopInactivityTracker();
+            location.reload();
+        }
+
+        function resetInactivityTimer() {
+            if (!getCurrentUser()) return;
+
+            const timeoutModal = document.getElementById('timeout-modal');
+            if (timeoutModal && !timeoutModal.classList.contains('hidden')) return;
+
+            clearTimeout(inactivityTimer);
+            clearInterval(warningCountdownTimer);
+
+            const totalTimeout = getTimeoutDuration();
+            const warningBefore = 60 * 1000; // Peringatan 1 menit terakhir
+
+            if (totalTimeout > warningBefore) {
+                inactivityTimer = setTimeout(showTimeoutWarning, totalTimeout - warningBefore);
+            } else {
+                inactivityTimer = setTimeout(showTimeoutWarning, 0);
             }
         }
 
-        // Toggle Sidebar & Submenu
+        function showTimeoutWarning() {
+            const timeoutModal = document.getElementById('timeout-modal');
+            const countdownEl = document.getElementById('timeout-countdown');
+            if (!timeoutModal) return;
+
+            countdownSeconds = 60;
+            countdownEl.innerText = "01:00";
+            timeoutModal.classList.remove('hidden');
+
+            warningCountdownTimer = setInterval(() => {
+                countdownSeconds--;
+                const secStr = countdownSeconds < 10 ? '0' + countdownSeconds : countdownSeconds;
+                countdownEl.innerText = `00:${secStr}`;
+
+                if (countdownSeconds <= 0) {
+                    clearInterval(warningCountdownTimer);
+                    handleLogout();
+                }
+            }, 1000);
+        }
+
+        function extendSession() {
+            const timeoutModal = document.getElementById('timeout-modal');
+            if (timeoutModal) timeoutModal.classList.add('hidden');
+            clearInterval(warningCountdownTimer);
+            resetInactivityTimer();
+        }
+
+        function startInactivityTracker() {
+            const events = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
+            events.forEach(evt => window.addEventListener(evt, resetInactivityTimer, true));
+            resetInactivityTimer();
+        }
+
+        function stopInactivityTracker() {
+            clearTimeout(inactivityTimer);
+            clearInterval(warningCountdownTimer);
+            const events = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'];
+            events.forEach(evt => window.removeEventListener(evt, resetInactivityTimer, true));
+        }
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobile-overlay');
@@ -244,12 +339,32 @@
 
         function loadPage(url, title, event) {
             if (event) event.preventDefault();
+
+            const currentUser = getCurrentUser();
+            const canvasContainer = document.getElementById('canvas-container');
+            const accessDeniedView = document.getElementById('access-denied-view');
             const canvas = document.getElementById('content-canvas');
             const loader = document.getElementById('canvas-loader');
             const pageTitle = document.getElementById('page-title');
 
-            loader.classList.remove('opacity-0', 'pointer-events-none');
             pageTitle.innerText = title;
+
+            const isAllowed = currentUser && (
+                currentUser.role === 'admin' || 
+                (currentUser.allowedMenus && (currentUser.allowedMenus.includes(url) || currentUser.allowedMenus.includes('*')))
+            );
+
+            if (!isAllowed) {
+                canvasContainer.classList.add('hidden');
+                accessDeniedView.classList.remove('hidden');
+                hideLoader();
+                return;
+            }
+
+            accessDeniedView.classList.add('hidden');
+            canvasContainer.classList.remove('hidden');
+
+            loader.classList.remove('opacity-0', 'pointer-events-none');
             canvas.src = url;
 
             document.querySelectorAll('.nav-item').forEach(item => {
@@ -281,7 +396,6 @@
             canvas.contentWindow.location.reload();
         }
 
-        // Render Sidebar Menu Berdasarkan Access Control Role User
         function loadDynamicMenus() {
             const currentUser = getCurrentUser();
             if (!currentUser) return;
@@ -289,7 +403,6 @@
             const navContainer = document.getElementById('sidebar-nav-container');
             const menus = JSON.parse(localStorage.getItem('custom_menus')) || [];
 
-            // Filter Menu Berdasarkan Hak Akses Role
             const allowed = currentUser.allowedMenus || [];
             const filteredMenus = currentUser.role === 'admin' 
                 ? menus 
@@ -334,7 +447,6 @@
                 htmlContent += `</div></div>`;
             });
 
-            // Menu Pengaturan hanya untuk Admin
             if (currentUser.role === 'admin') {
                 htmlContent += `
                     <div class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider my-4">Lainnya</div>
@@ -347,18 +459,15 @@
 
             navContainer.innerHTML = htmlContent;
 
-            // Load default Canvas pertama jika belum diisi
-            const canvas = document.getElementById('content-canvas');
-            if (!canvas.src || canvas.src === window.location.href) {
-                if (singleMenus.length > 0) {
-                    loadPage(singleMenus[0].url, singleMenus[0].label);
-                } else if (currentUser.role === 'admin') {
-                    loadPage('settings.html', 'Pengaturan Sistem');
-                }
+            if (singleMenus.length > 0) {
+                loadPage(singleMenus[0].url, singleMenus[0].label);
+            } else if (currentUser.role === 'admin') {
+                loadPage('settings.html', 'Pengaturan Sistem');
+            } else {
+                loadPage('unauthorized.html', 'Akses Ditolak');
             }
         }
 
-        // Theme Toggle
         function toggleDarkMode() {
             const html = document.documentElement;
             const sunIcon = document.getElementById('theme-icon-sun');

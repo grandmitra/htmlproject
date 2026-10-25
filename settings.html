@@ -17,7 +17,7 @@
         <div class="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
             <div>
                 <h1 class="text-xl font-bold text-slate-900 tracking-tight">Pengaturan System & Manajemen Akses</h1>
-                <p class="text-xs sm:text-sm text-slate-500 mt-1">Kelola menu dinamis dan batasi hak akses spesifik per pengguna.</p>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">Kelola menu dinamis, hak akses pengguna, dan durasi timeout sesi.</p>
             </div>
             <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg">
                 <i class="fa-solid fa-sliders"></i>
@@ -25,12 +25,15 @@
         </div>
 
         <!-- TAB NAVIGATION -->
-        <div class="flex space-x-2 border-b border-slate-200">
-            <button type="button" onclick="switchTab('tab-menus')" id="btn-tab-menus" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none cursor-pointer">
+        <div class="flex space-x-2 border-b border-slate-200 overflow-x-auto">
+            <button type="button" onclick="switchTab('tab-menus')" id="btn-tab-menus" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none cursor-pointer whitespace-nowrap">
                 <i class="fa-solid fa-bars-staggered mr-2"></i>Manajemen Menu Navbar
             </button>
-            <button type="button" onclick="switchTab('tab-users')" id="btn-tab-users" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer">
+            <button type="button" onclick="switchTab('tab-users')" id="btn-tab-users" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer whitespace-nowrap">
                 <i class="fa-solid fa-users-gear mr-2"></i>Manajemen Pengguna & Role
+            </button>
+            <button type="button" onclick="switchTab('tab-system')" id="btn-tab-system" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer whitespace-nowrap">
+                <i class="fa-solid fa-gear mr-2"></i>Konfigurasi Sesi (Timeout)
             </button>
         </div>
 
@@ -160,6 +163,25 @@
             </div>
         </div>
 
+        <!-- SECTION 3: KONFIGURASI SESI TIMEOUT -->
+        <div id="tab-system" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 max-w-xl hidden">
+            <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center space-x-2">
+                <i class="fa-solid fa-clock text-blue-600"></i>
+                <span>Pengaturan Durasi Timeout Otomatis</span>
+            </h2>
+            <p class="text-xs text-slate-500 mb-6">Tentukan berapa lama waktu tidak aktif (dalam menit) sebelum sesi pengguna secara otomatis berakhir dan keluar ke halaman login.</p>
+
+            <form onsubmit="saveTimeoutConfig(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Durasi Inaktif (Menit)</label>
+                    <input type="number" id="timeout-minutes-input" min="1" max="120" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-500/20 transition-all">
+                    Simpan Durasi Timeout
+                </button>
+            </form>
+        </div>
+
     </div>
 
     <!-- MODAL SETTING HAK AKSES MENU SPESIFIK USER -->
@@ -172,9 +194,7 @@
             
             <p class="text-xs text-slate-500 my-3">Centang menu-menu yang diperbolehkan untuk diakses oleh pengguna ini:</p>
             
-            <div id="menu-checkbox-list" class="space-y-2 max-h-60 overflow-y-auto pr-2 my-4">
-                <!-- Checklist menu diisi via JS -->
-            </div>
+            <div id="menu-checkbox-list" class="space-y-2 max-h-60 overflow-y-auto pr-2 my-4"></div>
 
             <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
                 <button onclick="closeAccessModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
@@ -189,21 +209,31 @@
         function switchTab(tabId) {
             const tabMenus = document.getElementById('tab-menus');
             const tabUsers = document.getElementById('tab-users');
+            const tabSystem = document.getElementById('tab-system');
+            
             const btnMenus = document.getElementById('btn-tab-menus');
             const btnUsers = document.getElementById('btn-tab-users');
+            const btnSystem = document.getElementById('btn-tab-system');
 
-            if (!tabMenus || !tabUsers || !btnMenus || !btnUsers) return;
+            if (!tabMenus || !tabUsers || !tabSystem) return;
+
+            tabMenus.classList.add('hidden');
+            tabUsers.classList.add('hidden');
+            tabSystem.classList.add('hidden');
+
+            btnMenus.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer whitespace-nowrap';
+            btnUsers.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer whitespace-nowrap';
+            btnSystem.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer whitespace-nowrap';
 
             if (tabId === 'tab-menus') {
                 tabMenus.classList.remove('hidden');
-                tabUsers.classList.add('hidden');
-                btnMenus.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none cursor-pointer';
-                btnUsers.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer';
-            } else {
-                tabMenus.classList.add('hidden');
+                btnMenus.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none cursor-pointer whitespace-nowrap';
+            } else if (tabId === 'tab-users') {
                 tabUsers.classList.remove('hidden');
-                btnUsers.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none cursor-pointer';
-                btnMenus.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer';
+                btnUsers.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none cursor-pointer whitespace-nowrap';
+            } else if (tabId === 'tab-system') {
+                tabSystem.classList.remove('hidden');
+                btnSystem.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none cursor-pointer whitespace-nowrap';
             }
         }
 
@@ -279,13 +309,12 @@
                 return;
             }
 
-            // Jika role user biasa, beri array kosong dulu (nanti ditentukan lewat modal)
             const allowedMenus = role === 'admin' ? ['*'] : [];
 
             users.push({ id: Date.now(), name, username, password, role, allowedMenus });
             localStorage.setItem('system_users', JSON.stringify(users));
 
-            alert('Pengguna berhasil dibuat! Silakan atur hak akses menunya jika role User.');
+            alert('Pengguna berhasil dibuat!');
             document.getElementById('user-form').reset();
             renderUsers();
         }
@@ -298,7 +327,13 @@
             }
         }
 
-        // BUKA MODAL PENGATURAN HAK AKSES MENU PER USER
+        function saveTimeoutConfig(e) {
+            e.preventDefault();
+            const mins = document.getElementById('timeout-minutes-input').value;
+            localStorage.setItem('session_timeout_minutes', mins);
+            alert('Durasi timeout berhasil diperbarui! Perubahan akan langsung diterapkan pada sistem.');
+        }
+
         function openAccessModal(userId) {
             currentEditingUserId = userId;
             const users = getUsers();
@@ -351,7 +386,6 @@
                 closeAccessModal();
                 renderUsers();
 
-                // Refresh navbar jika user yang diubah sedang aktif
                 if (window.parent && typeof window.parent.loadDynamicMenus === 'function') {
                     window.parent.loadDynamicMenus();
                 }
@@ -384,9 +418,7 @@
                         <td class="py-3 px-4">
                             <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}">${u.role}</span>
                         </td>
-                        <td class="py-3 px-4 text-xs font-medium text-slate-600">
-                            ${countAllowed}
-                        </td>
+                        <td class="py-3 px-4 text-xs font-medium text-slate-600">${countAllowed}</td>
                         <td class="py-3 px-4 text-center space-x-2">
                             ${u.role !== 'admin' ? `
                                 <button onclick="openAccessModal(${u.id})" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Atur Hak Akses Menu">
@@ -408,6 +440,10 @@
             renderTable();
             renderUsers();
             toggleParentDropdown();
+
+            // Set nilai input timeout sesuai data tersimpan (default 15 menit)
+            const currentMins = localStorage.getItem('session_timeout_minutes') || 15;
+            document.getElementById('timeout-minutes-input').value = currentMins;
         };
     </script>
 </body>
