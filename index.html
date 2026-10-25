@@ -76,65 +76,9 @@
                 </button>
             </div>
 
-            <!-- Sidebar Navigation Items -->
-            <nav class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto sidebar-scroll">
-                
-                <div class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Main Navigation</div>
-
-                <!-- DROPDOWN MENU: LAPORAN -->
-                <div class="rounded-xl overflow-hidden">
-                    <button onclick="toggleSubmenu('laporan-submenu', 'laporan-arrow')" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white transition-all group">
-                        <div class="flex items-center space-x-3">
-                            <i class="fa-solid fa-chart-pie w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
-                            <span>Laporan</span>
-                        </div>
-                        <i id="laporan-arrow" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-300"></i>
-                    </button>
-                    
-                    <!-- Submenu Items -->
-                    <div id="laporan-submenu" class="submenu-content bg-slate-950/40 rounded-b-xl space-y-1 px-3">
-                        <a href="#" onclick="loadPage('dailyreport.html', 'Daily Report', event)" class="nav-item flex items-center space-x-3 px-4 py-2.5 my-1 text-xs font-medium rounded-lg text-slate-400 hover:bg-blue-600/20 hover:text-blue-400 transition-all">
-                            <i class="fa-solid fa-calendar-day w-4 text-center"></i>
-                            <span>Daily Report</span>
-                        </a>
-                        <a href="#" onclick="loadPage('monthlyreport.html', 'Monthly Report', event)" class="nav-item flex items-center space-x-3 px-4 py-2.5 my-1 text-xs font-medium rounded-lg text-slate-400 hover:bg-blue-600/20 hover:text-blue-400 transition-all">
-                            <i class="fa-solid fa-calendar-days w-4 text-center"></i>
-                            <span>Monthly Report</span>
-                        </a>
-                        <!-- Container Sub-menu Kustom Target Laporan -->
-                        <div id="custom-sub-laporan"></div>
-                    </div>
-                </div>
-
-                <!-- SINGLE MENU: RFQ -->
-                <a href="#" onclick="loadPage('rfq.html', 'Request For Quotation (RFQ)', event)" class="nav-item flex items-center justify-between px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
-                    <div class="flex items-center space-x-3">
-                        <i class="fa-solid fa-file-contract w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
-                        <span>RFQ</span>
-                    </div>
-                    <span class="bg-blue-500/20 text-blue-400 text-[10px] font-semibold px-2 py-0.5 rounded-full">New</span>
-                </a>
-
-                <!-- SINGLE MENU: ONGKIR -->
-                <a href="#" onclick="loadPage('ongkir.html', 'Cek Ongkos Kirim', event)" class="nav-item flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
-                    <i class="fa-solid fa-truck-fast w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
-                    <span>Cek Ongkir</span>
-                </a>
-
-                <!-- CONTAINER DINAMIS MENU UTAMA SINGLE / DROPDOWN -->
-                <div id="custom-main-menus" class="space-y-1.5"></div>
-
-                <div class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider my-4">Lainnya</div>
-
-                <!-- CONTAINER SUB-MENU KUSTOM TARGET LAINNYA -->
-                <div id="custom-sub-lainnya" class="space-y-1 mb-1"></div>
-
-                <!-- SINGLE MENU: SETTINGS / DLL -->
-                <a href="#" onclick="loadPage('settings.html', 'Pengaturan Sistem', event)" class="nav-item flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
-                    <i class="fa-solid fa-sliders w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
-                    <span>Pengaturan</span>
-                </a>
-
+            <!-- Sidebar Navigation Items (Dynamic Container) -->
+            <nav id="sidebar-nav-container" class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto sidebar-scroll">
+                <!-- Menu akan dimuat secara otomatis oleh fungsi JavaScript loadDynamicMenus() -->
             </nav>
 
             <!-- User Info Footer -->
@@ -170,7 +114,7 @@
                     </button>
                     <!-- Current Page Breadcrumb / Title -->
                     <div>
-                        <h1 id="page-title" class="text-base lg:text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">Daily Report</h1>
+                        <h1 id="page-title" class="text-base lg:text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">Dashboard</h1>
                         <p class="text-[11px] text-slate-400 dark:text-slate-500 hidden sm:block">Vercel Root Workspace</p>
                     </div>
                 </div>
@@ -206,7 +150,7 @@
 
                 <div class="w-full h-full bg-white dark:bg-slate-900 rounded-xl lg:rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-colors duration-300">
                     <!-- Dynamic iFrame Canvas Container -->
-                    <iframe id="content-canvas" src="dailyreport.html" class="w-full h-full border-0" onload="hideLoader()"></iframe>
+                    <iframe id="content-canvas" src="" class="w-full h-full border-0" onload="hideLoader()"></iframe>
                 </div>
             </main>
 
@@ -249,8 +193,8 @@
             const submenu = document.getElementById(submenuId);
             const arrow = document.getElementById(arrowId);
             
-            submenu.classList.toggle('open');
-            arrow.classList.toggle('rotate-arrow');
+            if (submenu) submenu.classList.toggle('open');
+            if (arrow) arrow.classList.toggle('rotate-arrow');
         }
 
         // 3. Load Page into iFrame Canvas & Highlight Active Menu
@@ -287,7 +231,7 @@
         // 4. Hide Loader once iFrame is loaded
         function hideLoader() {
             const loader = document.getElementById('canvas-loader');
-            loader.classList.add('opacity-0', 'pointer-events-none');
+            if (loader) loader.classList.add('opacity-0', 'pointer-events-none');
         }
 
         // 5. Reload Current Active Canvas iFrame
@@ -298,43 +242,78 @@
             canvas.contentWindow.location.reload();
         }
 
-        // 6. Load Dynamic Menus from LocalStorage (Sinkronisasi dengan settings.html)
+        // 6. Load Dynamic Menus from LocalStorage (Sepenuhnya dari settings.html)
         function loadDynamicMenus() {
-            const customMainContainer = document.getElementById('custom-main-menus');
-            const customSubLaporan = document.getElementById('custom-sub-laporan');
-            const customSubLainnya = document.getElementById('custom-sub-lainnya');
-
-            // Kosongkan container sebelum render ulang
-            customMainContainer.innerHTML = '';
-            customSubLaporan.innerHTML = '';
-            customSubLainnya.innerHTML = '';
-
+            const navContainer = document.getElementById('sidebar-nav-container');
             const menus = JSON.parse(localStorage.getItem('custom_menus')) || [];
 
-            menus.forEach(m => {
-                if (m.type === 'single') {
-                    // Render Menu Utama Single
-                    customMainContainer.innerHTML += `
-                        <a href="#" onclick="loadPage('${m.url}', '${m.label}', event)" class="nav-item flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
-                            <i class="${m.icon} w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
-                            <span>${m.label}</span>
-                        </a>
-                    `;
-                } else if (m.type === 'sub') {
-                    // Render Sub-menu berdasarkan induknya (laporan / lainnya)
-                    const subHtml = `
-                        <a href="#" onclick="loadPage('${m.url}', '${m.label}', event)" class="nav-item flex items-center space-x-3 px-4 py-2.5 my-1 text-xs font-medium rounded-lg text-slate-400 hover:bg-blue-600/20 hover:text-blue-400 transition-all">
-                            <i class="${m.icon} w-4 text-center"></i>
-                            <span>${m.label}</span>
-                        </a>
-                    `;
-                    if (m.parent === 'laporan') {
-                        customSubLaporan.innerHTML += subHtml;
-                    } else if (m.parent === 'lainnya') {
-                        customSubLainnya.innerHTML += subHtml;
-                    }
-                }
+            let htmlContent = `<div class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Main Navigation</div>`;
+
+            // Pisahkan menu berdasarkan tipe
+            const singleMenus = menus.filter(m => m.type === 'single');
+            const dropdownMenus = menus.filter(m => m.type === 'dropdown');
+            const subMenus = menus.filter(m => m.type === 'sub');
+
+            // Render Menu Utama Single
+            singleMenus.forEach(m => {
+                htmlContent += `
+                    <a href="#" onclick="loadPage('${m.url}', '${m.label}', event)" class="nav-item flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
+                        <i class="${m.icon} w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
+                        <span>${m.label}</span>
+                    </a>
+                `;
             });
+
+            // Render Menu Utama Dropdown beserta Sub-menunya
+            dropdownMenus.forEach(d => {
+                const subs = subMenus.filter(s => s.parent === d.url || s.parent === d.label.toLowerCase());
+                htmlContent += `
+                    <div class="rounded-xl overflow-hidden my-1">
+                        <button onclick="toggleSubmenu('${d.url}-submenu', '${d.url}-arrow')" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white transition-all group">
+                            <div class="flex items-center space-x-3">
+                                <i class="${d.icon} w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
+                                <span>${d.label}</span>
+                            </div>
+                            <i id="${d.url}-arrow" class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-300"></i>
+                        </button>
+                        <div id="${d.url}-submenu" class="submenu-content bg-slate-950/40 rounded-b-xl space-y-1 px-3 py-1">
+                `;
+                
+                subs.forEach(s => {
+                    htmlContent += `
+                        <a href="#" onclick="loadPage('${s.url}', '${s.label}', event)" class="nav-item flex items-center space-x-3 px-4 py-2.5 my-1 text-xs font-medium rounded-lg text-slate-400 hover:bg-blue-600/20 hover:text-blue-400 transition-all">
+                            <i class="${s.icon} w-4 text-center"></i>
+                            <span>${s.label}</span>
+                        </a>
+                    `;
+                });
+
+                htmlContent += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Menu Pengaturan selalu ada di bagian bawah navigasi
+            htmlContent += `
+                <div class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider my-4">Lainnya</div>
+                <a href="#" onclick="loadPage('settings.html', 'Pengaturan Sistem', event)" class="nav-item flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
+                    <i class="fa-solid fa-sliders w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
+                    <span>Pengaturan</span>
+                </a>
+            `;
+
+            navContainer.innerHTML = htmlContent;
+
+            // Otomatis buka halaman pertama atau settings jika belum ada halaman yang dimuat
+            const canvas = document.getElementById('content-canvas');
+            if (!canvas.src || canvas.src === window.location.href) {
+                if (singleMenus.length > 0) {
+                    loadPage(singleMenus[0].url, singleMenus[0].label);
+                } else {
+                    loadPage('settings.html', 'Pengaturan Sistem');
+                }
+            }
         }
 
         // 7. Toggle Light / Dark Mode & Persist with LocalStorage
@@ -381,17 +360,7 @@
         // 8. Event Listener Initial Load
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
-            loadDynamicMenus(); // Muat menu kustom dari settings.html
-
-            // Auto open Laporan dropdown by default
-            toggleSubmenu('laporan-submenu', 'laporan-arrow');
-            
-            // Set first child (Daily Report) active by default
-            const firstSubItem = document.querySelector('#laporan-submenu .nav-item');
-            if (firstSubItem) {
-                firstSubItem.classList.add('bg-blue-600', 'text-white');
-                firstSubItem.classList.remove('text-slate-400');
-            }
+            loadDynamicMenus(); // Muat seluruh menu dinamis dari LocalStorage/Settings
         });
     </script>
 </body>
