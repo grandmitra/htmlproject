@@ -3,89 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pengaturan Menu - Canvas Vercel</title>
-    <!-- Tailwind CSS -->
+    <title>Pengaturan System - Canvas Vercel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    </style>
+    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
 </head>
 <body class="bg-slate-50 text-slate-800 p-4 sm:p-8">
 
-    <div class="max-w-4xl mx-auto space-y-6">
+    <div class="max-w-5xl mx-auto space-y-6">
         
         <!-- Header Page -->
         <div class="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
             <div>
-                <h1 class="text-xl font-bold text-slate-900 tracking-tight">Pengaturan & Manajemen Menu</h1>
-                <p class="text-xs sm:text-sm text-slate-500 mt-1">Tambah menu utama atau sub-menu dinamis ke dalam sidebar sistem.</p>
+                <h1 class="text-xl font-bold text-slate-900 tracking-tight">Pengaturan System & Manajemen Akses</h1>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">Kelola menu dinamis dan batasi hak akses spesifik per pengguna.</p>
             </div>
             <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-lg">
                 <i class="fa-solid fa-sliders"></i>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            <!-- FORM TAMBAH MENU -->
+        <!-- TAB NAVIGATION -->
+        <div class="flex space-x-2 border-b border-slate-200">
+            <button type="button" onclick="switchTab('tab-menus')" id="btn-tab-menus" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none cursor-pointer">
+                <i class="fa-solid fa-bars-staggered mr-2"></i>Manajemen Menu Navbar
+            </button>
+            <button type="button" onclick="switchTab('tab-users')" id="btn-tab-users" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer">
+                <i class="fa-solid fa-users-gear mr-2"></i>Manajemen Pengguna & Role
+            </button>
+        </div>
+
+        <!-- SECTION 1: MANAJEMEN MENU NAVBAR -->
+        <div id="tab-menus" class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 h-fit">
                 <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center space-x-2">
                     <i class="fa-solid fa-circle-plus text-blue-600"></i>
                     <span>Tambah Menu Baru</span>
                 </h2>
-
                 <form id="menu-form" onsubmit="saveNewMenu(event)" class="space-y-4">
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tipe Menu</label>
-                        <select id="menu-type" onchange="toggleParentDropdown()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+                        <select id="menu-type" onchange="toggleParentDropdown()" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <option value="single">Menu Utama (Single)</option>
-                            <option value="dropdown">Menu Utama (Punya Dropdown)</option>
-                            <option value="sub">Sub-Menu (Anak dari Laporan/Lainnya)</option>
+                            <option value="dropdown">Menu Utama (Dropdown)</option>
+                            <option value="sub">Sub-Menu (Anak Dropdown)</option>
                         </select>
                     </div>
 
                     <div id="parent-container" class="hidden">
                         <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Pilih Induk Menu</label>
-                        <select id="menu-parent" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
-                            <!-- Diisi dinamis via JS -->
-                        </select>
+                        <select id="menu-parent" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nama Label Menu</label>
-                        <input type="text" id="menu-label" required placeholder="Contoh: Stok Gudang" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+                        <input type="text" id="menu-label" required placeholder="Contoh: Stok Gudang" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nama File HTML (.html)</label>
-                        <input type="text" id="menu-url" required placeholder="Contoh: gudang.html" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
+                        <input type="text" id="menu-url" required placeholder="Contoh: gudang.html" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
                     <div>
                         <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Ikon (FontAwesome)</label>
-                        <input type="text" id="menu-icon" value="fa-solid fa-file-lines" placeholder="fa-solid fa-box" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600">
-                        <span class="text-[10px] text-slate-400 mt-1 block">Gunakan class dari FontAwesome 6.</span>
+                        <input type="text" id="menu-icon" value="fa-solid fa-file-lines" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
                     </div>
 
                     <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-500/20 transition-all">
-                        Simpan & Tambahkan Menu
+                        Simpan Menu
                     </button>
                 </form>
             </div>
 
-            <!-- DAFTAR MENU Kustom YANG AKTIF -->
             <div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-base font-bold text-slate-800 flex items-center space-x-2">
                         <i class="fa-solid fa-list-check text-blue-600"></i>
-                        <span>Daftar Menu Kustom Tersimpan</span>
+                        <span>Daftar Menu Aktif</span>
                     </h2>
                     <button onclick="resetDefaultMenus()" class="text-xs text-red-500 hover:text-red-700 font-semibold">
-                        <i class="fa-solid fa-rotate-left mr-1"></i> Reset Default
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Reset Menu
                     </button>
                 </div>
 
@@ -95,26 +94,121 @@
                             <tr class="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                                 <th class="py-3 px-4">Label</th>
                                 <th class="py-3 px-4">Target File</th>
-                                <th class="py-3 px-4">Tipe / Induk</th>
+                                <th class="py-3 px-4">Tipe</th>
                                 <th class="py-3 px-4 text-center">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody id="custom-menu-table" class="text-sm divide-y divide-slate-100">
-                            <!-- Diisi via JavaScript -->
-                        </tbody>
+                        <tbody id="custom-menu-table" class="text-sm divide-y divide-slate-100"></tbody>
                     </table>
                 </div>
             </div>
+        </div>
 
+        <!-- SECTION 2: MANAJEMEN PENGGUNA & ROLE -->
+        <div id="tab-users" class="grid grid-cols-1 md:grid-cols-3 gap-6 hidden">
+            <div class="md:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 h-fit">
+                <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center space-x-2">
+                    <i class="fa-solid fa-user-plus text-blue-600"></i>
+                    <span>Tambah Pengguna Baru</span>
+                </h2>
+                <form id="user-form" onsubmit="saveUser(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Nama Lengkap</label>
+                        <input type="text" id="user-fullname" required placeholder="Contoh: Budi Santoso" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Username</label>
+                        <input type="text" id="user-username" required placeholder="budi123" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Password</label>
+                        <input type="password" id="user-password" required placeholder="••••••••" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Role / Hak Akses Utama</label>
+                        <select id="user-role" class="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="user">User (Akses Terbatas Spesifik)</option>
+                            <option value="admin">Administrator (Akses Penuh Semua Menu)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-sm shadow-lg shadow-emerald-500/20 transition-all">
+                        Simpan Pengguna
+                    </button>
+                </form>
+            </div>
+
+            <div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80">
+                <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center space-x-2">
+                    <i class="fa-solid fa-users text-blue-600"></i>
+                    <span>Daftar Pengguna Aplikasi</span>
+                </h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-100 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                <th class="py-3 px-4">Pengguna</th>
+                                <th class="py-3 px-4">Username</th>
+                                <th class="py-3 px-4">Role</th>
+                                <th class="py-3 px-4">Menu Diizinkan</th>
+                                <th class="py-3 px-4 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table" class="text-sm divide-y divide-slate-100"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
 
     </div>
 
+    <!-- MODAL SETTING HAK AKSES MENU SPESIFIK USER -->
+    <div id="access-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl border border-slate-200">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="font-bold text-slate-900">Atur Akses Menu: <span id="target-user-name" class="text-blue-600"></span></h3>
+                <button onclick="closeAccessModal()" class="text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <p class="text-xs text-slate-500 my-3">Centang menu-menu yang diperbolehkan untuk diakses oleh pengguna ini:</p>
+            
+            <div id="menu-checkbox-list" class="space-y-2 max-h-60 overflow-y-auto pr-2 my-4">
+                <!-- Checklist menu diisi via JS -->
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-3 border-t border-slate-100">
+                <button onclick="closeAccessModal()" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Batal</button>
+                <button onclick="saveUserPermissions()" class="px-4 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-md">Simpan Hak Akses</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        // Ambil data menu custom dari LocalStorage atau buat default array kosong
-        function getCustomMenus() {
-            return JSON.parse(localStorage.getItem('custom_menus')) || [];
+        let currentEditingUserId = null;
+
+        function switchTab(tabId) {
+            const tabMenus = document.getElementById('tab-menus');
+            const tabUsers = document.getElementById('tab-users');
+            const btnMenus = document.getElementById('btn-tab-menus');
+            const btnUsers = document.getElementById('btn-tab-users');
+
+            if (!tabMenus || !tabUsers || !btnMenus || !btnUsers) return;
+
+            if (tabId === 'tab-menus') {
+                tabMenus.classList.remove('hidden');
+                tabUsers.classList.add('hidden');
+                btnMenus.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none cursor-pointer';
+                btnUsers.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer';
+            } else {
+                tabMenus.classList.add('hidden');
+                tabUsers.classList.remove('hidden');
+                btnUsers.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600 focus:outline-none cursor-pointer';
+                btnMenus.className = 'py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500 hover:text-slate-700 focus:outline-none cursor-pointer';
+            }
         }
+
+        function getCustomMenus() { return JSON.parse(localStorage.getItem('custom_menus')) || []; }
+        function getUsers() { return JSON.parse(localStorage.getItem('system_users')) || []; }
 
         function toggleParentDropdown() {
             const type = document.getElementById('menu-type').value;
@@ -123,11 +217,8 @@
 
             if (type === 'sub') {
                 container.classList.remove('hidden');
-                // Isi dropdown dengan opsi menu utama yang ber-dropdown atau bisa jadi induk
-                parentSelect.innerHTML = `
-                    <option value="laporan">Laporan (Dropdown)</option>
-                    <option value="lainnya">Lainnya</option>
-                `;
+                const menus = getCustomMenus().filter(m => m.type === 'dropdown');
+                parentSelect.innerHTML = menus.map(m => `<option value="${m.url}">${m.label}</option>`).join('');
             } else {
                 container.classList.add('hidden');
             }
@@ -141,32 +232,24 @@
             const icon = document.getElementById('menu-icon').value;
             const parent = document.getElementById('menu-parent').value;
 
-            const newMenu = { id: Date.now(), type, label, url, icon, parent };
-            
             let menus = getCustomMenus();
-            menus.push(newMenu);
+            menus.push({ id: Date.now(), type, label, url, icon, parent });
             localStorage.setItem('custom_menus', JSON.stringify(menus));
 
-            alert('Menu berhasil disimpan! Perubahan akan disinkronkan ke index.html.');
-            
-            // Reset form
+            alert('Menu berhasil ditambahkan!');
             document.getElementById('menu-form').reset();
-            toggleParentDropdown();
             renderTable();
 
-            // Beritahu parent window (index.html) untuk me-refresh menu sidebar secara langsung jika fungsi tersedia
             if (window.parent && typeof window.parent.loadDynamicMenus === 'function') {
                 window.parent.loadDynamicMenus();
             }
         }
 
         function deleteMenu(id) {
-            if (confirm('Hapus menu ini dari daftar?')) {
-                let menus = getCustomMenus();
-                menus = menus.filter(m => m.id !== id);
+            if (confirm('Hapus menu ini?')) {
+                let menus = getCustomMenus().filter(m => m.id !== id);
                 localStorage.setItem('custom_menus', JSON.stringify(menus));
                 renderTable();
-
                 if (window.parent && typeof window.parent.loadDynamicMenus === 'function') {
                     window.parent.loadDynamicMenus();
                 }
@@ -174,9 +257,101 @@
         }
 
         function resetDefaultMenus() {
-            if (confirm('Reset seluruh menu kustom ke setelan awal?')) {
+            if (confirm('Reset semua menu kustom?')) {
                 localStorage.removeItem('custom_menus');
                 renderTable();
+                if (window.parent && typeof window.parent.loadDynamicMenus === 'function') {
+                    window.parent.loadDynamicMenus();
+                }
+            }
+        }
+
+        function saveUser(e) {
+            e.preventDefault();
+            const name = document.getElementById('user-fullname').value;
+            const username = document.getElementById('user-username').value.trim();
+            const password = document.getElementById('user-password').value.trim();
+            const role = document.getElementById('user-role').value;
+
+            let users = getUsers();
+            if (users.some(u => u.username === username)) {
+                alert('Username sudah digunakan!');
+                return;
+            }
+
+            // Jika role user biasa, beri array kosong dulu (nanti ditentukan lewat modal)
+            const allowedMenus = role === 'admin' ? ['*'] : [];
+
+            users.push({ id: Date.now(), name, username, password, role, allowedMenus });
+            localStorage.setItem('system_users', JSON.stringify(users));
+
+            alert('Pengguna berhasil dibuat! Silakan atur hak akses menunya jika role User.');
+            document.getElementById('user-form').reset();
+            renderUsers();
+        }
+
+        function deleteUser(id) {
+            if (confirm('Hapus pengguna ini?')) {
+                let users = getUsers().filter(u => u.id !== id);
+                localStorage.setItem('system_users', JSON.stringify(users));
+                renderUsers();
+            }
+        }
+
+        // BUKA MODAL PENGATURAN HAK AKSES MENU PER USER
+        function openAccessModal(userId) {
+            currentEditingUserId = userId;
+            const users = getUsers();
+            const user = users.find(u => u.id === userId);
+            const menus = getCustomMenus();
+
+            if (!user) return;
+
+            document.getElementById('target-user-name').innerText = user.name;
+            const checkboxContainer = document.getElementById('menu-checkbox-list');
+
+            if (menus.length === 0) {
+                checkboxContainer.innerHTML = `<p class="text-xs text-red-500 italic">Belum ada menu yang dibuat di tab Manajemen Menu Navbar.</p>`;
+            } else {
+                checkboxContainer.innerHTML = menus.map(m => {
+                    const isChecked = user.allowedMenus.includes(m.url) || user.allowedMenus.includes('*');
+                    return `
+                        <label class="flex items-center space-x-3 p-2 bg-slate-50 hover:bg-slate-100 rounded-lg cursor-pointer transition-colors border border-slate-200/60">
+                            <input type="checkbox" value="${m.url}" ${isChecked ? 'checked' : ''} class="perm-checkbox w-4 h-4 text-blue-600 rounded focus:ring-blue-500">
+                            <div class="text-xs">
+                                <span class="font-semibold text-slate-800">${m.label}</span>
+                                <span class="text-[10px] text-slate-400 block font-mono">${m.url}</span>
+                            </div>
+                        </label>
+                    `;
+                }).join('');
+            }
+
+            document.getElementById('access-modal').classList.remove('hidden');
+        }
+
+        function closeAccessModal() {
+            document.getElementById('access-modal').classList.add('hidden');
+            currentEditingUserId = null;
+        }
+
+        function saveUserPermissions() {
+            if (!currentEditingUserId) return;
+            const users = getUsers();
+            const userIndex = users.findIndex(u => u.id === currentEditingUserId);
+
+            if (userIndex !== -1) {
+                const checkboxes = document.querySelectorAll('.perm-checkbox:checked');
+                const selectedUrls = Array.from(checkboxes).map(cb => cb.value);
+
+                users[userIndex].allowedMenus = selectedUrls;
+                localStorage.setItem('system_users', JSON.stringify(users));
+
+                alert('Hak akses menu pengguna berhasil diperbarui!');
+                closeAccessModal();
+                renderUsers();
+
+                // Refresh navbar jika user yang diubah sedang aktif
                 if (window.parent && typeof window.parent.loadDynamicMenus === 'function') {
                     window.parent.loadDynamicMenus();
                 }
@@ -186,34 +361,54 @@
         function renderTable() {
             const tbody = document.getElementById('custom-menu-table');
             const menus = getCustomMenus();
-
-            if (menus.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="py-6 text-center text-slate-400 text-xs">Belum ada menu kustom yang ditambahkan.</td></tr>`;
-                return;
-            }
-
-            tbody.innerHTML = menus.map(m => `
-                <tr class="hover:bg-slate-50/80 transition-colors">
-                    <td class="py-3 px-4 font-medium text-slate-800 flex items-center space-x-2">
-                        <i class="${m.icon} text-blue-500 w-5"></i>
-                        <span>${m.label}</span>
-                    </td>
+            tbody.innerHTML = menus.length === 0 ? `<tr><td colspan="4" class="py-4 text-center text-xs text-slate-400">Belum ada menu kustom.</td></tr>` : 
+            menus.map(m => `
+                <tr class="hover:bg-slate-50">
+                    <td class="py-3 px-4 font-medium flex items-center space-x-2"><i class="${m.icon} text-blue-500"></i><span>${m.label}</span></td>
                     <td class="py-3 px-4 text-slate-500 font-mono text-xs">${m.url}</td>
-                    <td class="py-3 px-4">
-                        <span class="px-2 py-1 bg-slate-100 text-slate-600 rounded text-[11px] font-semibold">
-                            ${m.type === 'sub' ? 'Sub: ' + m.parent : (m.type === 'dropdown' ? 'Dropdown Main' : 'Single Main')}
-                        </span>
-                    </td>
-                    <td class="py-3 px-4 text-center">
-                        <button onclick="deleteMenu(${m.id})" class="p-1.5 text-slate-400 hover:text-red-500 transition-colors">
-                            <i class="fa-solid fa-trash-can text-sm"></i>
-                        </button>
-                    </td>
+                    <td class="py-3 px-4"><span class="px-2 py-1 bg-slate-100 rounded text-[11px] font-semibold">${m.type}</span></td>
+                    <td class="py-3 px-4 text-center"><button onclick="deleteMenu(${m.id})" class="text-slate-400 hover:text-red-500"><i class="fa-solid fa-trash"></i></button></td>
                 </tr>
             `).join('');
         }
 
-        window.onload = renderTable;
+        function renderUsers() {
+            const tbody = document.getElementById('users-table');
+            const users = getUsers();
+            tbody.innerHTML = users.map(u => {
+                const countAllowed = u.role === 'admin' ? 'Semua (Admin)' : (u.allowedMenus ? u.allowedMenus.length + ' Menu' : '0 Menu');
+                return `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3 px-4 font-semibold text-slate-800">${u.name}</td>
+                        <td class="py-3 px-4 text-slate-600 font-mono text-xs">${u.username}</td>
+                        <td class="py-3 px-4">
+                            <span class="px-2.5 py-1 rounded-full text-xs font-semibold ${u.role === 'admin' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'}">${u.role}</span>
+                        </td>
+                        <td class="py-3 px-4 text-xs font-medium text-slate-600">
+                            ${countAllowed}
+                        </td>
+                        <td class="py-3 px-4 text-center space-x-2">
+                            ${u.role !== 'admin' ? `
+                                <button onclick="openAccessModal(${u.id})" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Atur Hak Akses Menu">
+                                    <i class="fa-solid fa-user-lock"></i>
+                                </button>
+                            ` : ''}
+                            ${u.username !== 'admin' ? `
+                                <button onclick="deleteUser(${u.id})" class="p-1.5 text-slate-400 hover:text-red-500 transition-colors" title="Hapus User">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            ` : '<span class="text-xs text-slate-400 italic">Default</span>'}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        window.onload = () => {
+            renderTable();
+            renderUsers();
+            toggleParentDropdown();
+        };
     </script>
 </body>
 </html>

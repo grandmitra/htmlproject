@@ -7,51 +7,55 @@
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Konfigurasi Tailwind untuk mendeteksi class 'dark'
-        tailwind.config = {
-            darkMode: 'class',
-        }
+        tailwind.config = { darkMode: 'class' }
     </script>
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts (Plus Jakarta Sans) -->
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-        /* Transisi untuk Hide/Unhide Sidebar Desktop & Mobile */
-        #sidebar {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        /* Custom Smooth Transition for Accordion Submenu */
-        .submenu-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s cubic-bezier(0, 1, 0, 1);
-        }
-        .submenu-content.open {
-            max-height: 500px;
-            transition: max-height 0.3s ease-in-out;
-        }
-        .rotate-arrow {
-            transform: rotate(180deg);
-        }
-        /* Custom scrollbar for sidebar */
-        .sidebar-scroll::-webkit-scrollbar {
-            width: 4px;
-        }
-        .sidebar-scroll::-webkit-scrollbar-thumb {
-            background: #334155;
-            border-radius: 4px;
-        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .submenu-content { max-height: 0; overflow: hidden; transition: max-height 0.3s cubic-bezier(0, 1, 0, 1); }
+        .submenu-content.open { max-height: 500px; transition: max-height 0.3s ease-in-out; }
+        .rotate-arrow { transform: rotate(180deg); }
+        .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+        .sidebar-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased h-screen overflow-hidden transition-colors duration-300">
+
+    <!-- MODAL LOGIN -->
+    <div id="login-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white text-2xl mx-auto mb-3 shadow-lg shadow-blue-500/30">
+                    <i class="fa-solid fa-layer-group"></i>
+                </div>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Masuk ke System</h2>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Masukkan Username dan Password Anda</p>
+            </div>
+
+            <form onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Username</label>
+                    <input type="text" id="login-username" required placeholder="Masukkan username" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Password</label>
+                    <input type="password" id="login-password" required placeholder="••••••••" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div id="login-error" class="text-xs text-red-500 hidden text-center font-medium">Username atau password salah!</div>
+                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-500/20 transition-all">
+                    Masuk Sekarang
+                </button>
+            </form>
+            <p class="text-[11px] text-center text-slate-400 mt-4">Default Admin: <span class="font-mono text-blue-500">admin / admin</span></p>
+        </div>
+    </div>
 
     <!-- MOBILE OVERLAY BACKDROP -->
     <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-30 hidden lg:hidden transition-opacity duration-300 opacity-0"></div>
@@ -69,33 +73,32 @@
                     </div>
                     <span class="font-bold text-lg text-white tracking-wide">CANVAS<span class="text-blue-500">ROOT</span></span>
                 </div>
-                <!-- Close Button Mobile / Hide Sidebar -->
                 <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white focus:outline-none p-1 rounded-lg hover:bg-slate-800 transition-colors">
                     <i class="fa-solid fa-xmark text-xl lg:hidden"></i>
                     <i class="fa-solid fa-chevron-left text-lg hidden lg:block" title="Sembunyikan Sidebar"></i>
                 </button>
             </div>
 
-            <!-- Sidebar Navigation Items (Dynamic Container) -->
+            <!-- Sidebar Navigation Items -->
             <nav id="sidebar-nav-container" class="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto sidebar-scroll">
-                <!-- Menu akan dimuat secara otomatis oleh fungsi JavaScript loadDynamicMenus() -->
+                <!-- Diisi Dinamis via JS -->
             </nav>
 
             <!-- User Info Footer -->
             <div class="p-4 bg-slate-950/80 border-t border-slate-800 flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <div class="relative">
-                        <div class="w-9 h-9 rounded-full bg-slate-700 flex items-center justify-center text-white font-semibold text-sm border border-slate-600">
-                            SM
+                        <div id="user-avatar" class="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-semibold text-sm border border-slate-600 uppercase">
+                            --
                         </div>
                         <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full ring-2 ring-slate-900"></span>
                     </div>
                     <div class="text-xs">
-                        <div class="font-semibold text-slate-200">Sofyan Mujid</div>
-                        <div class="text-slate-500 text-[10px]">Administrator</div>
+                        <div id="user-display-name" class="font-semibold text-slate-200">Guest</div>
+                        <div id="user-display-role" class="text-slate-500 text-[10px] capitalize">Visitor</div>
                     </div>
                 </div>
-                <button class="text-slate-400 hover:text-red-400 transition-colors p-2" title="Keluar">
+                <button onclick="handleLogout()" class="text-slate-400 hover:text-red-400 transition-colors p-2" title="Keluar / Logout">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i>
                 </button>
             </div>
@@ -108,20 +111,16 @@
             <!-- TOPBAR HEADER -->
             <header class="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-4 lg:px-8 z-20 transition-colors duration-300">
                 <div class="flex items-center space-x-3">
-                    <!-- Sidebar Toggle Button (Desktop & Mobile) -->
-                    <button onclick="toggleSidebar()" class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none transition-colors" title="Toggle Sidebar">
+                    <button onclick="toggleSidebar()" class="p-2 rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none transition-colors">
                         <i class="fa-solid fa-bars text-lg"></i>
                     </button>
-                    <!-- Current Page Breadcrumb / Title -->
                     <div>
                         <h1 id="page-title" class="text-base lg:text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight">Dashboard</h1>
                         <p class="text-[11px] text-slate-400 dark:text-slate-500 hidden sm:block">Vercel Root Workspace</p>
                     </div>
                 </div>
 
-                <!-- Header Action Quick Options -->
                 <div class="flex items-center space-x-2 sm:space-x-3">
-                    <!-- Light / Dark Mode Toggle Button -->
                     <button onclick="toggleDarkMode()" title="Ubah Mode Tampilan" class="p-2.5 rounded-xl text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-amber-500 dark:hover:text-amber-400 transition-all">
                         <i id="theme-icon-sun" class="fa-solid fa-sun text-base hidden"></i>
                         <i id="theme-icon-moon" class="fa-solid fa-moon text-base"></i>
@@ -141,15 +140,12 @@
 
             <!-- MAIN CANVAS FRAME WORKSPACE -->
             <main class="flex-1 p-2 sm:p-4 lg:p-6 bg-slate-100 dark:bg-slate-950 overflow-hidden relative transition-colors duration-300">
-                
-                <!-- Loading State Indicator -->
                 <div id="canvas-loader" class="absolute inset-0 bg-slate-100/80 dark:bg-slate-950/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center transition-opacity duration-200 opacity-0 pointer-events-none">
                     <div class="w-10 h-10 border-4 border-blue-500/20 border-t-blue-600 rounded-full animate-spin mb-3"></div>
                     <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Memuat Halaman...</span>
                 </div>
 
                 <div class="w-full h-full bg-white dark:bg-slate-900 rounded-xl lg:rounded-2xl shadow-sm border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-colors duration-300">
-                    <!-- Dynamic iFrame Canvas Container -->
                     <iframe id="content-canvas" src="" class="w-full h-full border-0" onload="hideLoader()"></iframe>
                 </div>
             </main>
@@ -158,9 +154,64 @@
 
     </div>
 
-    <!-- INTERACTIVE JAVASCRIPT LOGIC -->
+    <!-- SCRIPT UTAMA -->
     <script>
-        // 1. Toggle Sidebar (Sembunyikan / Tampilkan untuk Desktop & Mobile)
+        // Init Default System Users Jika Belum Ada
+        function initUsers() {
+            if (!localStorage.getItem('system_users')) {
+                const defaultUsers = [
+                    { id: 1, name: 'Sofyan Mujid', username: 'admin', password: 'admin', role: 'admin', allowedMenus: ['*'] }
+                ];
+                localStorage.setItem('system_users', JSON.stringify(defaultUsers));
+            }
+        }
+
+        // Authentication & Session
+        function getCurrentUser() {
+            return JSON.parse(localStorage.getItem('active_session')) || null;
+        }
+
+        function checkAuth() {
+            const user = getCurrentUser();
+            const modal = document.getElementById('login-modal');
+
+            if (!user) {
+                modal.classList.remove('hidden');
+            } else {
+                modal.classList.add('hidden');
+                document.getElementById('user-display-name').innerText = user.name;
+                document.getElementById('user-display-role').innerText = user.role;
+                document.getElementById('user-avatar').innerText = user.name.substring(0, 2).toUpperCase();
+                loadDynamicMenus();
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('login-username').value.trim();
+            const p = document.getElementById('login-password').value.trim();
+            const err = document.getElementById('login-error');
+
+            const users = JSON.parse(localStorage.getItem('system_users')) || [];
+            const found = users.find(user => user.username === u && user.password === p);
+
+            if (found) {
+                err.classList.add('hidden');
+                localStorage.setItem('active_session', JSON.stringify(found));
+                checkAuth();
+            } else {
+                err.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            if (confirm('Apakah Anda yakin ingin keluar?')) {
+                localStorage.removeItem('active_session');
+                location.reload();
+            }
+        }
+
+        // Toggle Sidebar & Submenu
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('mobile-overlay');
@@ -178,29 +229,21 @@
                     setTimeout(() => overlay.classList.add('hidden'), 300);
                 }
             } else {
-                if (sidebar.classList.contains('lg:translate-x-0')) {
-                    sidebar.classList.remove('lg:translate-x-0');
-                    sidebar.classList.add('-translate-x-full', 'lg:-ml-72');
-                } else {
-                    sidebar.classList.remove('-translate-x-full', 'lg:-ml-72');
-                    sidebar.classList.add('lg:translate-x-0');
-                }
+                sidebar.classList.toggle('lg:translate-x-0');
+                sidebar.classList.toggle('-translate-x-full');
+                sidebar.classList.toggle('lg:-ml-72');
             }
         }
 
-        // 2. Toggle Submenu Accordion (Expand / Collapse)
         function toggleSubmenu(submenuId, arrowId) {
             const submenu = document.getElementById(submenuId);
             const arrow = document.getElementById(arrowId);
-            
             if (submenu) submenu.classList.toggle('open');
             if (arrow) arrow.classList.toggle('rotate-arrow');
         }
 
-        // 3. Load Page into iFrame Canvas & Highlight Active Menu
         function loadPage(url, title, event) {
             if (event) event.preventDefault();
-
             const canvas = document.getElementById('content-canvas');
             const loader = document.getElementById('canvas-loader');
             const pageTitle = document.getElementById('page-title');
@@ -222,19 +265,15 @@
 
             if (window.innerWidth < 1024) {
                 const sidebar = document.getElementById('sidebar');
-                if (!sidebar.classList.contains('-translate-x-full')) {
-                    toggleSidebar();
-                }
+                if (!sidebar.classList.contains('-translate-x-full')) toggleSidebar();
             }
         }
 
-        // 4. Hide Loader once iFrame is loaded
         function hideLoader() {
             const loader = document.getElementById('canvas-loader');
             if (loader) loader.classList.add('opacity-0', 'pointer-events-none');
         }
 
-        // 5. Reload Current Active Canvas iFrame
         function reloadCanvas() {
             const canvas = document.getElementById('content-canvas');
             const loader = document.getElementById('canvas-loader');
@@ -242,19 +281,26 @@
             canvas.contentWindow.location.reload();
         }
 
-        // 6. Load Dynamic Menus from LocalStorage (Sepenuhnya dari settings.html)
+        // Render Sidebar Menu Berdasarkan Access Control Role User
         function loadDynamicMenus() {
+            const currentUser = getCurrentUser();
+            if (!currentUser) return;
+
             const navContainer = document.getElementById('sidebar-nav-container');
             const menus = JSON.parse(localStorage.getItem('custom_menus')) || [];
 
+            // Filter Menu Berdasarkan Hak Akses Role
+            const allowed = currentUser.allowedMenus || [];
+            const filteredMenus = currentUser.role === 'admin' 
+                ? menus 
+                : menus.filter(m => allowed.includes(m.url) || allowed.includes('*'));
+
             let htmlContent = `<div class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Main Navigation</div>`;
 
-            // Pisahkan menu berdasarkan tipe
-            const singleMenus = menus.filter(m => m.type === 'single');
-            const dropdownMenus = menus.filter(m => m.type === 'dropdown');
-            const subMenus = menus.filter(m => m.type === 'sub');
+            const singleMenus = filteredMenus.filter(m => m.type === 'single');
+            const dropdownMenus = filteredMenus.filter(m => m.type === 'dropdown');
+            const subMenus = filteredMenus.filter(m => m.type === 'sub');
 
-            // Render Menu Utama Single
             singleMenus.forEach(m => {
                 htmlContent += `
                     <a href="#" onclick="loadPage('${m.url}', '${m.label}', event)" class="nav-item flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
@@ -264,7 +310,6 @@
                 `;
             });
 
-            // Render Menu Utama Dropdown beserta Sub-menunya
             dropdownMenus.forEach(d => {
                 const subs = subMenus.filter(s => s.parent === d.url || s.parent === d.label.toLowerCase());
                 htmlContent += `
@@ -278,7 +323,6 @@
                         </button>
                         <div id="${d.url}-submenu" class="submenu-content bg-slate-950/40 rounded-b-xl space-y-1 px-3 py-1">
                 `;
-                
                 subs.forEach(s => {
                     htmlContent += `
                         <a href="#" onclick="loadPage('${s.url}', '${s.label}', event)" class="nav-item flex items-center space-x-3 px-4 py-2.5 my-1 text-xs font-medium rounded-lg text-slate-400 hover:bg-blue-600/20 hover:text-blue-400 transition-all">
@@ -287,36 +331,34 @@
                         </a>
                     `;
                 });
-
-                htmlContent += `
-                        </div>
-                    </div>
-                `;
+                htmlContent += `</div></div>`;
             });
 
-            // Menu Pengaturan selalu ada di bagian bawah navigasi
-            htmlContent += `
-                <div class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider my-4">Lainnya</div>
-                <a href="#" onclick="loadPage('settings.html', 'Pengaturan Sistem', event)" class="nav-item flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
-                    <i class="fa-solid fa-sliders w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
-                    <span>Pengaturan</span>
-                </a>
-            `;
+            // Menu Pengaturan hanya untuk Admin
+            if (currentUser.role === 'admin') {
+                htmlContent += `
+                    <div class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider my-4">Lainnya</div>
+                    <a href="#" onclick="loadPage('settings.html', 'Pengaturan Sistem', event)" class="nav-item flex items-center space-x-3 px-4 py-3 text-sm font-medium rounded-xl hover:bg-slate-800 hover:text-white text-slate-300 transition-all group">
+                        <i class="fa-solid fa-sliders w-5 text-slate-400 group-hover:text-blue-400 transition-colors"></i>
+                        <span>Pengaturan & User</span>
+                    </a>
+                `;
+            }
 
             navContainer.innerHTML = htmlContent;
 
-            // Otomatis buka halaman pertama atau settings jika belum ada halaman yang dimuat
+            // Load default Canvas pertama jika belum diisi
             const canvas = document.getElementById('content-canvas');
             if (!canvas.src || canvas.src === window.location.href) {
                 if (singleMenus.length > 0) {
                     loadPage(singleMenus[0].url, singleMenus[0].label);
-                } else {
+                } else if (currentUser.role === 'admin') {
                     loadPage('settings.html', 'Pengaturan Sistem');
                 }
             }
         }
 
-        // 7. Toggle Light / Dark Mode & Persist with LocalStorage
+        // Theme Toggle
         function toggleDarkMode() {
             const html = document.documentElement;
             const sunIcon = document.getElementById('theme-icon-sun');
@@ -357,10 +399,10 @@
             }
         }
 
-        // 8. Event Listener Initial Load
         window.addEventListener('DOMContentLoaded', () => {
+            initUsers();
             initTheme();
-            loadDynamicMenus(); // Muat seluruh menu dinamis dari LocalStorage/Settings
+            checkAuth();
         });
     </script>
 </body>
