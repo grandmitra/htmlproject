@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Kinerja MD GMB</title>
+    
+    <!-- Tailwind CSS untuk Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- PapaParse untuk membaca CSV dari URL -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    
+    <!-- ApexCharts untuk Grafik/Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: {
+                            light: '#FFF9F5',
+                            card: '#FFFFFF',
+                            primary: '#E07A5F',
+                            secondary: '#F2CC8F',
+                            accent: '#81B29A',
+                            text: '#3D405B',
+                            border: '#F4E3D7'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #E2E8F0; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #CBD5E1; }
+        
+        .card-shadow {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        /* Styling multiple select agar lebih rapi */
+        select[multiple] {
+            height: auto;
+            min-height: 80px;
+            max-height: 110px;
+            overflow-y: auto;
+            cursor: pointer;
+        }
+        select[multiple] option {
+            padding: 6px 8px;
+            margin-bottom: 2px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+        select[multiple] option:checked {
+            background-color: #E07A5F !important;
+            color: white !important;
+            font-weight: 600;
+        }
+        select[multiple] option:hover {
+            background-color: #F4E3D7;
+        }
+    </style>
+</head>
+<body class="bg-brand-light text-brand-text font-sans h-screen w-screen overflow-hidden flex justify-center items-center">
+
+    <div id="dashboard-container" class="w-full h-full flex flex-col md:flex-row bg-brand-light relative">
+        
+        <!-- Loading Overlay -->
+        <div id="loading-overlay" class="absolute inset-0 bg-brand-light z-50 flex flex-col justify-center items-center transition-opacity duration-300">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-brand-primary mb-4"></div>
+            <h2 class="text-xl font-semibold text-brand-text" id="loading-text">Memuat Data dari Sumber...</h2>
+        </div>
+
+        <!-- Left Sidebar: Slicers -->
+        <aside class="w-full md:w-72 bg-brand-card border-r border-brand-border p-5 flex flex-col gap-4 overflow-y-auto z-10 card-shadow shrink-0">
+            <div>
+                <h1 class="text-xl font-bold text-brand-primary tracking-tight leading-tight">
+                    Dashboard Kinerja<br>MD GMB
+                </h1>
+                <p class="text-[11px] text-gray-500 mt-1" id="last-updated">Menunggu data...</p>
+                <!-- Tombol Refresh Cache -->
+                <button id="btn-refresh-data" class="text-[10px] bg-brand-primary text-white px-2 py-1.5 rounded mt-2 hover:bg-orange-600 transition-colors w-full font-semibold shadow-sm">
+                    🔄 Refresh / Unduh Data Terbaru
+                </button>
+            </div>
+
+            <div class="flex flex-col gap-3 flex-grow mt-2">
+                <div>
+                    <h3 class="font-semibold text-sm text-gray-500 uppercase tracking-wider mb-1">Filter Data</h3>
+                    <p class="text-[10px] text-gray-400 leading-tight">Filter bersifat Dependen (Saling Terhubung).</p>
+                </div>
+                
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-gray-600">Tahun</label>
+                    <select id="slicer-tahun" multiple class="w-full text-xs border border-brand-border rounded-md bg-brand-light focus:outline-none"></select>
+                </div>
+                
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-gray-600">Bulan</label>
+                    <select id="slicer-bulan" multiple class="w-full text-xs border border-brand-border rounded-md bg-brand-light focus:outline-none"></select>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-gray-600">Departemen</label>
+                    <select id="slicer-departemen" multiple class="w-full text-xs border border-brand-border rounded-md bg-brand-light focus:outline-none"></select>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-gray-600">PIC</label>
+                    <select id="slicer-pic" multiple class="w-full text-xs border border-brand-border rounded-md bg-brand-light focus:outline-none"></select>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-gray-600">Brand</label>
+                    <select id="slicer-brand" multiple class="w-full text-xs border border-brand-border rounded-md bg-brand-light focus:outline-none"></select>
+                </div>
+
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-gray-600">Status Konsinyasi</label>
+                    <select id="slicer-consignment" multiple class="w-full text-xs border border-brand-border rounded-md bg-brand-light focus:outline-none"></select>
+                </div>
+            </div>
+            
+            <button id="btn-reset" class="w-full py-2 mt-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-medium rounded-md transition-colors border border-gray-200">
+                Reset Semua Filter
+            </button>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="flex-1 p-4 md:p-6 flex flex-col gap-6 overflow-y-auto bg-gray-50/50">
+            
+            <!-- Scorecards Row -->
+            <div class="grid grid-cols-2 lg:grid-cols-5 gap-4 shrink-0">
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center">
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Jual</p>
+                    <h3 class="text-xl xl:text-2xl font-bold text-brand-text truncate" id="sc-total-jual">Rp 0</h3>
+                </div>
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center">
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Modal</p>
+                    <h3 class="text-xl xl:text-2xl font-bold text-brand-text truncate" id="sc-total-modal">Rp 0</h3>
+                </div>
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center">
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Laba Kotor</p>
+                    <h3 class="text-xl xl:text-2xl font-bold text-brand-text truncate" id="sc-total-laba">Rp 0</h3>
+                </div>
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center">
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">GPM</p>
+                    <h3 class="text-xl xl:text-2xl font-bold text-brand-primary truncate" id="sc-gpm">0%</h3>
+                </div>
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center">
+                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Price Point</p>
+                    <h3 class="text-xl xl:text-2xl font-bold text-brand-accent truncate" id="sc-price-point">Rp 0</h3>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Baris 1: Amount & Qty -->
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow">
+                    <h4 class="text-sm font-semibold text-gray-600 mb-2">Total Amount Bulanan</h4>
+                    <div id="chart-amount-trend"></div>
+                </div>
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow">
+                    <h4 class="text-sm font-semibold text-gray-600 mb-2">Total QTY Bulanan</h4>
+                    <div id="chart-qty-trend"></div>
+                </div>
+
+                <!-- Baris 2: Laba Kotor & Divisi -->
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow">
+                    <h4 class="text-sm font-semibold text-gray-600 mb-2">Total Laba Kotor Bulanan</h4>
+                    <div id="chart-laba-trend"></div>
+                </div>
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow">
+                    <h4 class="text-sm font-semibold text-gray-600 mb-2">Penjualan per DIVISI</h4>
+                    <div id="chart-divisi"></div>
+                </div>
+
+                <!-- Baris 3: Kategori & Brand -->
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow">
+                    <h4 class="text-sm font-semibold text-gray-600 mb-2">Penjualan per KATEGORI</h4>
+                    <div id="chart-kategori"></div>
+                </div>
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow">
+                    <h4 class="text-sm font-semibold text-gray-600 mb-2">Penjualan per BRAND</h4>
+                    <div id="chart-brand"></div>
+                </div>
+
+                <!-- Baris 4: Departemen & PIC -->
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow">
+                    <h4 class="text-sm font-semibold text-gray-600 mb-2">Penjualan Sesuai DEPARTEMEN</h4>
+                    <div id="chart-dept-pie" class="flex justify-center items-center"></div>
+                </div>
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow">
+                    <h4 class="text-sm font-semibold text-gray-600 mb-2">Kontribusi PIC (Berdasarkan Amount)</h4>
+                    <div id="chart-pic-donut" class="flex justify-center items-center"></div>
+                </div>
+            </div>
+
+            <!-- TABEL DATA ITEM DI BAWAH -->
+            <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col mb-6 mt-2">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-sm font-semibold text-gray-600">Rincian Data Item</h4>
+                    <span id="table-info" class="text-xs text-brand-primary font-medium bg-brand-light px-3 py-1 rounded-full border border-brand-border">Menampilkan 0 data</span>
+                </div>
+                <div class="overflow-x-auto overflow-y-auto max-h-[500px] border border-gray-100 rounded-lg">
+                    <table class="w-full text-sm text-left whitespace-nowrap">
+                        <thead class="text-[11px] text-gray-500 uppercase bg-gray-50 sticky top-0 z-10 shadow-sm font-semibold">
+                            <tr>
+                                <th class="px-4 py-3 border-b">Periode</th>
+                                <th class="px-4 py-3 border-b">PIC</th>
+                                <th class="px-4 py-3 border-b">Departemen</th>
+                                <th class="px-4 py-3 border-b">Kategori</th>
+                                <th class="px-4 py-3 border-b">Brand</th>
+                                <th class="px-4 py-3 border-b text-center">Konsinyasi</th>
+                                <th class="px-4 py-3 border-b text-right">Amount</th>
+                                <th class="px-4 py-3 border-b text-center">QTY</th>
+                                <th class="px-4 py-3 border-b text-right">Laba Kotor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body" class="divide-y divide-gray-100 bg-white">
+                            <!-- Rows akan digenerate via Javascript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTY5Ui7PfkQLGn52K0gpZhP56wJzdk9j7NbUQxt17xAKIKnsbNk3wTNzoYsVcxBqWKh0CUNbPcrOWYt/pub?gid=2144772090&single=true&output=csv';
+
+        const CACHE_KEY = 'gmb_dashboard_csv_data';
+        const CACHE_TIME_KEY = 'gmb_dashboard_cache_time';
+        const CACHE_DURATION_MS = 60 * 60 * 1000; // 1 Jam
+
+        let rawData = [];
+        let filteredData = [];
+        let charts = {};
+
+        // URUTAN BULAN STANDARD
+        const stdMonthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        
+        function normalizeMonth(monthStr) {
+            if (!monthStr) return 'Unknown';
+            let str = String(monthStr).trim().toLowerCase();
+            if (str.startsWith('jan')) return 'Januari';
+            if (str.startsWith('feb')) return 'Februari';
+            if (str.startsWith('mar')) return 'Maret';
+            if (str.startsWith('apr')) return 'April';
+            if (str.startsWith('mei') || str.startsWith('may')) return 'Mei';
+            if (str.startsWith('jun')) return 'Juni';
+            if (str.startsWith('jul')) return 'Juli';
+            if (str.startsWith('agu') || str.startsWith('agt') || str.startsWith('aug')) return 'Agustus';
+            if (str.startsWith('sep')) return 'September';
+            if (str.startsWith('okt') || str.startsWith('oct')) return 'Oktober';
+            if (str.startsWith('nov')) return 'November';
+            if (str.startsWith('des') || str.startsWith('dec')) return 'Desember';
+            return monthStr;
+        }
+
+        function getMonthIndex(monthStr) {
+            return stdMonthNames.indexOf(monthStr);
+        }
+
+        function parseNum(val) {
+            if (val === null || val === undefined) return 0;
+            if (typeof val === 'number') return val;
+            let str = String(val).trim();
+            if (str === '') return 0;
+            str = str.replace(/Rp/gi, '').trim().replace(/,/g, '');
+            let num = parseFloat(str);
+            return isNaN(num) ? 0 : num;
+        }
+
+        const formatRp = (num) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
+        const formatCompact = (num) => new Intl.NumberFormat('id-ID', { notation: "compact", maximumFractionDigits: 1 }).format(num);
+        const formatPercent = (num) => new Intl.NumberFormat('id-ID', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 2 }).format(num);
+
+        function fetchData() {
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            const cacheTime = localStorage.getItem(CACHE_TIME_KEY);
+            const now = new Date().getTime();
+
+            if (cachedData && cacheTime && (now - cacheTime < CACHE_DURATION_MS)) {
+                document.getElementById('last-updated').innerText = `Terakhir diperbarui: (Dari Cache ⚡)`;
+                parseCSVString(cachedData);
+            } else {
+                fetchFromNetwork();
+            }
+        }
+
+        function fetchFromNetwork() {
+            const overlay = document.getElementById('loading-overlay');
+            overlay.style.display = 'flex';
+            overlay.style.opacity = '1';
+            document.getElementById('loading-text').innerText = "Mengunduh Data Terbaru dari Sheets...";
+            
+            fetch(CSV_URL)
+                .then(response => {
+                    if (!response.ok) throw new Error("Gagal terhubung ke Google Sheets");
+                    return response.text();
+                })
+                .then(csvText => {
+                    try {
+                        localStorage.setItem(CACHE_KEY, csvText);
+                        localStorage.setItem(CACHE_TIME_KEY, new Date().getTime().toString());
+                    } catch (e) {}
+                    document.getElementById('last-updated').innerText = `Terakhir diperbarui: ${new Date().toLocaleTimeString('id-ID')}`;
+                    parseCSVString(csvText);
+                })
+                .catch(error => {
+                    console.error("Error Network:", error);
+                    const cachedData = localStorage.getItem(CACHE_KEY);
+                    if (cachedData) {
+                        document.getElementById('last-updated').innerText = `Koneksi Error. Memakai Cache Lama.`;
+                        parseCSVString(cachedData);
+                    } else {
+                        overlay.innerHTML = `
+                            <div class="text-red-500 font-bold p-4 bg-red-50 rounded-lg border border-red-200 text-center">
+                                Gagal memuat data CSV.<br>Periksa koneksi internet Anda.
+                                <button onclick="fetchFromNetwork()" class="mt-3 bg-red-500 text-white px-4 py-2 rounded text-sm">Coba Lagi</button>
+                            </div>`;
+                    }
+                });
+        }
+
+        function parseCSVString(csvString) {
+            Papa.parse(csvString, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) { processData(results.data); },
+                error: function() { console.error("Gagal parse CSV"); }
+            });
+        }
+
+        document.getElementById('btn-refresh-data').addEventListener('click', () => {
+            localStorage.removeItem(CACHE_KEY);
+            localStorage.removeItem(CACHE_TIME_KEY);
+            document.getElementById('last-updated').innerText = `Meminta data...`;
+            fetchFromNetwork();
+        });
+
+        function normalizeKey(key) {
+            return key.trim().toUpperCase().replace(/ /g, '_');
+        }
+
+        function processData(data) {
+            rawData = data.map(row => {
+                let cleanRow = {};
+                for (let key in row) cleanRow[normalizeKey(key)] = row[key];
+                
+                let tahunVal = cleanRow['TAHUN'] || cleanRow['YEAR'] || '';
+                let bulanVal = cleanRow['BULAN'] || cleanRow['MONTH'] || '';
+                
+                let tanggalVal = cleanRow['TANGGAL'] || cleanRow['DATE'] || '';
+                if(tanggalVal && (!tahunVal || !bulanVal)) {
+                    try {
+                        let d = new Date(tanggalVal);
+                        if(!isNaN(d.getTime())) {
+                            tahunVal = tahunVal || d.getFullYear().toString();
+                            bulanVal = bulanVal || stdMonthNames[d.getMonth()];
+                        }
+                    } catch(e){}
+                }
+
+                return {
+                    TAHUN: String(tahunVal).trim(),
+                    BULAN: normalizeMonth(bulanVal), // Format standard Bulan
+                    DEPARTEMEN: cleanRow['DEPARTEMEN'] || cleanRow['DEPARTMENT'] || 'Uncategorized',
+                    PIC: cleanRow['PIC'] || 'Unknown',
+                    DIVISI: cleanRow['DIVISI'] || cleanRow['DIVISION'] || 'Unknown',
+                    KATEGORI: cleanRow['KATEGORI'] || cleanRow['CATEGORY'] || 'Unknown',
+                    BRAND: cleanRow['BRAND'] || cleanRow['MERK'] || 'NONE',
+                    ON_CONSIGNMENT: cleanRow['ON_CONSIGNMENT'] || cleanRow['KONSINYASI'] || cleanRow['STATUS_KONSINYASI'] || 'NON_KONSINYASI',
+                    TOTAL_AMOUNT: parseNum(cleanRow['TOTAL_AMOUNT']),
+                    TOTAL_QTY: parseNum(cleanRow['TOTAL_QTY']),
+                    PROFIT_AMOUNT: parseNum(cleanRow['PROFIT_AMOUNT'])
+                };
+            }).filter(row => row.TAHUN !== '' || row.TOTAL_AMOUNT > 0);
+
+            setupMultiSelects();
+            
+            // Inisialisasi awal Select (semua terpilih "All")
+            const slicerIds = ['tahun', 'bulan', 'departemen', 'pic', 'brand', 'consignment'];
+            slicerIds.forEach(id => {
+                let select = document.getElementById(`slicer-${id}`);
+                select.innerHTML = '<option value="All" selected>Semua</option>';
+            });
+
+            // Langsung eksekusi filter pertama
+            applyFilters();
+            
+            const loader = document.getElementById('loading-overlay');
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 300);
+        }
+
+        // FUNGSI MULTI-SELECT CASCADING STRICT DEPENDENT
+        function setupMultiSelects() {
+            const slicerIds = ['tahun', 'bulan', 'departemen', 'pic', 'brand', 'consignment'];
+            
+            slicerIds.forEach(id => {
+                const select = document.getElementById(`slicer-${id}`);
+                select.addEventListener('mousedown', function(e) {
+                    if(e.target.tagName === 'OPTION') {
+                        e.preventDefault();
+                        const clickedOpt = e.target;
+                        
+                        if(clickedOpt.value === 'All') {
+                            Array.from(this.options).forEach(o => o.selected = false);
+                            clickedOpt.selected = true;
+                        } else {
+                            this.options[0].selected = false;
+                            clickedOpt.selected = !clickedOpt.selected;
+                        }
+                        
+                        if(Array.from(this.options).filter(o => o.selected).length === 0) {
+                            this.options[0].selected = true;
+                        }
+                        
+                        applyFilters(); // Hitung ulang dependensi semua filter!
+                    }
+                });
+            });
+
+            document.getElementById('btn-reset').addEventListener('click', () => {
+                slicerIds.forEach(id => {
+                    let select = document.getElementById(`slicer-${id}`);
+                    select.innerHTML = '<option value="All" selected>Semua</option>';
+                });
+                applyFilters();
+            });
+        }
+
+        function getSelectedValues(selectId) {
+            const select = document.getElementById(selectId);
+            return Array.from(select.selectedOptions).map(opt => opt.value);
+        }
+
+        function rebuildSelect(id, validValues, selectedValues, isMonth = false) {
+            const select = document.getElementById(id);
+            let combinedValues = [...new Set(validValues)]; // Hanya memasukan opsi yang valid!
+            
+            if (isMonth) {
+                combinedValues.sort((a,b) => getMonthIndex(a) - getMonthIndex(b));
+            } else {
+                combinedValues.sort();
+            }
+
+            let html = `<option value="All" ${selectedValues.includes('All') ? 'selected' : ''}>Semua</option>`;
+            combinedValues.forEach(val => {
+                let isSelected = selectedValues.includes(val);
+                html += `<option value="${val}" ${isSelected ? 'selected' : ''}>${val}</option>`;
+            });
+            
+            // Update dom (hanya jika ada perubahan html agar performa bagus)
+            if(select.innerHTML !== html) {
+                select.innerHTML = html;
+            }
+        }
+
+        // Fungsi Inti Cascading Filter Strict
+        function applyFilters() {
+            let fTahun = getSelectedValues('slicer-tahun');
+            let fBulan = getSelectedValues('slicer-bulan');
+            let fDept = getSelectedValues('slicer-departemen');
+            let fPic = getSelectedValues('slicer-pic');
+            let fBrand = getSelectedValues('slicer-brand');
+            let fCons = getSelectedValues('slicer-consignment');
+
+            if(fTahun.length===0) fTahun=['All'];
+            if(fBulan.length===0) fBulan=['All'];
+            if(fDept.length===0) fDept=['All'];
+            if(fPic.length===0) fPic=['All'];
+            if(fBrand.length===0) fBrand=['All'];
+            if(fCons.length===0) fCons=['All'];
+
+            // Logika cek silang: Apakah suatu baris data cocok dengan kondisi filter lain (selain filter itu sendiri)
+            const matchExcept = (row, excludeKey) => {
+                return (excludeKey === 'TAHUN' || fTahun.includes('All') || fTahun.includes(row.TAHUN)) &&
+                       (excludeKey === 'BULAN' || fBulan.includes('All') || fBulan.includes(row.BULAN)) &&
+                       (excludeKey === 'DEPARTEMEN' || fDept.includes('All') || fDept.includes(row.DEPARTEMEN)) &&
+                       (excludeKey === 'PIC' || fPic.includes('All') || fPic.includes(row.PIC)) &&
+                       (excludeKey === 'BRAND' || fBrand.includes('All') || fBrand.includes(row.BRAND)) &&
+                       (excludeKey === 'ON_CONSIGNMENT' || fCons.includes('All') || fCons.includes(row.ON_CONSIGNMENT));
+            };
+
+            // Mengumpulkan opsi dropdown yang valid berdasarkan filter lainnya
+            const validTahun = [...new Set(rawData.filter(r => matchExcept(r, 'TAHUN')).map(r => r.TAHUN))];
+            const validBulan = [...new Set(rawData.filter(r => matchExcept(r, 'BULAN')).map(r => r.BULAN))];
+            const validDept = [...new Set(rawData.filter(r => matchExcept(r, 'DEPARTEMEN')).map(r => r.DEPARTEMEN))];
+            const validPic = [...new Set(rawData.filter(r => matchExcept(r, 'PIC')).map(r => r.PIC))];
+            const validBrand = [...new Set(rawData.filter(r => matchExcept(r, 'BRAND')).map(r => r.BRAND))];
+            const validCons = [...new Set(rawData.filter(r => matchExcept(r, 'ON_CONSIGNMENT')).map(r => r.ON_CONSIGNMENT))];
+
+            // Membersihkan pilihan jika opsi yang terpilih sebelumnya sudah tidak valid
+            fTahun = fTahun.filter(v => v === 'All' || validTahun.includes(v)); if(fTahun.length===0) fTahun=['All'];
+            fBulan = fBulan.filter(v => v === 'All' || validBulan.includes(v)); if(fBulan.length===0) fBulan=['All'];
+            fDept = fDept.filter(v => v === 'All' || validDept.includes(v)); if(fDept.length===0) fDept=['All'];
+            fPic = fPic.filter(v => v === 'All' || validPic.includes(v)); if(fPic.length===0) fPic=['All'];
+            fBrand = fBrand.filter(v => v === 'All' || validBrand.includes(v)); if(fBrand.length===0) fBrand=['All'];
+            fCons = fCons.filter(v => v === 'All' || validCons.includes(v)); if(fCons.length===0) fCons=['All'];
+
+            // Bangun ulang Slicer (Dependen Strict)
+            rebuildSelect('slicer-tahun', validTahun, fTahun);
+            rebuildSelect('slicer-bulan', validBulan, fBulan, true);
+            rebuildSelect('slicer-departemen', validDept, fDept);
+            rebuildSelect('slicer-pic', validPic, fPic);
+            rebuildSelect('slicer-brand', validBrand, fBrand);
+            rebuildSelect('slicer-consignment', validCons, fCons);
+
+            // Filter data utama berdasarkan SEMUA kondisi
+            filteredData = rawData.filter(row => matchExcept(row, 'NONE'));
+            
+            // SORTING TABEL & DATA: Tahun Menurun (2026->2025), Bulan Menaik (Jan->Des)
+            filteredData.sort((a,b) => {
+                if (a.TAHUN !== b.TAHUN) return b.TAHUN.localeCompare(a.TAHUN); // Descending year
+                return getMonthIndex(a.BULAN) - getMonthIndex(b.BULAN); // Ascending standard month
+            });
+
+            updateDashboard();
+        }
+
+        function updateDashboard() {
+            updateScorecards();
+            updateCharts();
+            renderTable();
+        }
+
+        function updateScorecards() {
+            let totalAmount = 0, totalProfit = 0, totalQty = 0;
+
+            filteredData.forEach(row => {
+                totalAmount += row.TOTAL_AMOUNT;
+                totalProfit += row.PROFIT_AMOUNT;
+                totalQty += row.TOTAL_QTY;
+            });
+
+            document.getElementById('sc-total-jual').innerText = formatRp(totalAmount);
+            let totalModal = totalAmount - totalProfit;
+            document.getElementById('sc-total-modal').innerText = formatRp(totalModal);
+            document.getElementById('sc-total-laba').innerText = formatRp(totalProfit);
+            let gpm = totalAmount > 0 ? (totalProfit / totalAmount) : 0;
+            document.getElementById('sc-gpm').innerText = formatPercent(gpm);
+            let pricePoint = totalQty > 0 ? (totalAmount / totalQty) : 0;
+            document.getElementById('sc-price-point').innerText = formatRp(pricePoint);
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = '';
+            
+            const displayLimit = 150;
+            const displayData = filteredData.slice(0, displayLimit);
+            
+            if (displayData.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="px-4 py-8 text-center text-gray-400 font-medium">Tidak ada data yang cocok dengan filter saat ini.</td></tr>`;
+                document.getElementById('table-info').innerText = `Menampilkan 0 data`;
+                return;
+            }
+
+            displayData.forEach(row => {
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-brand-light transition-colors";
+                let consBadge = row.ON_CONSIGNMENT.toUpperCase().includes('NON') 
+                    ? `<span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-[10px] font-bold">REGULAR</span>`
+                    : `<span class="bg-brand-secondary text-yellow-800 px-2 py-0.5 rounded text-[10px] font-bold">KONSINYASI</span>`;
+
+                tr.innerHTML = `
+                    <td class="px-4 py-2 border-b border-gray-50 text-gray-700">${row.BULAN} ${row.TAHUN}</td>
+                    <td class="px-4 py-2 border-b border-gray-50 font-medium text-brand-primary">${row.PIC}</td>
+                    <td class="px-4 py-2 border-b border-gray-50">${row.DEPARTEMEN}</td>
+                    <td class="px-4 py-2 border-b border-gray-50">${row.KATEGORI}</td>
+                    <td class="px-4 py-2 border-b border-gray-50 font-medium">${row.BRAND}</td>
+                    <td class="px-4 py-2 border-b border-gray-50 text-center">${consBadge}</td>
+                    <td class="px-4 py-2 border-b border-gray-50 text-right font-medium text-gray-800">${formatRp(row.TOTAL_AMOUNT)}</td>
+                    <td class="px-4 py-2 border-b border-gray-50 text-center text-gray-600">${new Intl.NumberFormat('id-ID').format(row.TOTAL_QTY)}</td>
+                    <td class="px-4 py-2 border-b border-gray-50 text-right font-semibold text-brand-accent">${formatRp(row.PROFIT_AMOUNT)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            let limitText = filteredData.length > displayLimit ? ` (Dibatasi ${displayLimit} baris pertama)` : '';
+            document.getElementById('table-info').innerText = `Menampilkan ${displayData.length} dari ${filteredData.length} total data${limitText}`;
+        }
+
+        function updateCharts() {
+            const chartColors = ['#E07A5F', '#81B29A', '#F2CC8F', '#3D405B', '#F4F1DE', '#D4A373', '#CCD5AE'];
+            
+            const groupBy = (array, keys, sumKeys) => {
+                let result = {};
+                array.forEach(item => {
+                    let keyStr = keys.map(k => item[k] || 'Unknown').join(' - ');
+                    if(!result[keyStr]) {
+                        result[keyStr] = { _label: keyStr, _sortKeys: keys.map(k=>item[k]) };
+                        sumKeys.forEach(sk => result[keyStr][sk] = 0);
+                    }
+                    sumKeys.forEach(sk => result[keyStr][sk] += item[sk]);
+                });
+                return Object.values(result);
+            };
+
+            let trendData = groupBy(filteredData, ['TAHUN', 'BULAN'], ['TOTAL_AMOUNT', 'TOTAL_QTY', 'PROFIT_AMOUNT']);
+            // Sort Chart Trend dengan index standar bulan
+            trendData.sort((a, b) => {
+                if(a._sortKeys[0] !== b._sortKeys[0]) return a._sortKeys[0].localeCompare(b._sortKeys[0]);
+                return getMonthIndex(a._sortKeys[1]) - getMonthIndex(b._sortKeys[1]);
+            });
+
+            let categories = trendData.map(d => `${d._sortKeys[1]} ${d._sortKeys[0]}`.trim());
+            
+            const commonColOptions = {
+                chart: { type: 'bar', height: 320, toolbar: { show: false } },
+                plotOptions: { bar: { borderRadius: 4, dataLabels: { position: 'top' } } },
+                dataLabels: {
+                    enabled: true, formatter: function (val) { return formatCompact(val); },
+                    offsetY: -20, style: { fontSize: '11px', colors: ["#304758"] }
+                },
+                xaxis: { categories: categories, labels: { style: { fontSize: '10px' }, trim: true, hideOverlappingLabels: true } },
+                yaxis: { labels: { formatter: (val) => formatCompact(val) } }
+            };
+
+            if(charts['amountTrend']) charts['amountTrend'].destroy();
+            charts['amountTrend'] = new ApexCharts(document.querySelector("#chart-amount-trend"), {
+                ...commonColOptions, series: [{ name: 'Total Amount', data: trendData.map(d => d.TOTAL_AMOUNT) }],
+                colors: [chartColors[0]], tooltip: { y: { formatter: (val) => formatRp(val) } }
+            });
+            charts['amountTrend'].render();
+
+            if(charts['qtyTrend']) charts['qtyTrend'].destroy();
+            charts['qtyTrend'] = new ApexCharts(document.querySelector("#chart-qty-trend"), {
+                ...commonColOptions, series: [{ name: 'Total QTY', data: trendData.map(d => d.TOTAL_QTY) }],
+                colors: [chartColors[1]], tooltip: { y: { formatter: (val) => new Intl.NumberFormat('id-ID').format(val) } }
+            });
+            charts['qtyTrend'].render();
+
+            if(charts['labaTrend']) charts['labaTrend'].destroy();
+            charts['labaTrend'] = new ApexCharts(document.querySelector("#chart-laba-trend"), {
+                ...commonColOptions, series: [{ name: 'Total Laba Kotor', data: trendData.map(d => d.PROFIT_AMOUNT) }],
+                colors: [chartColors[2]], tooltip: { y: { formatter: (val) => formatRp(val) } }
+            });
+            charts['labaTrend'].render();
+
+            const renderCategoryBarChart = (chartKey, selector, groupKey, colorIdx) => {
+                let dataGroup = groupBy(filteredData, [groupKey], ['TOTAL_AMOUNT']);
+                dataGroup.sort((a,b) => b.TOTAL_AMOUNT - a.TOTAL_AMOUNT); 
+                if(dataGroup.length > 10) dataGroup = dataGroup.slice(0, 10); 
+
+                if(charts[chartKey]) charts[chartKey].destroy();
+                charts[chartKey] = new ApexCharts(document.querySelector(selector), {
+                    chart: { type: 'bar', height: 320, toolbar: { show: false } },
+                    series: [{ name: 'Total Amount', data: dataGroup.map(d => d.TOTAL_AMOUNT) }],
+                    xaxis: { categories: dataGroup.map(d => d._label), labels: { style: { fontSize: '10px' } } },
+                    yaxis: { labels: { formatter: (val) => formatCompact(val) } },
+                    colors: [chartColors[colorIdx]],
+                    plotOptions: { bar: { borderRadius: 4, dataLabels: { position: 'top' }, distributed: true } },
+                    dataLabels: { enabled: true, formatter: (val) => formatCompact(val), offsetY: -20, style: { fontSize: '10px', colors: ["#304758"] } },
+                    legend: { show: false },
+                    tooltip: { y: { formatter: (val) => formatRp(val) } }
+                });
+                charts[chartKey].render();
+            };
+
+            renderCategoryBarChart('divisiChart', '#chart-divisi', 'DIVISI', 3);
+            renderCategoryBarChart('kategoriChart', '#chart-kategori', 'KATEGORI', 5);
+            renderCategoryBarChart('brandChart', '#chart-brand', 'BRAND', 0);
+
+            let deptData = groupBy(filteredData, ['DEPARTEMEN'], ['TOTAL_AMOUNT']);
+            deptData.sort((a,b) => b.TOTAL_AMOUNT - a.TOTAL_AMOUNT);
+            if(charts['deptPie']) charts['deptPie'].destroy();
+            charts['deptPie'] = new ApexCharts(document.querySelector("#chart-dept-pie"), {
+                series: deptData.map(d => d.TOTAL_AMOUNT),
+                labels: deptData.map(d => d._label),
+                chart: { type: 'pie', height: 320 },
+                colors: chartColors,
+                legend: { position: 'bottom', fontSize: '11px' },
+                tooltip: { y: { formatter: (val) => formatRp(val) } }
+            });
+            charts['deptPie'].render();
+
+            let picData = groupBy(filteredData, ['PIC'], ['TOTAL_AMOUNT']);
+            picData.sort((a,b) => b.TOTAL_AMOUNT - a.TOTAL_AMOUNT);
+            if(charts['picDonut']) charts['picDonut'].destroy();
+            charts['picDonut'] = new ApexCharts(document.querySelector("#chart-pic-donut"), {
+                series: picData.map(d => d.TOTAL_AMOUNT),
+                labels: picData.map(d => d._label),
+                chart: { type: 'donut', height: 320 },
+                colors: chartColors,
+                legend: { position: 'bottom', fontSize: '11px' },
+                tooltip: { y: { formatter: (val) => formatRp(val) } },
+                plotOptions: { pie: { donut: { size: '60%' } } }
+            });
+            charts['picDonut'].render();
+        }
+
+        window.addEventListener('DOMContentLoaded', fetchData);
+    </script>
+</body>
+</html>

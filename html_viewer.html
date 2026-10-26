@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML Live Viewer</title>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=JetBrains+Mono:wght@300;400;600&display=swap');
+
+*{
+  margin:0; padding:0; box-sizing:border-box;
+}
+
+body{
+  background:#0b0f1a;
+  color:white;
+  font-family:'Inter',sans-serif;
+  height:100vh;
+  overflow:hidden;
+}
+
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:12px 20px;
+  background:#0b0f1a;
+  border-bottom:1px solid rgba(0,255,255,.3);
+}
+
+.logo{
+  font-weight:600;
+  color:#0affff;
+}
+
+/* CONTAINER SPLIT */
+.container{
+  display:flex;
+  height:calc(100vh - 50px);
+}
+
+/* EDITOR */
+.editor-wrapper{
+  width:50%;
+  background:#05070f;
+  border-right:1px solid rgba(0,255,255,.3);
+  display:flex;
+  flex-direction:column;
+  position:relative;
+  z-index:2;
+}
+
+.editor-header{
+  padding:10px 15px;
+  background:#0d1224;
+  color:#aab1ff;
+  font-size:12px;
+  font-weight:600;
+  border-bottom:1px solid rgba(0,255,255,.2);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  cursor:grab;
+}
+.editor-header:active{
+  cursor:grabbing;
+}
+
+textarea#codeEditor{
+  flex:1;
+  width:100%;
+  background:transparent;
+  color:#eef1ff;
+  font-family:'JetBrains Mono', monospace;
+  font-size:14px;
+  line-height:1.6;
+  padding:20px;
+  border:none;
+  resize:none;
+  outline:none;
+  /* Mencegah spasi hilang jika dicopy */
+  white-space: pre; 
+  overflow-wrap: normal;
+  overflow-x: auto;
+}
+
+/* RESIZER */
+.dragbar{
+  width:6px;
+  background:#1a233a;
+  cursor:col-resize;
+  z-index:10;
+  transition:background 0.2s;
+}
+.dragbar:hover, .dragbar.dragging{
+  background:#0affff;
+}
+
+/* PREVIEW */
+.preview-pane{
+  flex:1;
+  background:#fff;
+  position:relative;
+}
+
+iframe#previewFrame{
+  width:100%;
+  height:100%;
+  border:none;
+  background:#fff;
+}
+
+/* FULLSCREEN WEB MODE */
+body.fullscreen-mode .preview-pane{
+  position:fixed;
+  top:50px;
+  left:0;
+  width:100vw;
+  height:calc(100vh - 50px);
+  z-index:5;
+}
+
+body.fullscreen-mode .dragbar{
+  display:none !important;
+}
+
+body.fullscreen-mode .editor-wrapper{
+  position:fixed;
+  top:70px;
+  right:20px;
+  width:400px;
+  height:300px;
+  background:rgba(5,7,15,0.85);
+  backdrop-filter:blur(10px);
+  border:1px solid rgba(0,255,255,.3);
+  border-radius:10px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.5);
+  z-index:100;
+  resize:both;
+  overflow:hidden;
+}
+
+.editor-controls button{
+  background:transparent;
+  border:none;
+  color:#aab1ff;
+  cursor:pointer;
+  font-size:16px;
+  padding:0 5px;
+}
+.editor-controls button:hover{
+  color:#0affff;
+}
+
+.minimized{
+  height:40px !important;
+  resize:none !important;
+  overflow:hidden;
+}
+
+/* STYLE TAMBAHAN BUTTON & SELECTOR */
+.header-actions{
+  display:flex;
+  gap:10px;
+}
+.header-actions button, .header-actions select{
+  background:rgba(0,255,255,.1);
+  color:#0affff;
+  border:1px solid rgba(0,255,255,.3);
+  padding:6px 12px;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:600;
+  font-family:'Inter',sans-serif;
+  font-size: 13px;
+  outline: none;
+}
+.header-actions button:hover, .header-actions select:hover{
+  background:rgba(0,255,255,.2);
+}
+
+/* TAB STYLE ASLI TANPA MERUSAK */
+.tab {
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.tab.active {
+  background: rgba(0,255,255,.2);
+  color: #0affff;
+}
+.tab:hover:not(.active) {
+  background: rgba(0,255,255,.1);
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    HTML Live Viewer
+  </div>
+  <div class="header-actions">
+    <select id="editorMode">
+      <option value="single">Satu File (index.html)</option>
+      <option value="multi">Pisah 3 File (HTML, CSS, JS)</option>
+    </select>
+    <button id="toggleFullscreen">🌐 Fullscreen Web</button>
+  </div>
+</div>
+
+<div class="container" id="mainContainer">
+  <div class="editor-wrapper" id="miniEditorBox">
+    <div class="editor-header" id="miniEditorHeader">
+      
+      <div id="tabContainer" style="display: none; gap: 10px;">
+        <span class="tab active" data-lang="html">index.html</span>
+        <span class="tab" data-lang="css">style.css</span>
+        <span class="tab" data-lang="js">script.js</span>
+      </div>
+      <span id="singleTitle">Editor</span>
+
+      <div class="editor-controls">
+        <button id="btnMinimize" title="Minimize/Maximize">_</button>
+      </div>
+    </div>
+    <textarea id="codeEditor" spellcheck="false" placeholder="Ketik kodemu di sini..."></textarea>
+  </div>
+
+  <div class="dragbar" id="dragbar"></div>
+
+  <div class="preview-pane" id="previewPane">
+    <iframe id="previewFrame"></iframe>
+  </div>
+</div>
+
+<script>
+const miniBox = document.getElementById("miniEditorBox");
+const miniHeader = document.getElementById("miniEditorHeader");
+const editor = document.getElementById("codeEditor");
+const iframe = document.getElementById("previewFrame");
+const dragbar = document.getElementById("dragbar");
+const toggleFullscreenBtn = document.getElementById("toggleFullscreen");
+const btnMinimize = document.getElementById("btnMinimize");
+const editorMode = document.getElementById("editorMode");
+const tabContainer = document.getElementById("tabContainer");
+const singleTitle = document.getElementById("singleTitle");
+
+// === DATA KODE ===
+let currentMode = "single";
+let currentLang = "html";
+
+let singleCode = `<!DOCTYPE html>\n<html>\n<head>\n  <style>\n    body { font-family: sans-serif; text-align: center; margin-top: 50px; background: #f0f4f8; }\n    h1 { color: #3b82f6; }\n  </style>\n</head>\n<body>\n  <h1>Mode Satu File HTML</h1>\n  <p>Tulis semua kodemu disini.</p>\n</body>\n</html>`;
+
+let multiCodes = {
+  html: `<div class="card">\n  <h1>Mode Pisah 3 File</h1>\n  <p>Pilih tab CSS atau JS di atas.</p>\n</div>`,
+  css: `body {\n  font-family: sans-serif;\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  height: 100vh;\n  margin: 0;\n  background: #f0f4f8;\n}\n.card {\n  background: white;\n  padding: 30px;\n  border-radius: 16px;\n  box-shadow: 0 10px 30px rgba(0,0,0,0.1);\n  text-align: center;\n}\nh1 { color: #3b82f6; margin-top: 0; }`,
+  js: `console.log("Sistem terhubung!");`
+};
+
+// MENGGABUNGKAN KODE DAN MENAMPILKAN KE IFRAME
+function updatePreview() {
+  let finalCode = "";
+  if (currentMode === 'single') {
+    finalCode = singleCode;
+  } else {
+    const htmlCode = multiCodes.html;
+    const cssCode = multiCodes.css ? `<style>\n${multiCodes.css}\n</style>` : '';
+    const jsCode = multiCodes.js ? `<script>\n${multiCodes.js}\n<\/script>` : '';
+
+    finalCode = htmlCode;
+    // Deteksi tag head dan body
+    if (finalCode.includes('</head>')) {
+        finalCode = finalCode.replace('</head>', cssCode + '\n</head>');
+    } else {
+        finalCode = cssCode + '\n' + finalCode;
+    }
+
+    if (finalCode.includes('</body>')) {
+        finalCode = finalCode.replace('</body>', jsCode + '\n</body>');
+    } else {
+        finalCode += '\n' + jsCode;
+    }
+  }
+
+  // 1. SIMPAN POSISI SCROLL SEBELUM IFRAME DI-RESET
+  let scrollX = 0;
+  let scrollY = 0;
+  if (iframe.contentWindow) {
+    scrollX = iframe.contentWindow.scrollX || 0;
+    scrollY = iframe.contentWindow.scrollY || 0;
+  }
+
+  const doc = iframe.contentDocument || iframe.contentWindow.document;
+  doc.open();
+  doc.write(finalCode);
+  doc.close();
+
+  // 2. KEMBALIKAN POSISI SCROLL SETELAH KODE BARU DIMASUKKAN
+  setTimeout(() => {
+    if (iframe.contentWindow) {
+      iframe.contentWindow.scrollTo(scrollX, scrollY);
+    }
+  }, 10);
+}
+
+// Inisiasi awal
+editor.value = singleCode;
+updatePreview();
+
+// Event Listener Saat Mengetik
+editor.addEventListener("input", () => {
+  if (currentMode === 'single') {
+    singleCode = editor.value;
+  } else {
+    multiCodes[currentLang] = editor.value;
+  }
+  updatePreview();
+});
+
+// MEMPERBAIKI INDENTASI TAB (Tanpa merusak fungsi ENTER bawaan browser)
+editor.addEventListener('keydown', function(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    let start = this.selectionStart;
+    let end = this.selectionEnd;
+    
+    // Ganti default tab melompat jadi memasukkan 2 spasi
+    this.value = this.value.substring(0, start) + "  " + this.value.substring(end);
+    this.selectionStart = this.selectionEnd = start + 2;
+    
+    if (currentMode === 'single') {
+      singleCode = this.value;
+    } else {
+      multiCodes[currentLang] = this.value;
+    }
+    updatePreview();
+  }
+});
+
+// LOGIKA PILIH MODE (1 File vs 3 File)
+editorMode.addEventListener('change', (e) => {
+  currentMode = e.target.value;
+  if(currentMode === 'multi') {
+    tabContainer.style.display = 'flex';
+    singleTitle.style.display = 'none';
+    currentLang = 'html';
+    
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.tab[data-lang="html"]').classList.add('active');
+    
+    editor.value = multiCodes[currentLang];
+  } else {
+    tabContainer.style.display = 'none';
+    singleTitle.style.display = 'inline';
+    editor.value = singleCode;
+  }
+  updatePreview();
+});
+
+// LOGIKA PINDAH TAB
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('mousedown', (e) => {
+    e.stopPropagation(); // Mencegah klik tab dianggap sebagai klik drag
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    e.target.classList.add('active');
+    
+    currentLang = e.target.getAttribute('data-lang');
+    editor.value = multiCodes[currentLang];
+  });
+});
+
+// === MINI EDITOR DRAG LOGIC ===
+let offsetX=0, offsetY=0, dragging=false;
+
+miniHeader.addEventListener("mousedown", (e)=>{
+  if (!document.body.classList.contains("fullscreen-mode")) return;
+  // Jangan drag jika yang diklik adalah Tab, Container Tab, atau Tombol
+  if (e.target.tagName.toLowerCase() === 'button' || e.target.classList.contains('tab') || e.target.id === 'tabContainer') return;
+  
+  dragging = true;
+  offsetX = e.clientX - miniBox.offsetLeft;
+  offsetY = e.clientY - miniBox.offsetTop;
+  iframe.style.pointerEvents = "none"; 
+});
+
+document.addEventListener("mousemove", (e)=>{
+  if(!dragging) return;
+
+  let x = e.clientX - offsetX;
+  let y = e.clientY - offsetY;
+
+  const maxX = window.innerWidth - miniBox.offsetWidth;
+  const maxY = window.innerHeight - miniBox.offsetHeight;
+
+  x = Math.max(0, Math.min(x, maxX));
+  y = Math.max(50, Math.min(y, maxY));
+
+  miniBox.style.left = x + "px";
+  miniBox.style.top = y + "px";
+});
+
+document.addEventListener("mouseup", ()=> {
+  dragging = false;
+  if (!isDraggingResizer) {
+    iframe.style.pointerEvents = "auto";
+  }
+});
+
+// === RESIZER DRAG ===
+let isDraggingResizer = false;
+
+dragbar.addEventListener("mousedown", () => {
+  if (document.body.classList.contains("fullscreen-mode")) return;
+  isDraggingResizer = true;
+  dragbar.classList.add("dragging");
+  document.body.style.cursor = "col-resize";
+  iframe.style.pointerEvents = "none";
+});
+
+document.addEventListener("mouseup", () => {
+  if (isDraggingResizer) {
+    isDraggingResizer = false;
+    dragbar.classList.remove("dragging");
+    document.body.style.cursor = "default";
+    if (!dragging) iframe.style.pointerEvents = "auto";
+  }
+});
+
+document.addEventListener("mousemove", (e) => {
+  if(!isDraggingResizer) return;
+
+  const container = document.querySelector(".container");
+  const rect = container.getBoundingClientRect();
+  let x = e.clientX - rect.left;
+  
+  if (x < 100) x = 100;
+  if (x > rect.width - 100) x = rect.width - 100;
+  
+  const percent = (x / rect.width) * 100;
+  miniBox.style.width = percent + "%";
+});
+
+// === FULLSCREEN WEB MODE ===
+let isFullscreen = false;
+
+toggleFullscreenBtn.addEventListener("click", () => {
+  isFullscreen = !isFullscreen;
+  
+  if (isFullscreen) {
+    document.body.classList.add("fullscreen-mode");
+    toggleFullscreenBtn.innerHTML = "✖ Keluar Fullscreen";
+    
+    miniBox.style.width = "400px";
+    miniBox.style.height = "300px";
+    miniBox.style.left = (window.innerWidth - 420) + "px"; 
+    miniBox.style.top = "70px";
+  } else {
+    document.body.classList.remove("fullscreen-mode");
+    toggleFullscreenBtn.innerHTML = "🌐 Fullscreen Web";
+    
+    miniBox.style.width = "50%";
+    miniBox.style.height = "auto";
+    miniBox.style.left = "0";
+    miniBox.style.top = "0";
+    miniBox.classList.remove("minimized");
+    btnMinimize.innerText = "_";
+  }
+});
+
+// === MINIMIZE MINI EDITOR ===
+btnMinimize.addEventListener("click", () => {
+  miniBox.classList.toggle("minimized");
+  if (miniBox.classList.contains("minimized")) {
+    btnMinimize.innerText = "□";
+  } else {
+    btnMinimize.innerText = "_";
+  }
+});
+</script>
+</body>
+</html>
