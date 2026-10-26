@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pengaturan System - Canvas Vercel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Plus Jakarta Sans', sans-serif; } </style>
+</head>
+<body class="bg-slate-50 text-slate-800 p-4 sm:p-8">
+
+    <div class="max-w-5xl mx-auto space-y-6">
+        <div class="flex items-center justify-between bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+            <div>
+                <h1 class="text-xl font-bold text-slate-900">Pengaturan System Cloud (Google Sheets)</h1>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">Perubahan menu, user, dan timeout akan disinkronkan ke seluruh PC secara otomatis.</p>
+            </div>
+            <button onclick="syncToCloud()" id="sync-btn" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow">
+                <i class="fa-solid fa-cloud-arrow-up mr-2"></i>Simpan & Sinkronkan ke Cloud
+            </button>
+        </div>
+
+        <div class="flex space-x-2 border-b border-slate-200 overflow-x-auto">
+            <button onclick="switchTab('tab-menus')" id="btn-tab-menus" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-blue-600 text-blue-600">Menu Navbar</button>
+            <button onclick="switchTab('tab-users')" id="btn-tab-users" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500">Pengguna & Role</button>
+            <button onclick="switchTab('tab-system')" id="btn-tab-system" class="py-2.5 px-4 font-semibold text-sm border-b-2 border-transparent text-slate-500">Konfigurasi Timeout</button>
+        </div>
+
+        <!-- TAB MENUS -->
+        <div id="tab-menus" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
+                <h2 class="text-base font-bold text-slate-800 mb-4"><i class="fa-solid fa-circle-plus text-blue-600 mr-2"></i>Tambah Menu</h2>
+                <form id="menu-form" onsubmit="saveNewMenu(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Tipe Menu</label>
+                        <select id="menu-type" onchange="toggleParentDropdown()" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="single">Menu Utama (Single)</option>
+                            <option value="dropdown">Menu Utama (Dropdown)</option>
+                            <option value="sub">Sub-Menu (Anak Dropdown)</option>
+                        </select>
+                    </div>
+
+                    <!-- DROPDOWN INDUK DINAMIS UNTUK SUB MENU -->
+                    <div id="parent-container" class="hidden">
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Pilih Induk Dropdown</label>
+                        <select id="menu-parent" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <!-- Diisi secara dinamis melalui fungsi JS -->
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Label</label>
+                        <input type="text" id="menu-label" required placeholder="Contoh: Daily Report" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">File HTML (.html)</label>
+                        <input type="text" id="menu-url" required placeholder="Contoh: dailyreport.html" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Ikon FontAwesome</label>
+                        <input type="text" id="menu-icon" value="fa-solid fa-file-lines" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    </div>
+                    <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm transition-all shadow-md">Tambah ke Daftar</button>
+                </form>
+            </div>
+            <div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-base font-bold text-slate-800 mb-4">Daftar Menu Aktif</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b text-[11px] font-bold text-slate-400 uppercase">
+                                <th class="py-2">Label</th>
+                                <th class="py-2">URL</th>
+                                <th class="py-2">Tipe / Induk</th>
+                                <th class="py-2 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="custom-menu-table" class="text-sm divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB USERS -->
+        <div id="tab-users" class="grid grid-cols-1 md:grid-cols-3 gap-6 hidden">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit">
+                <h2 class="text-base font-bold text-slate-800 mb-4">Tambah Pengguna</h2>
+                <form id="user-form" onsubmit="saveUser(event)" class="space-y-4">
+                    <input type="text" id="user-fullname" required placeholder="Nama Lengkap" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    <input type="text" id="user-username" required placeholder="Username" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    <input type="password" id="user-password" required placeholder="Password" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                    <select id="user-role" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                        <option value="user">User</option>
+                        <option value="admin">Administrator</option>
+                    </select>
+                    <button type="submit" class="w-full py-2.5 bg-emerald-600 text-white font-semibold rounded-xl text-sm">Tambah User</button>
+                </form>
+            </div>
+            <div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-base font-bold text-slate-800 mb-4">Daftar Pengguna</h2>
+                <table class="w-full text-left">
+                    <thead><tr class="border-b text-[11px] font-bold text-slate-400 uppercase"><th class="py-2">Nama</th><th class="py-2">Username</th><th class="py-2">Role</th><th class="py-2 text-center">Aksi</th></tr></thead>
+                    <tbody id="users-table" class="text-sm divide-y"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- TAB SYSTEM -->
+        <div id="tab-system" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-xl hidden">
+            <h2 class="text-base font-bold text-slate-800 mb-4">Pengaturan Timeout Sesi</h2>
+            <div class="space-y-4">
+                <input type="number" id="timeout-minutes-input" min="1" class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm">
+                <button onclick="saveTimeout()" class="py-2.5 px-4 bg-blue-600 text-white font-semibold rounded-xl text-sm">Simpan Timeout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL AKSES -->
+    <div id="access-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+            <h3 class="font-bold mb-3">Atur Akses Menu: <span id="target-user-name" class="text-blue-600"></span></h3>
+            <div id="menu-checkbox-list" class="space-y-2 max-h-60 overflow-y-auto mb-4"></div>
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeAccessModal()" class="px-3 py-1.5 text-xs bg-slate-100 rounded-lg">Batal</button>
+                <button onclick="saveUserPermissions()" class="px-3 py-1.5 text-xs bg-blue-600 text-white rounded-lg">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwz4RxGAD52JC0kfZzRZ06u9A53OcicxTfCs_O5YCNY7gzEmbeTH4GTvuSMGLcPcSpn/exec";
+        let currentEditingUserId = null;
+
+        function switchTab(id) {
+            ['tab-menus', 'tab-users', 'tab-system'].forEach(t => document.getElementById(t).classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        }
+
+        function getCustomMenus() { return JSON.parse(localStorage.getItem('custom_menus')) || []; }
+        function getUsers() { return JSON.parse(localStorage.getItem('system_users')) || []; }
+
+        // Fungsi Menampilkan Pilihan Induk Dropdown Dinamis untuk Sub Menu
+        function toggleParentDropdown() {
+            const type = document.getElementById('menu-type').value;
+            const container = document.getElementById('parent-container');
+            const parentSelect = document.getElementById('menu-parent');
+
+            if (type === 'sub') {
+                container.classList.remove('hidden');
+                const menus = getCustomMenus();
+                // Filter hanya menu yang bertipe dropdown untuk dijadikan induk
+                const dropdownMenus = menus.filter(m => m.type === 'dropdown');
+
+                if (dropdownMenus.length === 0) {
+                    parentSelect.innerHTML = `<option value="">-- Buat menu bertipe 'Dropdown' terlebih dahulu --</option>`;
+                } else {
+                    parentSelect.innerHTML = dropdownMenus.map(m => `<option value="${m.url}">${m.label} (${m.url})</option>`).join('');
+                }
+            } else {
+                container.classList.add('hidden');
+            }
+        }
+
+        async function syncToCloud() {
+            const btn = document.getElementById('sync-btn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin mr-2"></i>Menyimpan...';
+            
+            const payload = {
+                type: "saveConfig",
+                custom_menus: getCustomMenus(),
+                system_users: getUsers(),
+                session_timeout_minutes: localStorage.getItem('session_timeout_minutes') || 15
+            };
+
+            try {
+                await fetch(SCRIPT_URL, { method: "POST", mode: "no-cors", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+                alert('Berhasil disinkronkan ke Google Sheets!');
+            } catch(e) {
+                alert('Gagal sinkronisasi jaringan.');
+            }
+            btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up mr-2"></i>Simpan & Sinkronkan ke Cloud';
+        }
+
+        function saveNewMenu(e) {
+            e.preventDefault();
+            const type = document.getElementById('menu-type').value;
+            const label = document.getElementById('menu-label').value;
+            const url = document.getElementById('menu-url').value;
+            const icon = document.getElementById('menu-icon').value;
+            const parent = type === 'sub' ? document.getElementById('menu-parent').value : '';
+
+            if (type === 'sub' && !parent) {
+                alert('Silakan pilih induk dropdown terlebih dahulu!');
+                return;
+            }
+
+            let menus = getCustomMenus();
+            menus.push({ id: Date.now(), type, label, url, icon, parent });
+            localStorage.setItem('custom_menus', JSON.stringify(menus));
+            document.getElementById('menu-form').reset();
+            toggleParentDropdown();
+            renderTable();
+        }
+
+        function deleteMenu(id) {
+            let menus = getCustomMenus().filter(m => m.id !== id);
+            localStorage.setItem('custom_menus', JSON.stringify(menus));
+            renderTable();
+            toggleParentDropdown();
+        }
+
+        function saveUser(e) {
+            e.preventDefault();
+            let users = getUsers();
+            users.push({ id: Date.now(), name: document.getElementById('user-fullname').value, username: document.getElementById('user-username').value, password: document.getElementById('user-password').value, role: document.getElementById('user-role').value, allowedMenus: ['*'] });
+            localStorage.setItem('system_users', JSON.stringify(users));
+            document.getElementById('user-form').reset();
+            renderUsers();
+        }
+
+        function deleteUser(id) {
+            let users = getUsers().filter(u => u.id !== id);
+            localStorage.setItem('system_users', JSON.stringify(users));
+            renderUsers();
+        }
+
+        function saveTimeout() {
+            localStorage.setItem('session_timeout_minutes', document.getElementById('timeout-minutes-input').value);
+            alert('Timeout disimpan!');
+        }
+
+        function openAccessModal(id) {
+            currentEditingUserId = id;
+            const user = getUsers().find(u => u.id === id);
+            document.getElementById('target-user-name').innerText = user.name;
+            document.getElementById('menu-checkbox-list').innerHTML = getCustomMenus().map(m => `
+                <label class="flex items-center space-x-2 text-xs"><input type="checkbox" value="${m.url}" ${user.allowedMenus.includes(m.url)?'checked':''} class="perm-checkbox"><span>${m.label}</span></label>
+            `).join('');
+            document.getElementById('access-modal').classList.remove('hidden');
+        }
+
+    function closeAccessModal() { document.getElementById('access-modal').classList.add('hidden'); }
+
+        function saveUserPermissions() {
+            let users = getUsers();
+            let idx = users.findIndex(u => u.id === currentEditingUserId);
+            if(idx !== -1) {
+                users[idx].allowedMenus = Array.from(document.querySelectorAll('.perm-checkbox:checked')).map(cb => cb.value);
+                localStorage.setItem('system_users', JSON.stringify(users));
+                closeAccessModal();
+                renderUsers();
+            }
+        }
+
+        function renderTable() {
+            document.getElementById('custom-menu-table').innerHTML = getCustomMenus().map(m => `
+                <tr>
+                    <td class="py-2 font-medium"><i class="${m.icon} text-blue-500 mr-2"></i>${m.label}</td>
+                    <td class="py-2 text-xs font-mono text-slate-500">${m.url}</td>
+                    <td class="py-2"><span class="px-2 py-0.5 bg-slate-100 rounded text-xs font-semibold">${m.type} ${m.parent ? '(' + m.parent + ')' : ''}</span></td>
+                    <td class="py-2 text-center"><button onclick="deleteMenu(${m.id})" class="text-red-500 hover:text-red-700"><i class="fa-solid fa-trash"></i></button></td>
+                </tr>
+            `).join('');
+        }
+
+        function renderUsers() {
+            document.getElementById('users-table').innerHTML = getUsers().map(u => `
+                <tr>
+                    <td class="py-2 font-medium">${u.name}</td>
+                    <td class="py-2 text-xs font-mono text-slate-500">${u.username}</td>
+                    <td class="py-2"><span class="px-2 py-0.5 bg-blue-50 text-blue-600 rounded text-xs font-semibold">${u.role}</span></td>
+                    <td class="py-2 text-center">
+                        <button onclick="openAccessModal(${u.id})" class="text-blue-600 mr-3" title="Atur Akses"><i class="fa-solid fa-user-lock"></i></button>
+                        <button onclick="deleteUser(${u.id})" class="text-red-500" title="Hapus User"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        window.onload = () => { 
+            renderTable(); 
+            renderUsers(); 
+            toggleParentDropdown();
+            document.getElementById('timeout-minutes-input').value = localStorage.getItem('session_timeout_minutes') || 15; 
+        };
+    </script>
+</body>
+</html>

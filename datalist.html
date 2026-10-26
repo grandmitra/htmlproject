@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Sofyan Mujid (https://sofyanmujid.web.app/ & https://sofyanalitics.web.app/)">
+    <title>Aplikasi Viewer Dokumen & AllBrand PL</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PapaParse untuk CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- SheetJS (XLSX) untuk Export Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #3b82f6;
+            width: 24px; height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 flex h-screen overflow-hidden">
+
+    <!-- Mobile Overlay Backdrop -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden transition-opacity duration-300" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Dokumen Utama -->
+    <aside id="sidebar" class="fixed md:relative z-30 w-72 h-full bg-white border-r border-slate-200 flex flex-col transition-all duration-300 transform -translate-x-full md:translate-x-0 md:ml-0 shadow-lg md:shadow-none shrink-0">
+        <div class="p-3.5 border-b border-slate-200 bg-slate-50 flex flex-col gap-2.5">
+            <div class="flex items-center justify-between">
+                <!-- Logo Grand Mitra -->
+                <div class="flex items-center gap-2.5 overflow-hidden">
+                    <img src="https://grandmitra.com/wp-content/uploads/2024/09/gm-1536x328.png" alt="Grandmitra Logo" class="h-6 max-w-[140px] object-contain" onerror="this.onerror=null; this.src='https://placehold.co/110x30/1e293b/ffffff?text=Grandmitra';" />
+                </div>
+                <button onclick="toggleSidebar()" class="text-slate-500 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-200/60 md:hidden" title="Tutup Sidebar">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="flex items-center gap-2 pt-1 border-t border-slate-200/60">
+                <i class="fa-solid fa-folder-open text-blue-600 text-sm"></i>
+                <h1 class="font-bold text-slate-800 text-sm tracking-tight">DocViewer Pro Catalog</h1>
+            </div>
+        </div>
+
+        <div class="px-3 pt-2 pb-1 border-b border-slate-100">
+            <button onclick="openAllBrandPLView()" class="w-full text-left p-2 rounded-lg flex items-center justify-between bg-gradient-to-r from-red-600 to-red-700 text-white font-medium text-xs hover:from-red-700 hover:to-red-800 transition-all shadow-sm">
+                <span class="flex items-center gap-2">
+                    <i class="fa-solid fa-database text-sm"></i>
+                    <span>AllBrand Price List (PL)</span>
+                </span>
+                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+        </div>
+
+        <div class="p-3 border-b border-slate-100">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input type="text" id="search-input" oninput="handleSearch()" placeholder="Cari file dokumen / gambar..." class="w-full pl-9 pr-8 py-2 text-sm bg-slate-100 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"/>
+                <button id="clear-search" onclick="clearSearch()" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1" title="Hapus Pencarian">
+                    <i class="fa-solid fa-circle-xmark text-sm"></i>
+                </button>
+            </div>
+            <div class="flex items-center justify-between mt-2 px-1">
+                <span id="file-count" class="text-xs font-medium text-slate-500">Memuat berkas...</span>
+                <button onclick="fetchCSVData()" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-rotate-right text-[10px]"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-2 relative" id="file-list-container">
+            <div id="loading-spinner" class="flex flex-col items-center justify-center p-8 text-slate-400 gap-2">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-blue-600"></i>
+                <span class="text-xs">Mengunduh daftar dokumen...</span>
+            </div>
+
+            <div id="empty-state" class="hidden flex flex-col items-center justify-center p-6 text-center text-slate-400 gap-2 mt-4">
+                <i class="fa-solid fa-folder-open text-3xl"></i>
+                <p id="empty-state-msg" class="text-xs">Tidak ada dokumen ditemukan</p>
+                <button onclick="fetchCSVData()" class="mt-2 px-3 py-1 bg-blue-50 text-blue-600 rounded text-xs hover:bg-blue-100 font-medium">Coba Lagi</button>
+            </div>
+
+            <div id="file-list" class="space-y-1"></div>
+        </div>
+
+        <div class="p-3 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+                <span class="flex items-center gap-1.5">
+                    <span id="storage-status-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Storage Lokal Aktif</span>
+                </span>
+                <button onclick="clearLocalStorage()" class="hover:text-red-600 transition-colors" title="Hapus Riwayat Sesi">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Canvas Area -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-200/70">
+        
+        <header class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shadow-sm z-10">
+            <div class="flex items-center gap-3 overflow-hidden pr-2">
+                <button onclick="toggleSidebar()" class="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors flex-shrink-0" title="Sembunyikan/Tampilkan Navigasi">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+                <div class="truncate flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <h2 id="current-doc-title" class="font-semibold text-slate-800 text-sm md:text-base truncate">Pilih Dokumen</h2>
+                        <span id="current-doc-badge" class="hidden text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0"></span>
+                    </div>
+                    <p id="current-doc-url" class="text-xs text-slate-400 truncate hidden md:block">Silakan pilih berkas dari panel sebelah kiri</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <button onclick="openAllBrandPLView()" class="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs md:text-sm font-medium px-3 py-2 rounded-lg transition-colors shadow-sm" title="Buka AllBrand Price List">
+                    <i class="fa-solid fa-table-list"></i>
+                    <span>AllBrand PL</span>
+                </button>
+                <a id="btn-open-newtab" href="#" target="_blank" class="hidden items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm font-medium px-3.5 py-2 rounded-lg transition-colors shadow-sm">
+                    <span>Buka di Tab Baru</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- Welcome Screen -->
+        <div id="welcome-canvas" class="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-500">
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-4 shadow-sm">
+                <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-1">Selamat Datang di DocViewer Pro</h3>
+            <p class="text-sm max-w-sm mb-4">Mendukung pratinjau PDF, Excel, Spreadsheet, Gambar (JPG, PNG, WebP), dan File Biner.</p>
+            <button onclick="openAllBrandPLView()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition shadow-sm flex items-center gap-2">
+                <i class="fa-solid fa-database"></i>
+                <span>Buka AllBrand Price List</span>
+            </button>
+        </div>
+
+        <!-- Viewer Iframe / Image Container -->
+        <div id="iframe-container" class="flex-1 w-full h-full relative hidden z-10 bg-white overflow-auto flex items-center justify-center">
+            <iframe id="doc-frame" class="w-full h-full border-none bg-white" src="about:blank" title="Preview Dokumen" allow="fullscreen"></iframe>
+            <div id="image-frame-container" class="hidden w-full h-full flex items-center justify-center bg-slate-900/90 p-4">
+                <img id="doc-image-preview" src="" alt="Pratinjau Gambar" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl">
+            </div>
+        </div>
+
+        <!-- AllBrand PL Container -->
+        <div id="allbrand-pl-container" class="flex-1 flex flex-row relative hidden w-full h-full overflow-hidden bg-gray-50 dark:bg-slate-900">
+            <!-- Login Overlay -->
+            <div id="loginOverlay" class="absolute inset-0 bg-gradient-to-br from-blue-900 via-gray-900 to-black z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-gray-100">
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 text-blue-600 rounded-full mb-4 shadow-inner">
+                            <i class="fas fa-database text-2xl"></i>
+                        </div>
+                        <h1 class="text-2xl font-bold text-gray-900">Data Hub Login</h1>
+                        <p class="text-sm text-gray-500 mt-1">Masukkan password akses untuk masuk ke sistem</p>
+                    </div>
+                    <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Password Akses</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none"><i class="fas fa-lock text-gray-400"></i></div>
+                                <input type="password" id="loginPassword" required class="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Masukkan password...">
+                                <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600">
+                                    <i id="togglePasswordIcon" class="fas fa-eye text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div id="loginError" class="hidden text-red-500 text-xs font-medium text-center bg-red-50 py-2 rounded-lg border border-red-100">Password salah! (Hint: gmb123)</div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2">
+                            <span>Masuk ke Sistem</span> <i class="fas fa-arrow-right text-xs"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Sidebar AllBrand PL -->
+            <aside id="allbrandSidebar" class="bg-white dark:bg-slate-800 dark:border-slate-700 flex-shrink-0 border-r border-gray-200 flex flex-col transition-all duration-300 absolute inset-y-0 left-0 z-40 md:relative w-64 shadow-xl md:shadow-none">
+                <div class="h-16 flex items-center px-6 border-b border-gray-100 dark:border-slate-700 justify-between bg-white dark:bg-slate-800">
+                    <div class="flex items-center gap-2 text-blue-600 dark:text-blue-400">
+                        <i class="fas fa-database text-xl"></i>
+                        <h1 class="text-lg font-bold text-gray-900 dark:text-white">Data Hub</h1>
+                    </div>
+                    <button class="text-gray-400 hover:text-red-500 transition p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-slate-700" onclick="toggleAllBrandSidebar()" title="Sembunyikan Sidebar">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Search Brand -->
+                <div class="p-3 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50">
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                            <i class="fas fa-search text-xs"></i>
+                        </span>
+                        <input type="text" id="brandSearchInput" oninput="handleBrandSearch()" placeholder="Cari brand / menu..." class="w-full pl-8 pr-8 py-1.5 text-xs bg-white dark:bg-slate-900 dark:text-white dark:border-slate-600 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition">
+                        <button id="clearBrandSearchBtn" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-red-500 hidden" onclick="clearBrandSearch()" title="Hapus Pencarian">
+                            <i class="fas fa-circle-xmark text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-1 overflow-y-auto py-4 px-3 hide-scrollbar">
+                    <p class="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Daftar Menu Brand</p>
+                    <nav id="nav-container" class="space-y-2"></nav>
+                </div>
+            </aside>
+            <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden" onclick="toggleAllBrandSidebar()"></div>
+
+            <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-gray-50 dark:bg-slate-900">
+                <header class="h-16 bg-white dark:bg-slate-800 shadow-sm border-b border-gray-200 dark:border-slate-700 flex items-center justify-between px-4 sm:px-6 z-20">
+                    <div class="flex items-center gap-4">
+                        <button class="text-gray-500 dark:text-gray-300 hover:text-blue-600 focus:outline-none transition p-1.5 rounded-lg bg-gray-100 dark:bg-slate-700 hover:bg-gray-200 dark:hover:bg-slate-600" onclick="toggleAllBrandSidebar()" title="Tampilkan/Sembunyikan Menu Sidebar">
+                            <i class="fas fa-bars text-lg"></i>
+                        </button>
+                        <h2 class="text-lg font-semibold text-gray-800 dark:text-white hidden sm:block truncate" id="currentSheetTitle">Memuat Konfigurasi...</h2>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="toggleDarkMode()" class="text-sm bg-gray-100 dark:bg-slate-700 text-gray-700 dark:text-yellow-400 px-3 py-1.5 rounded-md hover:bg-gray-200 dark:hover:bg-slate-600 transition shadow-sm border border-gray-200 dark:border-slate-600 flex items-center gap-1.5" title="Ganti Mode Tampilan (Dark/Light)">
+                            <i id="darkModeIcon" class="fas fa-moon"></i> <span class="hidden sm:inline" id="darkModeText">Dark</span>
+                        </button>
+                        <button onclick="exportToExcel()" class="text-sm bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-3 py-1.5 rounded-md hover:bg-green-100 dark:hover:bg-green-900/50 transition shadow-sm border border-green-200 dark:border-green-800 flex items-center gap-1.5">
+                            <i class="fas fa-file-excel"></i> <span class="hidden sm:inline">Excel</span>
+                        </button>
+                        <button onclick="refreshCurrentData()" class="text-sm bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-md hover:bg-blue-100 dark:hover:bg-blue-900/50 transition shadow-sm border border-blue-200 dark:border-blue-800 flex items-center gap-1.5">
+                            <i class="fas fa-sync-alt"></i> <span class="hidden sm:inline">Refresh</span>
+                        </button>
+                        <button onclick="handleLogout()" class="text-sm bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50 transition shadow-sm border border-red-200 dark:border-red-800 flex items-center gap-1.5 ml-2">
+                            <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Keluar</span>
+                        </button>
+                    </div>
+                </header>
+                <main class="flex-1 overflow-hidden flex flex-col w-full px-4 sm:px-6 py-6">
+                    <div class="bg-white dark:bg-slate-800 rounded-t-xl shadow-sm border-b border-gray-100 dark:border-slate-700 p-4 flex flex-col sm:flex-row justify-between gap-4 items-center">
+                        <div class="relative w-full sm:max-w-md">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fas fa-search text-gray-400"></i></div>
+                            <input type="text" id="searchInput" class="block w-full pl-10 pr-10 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-gray-50 dark:bg-slate-900 dark:text-white sm:text-sm" placeholder="Ketik kata kunci...">
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-800 shadow-sm flex-1 overflow-hidden flex flex-col relative rounded-b-xl border border-t-0 border-gray-100 dark:border-slate-700">
+                        <div id="loadingIndicator" class="absolute inset-0 bg-white dark:bg-slate-800 z-20 flex flex-col items-center justify-center hidden bg-opacity-95">
+                            <div class="loader mb-3"></div>
+                            <p class="text-gray-500 dark:text-gray-300 text-sm font-medium animate-pulse" id="loadingText">Mengambil Data...</p>
+                        </div>
+                        <div id="tableViewContainer" class="overflow-auto flex-1 block">
+                            <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-700 table-auto w-full">
+                                <thead class="bg-gray-50 dark:bg-slate-700 sticky top-0 z-10" id="tableHeader"></thead>
+                                <tbody class="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-slate-700" id="tableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZ23-CsvMtsVBQbpY8aZbhsgCO8wU0wlvX236F1qYyHG1-EM4-2YSUSWEuKVhhzCBO5u_56hlZ8ujs/pub?gid=471173103&single=true&output=csv";
+        const MASTER_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRi1f0t8VW_7RgczLs69mKyqjbDu1eO_O4pqk4trNuhr8OBayM4JfKMwFToMA_yaKJUpcgIHXBN0Yqh/pub?gid=240150809&single=true&output=csv';
+        const CORRECT_PASSWORD = 'gmb123';
+
+        const PROXIES = [
+            (url) => url,
+            (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`
+        ];
+
+        let documentList = [];
+        let activeDocIndex = null;
+        let sheetsConfig = [];
+        let isAllBrandInitialized = false;
+
+        let state = {
+            currentSheetId: '',
+            data: [],          
+            filteredData: [],  
+            headers: [],       
+            currentPage: 1,
+            perPage: 10,       
+            searchQuery: '',
+            sortColumn: null,     
+            sortDirection: 'asc'  
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchCSVData();
+            restoreLastViewedDoc();
+            if (localStorage.getItem('theme') === 'dark') {
+                document.documentElement.classList.add('dark');
+                updateDarkModeUI(true);
+            }
+        });
+
+        async function fetchCSVData() {
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const fileListEl = document.getElementById('file-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            if (loadingSpinner) loadingSpinner.classList.remove('hidden');
+            if (fileListEl) fileListEl.innerHTML = '';
+            if (emptyState) emptyState.classList.add('hidden');
+
+            let csvText = null;
+            for (const proxyFn of PROXIES) {
+                try {
+                    const response = await fetch(proxyFn(CSV_URL), { cache: "no-cache" });
+                    if (response.ok) {
+                        const text = await response.text();
+                        if (text && text.trim().length > 0) {
+                            csvText = text;
+                            break;
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Fetch attempt failed...", err);
+                }
+            }
+
+            if (csvText) {
+                documentList = parseCSV(csvText);
+                if (documentList.length > 0) {
+                    localStorage.setItem('docviewer_cached_list', JSON.stringify(documentList));
+                    renderFileList(documentList);
+                } else {
+                    showEmptyState("Format CSV tidak berisi data dokumen yang valid.");
+                }
+            } else {
+                const cachedData = localStorage.getItem('docviewer_cached_list');
+                if (cachedData) {
+                    try {
+                        documentList = JSON.parse(cachedData);
+                        renderFileList(documentList);
+                    } catch (e) {
+                        showEmptyState("Gagal memuat dokumen dari server maupun cache.");
+                    }
+                } else {
+                    showEmptyState("Gagal mengunduh CSV dari Google Sheets.");
+                }
+            }
+            if (loadingSpinner) loadingSpinner.classList.add('hidden');
+        }
+
+        function showEmptyState(msg) {
+            const emptyState = document.getElementById('empty-state');
+            const msgEl = document.getElementById('empty-state-msg');
+            const countEl = document.getElementById('file-count');
+            if (msgEl) msgEl.innerText = msg;
+            if (emptyState) emptyState.classList.remove('hidden');
+            if (countEl) countEl.innerText = "0 Berkas";
+        }
+
+        function parseCSV(text) {
+            const lines = text.split(/\r\n|\n|\r/);
+            const items = [];
+            lines.forEach((line) => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+                const columns = parseCSVRow(trimmed);
+                if (columns.length >= 1) {
+                    let col1 = columns[0] ? columns[0].trim() : '';
+                    let col2 = columns[1] ? columns[1].trim() : '';
+                    let name = col1, url = col2;
+
+                    if (isValidURL(col1) && !isValidURL(col2)) {
+                        url = col1; name = col2 || `Dokumen ${items.length + 1}`;
+                    } else if (!isValidURL(col1) && isValidURL(col2)) {
+                        name = col1; url = col2;
+                    } else if (isValidURL(col1)) {
+                        url = col1; name = `Dokumen ${items.length + 1}`;
+                    }
+
+                    const isHeader = ['nama', 'title', 'judul', 'url', 'link', 'alamat'].includes(name.toLowerCase());
+                    if (!isHeader && url && isValidURL(url)) {
+                        items.push({ id: items.length, name: name || `Dokumen ${items.length + 1}`, url: url });
+                    }
+                }
+            });
+            return items;
+        }
+
+        function parseCSVRow(row) {
+            const result = [];
+            let current = '', inQuotes = false;
+            const delimiter = row.includes(';') && !row.includes(',') ? ';' : ',';
+            for (let i = 0; i < row.length; i++) {
+                const char = row[i];
+                if (char === '"') inQuotes = !inQuotes;
+                else if (char === delimiter && !inQuotes) {
+                    result.push(current.replace(/^"|"$/g, '').trim());
+                    current = '';
+                } else current += char;
+            }
+            result.push(current.replace(/^"|"$/g, '').trim());
+            return result;
+        }
+
+        function isValidURL(string) {
+            if (!string) return false;
+            try {
+                const u = new URL(string);
+                return u.protocol === "http:" || u.protocol === "https:";
+            } catch (_) { return false; }
+        }
+
+        function renderFileList(list) {
+            const fileListEl = document.getElementById('file-list');
+            const countEl = document.getElementById('file-count');
+            if (!fileListEl) return;
+            fileListEl.innerHTML = '';
+            if (countEl) countEl.innerText = `${list.length} Berkas Tersedia`;
+
+            list.forEach((item) => {
+                const isActive = activeDocIndex === item.id;
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-2.5 rounded-lg flex items-center gap-2.5 transition-all ${isActive ? 'bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-600 shadow-sm' : 'text-slate-700 hover:bg-slate-100'}`;
+                btn.onclick = () => selectDocument(item);
+
+                btn.innerHTML = `
+                    <i class="fa-solid ${getIconForUrl(item.url)} ${isActive ? 'text-blue-600' : 'text-slate-400'} text-base"></i>
+                    <div class="truncate flex-1">
+                        <p class="text-xs md:text-sm truncate leading-tight">${escapeHtml(item.name)}</p>
+                    </div>
+                `;
+                fileListEl.appendChild(btn);
+            });
+        }
+
+        function getIconForUrl(url) {
+            const lower = url.toLowerCase();
+            if (lower.includes('.pdf')) return 'fa-file-pdf text-red-500';
+            if (lower.includes('.xlsx') || lower.includes('.xls') || lower.includes('spreadsheet') || lower.includes('sheet')) return 'fa-file-excel text-emerald-500';
+            if (lower.includes('.docx') || lower.includes('.doc') || lower.includes('document')) return 'fa-file-word text-blue-500';
+            if (lower.includes('.jpg') || lower.includes('.jpeg') || lower.includes('.png') || lower.includes('.webp') || lower.includes('.gif') || lower.includes('.svg')) return 'fa-file-image text-purple-500';
+            if (lower.includes('octet-stream')) return 'fa-file-arrow-down text-amber-500';
+            return 'fa-file-lines text-slate-500';
+        }
+
+        function handleSearch() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            document.getElementById('clear-search').classList.toggle('hidden', query.length === 0);
+            const filtered = documentList.filter(doc => doc.name.toLowerCase().includes(query) || doc.url.toLowerCase().includes(query));
+            renderFileList(filtered);
+        }
+
+        function clearSearch() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            renderFileList(documentList);
+        }
+
+        // PERBAIKAN FUNGSI SELECT DOCUMENT (DOCVIEWER VIEWER)
+        function selectDocument(doc) {
+            document.getElementById('allbrand-pl-container').classList.add('hidden');
+            activeDocIndex = doc.id;
+            localStorage.setItem('docviewer_last_selected', JSON.stringify(doc));
+
+            document.getElementById('current-doc-title').innerText = doc.name;
+            document.getElementById('current-doc-url').innerText = doc.url;
+            
+            const btnOpenNewTab = document.getElementById('btn-open-newtab');
+            btnOpenNewTab.href = doc.url;
+            btnOpenNewTab.classList.remove('hidden');
+            btnOpenNewTab.classList.add('flex');
+
+            const iframeContainer = document.getElementById('iframe-container');
+            const iframe = document.getElementById('doc-frame');
+            const imageContainer = document.getElementById('image-frame-container');
+            const imagePreview = document.getElementById('doc-image-preview');
+            const welcomeCanvas = document.getElementById('welcome-canvas');
+
+            const lowerUrl = doc.url.toLowerCase();
+            const isImage = lowerUrl.match(/\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i) || lowerUrl.includes('image/');
+
+            if (isImage) {
+                iframe.classList.add('hidden');
+                imageContainer.classList.remove('hidden');
+                imagePreview.src = doc.url;
+            } else {
+                imageContainer.classList.add('hidden');
+                iframe.classList.remove('hidden');
+                iframe.src = formatEmbedUrl(doc.url);
+            }
+
+            welcomeCanvas.classList.add('hidden');
+            iframeContainer.classList.remove('hidden');
+
+            if (window.innerWidth < 768) toggleSidebar(false);
+        }
+
+        function formatEmbedUrl(rawUrl) {
+            if (!rawUrl) return 'about:blank';
+            let url = rawUrl.trim();
+            const lower = url.toLowerCase();
+
+            if (lower.includes('drive.google.com') || lower.includes('docs.google.com')) {
+                if (lower.includes('/view') || lower.includes('/edit')) {
+                    return url.replace(/\/view.*$/, '/preview').replace(/\/edit.*$/, '/preview');
+                }
+                return url;
+            }
+
+            if (lower.includes('.xlsx') || lower.includes('.xls') || lower.includes('spreadsheetml.sheet') || lower.includes('vnd.ms-excel')) {
+                return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(url)}`;
+            }
+
+            if (lower.includes('.pdf') || lower.includes('octet-stream')) {
+                return `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`;
+            }
+
+            return `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`;
+        }
+
+        function restoreLastViewedDoc() {
+            const savedDoc = localStorage.getItem('docviewer_last_selected');
+            if (savedDoc) {
+                try { selectDocument(JSON.parse(savedDoc)); } catch (e) { console.error(e); }
+            }
+        }
+
+        function toggleSidebar(forceState = null) {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            const isMobile = window.innerWidth < 768;
+
+            if (isMobile) {
+                const isClosed = sidebar.classList.contains('-translate-x-full');
+                const shouldOpen = forceState !== null ? forceState : isClosed;
+                sidebar.classList.toggle('-translate-x-full', !shouldOpen);
+                overlay.classList.toggle('hidden', !shouldOpen);
+            } else {
+                sidebar.classList.toggle('md:-ml-72');
+            }
+        }
+
+        function clearLocalStorage() {
+            localStorage.removeItem('docviewer_last_selected');
+            localStorage.removeItem('docviewer_cached_list');
+            location.reload();
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        /* ==========================================================================
+           LOGIK ALLBRAND PL (PERBAIKAN FUNGSI MENAMPILKAN DATA HUB & SIDEBAR TOGGLE)
+           ========================================================================== */
+        function openAllBrandPLView() {
+            document.getElementById('welcome-canvas').classList.add('hidden');
+            document.getElementById('iframe-container').classList.add('hidden');
+            
+            const container = document.getElementById('allbrand-pl-container');
+            container.classList.remove('hidden');
+
+            document.getElementById('current-doc-title').innerText = "AllBrand Price List (PL) Data Hub";
+            document.getElementById('current-doc-url').innerText = "Sistem Informasi Data Terpusat";
+            document.getElementById('btn-open-newtab').classList.add('hidden');
+            
+            if (sessionStorage.getItem('gmb_logged_in') === 'true') {
+                document.getElementById('loginOverlay').classList.add('hidden');
+                initAllBrandApp();
+            } else {
+                document.getElementById('loginOverlay').classList.remove('hidden');
+            }
+            if (window.innerWidth < 768) toggleSidebar(false);
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            if (document.getElementById('loginPassword').value === CORRECT_PASSWORD) {
+                sessionStorage.setItem('gmb_logged_in', 'true');
+                document.getElementById('loginOverlay').classList.add('hidden');
+                initAllBrandApp();
+            } else {
+                document.getElementById('loginError').classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('gmb_logged_in');
+            document.getElementById('loginOverlay').classList.remove('hidden');
+        }
+
+        function togglePasswordVisibility() {
+            const f = document.getElementById('loginPassword');
+            f.type = f.type === 'password' ? 'text' : 'password';
+        }
+
+        function initAllBrandApp() {
+            if (isAllBrandInitialized) return;
+            isAllBrandInitialized = true;
+            setupSearchListener();
+            loadMasterConfig();
+        }
+
+        async function loadMasterConfig() {
+            setLoadingText('Memuat Konfigurasi Sheet...');
+            showLoading(true);
+
+            let csvText = null;
+            for (const proxyFn of PROXIES) {
+                try {
+                    const response = await fetch(proxyFn(MASTER_SHEETS_URL), { cache: "no-cache" });
+                    if (response.ok) {
+                        const text = await response.text();
+                        if (text && text.trim().length > 0) {
+                            csvText = text;
+                            break;
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Attempt fetch master config failed...", err);
+                }
+            }
+
+            if (!csvText) {
+                showLoading(false);
+                alert("Gagal memuat link master sheet dari Google Spreadsheet.");
+                return;
+            }
+
+            Papa.parse(csvText, {
+                header: false,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    const rows = results.data;
+                    sheetsConfig = [];
+                    let currentParent = 'Lainnya';
+
+                    let startIndex = 0;
+                    if (rows.length > 0) {
+                        const firstCell = String(rows[0][0] || '').toLowerCase();
+                        if (firstCell.includes('parent') || firstCell.includes('id') || firstCell.includes('nama')) {
+                            startIndex = 1;
+                        }
+                    }
+
+                    for (let i = startIndex; i < rows.length; i++) {
+                        const r = rows[i];
+                        if (r && r.length >= 2) {
+                            let parentVal = r[0] ? r[0].toString().trim() : '';
+                            let id = r[1] ? r[1].toString().trim() : '';
+                            let name = r[2] ? r[2].toString().trim() : '';
+                            let url = r[3] ? r[3].toString().trim() : '';
+
+                            if (isValidURL(id) && !url) {
+                                url = id;
+                                id = `sheet_${i}`;
+                                name = parentVal;
+                            } else if (isValidURL(name) && !url) {
+                                url = name;
+                                name = id;
+                                id = `sheet_${i}`;
+                            }
+
+                            if (parentVal && !isValidURL(parentVal)) {
+                                currentParent = parentVal;
+                            }
+
+                            if (url && isValidURL(url)) {
+                                sheetsConfig.push({
+                                    parent: currentParent,
+                                    id: id || `sheet_${i}`,
+                                    name: name || `Sheet ${sheetsConfig.length + 1}`,
+                                    url: url
+                                });
+                            }
+                        }
+                    }
+
+                    if (sheetsConfig.length === 0) {
+                        showLoading(false);
+                        alert('Tidak ada konfigurasi sheet yang valid.');
+                        return;
+                    }
+
+                    state.currentSheetId = sheetsConfig[0].id;
+                    renderNav(sheetsConfig);
+                    updateCurrentSheetTitle();
+                    loadSheetData(state.currentSheetId);
+                },
+                error: function(err) {
+                    showLoading(false);
+                    alert('Gagal memproses struktur CSV Master Sheet.');
+                }
+            });
+        }
+
+        // PERBAIKAN TOGGLE SIDEBAR DATA HUB (HIDE / UNHIDE)
+        function toggleAllBrandSidebar(forceState = null) {
+            const sidebar = document.getElementById('allbrandSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            const isMobile = window.innerWidth < 768;
+
+            if (isMobile) {
+                const isClosed = sidebar.classList.contains('-translate-x-full');
+                const shouldOpen = forceState !== null ? forceState : isClosed;
+                sidebar.classList.toggle('-translate-x-full', !shouldOpen);
+                overlay.classList.toggle('hidden', !shouldOpen);
+            } else {
+                sidebar.classList.toggle('hidden');
+            }
+        }
+
+        function toggleDarkMode() {
+            const isDark = document.documentElement.classList.toggle('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            updateDarkModeUI(isDark);
+        }
+
+        function updateDarkModeUI(isDark) {
+            const icon = document.getElementById('darkModeIcon');
+            const text = document.getElementById('darkModeText');
+            if (isDark) {
+                icon.className = "fas fa-sun";
+                text.textContent = "Light";
+            } else {
+                icon.className = "fas fa-moon";
+                text.textContent = "Dark";
+            }
+        }
+
+        function handleBrandSearch() {
+            const query = document.getElementById('brandSearchInput').value.toLowerCase().trim();
+            const clearBtn = document.getElementById('clearBrandSearchBtn');
+            clearBtn.classList.toggle('hidden', query.length === 0);
+
+            if (query === '') {
+                renderNav(sheetsConfig);
+                return;
+            }
+
+            const filteredConfig = sheetsConfig.filter(sheet => 
+                sheet.parent.toLowerCase().includes(query) || 
+                sheet.name.toLowerCase().includes(query)
+            );
+            renderNav(filteredConfig, true);
+        }
+
+        function clearBrandSearch() {
+            const input = document.getElementById('brandSearchInput');
+            input.value = '';
+            document.getElementById('clearBrandSearchBtn').classList.add('hidden');
+            renderNav(sheetsConfig);
+            input.focus();
+        }
+
+        function renderNav(dataList, autoOpen = false) {
+            const navContainer = document.getElementById('nav-container');
+            navContainer.innerHTML = '';
+            
+            const grouped = {};
+            dataList.forEach(sheet => {
+                const p = sheet.parent || 'Lainnya';
+                if (!grouped[p]) grouped[p] = [];
+                grouped[p].push(sheet);
+            });
+
+            Object.keys(grouped).forEach(parentName => {
+                const items = grouped[parentName];
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'mb-1';
+                
+                const parentBtn = document.createElement('button');
+                parentBtn.className = `w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-between text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700`;
+                parentBtn.innerHTML = `
+                    <span class="flex items-center gap-2.5"><i class="fas fa-folder text-blue-500"></i> ${parentName}</span>
+                    <i class="fas fa-chevron-down text-xs text-gray-400 transition-transform duration-200 ${autoOpen ? 'rotate-180' : ''}"></i>
+                `;
+                
+                const childContainer = document.createElement('div');
+                childContainer.className = `space-y-1 pl-4 mt-1 border-l-2 border-blue-50 dark:border-slate-700 ml-3 ${autoOpen ? '' : 'hidden'}`;
+                
+                parentBtn.onclick = () => {
+                    childContainer.classList.toggle('hidden');
+                    parentBtn.querySelector('.fa-chevron-down').classList.toggle('rotate-180');
+                };
+                
+                items.forEach(sheet => {
+                    const isActive = state.currentSheetId === sheet.id;
+                    const childBtn = document.createElement('button');
+                    childBtn.className = `w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-2.5 ${isActive ? 'bg-blue-50 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 font-semibold shadow-sm border border-blue-100 dark:border-blue-800' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700'}`;
+                    childBtn.innerHTML = `<i class="fas fa-file-csv ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400'}"></i> ${sheet.name}`;
+                    childBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        switchSheet(sheet.id);
+                        if (window.innerWidth < 768) toggleAllBrandSidebar(false);
+                    };
+                    childContainer.appendChild(childBtn);
+                });
+                
+                groupDiv.appendChild(parentBtn);
+                groupDiv.appendChild(childContainer);
+                navContainer.appendChild(groupDiv);
+            });
+        }
+
+        function updateCurrentSheetTitle() {
+            const activeSheet = sheetsConfig.find(s => s.id === state.currentSheetId);
+            if (activeSheet) {
+                document.getElementById('currentSheetTitle').textContent = `${activeSheet.parent} - ${activeSheet.name}`;
+            }
+        }
+
+        function switchSheet(sheetId) {
+            if (state.currentSheetId === sheetId) return;
+            state.currentSheetId = sheetId;
+            state.currentPage = 1;
+            updateCurrentSheetTitle();
+            loadSheetData(sheetId);
+            const query = document.getElementById('brandSearchInput').value.toLowerCase().trim();
+            if(query) {
+                const filteredConfig = sheetsConfig.filter(sheet => sheet.parent.toLowerCase().includes(query) || sheet.name.toLowerCase().includes(query));
+                renderNav(filteredConfig, true);
+            } else {
+                renderNav(sheetsConfig);
+            }
+        }
+
+        function refreshCurrentData() {
+            localStorage.removeItem(`sheet_data_${state.currentSheetId}`);
+            loadSheetData(state.currentSheetId);
+        }
+
+        async function loadSheetData(sheetId) {
+            setLoadingText('Mengambil & Merapikan Data...');
+            showLoading(true);
+            const sheet = sheetsConfig.find(s => s.id === sheetId);
+            if (!sheet) {
+                showLoading(false);
+                return;
+            }
+            
+            try {
+                let csvText = null;
+                for (const proxyFn of PROXIES) {
+                    try {
+                        const response = await fetch(proxyFn(sheet.url), { cache: "no-cache" });
+                        if (response.ok) {
+                            const text = await response.text();
+                            if (text && text.trim().length > 0) {
+                                csvText = text;
+                                break;
+                            }
+                        }
+                    } catch (e) {}
+                }
+
+                if (!csvText) throw new Error("Gagal mengunduh sheet data.");
+
+                Papa.parse(csvText, {
+                    header: false,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        const cleaned = cleanMessyData(results.data);
+                        state.headers = cleaned.headers;
+                        state.data = cleaned.data;
+                        applyFiltersAndRender();
+                        showLoading(false);
+                    },
+                    error: function() {
+                        showLoading(false);
+                        alert("Gagal membaca struktur CSV Sheet.");
+                    }
+                });
+            } catch (error) {
+                showLoading(false);
+                alert("Gagal mengambil data sheet.");
+            }
+        }
+
+        function cleanMessyData(rawArray) {
+            if (!rawArray || rawArray.length === 0) return { headers: [], data: [] };
+
+            let maxColsCount = 0;
+            let headerRowIndex = 0;
+            
+            const searchLimit = Math.min(15, rawArray.length);
+            for (let i = 0; i < searchLimit; i++) {
+                const validCells = rawArray[i].filter(cell => cell && cell.toString().trim() !== '').length;
+                if (validCells > maxColsCount) {
+                    maxColsCount = validCells;
+                    headerRowIndex = i;
+                }
+            }
+
+            let rawHeaders = rawArray[headerRowIndex];
+            let cleanHeaders = [];
+            let headerCounts = {};
+
+            rawHeaders.forEach((h, idx) => {
+                let hName = h ? h.toString().trim() : `Kolom_${idx + 1}`;
+                if (headerCounts[hName]) {
+                    headerCounts[hName]++;
+                    hName = `${hName} (${headerCounts[hName]})`;
+                } else {
+                    headerCounts[hName] = 1;
+                }
+                cleanHeaders.push(hName);
+            });
+
+            let cleanDataList = [];
+            for (let i = headerRowIndex + 1; i < rawArray.length; i++) {
+                const row = rawArray[i];
+                if (row.every(cell => !cell || cell.toString().trim() === '')) continue;
+
+                let rowData = {};
+                cleanHeaders.forEach((headerName, idx) => {
+                    rowData[headerName] = row[idx] !== undefined && row[idx].toString().trim() !== '' ? row[idx] : '-';
+                });
+                cleanDataList.push(rowData);
+            }
+
+            return { headers: cleanHeaders, data: cleanDataList };
+        }
+
+        function exportToExcel() {
+            if (!state.filteredData || state.filteredData.length === 0) return alert("Tidak ada data untuk diexport!");
+            const worksheet = XLSX.utils.json_to_sheet(state.filteredData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+            XLSX.writeFile(workbook, `Export_AllBrandPL_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        function setupSearchListener() {
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                state.searchQuery = e.target.value.toLowerCase();
+                state.currentPage = 1;
+                applyFiltersAndRender();
+            });
+        }
+
+        function applyFiltersAndRender() {
+            if (state.searchQuery.trim() === '') {
+                state.filteredData = [...state.data];
+            } else {
+                state.filteredData = state.data.filter(row => Object.values(row).some(val => String(val).toLowerCase().includes(state.searchQuery)));
+            }
+            renderTableHeader();
+            renderTableBody(state.filteredData);
+        }
+
+        function renderTableHeader() {
+            const thead = document.getElementById('tableHeader');
+            let html = '<tr><th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase bg-gray-100 dark:bg-slate-700 border-b dark:border-slate-600 w-12">No</th>';
+            state.headers.forEach(h => {
+                html += `<th class="px-6 py-4 text-left text-xs font-bold text-gray-500 dark:text-gray-300 uppercase bg-gray-100 dark:bg-slate-700 border-b dark:border-slate-600 whitespace-nowrap">${h}</th>`;
+            });
+            html += '</tr>';
+            thead.innerHTML = html;
+        }
+
+        function renderTableBody(items) {
+            const tbody = document.getElementById('tableBody');
+            let html = '';
+            items.forEach((row, index) => {
+                html += `<tr class="hover:bg-blue-50 dark:hover:bg-slate-700/50 transition-colors">`;
+                html += `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 font-medium">${index + 1}</td>`;
+                state.headers.forEach(h => {
+                    html += `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 dark:text-gray-200 border-l border-gray-100 dark:border-slate-700">${row[h]}</td>`;
+                });
+                html += `</tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function showLoading(show) {
+            document.getElementById('loadingIndicator').classList.toggle('hidden', !show);
+        }
+
+        function setLoadingText(text) {
+            document.getElementById('loadingText').textContent = text;
+        }
+    </script>
+</body>
+</html>

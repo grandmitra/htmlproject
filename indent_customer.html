@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Pesanan Pembelian (Mother-Child)</title>
+    
+    <!-- Load Tailwind CSS for Styling and Responsiveness -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Load PapaParse for parsing CSV data -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- Google Fonts for better typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+        }
+        
+        /* Custom scrollbar for horizontal scrolling table */
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-container::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1; 
+            border-radius: 4px;
+        }
+        .table-container::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; 
+        }
+
+        /* Loading spinner CSS */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased min-h-screen flex flex-col">
+
+    <div class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <header class="mb-6">
+            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">Data Oustanding Indent</h1>
+            <p class="text-sm text-gray-500 mt-1">Sistem Laporan Pesanan Customer</p>
+        </header>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                
+                <!-- Search Box -->
+                <div class="relative flex-grow max-w-2xl w-full">
+                    <label for="searchInput" class="block text-sm font-semibold text-gray-700 mb-2">Pencarian Data (Cari Vendor, No. PR, atau Nama/No. Item)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            class="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400 transition-colors"
+                            placeholder="Ketik kata kunci di sini..."
+                        >
+                        <!-- Clear Text Button -->
+                        <button 
+                            id="clearSearchBtn" 
+                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 hidden focus:outline-none"
+                            title="Bersihkan teks"
+                        >
+                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Page Size Selector -->
+                <div class="flex items-center space-x-2 pb-1">
+                    <label for="pageSize" class="text-sm text-gray-600 whitespace-nowrap">Tampilkan per hal:</label>
+                    <select id="pageSize" class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+                        <option value="5">5 Form</option>
+                        <option value="10" selected>10 Form</option>
+                        <option value="25">25 Form</option>
+                        <option value="50">50 Form</option>
+                    </select>
+                </div>
+                
+                <!-- Refresh Button -->
+                <div class="flex items-center pb-1">
+                    <button id="btnRefresh" class="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-lg px-3 py-2.5 transition-colors focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-auto" title="Muat ulang data dari server">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        <span class="text-sm font-medium">Muat Ulang</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="flex flex-col items-center justify-center py-20">
+            <div class="loader mb-4"></div>
+            <p class="text-gray-500 font-medium animate-pulse">Mengambil data dari server...</p>
+        </div>
+        
+        <!-- Error State -->
+        <div id="errorState" class="hidden bg-red-50 border border-red-200 text-red-600 rounded-xl p-6 text-center mb-6">
+            <svg class="w-10 h-10 mx-auto mb-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <p id="errorMessage" class="font-medium">Gagal memuat data.</p>
+        </div>
+
+        <!-- Table Data -->
+        <div id="tableWrapper" class="hidden bg-transparent md:bg-white border-0 md:border border-gray-200 shadow-none md:shadow-sm rounded-xl md:overflow-hidden mb-6 pb-2 md:pb-0">
+            <div class="table-container overflow-x-hidden md:overflow-x-auto w-full">
+                <table class="w-full text-sm text-left text-gray-600 whitespace-nowrap block md:table">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b border-gray-200 hidden md:table-header-group">
+                        <tr class="md:table-row">
+                            <th scope="col" class="px-4 py-3 min-w-[120px]">Tgl PO</th>
+                            <th scope="col" class="px-4 py-3 min-w-[100px]">ETA</th>
+                            <th scope="col" class="px-4 py-3 min-w-[120px]">PR NO</th>
+                            <th scope="col" class="px-4 py-3 min-w-[120px]">ITEM NO</th>
+                            <th scope="col" class="px-4 py-3 min-w-[200px]">ITEM NAME</th>
+                            <th scope="col" class="px-4 py-3 min-w-[200px]">ITEM NAME 2</th>
+                            <th scope="col" class="px-4 py-3 min-w-[80px] text-right">QTY</th>
+                            <th scope="col" class="px-4 py-3 min-w-[80px]">UNIT</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="block md:table-row-group">
+                        <!-- Data will be injected here via JS -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Empty State -->
+            <div id="emptyState" class="hidden text-center py-12 text-gray-500">
+                <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                <p class="text-base font-medium text-gray-900">Tidak ada data ditemukan</p>
+                <p class="text-sm">Coba sesuaikan kata kunci pencarian Anda.</p>
+            </div>
+        </div>
+
+        <div id="paginationWrapper" class="hidden flex flex-col md:flex-row justify-between items-center bg-white p-4 border border-gray-200 rounded-xl shadow-sm gap-4">
+            <span class="text-sm text-gray-600">
+                Menampilkan Halaman <span id="pageInfoCurrent" class="font-semibold text-gray-900">0</span> dari <span id="pageInfoTotal" class="font-semibold text-gray-900">0</span> 
+                (Total: <span id="pageInfoTotalItems" class="font-semibold text-gray-900">0</span> Form Mother)
+            </span>
+            <div class="inline-flex rounded-md shadow-sm" role="group">
+                <button type="button" id="btnPrev" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                    Sebelumnya
+                </button>
+                <button type="button" id="btnNext" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed border-l-0">
+                    Selanjutnya
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Constants & State variables
+        const DATA_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTCc_CemCRVQERmiCvWp9iyMCETpwXPVZVcKpbeG6Q_t_QC_Ez4UPbPO9aSjchl8eNqGsi4viW6G2wJ/pub?gid=1088893675&single=true&output=csv";
+        
+        // Cache Configuration
+        const CACHE_KEY = "po_dashboard_data";
+        const CACHE_TIME_KEY = "po_dashboard_last_fetch";
+        const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 Menit dalam milidetik
+
+        let allData = [];
+        let filteredMothers = [];
+        
+        let currentPage = 1;
+        let itemsPerPage = 10;
+        let searchQuery = "";
+
+        // DOM Elements
+        const elSearchInput = document.getElementById('searchInput');
+        const elClearSearchBtn = document.getElementById('clearSearchBtn');
+        const elPageSize = document.getElementById('pageSize');
+        
+        const elLoadingState = document.getElementById('loadingState');
+        const elErrorState = document.getElementById('errorState');
+        const elErrorMessage = document.getElementById('errorMessage');
+        const elTableWrapper = document.getElementById('tableWrapper');
+        const elTableBody = document.getElementById('tableBody');
+        const elEmptyState = document.getElementById('emptyState');
+        const elPaginationWrapper = document.getElementById('paginationWrapper');
+        
+        const elBtnPrev = document.getElementById('btnPrev');
+        const elBtnNext = document.getElementById('btnNext');
+        const elBtnRefresh = document.getElementById('btnRefresh');
+        
+        const elPageInfoCurrent = document.getElementById('pageInfoCurrent');
+        const elPageInfoTotal = document.getElementById('pageInfoTotal');
+        const elPageInfoTotalItems = document.getElementById('pageInfoTotalItems');
+
+        // Parse date reliably from various formats
+        function parseCustomDate(dateString) {
+            if (!dateString) return 0;
+            const parsed = Date.parse(dateString);
+            if (!isNaN(parsed)) return parsed;
+            
+            // Fallback for DD/MM/YYYY or DD-MM-YYYY
+            const parts = dateString.split(/[-/]/);
+            if (parts.length === 3) {
+                // Assuming DD/MM/YYYY
+                const fallback = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
+                if (!isNaN(fallback)) return fallback;
+            }
+            return 0; // Epoch fallback
+        }
+
+        // Format Number (ID Locale)
+        function formatNumber(value) {
+            if (!value) return '-';
+            const num = parseFloat(value.toString().replace(/,/g, ''));
+            if (isNaN(num)) return value;
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+
+        function fetchData(forceRefresh = false) {
+            // Tampilkan state loading
+            elLoadingState.classList.remove('hidden');
+            elTableWrapper.classList.add('hidden');
+            elPaginationWrapper.classList.add('hidden');
+            elErrorState.classList.add('hidden');
+
+            const now = new Date().getTime();
+            const cachedData = localStorage.getItem(CACHE_KEY);
+            const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+
+            // Cek apakah menggunakan cache jika tidak dipaksa refresh
+            if (!forceRefresh && cachedData && cachedTime) {
+                const timeDiff = now - parseInt(cachedTime);
+                if (timeDiff < CACHE_EXPIRY_MS) {
+                    try {
+                        allData = JSON.parse(cachedData);
+                        console.log("Memuat data dari Local Storage (Cache)");
+                        processData();
+                        return; // Berhenti di sini, tidak perlu fetch server
+                    } catch (e) {
+                        console.warn("Gagal membaca cache, mengambil ulang dari server.", e);
+                    }
+                }
+            }
+
+            console.log("Mengambil data baru dari server...");
+            
+            Papa.parse(DATA_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                transformHeader: function(header) {
+                    return header.trim();
+                },
+                complete: function(results) {
+                    if (results.errors.length > 0 && results.data.length === 0) {
+                        showError("Gagal mem-parsing data CSV. URL mungkin salah atau terblokir.");
+                        return;
+                    }
+                    allData = results.data;
+                    
+                    // Simpan data ke LocalStorage untuk cache
+                    try {
+                        localStorage.setItem(CACHE_KEY, JSON.stringify(allData));
+                        localStorage.setItem(CACHE_TIME_KEY, now.toString());
+                    } catch (e) {
+                        console.warn("Local storage penuh atau tidak tersedia, cache dilewati.", e);
+                    }
+                    
+                    processData();
+                },
+                error: function(err) {
+                    // Jika gagal fetch namun ada data cache lama (offline fallback)
+                    if (cachedData) {
+                        console.warn("Koneksi gagal, memuat data cache lama.");
+                        allData = JSON.parse(cachedData);
+                        processData();
+                    } else {
+                        showError("Koneksi gagal. Tidak dapat mengunduh data dari server.");
+                    }
+                }
+            });
+        }
+
+        function showError(message) {
+            elLoadingState.classList.add('hidden');
+            elTableWrapper.classList.add('hidden');
+            elPaginationWrapper.classList.add('hidden');
+            elErrorState.classList.remove('hidden');
+            elErrorMessage.textContent = message;
+        }
+
+        function processData() {
+            // 1. Filter Data (By VENDOR_NAME, PR_NO, ITEM_NO, ITEM_NAME)
+            let filteredRaw = allData;
+            const q = searchQuery.toLowerCase().trim();
+            
+            if (q) {
+                filteredRaw = allData.filter(row => {
+                    const vendor = (row.VENDOR_NAME || '').toLowerCase();
+                    const pr = (row.PR_NO || '').toLowerCase();
+                    const itemNo = (row.ITEM_NO || '').toLowerCase();
+                    const itemName = (row.ITEM_NAME || '').toLowerCase();
+                    
+                    return vendor.includes(q) || pr.includes(q) || itemNo.includes(q) || itemName.includes(q);
+                });
+            }
+
+            // 2. Group by Mother (FORM_NO)
+            const grouped = {};
+            filteredRaw.forEach(row => {
+                const formNo = row.FORM_NO || 'UNKNOWN_FORM';
+                if (!grouped[formNo]) {
+                    grouped[formNo] = {
+                        formNo: formNo,
+                        vendorName: row.VENDOR_NAME || 'Unknown Vendor',
+                        children: [],
+                        latestDate: 0
+                    };
+                }
+                grouped[formNo].children.push(row);
+                
+                // Track latest date within the mother to sort descending
+                const timestamp = parseCustomDate(row.FORM_DATE);
+                if (timestamp > grouped[formNo].latestDate) {
+                    grouped[formNo].latestDate = timestamp;
+                }
+            });
+
+            // 3. Convert Map to Array and Sort Descending by Form Date (Latest Top)
+            filteredMothers = Object.values(grouped);
+            filteredMothers.sort((a, b) => b.latestDate - a.latestDate);
+
+            // Reset page if needed & Render
+            const maxPage = Math.ceil(filteredMothers.length / itemsPerPage) || 1;
+            if (currentPage > maxPage) currentPage = maxPage;
+            
+            renderUI();
+        }
+
+        function renderUI() {
+            elLoadingState.classList.add('hidden');
+            elErrorState.classList.add('hidden');
+            elTableWrapper.classList.remove('hidden');
+            
+            // Handle Empty State
+            if (filteredMothers.length === 0) {
+                elTableBody.innerHTML = '';
+                elEmptyState.classList.remove('hidden');
+                elPaginationWrapper.classList.add('hidden');
+                // Hide table header strictly
+                elTableBody.parentElement.classList.add('hidden'); 
+                return;
+            } else {
+                elEmptyState.classList.add('hidden');
+                elPaginationWrapper.classList.remove('hidden');
+                elPaginationWrapper.classList.add('flex');
+                elTableBody.parentElement.classList.remove('hidden'); 
+            }
+
+            // Calculate Pagination
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const currentMothers = filteredMothers.slice(startIndex, endIndex);
+            
+            // Build Table HTML
+            let html = '';
+            
+            currentMothers.forEach((mother, mIndex) => {
+                const groupId = `group-${mIndex}`;
+                // Render Mother Row (Drill-down header)
+                html += `
+                    <tr class="bg-blue-50 hover:bg-blue-100 border-y border-blue-200 md:border-y-0 md:border-t-2 md:border-blue-200 cursor-pointer mother-row transition-colors block md:table-row mb-3 md:mb-0 rounded-xl md:rounded-none shadow-sm md:shadow-none" data-group="${groupId}" title="Klik untuk melihat/menyembunyikan detail">
+                        <td colspan="8" class="px-4 py-3 font-semibold text-blue-900 block md:table-cell md:sticky left-0">
+                            <div class="flex flex-row items-center justify-between gap-2 w-full whitespace-normal">
+                                <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
+                                    <span><span class="text-blue-500/80 mr-1 text-xs uppercase tracking-wider">NO PO:</span> ${mother.formNo}</span>
+                                    <span class="hidden md:inline text-blue-300">|</span>
+                                    <span><span class="text-blue-500/80 mr-1 text-xs uppercase tracking-wider">VENDOR:</span> ${mother.vendorName}</span>
+                                    <span class="hidden md:inline text-blue-300">|</span>
+                                    <span class="text-xs w-max bg-white border border-blue-200 text-blue-700 py-0.5 px-2 rounded-full font-medium whitespace-nowrap">${mother.children.length} Item Detail</span>
+                                </div>
+                                <div class="text-blue-500 bg-white rounded-full p-1.5 shadow-sm flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5 h-5 transform transition-transform duration-200 chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                
+                // Sort children by date descending as well inside the mother group
+                const sortedChildren = mother.children.sort((a, b) => parseCustomDate(b.FORM_DATE) - parseCustomDate(a.FORM_DATE));
+
+                // Render Child Rows (Hidden by default)
+                sortedChildren.forEach(child => {
+                    html += `
+                        <tr class="bg-white border border-gray-200 md:border-0 md:border-b hover:bg-gray-50 transition-colors child-row hidden ${groupId} block md:table-row mb-4 md:mb-0 rounded-xl md:rounded-none mx-2 md:mx-0 shadow-sm md:shadow-none overflow-hidden">
+                            <td class="px-4 py-2.5 md:px-4 md:py-3 md:pl-8 md:border-l-4 md:border-l-blue-200 flex flex-col md:table-cell border-b border-gray-100 md:border-0 bg-gray-50 md:bg-transparent">
+                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase mb-1">FORM DATE</span>
+                                <span class="font-medium md:font-normal text-gray-900 md:text-gray-600">${child.FORM_DATE || '-'}</span>
+                            </td>
+                            <td class="px-4 py-2.5 md:px-4 md:py-3 flex justify-between items-center md:table-cell border-b border-gray-100 md:border-0">
+                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase">ETA</span>
+                                <span class="text-right md:text-left">${child.ETA || '-'}</span>
+                            </td>
+                            <td class="px-4 py-2.5 md:px-4 md:py-3 font-medium text-gray-800 flex justify-between items-center md:table-cell border-b border-gray-100 md:border-0">
+                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase">PR NO</span>
+                                <span class="text-right md:text-left">${child.PR_NO || '-'}</span>
+                            </td>
+                            <td class="px-4 py-2.5 md:px-4 md:py-3 flex justify-between items-center md:table-cell border-b border-gray-100 md:border-0">
+                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase">ITEM NO</span>
+                                <span class="text-right md:text-left">${child.ITEM_NO || '-'}</span>
+                            </td>
+                            <td class="px-4 py-2.5 md:px-4 md:py-3 flex flex-col md:table-cell border-b border-gray-100 md:border-0">
+                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase mb-1">ITEM NAME</span>
+                                <div class="w-full md:max-w-xs md:truncate text-gray-800 md:text-gray-600 whitespace-normal md:whitespace-nowrap" title="${child.ITEM_NAME || ''}">
+                                    ${child.ITEM_NAME || '-'}
+                                </div>
+                            </td>
+                            <td class="px-4 py-2.5 md:px-4 md:py-3 flex flex-col md:table-cell border-b border-gray-100 md:border-0">
+                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase mb-1">ITEM NAME 2</span>
+                                <div class="w-full md:max-w-xs md:truncate text-gray-500 md:text-gray-600 whitespace-normal md:whitespace-nowrap" title="${child.ITEM_NAME2 || ''}">
+                                    ${child.ITEM_NAME2 || '-'}
+                                </div>
+                            </td>
+                            <td class="px-4 py-2.5 md:px-4 md:py-3 flex justify-between items-center md:table-cell border-b border-gray-100 md:border-0">
+                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase">QTY</span>
+                                <span class="text-right font-medium text-gray-700">${formatNumber(child.QTY)}</span>
+                            </td>
+                            <td class="px-4 py-2.5 md:px-4 md:py-3 flex justify-between items-center md:table-cell">
+                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase">UNIT</span>
+                                <span class="text-right md:text-left">${child.ITEM_UNIT || '-'}</span>
+                            </td>
+                        </tr>
+                    `;
+                });
+            });
+
+            elTableBody.innerHTML = html;
+
+            // Add Click Events for Drill-down
+            const motherRows = elTableBody.querySelectorAll('.mother-row');
+            motherRows.forEach(row => {
+                row.addEventListener('click', function() {
+                    const groupId = this.getAttribute('data-group');
+                    const childRows = elTableBody.querySelectorAll(`.${groupId}`);
+                    const chevron = this.querySelector('.chevron-icon');
+                    
+                    let isExpanded = false;
+                    
+                    // Toggle child visibility
+                    childRows.forEach(child => {
+                        if (child.classList.contains('hidden')) {
+                            child.classList.remove('hidden');
+                            isExpanded = true;
+                        } else {
+                            child.classList.add('hidden');
+                        }
+                    });
+
+                    // Update styling and chevron rotation based on state
+                    if (isExpanded) {
+                        chevron.classList.add('rotate-180');
+                        this.classList.add('bg-blue-100');
+                        this.classList.remove('bg-blue-50');
+                    } else {
+                        chevron.classList.remove('rotate-180');
+                        this.classList.add('bg-blue-50');
+                        this.classList.remove('bg-blue-100');
+                    }
+                });
+            });
+
+            // Update Pagination Info
+            const totalMothers = filteredMothers.length;
+            const totalPages = Math.ceil(totalMothers / itemsPerPage);
+            
+            elPageInfoCurrent.textContent = currentPage;
+            elPageInfoTotal.textContent = totalPages;
+            elPageInfoTotalItems.textContent = totalMothers;
+
+            // Update Button States
+            elBtnPrev.disabled = currentPage === 1;
+            elBtnNext.disabled = currentPage === totalPages;
+        }
+
+        
+        // Search Input Event
+        elSearchInput.addEventListener('input', (e) => {
+            searchQuery = e.target.value;
+            
+            // Toggle Clear Button
+            if (searchQuery.length > 0) {
+                elClearSearchBtn.classList.remove('hidden');
+            } else {
+                elClearSearchBtn.classList.add('hidden');
+            }
+            
+            // Debounce or process directly (Direct since local data)
+            currentPage = 1;
+            processData();
+        });
+
+        // Clear Search Event
+        elClearSearchBtn.addEventListener('click', () => {
+            elSearchInput.value = '';
+            searchQuery = '';
+            elClearSearchBtn.classList.add('hidden');
+            elSearchInput.focus();
+            currentPage = 1;
+            processData();
+        });
+
+        // Page Size Event
+        elPageSize.addEventListener('change', (e) => {
+            itemsPerPage = parseInt(e.target.value);
+            currentPage = 1; // Reset to page 1
+            processData();
+        });
+
+        // Refresh Button Event
+        elBtnRefresh.addEventListener('click', () => {
+            const icon = elBtnRefresh.querySelector('svg');
+            icon.classList.add('animate-spin'); // Tambahkan efek putar saat diklik
+            
+            // Panggil fungsi fetchData dengan parameter forceRefresh = true
+            fetchData(true);
+            
+            // Hapus animasi setelah 1 detik
+            setTimeout(() => {
+                icon.classList.remove('animate-spin');
+            }, 1000);
+        });
+
+        // Pagination Buttons Events
+        elBtnPrev.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                renderUI();
+                // Scroll back to top of table
+                elTableWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+
+        elBtnNext.addEventListener('click', () => {
+            const maxPage = Math.ceil(filteredMothers.length / itemsPerPage);
+            if (currentPage < maxPage) {
+                currentPage++;
+                renderUI();
+                elTableWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchData();
+        });
+
+    </script>
+</body>
+</html>
