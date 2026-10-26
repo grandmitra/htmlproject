@@ -71,7 +71,8 @@
             </button>
         </div>
 
-        <div class="p-3 border-b border-slate-100">
+        <!-- Section Pencarian & Tombol Refresh Data Spreadsheet -->
+        <div class="p-3 border-b border-slate-100 flex flex-col gap-2">
             <div class="relative">
                 <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
                 <input type="text" id="search-input" oninput="handleSearch()" placeholder="Cari file dokumen / gambar..." class="w-full pl-9 pr-8 py-2 text-sm bg-slate-100 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"/>
@@ -79,10 +80,20 @@
                     <i class="fa-solid fa-circle-xmark text-sm"></i>
                 </button>
             </div>
-            <div class="flex items-center justify-between mt-2 px-1">
+
+            <!-- Tombol Refresh Data Spreadsheet Jarak Jauh -->
+            <button id="btnRefreshDrive" onclick="triggerDriveRefresh()" class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-medium text-xs py-2 px-3 rounded-lg transition-all shadow-sm flex items-center justify-center gap-2" title="Sinkronkan Google Drive ke Google Spreadsheet">
+                <i class="fa-solid fa-rotate text-xs" id="iconRefreshDrive"></i>
+                <span id="textRefreshDrive">Refresh Data Spreadsheet</span>
+            </button>
+
+            <!-- Status Sinkronisasi -->
+            <div id="driveRefreshStatus" class="hidden text-[11px] p-2 rounded-lg border leading-tight text-center"></div>
+
+            <div class="flex items-center justify-between px-1">
                 <span id="file-count" class="text-xs font-medium text-slate-500">Memuat berkas...</span>
                 <button onclick="fetchCSVData()" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
-                    <i class="fa-solid fa-rotate-right text-[10px]"></i> Refresh
+                    <i class="fa-solid fa-rotate-right text-[10px]"></i> Reload List
                 </button>
             </div>
         </div>
@@ -117,7 +128,6 @@
 
     <!-- Main Canvas Area -->
     <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-200/70">
-        
         <header class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shadow-sm z-10">
             <div class="flex items-center gap-3 overflow-hidden pr-2">
                 <button onclick="toggleSidebar()" class="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors flex-shrink-0" title="Sembunyikan/Tampilkan Navigasi">
@@ -167,7 +177,6 @@
 
         <!-- AllBrand PL Container -->
         <div id="allbrand-pl-container" class="flex-1 flex flex-row relative hidden w-full h-full overflow-hidden bg-gray-50 dark:bg-slate-900">
-            <!-- Login Overlay -->
             <div id="loginOverlay" class="absolute inset-0 bg-gradient-to-br from-blue-900 via-gray-900 to-black z-50 flex items-center justify-center p-4">
                 <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-gray-100">
                     <div class="text-center mb-8">
@@ -196,7 +205,6 @@
                 </div>
             </div>
             
-            <!-- Sidebar AllBrand PL -->
             <aside id="allbrandSidebar" class="bg-white dark:bg-slate-800 dark:border-slate-700 flex-shrink-0 border-r border-gray-200 flex flex-col transition-all duration-300 absolute inset-y-0 left-0 z-40 md:relative w-64 shadow-xl md:shadow-none">
                 <div class="h-16 flex items-center px-6 border-b border-gray-100 dark:border-slate-700 justify-between bg-white dark:bg-slate-800">
                     <div class="flex items-center gap-2 text-blue-600 dark:text-blue-400">
@@ -208,7 +216,6 @@
                     </button>
                 </div>
 
-                <!-- Search Brand -->
                 <div class="p-3 border-b border-gray-100 dark:border-slate-700 bg-gray-50/50 dark:bg-slate-800/50">
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
@@ -278,6 +285,9 @@
     <script>
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSZ23-CsvMtsVBQbpY8aZbhsgCO8wU0wlvX236F1qYyHG1-EM4-2YSUSWEuKVhhzCBO5u_56hlZ8ujs/pub?gid=471173103&single=true&output=csv";
         const MASTER_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRi1f0t8VW_7RgczLs69mKyqjbDu1eO_O4pqk4trNuhr8OBayM4JfKMwFToMA_yaKJUpcgIHXBN0Yqh/pub?gid=240150809&single=true&output=csv';
+        // URL Web App Google Apps Script Refresh Drive
+        const TARGET_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNDtZ8DOKImw4ZggY_6qZhgd2Sb9jN5aBxK9koLR99tm0R9cd61JOQbt4lXppbPzk16Q/exec";
+        
         const CORRECT_PASSWORD = 'gmb123';
 
         const PROXIES = [
@@ -311,6 +321,58 @@
                 updateDarkModeUI(true);
             }
         });
+
+        // FUNGSI UTAMA REFRESH DRIVE SPREADSHEET (APPS SCRIPT)
+        function triggerDriveRefresh() {
+            const btn = document.getElementById('btnRefreshDrive');
+            const icon = document.getElementById('iconRefreshDrive');
+            const text = document.getElementById('textRefreshDrive');
+            const statusDiv = document.getElementById('driveRefreshStatus');
+
+            btn.disabled = true;
+            icon.classList.add('fa-spin');
+            text.innerText = "Memproses Drive...";
+            statusDiv.classList.add('hidden');
+
+            fetch(TARGET_WEB_APP_URL)
+            .then(response => response.json())
+            .then(data => {
+                btn.disabled = false;
+                icon.classList.remove('fa-spin');
+                text.innerText = "Refresh Data Spreadsheet";
+                
+                statusDiv.classList.remove('hidden');
+                if (data.status === "success") {
+                    statusDiv.className = "text-[11px] p-2 rounded-lg leading-tight text-center bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800";
+                    statusDiv.innerText = "✅ " + data.message;
+                    // Otomatis re-fetch CSV data setelah spreadsheet terupdate
+                    setTimeout(() => fetchCSVData(), 1200);
+                } else {
+                    statusDiv.className = "text-[11px] p-2 rounded-lg leading-tight text-center bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800";
+                    statusDiv.innerText = "❌ Gagal: " + data.message;
+                }
+            })
+            .catch(error => {
+                btn.disabled = false;
+                icon.classList.remove('fa-spin');
+                text.innerText = "Refresh Data Spreadsheet";
+                
+                statusDiv.classList.remove('hidden');
+                statusDiv.className = "text-[11px] p-2 rounded-lg leading-tight text-center bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800";
+                statusDiv.innerText = "❌ Terhubung dengan Proxy / Server...";
+                // Retry fallback via Proxy jika fetch langsung terkena batasan CORS
+                fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(TARGET_WEB_APP_URL)}`)
+                .then(r => r.json())
+                .then(res => {
+                    statusDiv.className = "text-[11px] p-2 rounded-lg leading-tight text-center bg-emerald-50 text-emerald-700 border-emerald-200";
+                    statusDiv.innerText = "✅ " + (res.message || "Refresh berhasil.");
+                    setTimeout(() => fetchCSVData(), 1200);
+                })
+                .catch(() => {
+                    statusDiv.innerText = "❌ Gagal terhubung ke server Apps Script.";
+                });
+            });
+        }
 
         async function fetchCSVData() {
             const loadingSpinner = document.getElementById('loading-spinner');
@@ -469,7 +531,6 @@
             renderFileList(documentList);
         }
 
-        // PERBAIKAN FUNGSI SELECT DOCUMENT (DOCVIEWER VIEWER)
         function selectDocument(doc) {
             document.getElementById('allbrand-pl-container').classList.add('hidden');
             activeDocIndex = doc.id;
@@ -564,7 +625,7 @@
         }
 
         /* ==========================================================================
-           LOGIK ALLBRAND PL (PERBAIKAN FUNGSI MENAMPILKAN DATA HUB & SIDEBAR TOGGLE)
+           LOGIK ALLBRAND PL
            ========================================================================== */
         function openAllBrandPLView() {
             document.getElementById('welcome-canvas').classList.add('hidden');
@@ -707,7 +768,6 @@
             });
         }
 
-        // PERBAIKAN TOGGLE SIDEBAR DATA HUB (HIDE / UNHIDE)
         function toggleAllBrandSidebar(forceState = null) {
             const sidebar = document.getElementById('allbrandSidebar');
             const overlay = document.getElementById('sidebarOverlay');
