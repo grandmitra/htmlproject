@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Tonase & Logistik - Grand Mitra</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .header-card { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; padding: 30px; border-radius: 15px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .card { border: none; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .result-box { background-color: #343a40; color: white; padding: 15px; border-radius: 8px; font-weight: bold; text-align: center; }
+        .table thead { background-color: #212529; color: white; }
+        .status-ideal { color: #198754; font-weight: bold; }
+        .status-warning { color: #ffc107; font-weight: bold; }
+        .status-inefficient { color: #dc3545; font-weight: bold; }
+        .manual-input-group { display: none; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+
+<div class="container py-4">
+    <div class="header-card text-center">
+        <img src="https://grandmitra.com/wp-content/uploads/2024/09/gm-1536x328.png" alt="Logo" style="max-height: 60px; margin-bottom: 15px;">
+        <h2><i class="fas fa-truck-moving me-2"></i> Kalkulator Tonase & Logistik</h2>
+        <p>Analisis Muatan & Estimasi Biaya Operasional Kendaraan</p>
+        <div class="mt-3 no-print">
+            <button class="btn btn-danger btn-sm me-2" onclick="exportToPDF()"><i class="fas fa-file-pdf"></i> Ekspor PDF</button>
+            <button class="btn btn-success btn-sm me-2" onclick="exportToExcel()"><i class="fas fa-file-excel"></i> Ekspor Excel</button>
+            <a href="https://www.google.com/maps/dir/Grand+Mitra+-+Toko+Bangunan+Modern+PIK+2+Tangerang,+Jalan+MH.+Thamrin+center+avenue+No.10,+Banten,+Kec.+Kosambi,+Kabupaten+Tangerang,+Banten+15213/Bantar+Gebang,+Bekasi,+West+Java/@-6.22816,106.6776114,56091m/data=!3m2!1e3!4b1!4m14!4m13!1m5!1m1!1s0x2e6a03fc6a46f3cd:0x869e7566d672b37e!2m2!1d106.7076702!2d-6.0682105!1m5!1m1!1s0x2e6993cd1cfd5131:0xbc41a51ae9cf5e0e!2m2!1d106.9898519!2d-6.3414752!3e0?entry=ttu&g_ep=EgoyMDI2MDEyMS4wIKXMDSoKLDEwMDc5MjA2N0gBUAM%3D" target="_blank" class="btn btn-warning btn-sm">
+                <i class="fas fa-map-marked-alt"></i> Lihat Rute
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-lg-8">
+            <div class="card mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center p-3">
+                    <h6 class="mb-0 fw-bold">Daftar Material Muatan</h6>
+                    <button class="btn btn-sm btn-primary" onclick="addRow()"><i class="fas fa-plus"></i> Tambah Item</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0" id="tonaseTable">
+                        <thead>
+                            <tr class="small">
+                                <th style="width: 5%;">No</th>
+                                <th style="width: 35%;">Material</th>
+                                <th class="text-center" style="width: 25%;">Berat/Vol Satuan</th>
+                                <th class="text-center" style="width: 100px;">Qty</th>
+                                <th class="text-end">Total Kumulatif</th>
+                                <th class="no-print"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card p-3 shadow-sm mb-3">
+                <h6 class="fw-bold"><i class="fas fa-cog me-2"></i>Parameter Operasional</h6>
+                <hr>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="small fw-bold">Jarak (KM):</label>
+                        <input type="number" id="jarakKm" class="form-control form-control-sm" value="10" oninput="calculateTotal()">
+                    </div>
+                    <div class="col-6">
+                        <label class="small fw-bold">Harga BBM/L:</label>
+                        <input type="number" id="hargaBBM" class="form-control form-control-sm" value="6800" oninput="calculateTotal()">
+                    </div>
+                    <div class="col-6">
+                        <label class="small fw-bold">Biaya Tol PP:</label>
+                        <input type="number" id="biayaTol" class="form-control form-control-sm" value="0" oninput="calculateTotal()">
+                    </div>
+                    <div class="col-6">
+                        <label class="small fw-bold">Biaya Kuli:</label>
+                        <input type="number" id="biayaKuli" class="form-control form-control-sm" value="0" oninput="calculateTotal()">
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div class="result-box bg-dark mb-2">
+                        <span class="small opacity-75">Beban Muatan:</span><br>
+                        <span id="totalKgDisplay">0</span> kg | <span id="totalTonDisplay">0,00</span> Ton
+                    </div>
+                    <div class="result-box bg-primary">
+                        <span class="small opacity-75">Estimasi Volume:</span><br>
+                        <span id="totalM3Display">0.00</span> m³
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm mt-2">
+        <div class="card-header bg-info text-white fw-bold">
+            <i class="fas fa-truck me-2"></i> Perbandingan Efisiensi Armada & Biaya
+        </div>
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+                <thead class="table-light text-center small">
+                    <tr>
+                        <th>Jenis Armada</th>
+                        <th>Kapasitas (Ton)</th>
+                        <th>Est. Trip</th>
+                        <th>Estimasi BBM</th>
+                        <th>Penyusutan</th>
+                        <th>Armada Sendiri</th>
+                        <th>Armada Sewa</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="analysisBody" class="small"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Data Material: [Berat (kg), Volume (m3)]
+    const materials = new Map([
+        ["Pilih Item", [0, 0]],
+        ["TEHEL 25X25 UNO", [15, 0.02]],
+        ["TEHEL 25X25 MASS", [15, 0.02]],
+        ["TEHEL 25X40 UNO", [15, 0.02]],
+        ["TEHEL 25X40 MASS", [16, 0.02]],
+        ["TEHEL 25X50 UNO", [16, 0.02]],
+        ["TEHEL 30X60 UNO", [17, 0.03]],
+        ["TEHEL 40X40 ARW", [17, 0.02]],
+        ["TEHEL 40X40 MASS", [17, 0.02]],
+        ["TEHEL 40X40 SPECTRUM", [16, 0.02]],
+        ["TEHEL 50X50 LAGUNA", [20, 0.03]],
+        ["TEHEL 50X50 UNO", [19, 0.03]],
+        ["TEHEL 60X60 MASS", [28, 0.04]],
+        ["TEHEL 60X60 UMUM", [30, 0.04]],
+        ["GRANIT 60X60 GRACE", [21, 0.04]],
+        ["GRANIT 60X60 MOTIF", [28, 0.04]],
+        ["GRANIT 80X80", [44, 0.06]],
+        ["GRANIT 120X60", [34, 0.05]],
+        ["GRANIT 60X60 MAGIA", [32, 0.04]],
+        ["GRANIT 60X60 MAGIA2", [28, 0.04]],
+        ["TEHEL 20X40", [16, 0.02]],
+        ["BESI 6 SNI", [3, 0.005]],
+        ["BESI 8 SNI", [5, 0.006]],
+        ["BESI 10 SNI", [7, 0.008]],
+        ["BESI 12 SNI", [10, 0.01]],
+        ["BESI 13 ULIR SNI", [13, 0.012]],
+        ["BESI 16 ULIR SNI", [19, 0.015]],
+        ["BESI 19 ULIR SNI", [27, 0.02]],
+        ["TRIPLEKS 9 ML", [9, 0.03]],
+        ["TRIPLEKS 6 ML", [6, 0.02]],
+        ["TRIPLEKS 3 ML", [3, 0.01]],
+        ["KUKU TEHEL", [15, 0.01]],
+        ["PAKU", [30, 0.02]],
+        ["SKIMKOAT APLUS MERAH", [20, 0.02]],
+        ["SKIMKOAT YOSAMI", [20, 0.02]],
+        ["CORNICE APLUS", [20, 0.03]],
+        ["RAJA PLANK 20 CM", [10, 0.02]],
+        ["RAJA PLANK 30 CM", [15, 0.03]],
+        ["SOKA JEMPOL", [3, 0.005]],
+        ["SOKA APLUS", [2, 0.005]],
+        ["NOK SOKA", [1, 0.002]],
+        ["HOLLO", [1, 0.01]],
+        ["KAWAT BWG 18", [25, 0.02]],
+        ["KAWAT BWG NO 12", [50, 0.04]],
+        ["PINTU GALVALUM", [8, 0.25]],
+        ["PAKU SENG", [16, 0.02]],
+        ["SAMBUNGAN PIPA", [8, 0.05]],
+        ["RAJA BOARD", [15.5, 0.05]],
+        ["GYPSUM", [15, 0.05]],
+        ["PIPA 1/2 TRILIUN", [1, 0.01]],
+        ["PIPA 3/4 TRILIUN", [1, 0.015]],
+        ["PIPA 1 INCI TRILIUN", [1, 0.02]],
+        ["PIPA 1 1/4 AW TRILIUN", [2, 0.03]],
+        ["PIPA 1 1/2 AW TRILIUN", [2, 0.04]],
+        ["PIPA 2 AW TRILIUN", [3, 0.06]],
+        ["PIPA 2 1/2 AW TRILIUN", [4, 0.08]],
+        ["PIPA 3 AW TRILIUN", [5, 0.10]],
+        ["PIPA 4 AW TRILIUN", [9, 0.12]],
+        ["PIPA 1 1/4 D TRILIUN", [1, 0.03]],
+        ["PIPA 1 1/2 D TRILIUN", [1, 0.04]],
+        ["PIPA 2 D TRILIUN", [2, 0.06]],
+        ["PIPA 2 1/2 D TRILIUN", [2, 0.08]],
+        ["PIPA 3 D TRILIUN", [3, 0.10]],
+        ["PIPA 4 D TRILIUN", [5, 0.12]],
+        ["TALANG SENG", [16, 0.08]],
+        ["BENDRAT", [20, 0.02]],
+        ["TANKI 1,200", [21, 1.50]],
+        ["KLOSET JONGKOK", [9, 0.08]],
+        ["GEROBAK", [20, 0.25]],
+        ["SEMEN INSTANT", [25, 0.25]],
+        ["SEMEN KONVENSIONAL", [50, 0.03]]
+    ]);
+
+    // Data Truck: [ton, m3, base_price, price_per_km, fuel_rate, wear_cost]
+    const truckData = [
+        { name: "Gran Max / Blindvan", ton: 0.7, m3: 2, base: 85000, perKm: 4500, fuelRate: 0.08, wear: 300 },
+        { name: "Pick-up Bak / L300", ton: 1.5, m3: 4, base: 95000, perKm: 5000, fuelRate: 0.10, wear: 450 },
+        { name: "Pick-up Box", ton: 1.2, m3: 6, base: 110000, perKm: 5500, fuelRate: 0.11, wear: 480 },
+        { name: "CDE Engkel Bak", ton: 2.5, m3: 9, base: 240000, perKm: 7000, fuelRate: 0.14, wear: 800 },
+        { name: "CDE Engkel Box", ton: 2.2, m3: 10, base: 260000, perKm: 7500, fuelRate: 0.15, wear: 850 },
+        { name: "CDD Canter Double", ton: 4.5, m3: 14, base: 450000, perKm: 8500, fuelRate: 0.18, wear: 1200 },
+        { name: "CDD Long (Canter)", ton: 5.5, m3: 19, base: 550000, perKm: 9500, fuelRate: 0.20, wear: 1400 },
+        { name: "Fuso Engkel", ton: 8.0, m3: 24, base: 850000, perKm: 12000, fuelRate: 0.28, wear: 2000 },
+        { name: "Fuso Tronton", ton: 15.0, m3: 30, base: 1200000, perKm: 15000, fuelRate: 0.35, wear: 3000 },
+        { name: "Wingbox", ton: 20.0, m3: 45, base: 2200000, perKm: 18000, fuelRate: 0.40, wear: 4000 },
+        { name: "Trailer 20 Feet", ton: 20.0, m3: 33, base: 2500000, perKm: 20000, fuelRate: 0.45, wear: 5000 },
+        { name: "Trailer 40 Feet", ton: 30.0, m3: 60, base: 3500000, perKm: 25000, fuelRate: 0.55, wear: 6500 }
+    ];
+
+    function formatIDR(v) { 
+        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(v); 
+    }
+
+    function addRow() {
+        const tbody = document.getElementById('tableBody');
+        const row = tbody.insertRow();
+        const rowIdx = tbody.rows.length;
+        row.innerHTML = `
+            <td>${rowIdx}</td>
+            <td>
+                <div class="mb-2">
+                    <select class="form-select form-select-sm item-select" onchange="toggleManualInput(this)">
+                        <option value="pilih">Pilih dari Daftar</option>
+                        <option value="manual">Input Manual</option>
+                        ${Array.from(materials.entries()).map(([key, value]) => 
+                            key !== "Pilih Item" ? `<option value="${key}">${key}</option>` : ''
+                        ).join('')}
+                    </select>
+                </div>
+                <div class="manual-input-group">
+                    <input type="text" class="form-control form-control-sm mb-1 manual-name" placeholder="Nama Material">
+                    <div class="row g-1">
+                        <div class="col-6">
+                            <input type="number" class="form-control form-control-sm manual-weight" placeholder="Berat (kg)" step="0.01">
+                        </div>
+                        <div class="col-6">
+                            <input type="number" class="form-control form-control-sm manual-volume" placeholder="Volume (m³)" step="0.001">
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td class="text-center small item-info">-</td>
+            <td>
+                <input type="number" class="form-control form-control-sm text-center quantity-input" value="0" min="0" oninput="updateRow(this)" disabled>
+            </td>
+            <td class="text-end fw-bold total-info">0 kg</td>
+            <td class="no-print">
+                <button class="btn btn-sm text-danger" onclick="this.parentElement.parentElement.remove();calculateTotal()">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </td>
+        `;
+    }
+
+    function toggleManualInput(select) {
+        const row = select.closest('tr');
+        const manualGroup = row.querySelector('.manual-input-group');
+        const qtyInput = row.querySelector('.quantity-input');
+        const itemInfo = row.querySelector('.item-info');
+        
+        if (select.value === 'manual') {
+            manualGroup.style.display = 'block';
+            qtyInput.disabled = false;
+            itemInfo.innerHTML = '<span class="text-muted">Input manual</span>';
+        } 
+        else if (select.value === 'pilih') {
+            manualGroup.style.display = 'none';
+            qtyInput.disabled = true;
+            itemInfo.innerHTML = '-';
+            qtyInput.value = 0;
+            row.querySelector('.total-info').innerHTML = '0 kg';
+        }
+        else {
+            // Item dipilih dari daftar
+            manualGroup.style.display = 'none';
+            qtyInput.disabled = false;
+            const data = materials.get(select.value) || [0, 0];
+            itemInfo.innerHTML = `${data[0]}kg / ${data[1]}m³`;
+        }
+        
+        calculateTotal();
+    }
+
+    function updateRow(el) {
+        const row = el.closest('tr');
+        const select = row.querySelector('.item-select');
+        const qty = parseFloat(el.value) || 0;
+        
+        let berat = 0, volume = 0, itemName = '';
+        
+        if (select.value === 'manual') {
+            // Ambil dari input manual
+            itemName = row.querySelector('.manual-name').value || 'Material Manual';
+            berat = parseFloat(row.querySelector('.manual-weight').value) || 0;
+            volume = parseFloat(row.querySelector('.manual-volume').value) || 0;
+            
+            if (berat > 0 || volume > 0) {
+                row.querySelector('.item-info').innerHTML = `${berat}kg / ${volume}m³`;
+            } else {
+                row.querySelector('.item-info').innerHTML = '<span class="text-muted">Input manual</span>';
+            }
+        } 
+        else if (select.value !== 'pilih') {
+            // Ambil dari daftar
+            itemName = select.value;
+            const data = materials.get(select.value) || [0, 0];
+            berat = data[0];
+            volume = data[1];
+        }
+        
+        if (berat > 0 || volume > 0) {
+            const totalBerat = berat * qty;
+            const totalVolume = volume * qty;
+            row.querySelector('.total-info').innerHTML = `
+                <div>${totalBerat.toLocaleString('id-ID')} kg</div>
+                <div class="small text-muted">${totalVolume.toFixed(3)} m³</div>
+            `;
+        } else {
+            row.querySelector('.total-info').innerHTML = '0 kg';
+        }
+        
+        calculateTotal();
+    }
+
+    function calculateTotal() {
+        let tKg = 0, tM3 = 0;
+        document.querySelectorAll('#tableBody tr').forEach(row => {
+            const select = row.querySelector('.item-select');
+            const q = parseFloat(row.querySelector('.quantity-input').value) || 0;
+            
+            if (q > 0) {
+                let berat = 0, volume = 0;
+                
+                if (select.value === 'manual') {
+                    // Ambil dari input manual
+                    berat = parseFloat(row.querySelector('.manual-weight').value) || 0;
+                    volume = parseFloat(row.querySelector('.manual-volume').value) || 0;
+                } 
+                else if (select.value !== 'pilih') {
+                    // Ambil dari daftar
+                    const data = materials.get(select.value) || [0, 0];
+                    berat = data[0];
+                    volume = data[1];
+                }
+                
+                tKg += (berat * q); 
+                tM3 += (volume * q);
+            }
+        });
+        
+        const tTon = tKg / 1000;
+        document.getElementById('totalKgDisplay').textContent = tKg.toLocaleString('id-ID');
+        document.getElementById('totalTonDisplay').textContent = tTon.toFixed(2).replace('.', ',');
+        document.getElementById('totalM3Display').textContent = tM3.toFixed(3);
+        
+        renderAnalysis(tTon, tM3);
+    }
+
+    function renderAnalysis(tTon, tM3) {
+        const body = document.getElementById('analysisBody');
+        body.innerHTML = '';
+        if (tTon === 0) return;
+
+        const km = parseFloat(document.getElementById('jarakKm').value) || 0;
+        const hBbm = parseFloat(document.getElementById('hargaBBM').value) || 0;
+        const tol = parseFloat(document.getElementById('biayaTol').value) || 0;
+        const kuli = parseFloat(document.getElementById('biayaKuli').value) || 0;
+
+        truckData.forEach(truck => {
+            const trips = Math.max(Math.ceil(tTon / truck.ton), Math.ceil(tM3 / truck.m3));
+            
+            // Perhitungan biaya
+            const bbm = (km * 2 * truck.fuelRate * hBbm) * trips;
+            const susut = (km * 2 * truck.wear) * trips;
+            const totalArmadaSendiri = bbm + susut + tol + kuli;
+            const totalArmadaSewa = ((truck.base + (km * truck.perKm)) * trips) + tol + kuli;
+            
+            const efficiency = ((tTon / (trips * truck.ton)) * 100).toFixed(0);
+            let statusClass = efficiency >= 85 ? "status-ideal" : efficiency >= 60 ? "status-warning" : "status-inefficient";
+
+            const row = body.insertRow();
+            row.innerHTML = `
+                <td><b>${truck.name}</b></td>
+                <td class="text-center">${truck.ton} Ton</td>
+                <td class="text-center">${trips}x</td>
+                <td class="text-end">${formatIDR(bbm)}</td>
+                <td class="text-end">${formatIDR(susut)}</td>
+                <td class="text-end text-success fw-bold">${formatIDR(totalArmadaSendiri)}</td>
+                <td class="text-end text-primary fw-bold">${formatIDR(totalArmadaSewa)}</td>
+                <td class="${statusClass}">${efficiency}% Efisien</td>
+            `;
+        });
+    }
+
+    async function exportToPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const logoUrl = "https://grandmitra.com/wp-content/uploads/2024/09/gm-1536x328.png";
+        
+        try { doc.addImage(logoUrl, 'PNG', 14, 10, 50, 11); } catch (e) {}
+        doc.setFontSize(14); doc.text("LAPORAN ANALISIS LOGISTIK MATERIAL", 14, 30);
+        
+        const matData = [];
+        document.querySelectorAll('#tableBody tr').forEach((row, i) => {
+            const select = row.querySelector('.item-select');
+            const qty = parseFloat(row.querySelector('.quantity-input').value) || 0;
+            
+            if (qty > 0) {
+                let materialName = '';
+                let berat = 0, volume = 0;
+                
+                if (select.value === 'manual') {
+                    materialName = row.querySelector('.manual-name').value || 'Material Manual';
+                    berat = parseFloat(row.querySelector('.manual-weight').value) || 0;
+                    volume = parseFloat(row.querySelector('.manual-volume').value) || 0;
+                } 
+                else if (select.value !== 'pilih') {
+                    materialName = select.value;
+                    const data = materials.get(select.value) || [0, 0];
+                    berat = data[0];
+                    volume = data[1];
+                }
+                
+                if (materialName) {
+                    const totalBerat = (berat * qty).toLocaleString('id-ID');
+                    const totalVolume = (volume * qty).toFixed(3);
+                    matData.push([i+1, materialName, `${berat}kg / ${volume}m³`, qty, `${totalBerat} kg / ${totalVolume} m³`]);
+                }
+            }
+        });
+
+        doc.autoTable({ startY: 35, head: [['No', 'Material', 'Berat/Vol Satuan', 'Qty', 'Total Kumulatif']], body: matData, theme: 'striped' });
+        
+        const analysisData = [];
+        document.querySelectorAll('#analysisBody tr').forEach(row => {
+            const c = row.cells;
+            analysisData.push([
+                c[0].textContent, 
+                c[1].textContent, 
+                c[2].textContent, 
+                c[3].textContent, 
+                c[4].textContent,
+                c[5].textContent,  // Armada Sendiri
+                c[6].textContent,  // Armada Sewa
+                c[7].textContent   // Status
+            ]);
+        });
+
+        doc.autoTable({ 
+            startY: doc.lastAutoTable.finalY + 10, 
+            head: [['Armada', 'Kapasitas', 'Trip', 'BBM', 'Penyusutan', 'Armada Sendiri', 'Armada Sewa', 'Efisiensi']], 
+            body: analysisData, 
+            theme: 'grid', 
+            headStyles: { fillColor: [30, 82, 152] } 
+        });
+        doc.save("Laporan_Logistik_GrandMitra.pdf");
+    }
+
+    function exportToExcel() {
+        const data = [["LAPORAN LOGISTIK GRAND MITRA"], [], ["DAFTAR MATERIAL"], ["Material", "Berat (kg)", "Vol (m3)", "Qty", "Total Berat", "Total Vol"]];
+        document.querySelectorAll('#tableBody tr').forEach(row => {
+            const select = row.querySelector('.item-select');
+            const q = parseFloat(row.querySelector('.quantity-input').value) || 0;
+            
+            if (q > 0) {
+                let materialName = '';
+                let berat = 0, volume = 0;
+                
+                if (select.value === 'manual') {
+                    materialName = row.querySelector('.manual-name').value || 'Material Manual';
+                    berat = parseFloat(row.querySelector('.manual-weight').value) || 0;
+                    volume = parseFloat(row.querySelector('.manual-volume').value) || 0;
+                } 
+                else if (select.value !== 'pilih') {
+                    materialName = select.value;
+                    const m = materials.get(select.value);
+                    if (m) {
+                        berat = m[0];
+                        volume = m[1];
+                    }
+                }
+                
+                if (materialName) {
+                    data.push([materialName, berat, volume, q, berat*q, volume*q]);
+                }
+            }
+        });
+
+        data.push([], ["ANALISIS BIAYA ARMADA"], ["Armada", "Trip", "BBM", "Penyusutan", "Armada Sendiri", "Armada Sewa"]);
+        const km = document.getElementById('jarakKm').value;
+        const hBbm = document.getElementById('hargaBBM').value;
+        const tol = parseFloat(document.getElementById('biayaTol').value) || 0;
+        const kuli = parseFloat(document.getElementById('biayaKuli').value) || 0;
+        const tTon = parseFloat(document.getElementById('totalTonDisplay').textContent.replace(',', '.'));
+        const tM3 = parseFloat(document.getElementById('totalM3Display').textContent);
+
+        truckData.forEach(t => {
+            const trips = Math.max(Math.ceil(tTon / t.ton), Math.ceil(tM3 / t.m3));
+            if(trips > 0) {
+                const bbm = (km * 2 * t.fuelRate * hBbm) * trips;
+                const susut = (km * 2 * t.wear) * trips;
+                const totalArmadaSendiri = bbm + susut + tol + kuli;
+                const totalArmadaSewa = ((t.base + (km * t.perKm)) * trips) + tol + kuli;
+                data.push([t.name, trips, bbm, susut, totalArmadaSendiri, totalArmadaSewa]);
+            }
+        });
+
+        const wb = XLSX.utils.book_new();
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        
+        // Format mata uang Rupiah di Excel
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            for (let C = 0; C <= range.e.c; ++C) {
+                const cell = ws[XLSX.utils.encode_cell({r: R, c: C})];
+                if (cell && typeof cell.v === 'number' && R > 5) cell.z = '"Rp"# ##0';
+            }
+        }
+
+        XLSX.utils.book_append_sheet(wb, ws, "Laporan_GrandMitra");
+        XLSX.writeFile(wb, "Laporan_Logistik.xlsx");
+    }
+
+    // Tambahkan row pertama saat halaman dimuat
+    addRow();
+</script>
+</body>
+</html>
