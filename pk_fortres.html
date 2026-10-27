@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Penjualan, Product Knowledge & Price List Resmi - Pintu Baja Fortress</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts: Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        fortress: {
+                            DEFAULT: '#ba1c1c',
+                            dark: '#8e1212',
+                            light: '#dc2626',
+                            soft: '#fef2f2'
+                        },
+                        navy: {
+                            DEFAULT: '#1e3d59',
+                            dark: '#122538',
+                            light: '#2b5378'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --primary-color: #1e3d59;
+            --fortress-red: #ba1c1c;
+            --price-color: #d90429;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+
+        /* Password Overlay Styling */
+        #loginOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #122538 0%, #1e3d59 50%, #ba1c1c 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .login-box {
+            background: #ffffff;
+            padding: 40px 32px;
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 440px;
+            text-align: center;
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        .tab-btn.active {
+            background-color: #ba1c1c;
+            color: #ffffff;
+            border-color: #ba1c1c;
+            box-shadow: 0 4px 12px rgba(186, 28, 28, 0.25);
+        }
+
+        .badge-type {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 11px;
+            display: inline-block;
+        }
+
+        .prod-link {
+            color: white;
+            background-color: #1e3d59;
+            padding: 6px 12px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .prod-link:hover {
+            background-color: #ba1c1c;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+<!-- 1. LOGIN OVERLAY SCREEN -->
+<div id="loginOverlay">
+    <div class="login-box">
+        <div class="w-16 h-16 bg-red-100 text-fortress rounded-full flex items-center justify-center text-3xl mx-auto mb-4">
+            <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <h2 class="text-2xl font-extrabold text-slate-800 mb-1">Grand Mitra Bangunan</h2>
+        <p class="text-xs text-slate-500 mb-6 leading-relaxed">Masukkan password akses untuk membuka Portal Sales Modul & Price List Resmi Pintu Baja FORTRESS</p>
+
+        <div class="space-y-4">
+            <input type="password" id="passwordInput" placeholder="Masukkan Password Akses..." 
+                   class="w-full px-4 py-3 border-2 border-slate-200 rounded-xl text-center text-lg font-semibold focus:border-fortress focus:outline-none transition"
+                   onkeypress="handleKeyPress(event)">
+            
+            <button onclick="checkPassword()" 
+                    class="w-full py-3.5 bg-fortress hover:bg-fortress-dark text-white font-bold rounded-xl transition flex items-center justify-center space-x-2 shadow-lg shadow-red-900/20">
+                <span>Buka Akses Sistem</span>
+                <i class="fa-solid fa-arrow-right text-sm"></i>
+            </button>
+        </div>
+
+        <div id="errorMsg" class="mt-4 p-3 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hidden">
+            <i class="fa-solid fa-triangle-exclamation mr-1"></i> Password salah! Silakan coba lagi.
+        </div>
+    </div>
+</div>
+
+<!-- 2. MAIN APPLICATION CONTAINER -->
+<div id="mainContainer" class="hidden">
+
+    <!-- HEADER BAR -->
+    <header class="bg-fortress text-white shadow-xl sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/10 p-2.5 rounded-xl border border-white/20">
+                    <i class="fa-solid fa-door-closed text-2xl text-white"></i>
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="font-black text-lg sm:text-xl tracking-tight">PINTU BAJA FORTRESS</h1>
+                        <span class="bg-white/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Official System</span>
+                    </div>
+                    <p class="text-xs text-red-100 font-medium">Grand Mitra Bangunan — Selling Skill, Product Knowledge & Price List 2024</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <a href="https://www.pintubajafortress.co.id/" target="_blank" 
+                   class="bg-white/10 hover:bg-white text-white hover:text-fortress font-semibold px-3 py-1.5 rounded-lg text-xs transition border border-white/20 flex items-center gap-1.5">
+                    <i class="fa-solid fa-globe"></i>
+                    <span>pintubajafortress.co.id</span>
+                </a>
+                <button onclick="location.reload()" title="Lock System" class="bg-black/20 hover:bg-black/40 text-white p-2 rounded-lg text-xs">
+                    <i class="fa-solid fa-lock"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- STICKY NAVIGATION TABS -->
+        <nav class="bg-slate-900 border-t border-slate-800 px-4">
+            <div class="max-w-7xl mx-auto flex space-x-2 overflow-x-auto py-2 scrollbar-none text-xs sm:text-sm">
+                <button onclick="switchTab('pkTab')" id="btn-pkTab" class="tab-btn active px-4 py-2 rounded-lg font-bold flex items-center gap-2 whitespace-nowrap transition">
+                    <i class="fa-solid fa-box-open"></i> Product Knowledge
+                </button>
+                <button onclick="switchTab('salesTab')" id="btn-salesTab" class="tab-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg font-bold flex items-center gap-2 whitespace-nowrap transition">
+                    <i class="fa-solid fa-headset"></i> Selling Skill & SOP CS
+                </button>
+                <button onclick="switchTab('priceTab')" id="btn-priceTab" class="tab-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg font-bold flex items-center gap-2 whitespace-nowrap transition">
+                    <i class="fa-solid fa-tags"></i> Katalog & Price List
+                </button>
+                <button onclick="switchTab('pdfTab')" id="btn-pdfTab" class="tab-btn bg-slate-800 text-slate-300 hover:bg-slate-700 px-4 py-2 rounded-lg font-bold flex items-center gap-2 whitespace-nowrap transition">
+                    <i class="fa-solid fa-file-pdf"></i> Dokumen PDF Resmi
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- CONTENT BODY -->
+    <main class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+
+        <!-- ================= TAB 1: PRODUCT KNOWLEDGE ================= -->
+        <div id="pkTab" class="tab-content space-y-8">
+
+            <!-- CORE VALUES & USP -->
+            <section class="bg-white rounded-2xl shadow-md p-6 border-l-8 border-fortress">
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xl sm:text-2xl font-black text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-star text-amber-500"></i> Core Value & Unique Selling Point (USP)
+                    </h2>
+                    <span class="text-xs font-bold bg-red-100 text-fortress px-2.5 py-1 rounded-full">5 Pilar Utama</span>
+                </div>
+                <p class="text-slate-600 text-xs sm:text-sm mb-6">Poin keunggulan utama Pintu Baja Fortress yang wajib dikuasai tim sales untuk meyakinkan konsumen:</p>
+                
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 text-center">
+                    <div class="bg-red-50/80 p-4 rounded-xl border border-red-100 hover:shadow-md transition">
+                        <i class="fa-solid fa-bug-slash text-fortress text-3xl mb-2"></i>
+                        <h4 class="text-xs font-bold text-slate-900">100% Anti Rayap</h4>
+                        <p class="text-[10px] text-slate-500 mt-1">Bahan baja bebas serangan serangga selamanya</p>
+                    </div>
+                    <div class="bg-red-50/80 p-4 rounded-xl border border-red-100 hover:shadow-md transition">
+                        <i class="fa-solid fa-key text-fortress text-3xl mb-2"></i>
+                        <h4 class="text-xs font-bold text-slate-900">Kunci 5 Titik</h4>
+                        <p class="text-[10px] text-slate-500 mt-1">Sistem penguncian maksimal & komputer master key</p>
+                    </div>
+                    <div class="bg-red-50/80 p-4 rounded-xl border border-red-100 hover:shadow-md transition">
+                        <i class="fa-solid fa-tree text-fortress text-3xl mb-2"></i>
+                        <h4 class="text-xs font-bold text-slate-900">Motif Urat Kayu</h4>
+                        <p class="text-[10px] text-slate-500 mt-1">Heat Transfer Print alami, estetis & mewah</p>
+                    </div>
+                    <div class="bg-red-50/80 p-4 rounded-xl border border-red-100 hover:shadow-md transition">
+                        <i class="fa-solid fa-box-open text-fortress text-3xl mb-2"></i>
+                        <h4 class="text-xs font-bold text-slate-900">Paket Komplit All-In</h4>
+                        <p class="text-[10px] text-slate-500 mt-1">Daun + Kusen + Handle + Kunci + Engsel + Dynabolt</p>
+                    </div>
+                    <div class="bg-red-50/80 p-4 rounded-xl border border-red-100 hover:shadow-md transition">
+                        <i class="fa-solid fa-shield-halved text-fortress text-3xl mb-2"></i>
+                        <h4 class="text-xs font-bold text-slate-900">Anti Muai & Susut</h4>
+                        <p class="text-[10px] text-slate-500 mt-1">Presisi tahan cuaca panas & hujan ekstrem</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- DETAILED PRODUCT KNOWLEDGE GRID -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+                <!-- CARD 1: BAHAN & MATERIAL -->
+                <div class="bg-white rounded-2xl shadow-md p-6 border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                            <div class="w-10 h-10 bg-blue-100 text-blue-700 rounded-xl flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-layer-group"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-base">Bahan & Spesifikasi Material</h3>
+                                <p class="text-xs text-slate-500">Konstruksi baja presisi tinggi bersertifikat</p>
+                            </div>
+                        </div>
+                        <ul class="space-y-3 text-xs sm:text-sm text-slate-600">
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-circle-check text-emerald-500 mt-1"></i>
+                                <span><strong>Plat Baja Canai Dingin (Cold Rolled Steel):</strong> Bahan baku utama daun pintu & kusen yang kokoh, tahan benturan keras, dan anti penyok standar pabrikasi.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-circle-check text-emerald-500 mt-1"></i>
+                                <span><strong>Honeycomb Paper Core:</strong> Struktur sarang lebah di dalam daun pintu yang berfungsi sebagai insulasi termal (peredam panas) dan isolasi akustik (peredam suara kedap).</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-circle-check text-emerald-500 mt-1"></i>
+                                <span><strong>Heat Transfer Printing Technology:</strong> Pelapisan motif urat kayu menggunakan teknik pemanasan suhu tinggi sehingga serat kayu merekat kuat & tidak mudah mengelupas.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-circle-check text-emerald-500 mt-1"></i>
+                                <span><strong>Powder Coating Anti-Rust:</strong> Lapisan dasar cat tahan karat dan perlindungan terhadap radiasi sinar UV agar warna tidak mudah pudar.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- CARD 2: DURABILITY & KEUNGGULAN -->
+                <div class="bg-white rounded-2xl shadow-md p-6 border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                            <div class="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-shield-cat"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-base">Durabilitas & Ketahanan Pintu</h3>
+                                <p class="text-xs text-slate-500">Investasi jangka panjang tanpa biaya perawatan ekstra</p>
+                            </div>
+                        </div>
+                        <ul class="space-y-3 text-xs sm:text-sm text-slate-600">
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-shield-halved text-fortress mt-1"></i>
+                                <span><strong>100% Bebas Rayap & Jamur:</strong> Bebas risiko lapuk atau hancur dimakan rayap, cocok untuk wilayah kelembapan tinggi di Indonesia.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-shield-halved text-fortress mt-1"></i>
+                                <span><strong>Stabil (Tidak Muai / Susut):</strong> Pintu tidak akan macet atau melengkung akibat perubahan cuaca panas maupun hujan deras.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-shield-halved text-fortress mt-1"></i>
+                                <span><strong>Tahan Api (Fire Retardant):</strong> Material baja tidak merambatkan api saat terjadi musibah kebakaran.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-shield-halved text-fortress mt-1"></i>
+                                <span><strong>Perawatan Sangat Mudah:</strong> Tidak perlu rutin dicat ulang atau di-finishing berkala; cukup dilap kain basah jika berdebu.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- CARD 3: SISTEM KEAMANAN & FITUR -->
+                <div class="bg-white rounded-2xl shadow-md p-6 border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                            <div class="w-10 h-10 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-lock"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-base">Sistem Penguncian & Aksesori</h3>
+                                <p class="text-xs text-slate-500">Keamanan maksimal untuk ketenangan keluarga</p>
+                            </div>
+                        </div>
+                        <ul class="space-y-3 text-xs sm:text-sm text-slate-600">
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-key text-amber-600 mt-1"></i>
+                                <span><strong>5 Titik Penguncian (5-Point Lock):</strong> Mengunci sekaligus di bagian atas, samping, dan bawah hanya dengan 1 kali putaran anak kunci.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-key text-amber-600 mt-1"></i>
+                                <span><strong>Computer Master Key System (Kunci A-B):</strong> Dilengkapi Kunci Contractor (A) & Kunci Master Pemilik (B). Saat Kunci B diputar, Kunci A otomatis hangus demi keamanan pasca renovasi.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-key text-amber-600 mt-1"></i>
+                                <span><strong>Engsel Baja Tersembunyi (Hidden Hinges):</strong> Engsel berada di dalam kusen, tidak bisa dipotong/dilepas dari luar oleh pencuri.</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <i class="fa-solid fa-key text-amber-600 mt-1"></i>
+                                <span><strong>Karet Peredam & Peep Hole:</strong> Rubber seal di sekeliling kusen meredam benturan dan lubang pengintip (peep hole) untuk melihat tamu dari dalam.</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- CARD 4: VARIAN TIPE & PANDUAN BUKAAN -->
+                <div class="bg-white rounded-2xl shadow-md p-6 border border-slate-200 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center space-x-3 mb-4 pb-3 border-b border-slate-100">
+                            <div class="w-10 h-10 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-door-open"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-base">Tipe Pintu & Arah Bukaan</h3>
+                                <p class="text-xs text-slate-500">Fleksibilitas untuk berbagai kebutuhan bangunan</p>
+                            </div>
+                        </div>
+                        <div class="space-y-3 text-xs sm:text-sm text-slate-600">
+                            <p><strong>1. Tipe Single Door (Pintu Tunggal):</strong> Untuk pintu kamar, pintu belakang, atau pintu utama rumah minimalis (Lebar 80 - 100 cm).</p>
+                            <p><strong>2. Tipe Mother & Son (Utang Anak):</strong> Kombinasi 1 daun pintu besar + 1 daun kecil, memudahkan memasukkan furnitur besar (Lebar 120 - 130 cm).</p>
+                            <p><strong>3. Tipe Double Door (Kupu-Kupu):</strong> 2 daun pintu sama besar yang sangat megah untuk pintu utama fasad depan (Lebar 150 - 160 cm).</p>
+                            <div class="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between">
+                                <div>
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase">Panduan Bukaan</span>
+                                    <p class="text-xs font-bold text-slate-800">L = Buka Kiri | R = Buka Kanan</p>
+                                </div>
+                                <i class="fa-solid fa-compass text-2xl text-purple-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- SERI PRODUK FORTRESS LINEUP -->
+            <section class="bg-white rounded-2xl shadow-md p-6 border border-slate-200">
+                <h3 class="text-lg font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-list-check text-fortress"></i> Klasifikasi Lineup Seri Pintu Baja Fortress
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span class="font-bold text-fortress text-sm">LEGION Series</span>
+                        <p class="text-slate-600 mt-1">Seri ekonomis/entry level, praktis & efisien dengan ketebalan daun 4 cm. Sangat terjangkau untuk proyek/perumahan.</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span class="font-bold text-fortress text-sm">URBAN Series</span>
+                        <p class="text-slate-600 mt-1">Seri favorit keluarga muda. Desain modern minimalis dengan harga kompetitif untuk pintu utama & kamar.</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span class="font-bold text-fortress text-sm">ARMOR & FORT Series</span>
+                        <p class="text-slate-600 mt-1">Seri flagship paling populer. Ketebalan daun 5 cm, kokoh, tersedia varian Wood, Marble (MRB), dan Black Carbon (CBN).</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span class="font-bold text-fortress text-sm">PRIME & SANCTUARY Series</span>
+                        <p class="text-slate-600 mt-1">Seri tinggi ekstra (220-230 cm) untuk rumah berkonsep ceiling tinggi, tampak lebih jangkung dan mewah.</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span class="font-bold text-fortress text-sm">SHIELD & GALAXY Series</span>
+                        <p class="text-slate-600 mt-1">Seri arsitektural tinggi 240 cm dengan desain garis tegas, futuristik, dan eksklusif untuk hunian modern.</p>
+                    </div>
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                        <span class="font-bold text-fortress text-sm">OLYMPUS & DYNASTY Series</span>
+                        <p class="text-slate-600 mt-1">Super Heavy Duty Luxury Door. Ketebalan panel mencapai 10 cm dengan desain ornamen klasik mewah bak istana.</p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- ================= TAB 2: SELLING SKILL & HANDLING OBJECTION ================= -->
+        <div id="salesTab" class="tab-content hidden space-y-8">
+
+            <!-- KONSEP 1: OFFLINE DISPLAY -->
+            <section class="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200">
+                <div class="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-fortress text-white font-black px-3 py-1 rounded-full text-xs">KONSEP 1</span>
+                        <h3 class="text-base sm:text-lg font-bold">Customer Datang Langsung ke Toko (Offline Display)</h3>
+                    </div>
+                    <i class="fa-solid fa-store text-xl text-slate-400"></i>
+                </div>
+
+                <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- SELLING SKILL -->
+                    <div class="bg-blue-50/60 p-5 rounded-xl border border-blue-100 space-y-3">
+                        <h4 class="font-bold text-blue-900 text-sm flex items-center gap-2 border-b border-blue-200 pb-2">
+                            <i class="fa-solid fa-bullseye text-blue-600"></i> Selling Skill (Experiential)
+                        </h4>
+                        <ul class="space-y-2 text-xs text-slate-700 leading-relaxed">
+                            <li><strong>1. Touch & Feel Experience:</strong> Ajak konsumen ketuk panel pintu baja untuk merasakan kekokohannya dibanding kayu biasa.</li>
+                            <li><strong>2. Demo Kunci 5 Titik:</strong> Biarkan customer memutar kunci sendiri untuk merasakan kelancaran & keamanan <em>Computer Master Key</em>.</li>
+                            <li><strong>3. Jelaskan Paket All-in-One:</strong> Tekankan bahwa harga tertera sudah paket lengkap: <em>Daun Pintu + Kusen + Engsel + Handle Stainless + Kunci + Dynabolt</em>.</li>
+                            <li><strong>4. Pengukuran di Tempat:</strong> Tunjukkan pita ukur, bantu ukur opening (lebar x tinggi) sesuai kebutuhan unit (Single, Mom-Son, Double).</li>
+                        </ul>
+                    </div>
+
+                    <!-- HANDLING OBJECTION -->
+                    <div class="bg-orange-50/60 p-5 rounded-xl border border-orange-100 space-y-3">
+                        <h4 class="font-bold text-orange-900 text-sm flex items-center gap-2 border-b border-orange-200 pb-2">
+                            <i class="fa-solid fa-shield-cat text-orange-600"></i> Handling Objection
+                        </h4>
+                        <div class="space-y-3 text-xs">
+                            <div class="bg-white p-3 rounded-lg shadow-sm border border-orange-100">
+                                <p class="font-bold text-red-600">"Harganya lebih mahal dari pintu kayu biasa?"</p>
+                                <p class="text-slate-600 mt-1"><strong>Solusi:</strong> "Bapak/Ibu, pintu kayu butuh beli kusen terpisah, ongkos cat, kunci, dan tukang. Kalau Fortress sudah <em>All-in-One</em> tinggal pasang, anti rayap selamanya, jadi jauh lebih hemat jangka panjang."</p>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg shadow-sm border border-orange-100">
+                                <p class="font-bold text-red-600">"Apakah bahan baja bikin ruangan panas atau seperti gudang?"</p>
+                                <p class="text-slate-600 mt-1"><strong>Solusi:</strong> "Di dalamnya ada peredam Honeycomb Paper, dan finishing kami menggunakan teknologi *Heat Transfer Print* urat kayu alami, tampilannya tetap hangat dan elegan seperti kayu premium."</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CS SOP -->
+                    <div class="bg-emerald-50/60 p-5 rounded-xl border border-emerald-100 space-y-3">
+                        <h4 class="font-bold text-emerald-900 text-sm flex items-center gap-2 border-b border-emerald-200 pb-2">
+                            <i class="fa-solid fa-handshake-angle text-emerald-600"></i> Customer Service SOP
+                        </h4>
+                        <ul class="space-y-2 text-xs text-slate-700 leading-relaxed">
+                            <li><strong>Sapaan Hangat:</strong> "Selamat datang di Display Fortress! Ada yang bisa dibantu untuk kebutuhan pintu utama atau kamar?"</li>
+                            <li><strong>Pendampingan Aktif:</strong> Dampingi konsumen dari display ke display, jangan biarkan konsumen bingung melihat price tag sendirian.</li>
+                            <li><strong>Transparansi Harga:</strong> Jelaskan secara gamblang nett price dan promo yang sedang berlaku, sertakan rincian bahwa tidak ada biaya tersembunyi untuk aksesori standar pintu.</li>
+                            <li><strong>Edukasi Bukaan Pintu:</strong> Pastikan membantu customer menentukan arah bukaan pintu (Buka Kiri / Buka Kanan) agar tidak salah saat pemasangan di lokasi.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- KONSEP 2: ONLINE / WHATSAPP SALES -->
+            <section class="bg-white rounded-2xl shadow-lg overflow-hidden border border-slate-200">
+                <div class="bg-slate-900 text-white p-4 sm:p-5 flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <span class="bg-fortress text-white font-black px-3 py-1 rounded-full text-xs">KONSEP 2</span>
+                        <h3 class="text-base sm:text-lg font-bold">Layanan Digital & Chat Penjualan (Online / WhatsApp)</h3>
+                    </div>
+                    <i class="fa-solid fa-comments text-xl text-slate-400"></i>
+                </div>
+
+                <div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-blue-50/60 p-5 rounded-xl border border-blue-100 space-y-3">
+                        <h4 class="font-bold text-blue-900 text-sm flex items-center gap-2 border-b border-blue-200 pb-2">
+                            <i class="fa-solid fa-bolt text-blue-600"></i> Quick Response & Media Sales
+                        </h4>
+                        <ul class="space-y-2 text-xs text-slate-700 leading-relaxed">
+                            <li><strong>1. Kecepatan Balas (< 3 Menit):</strong> Kirimkan e-katalog PDF & foto HD pintu sesuai tipe yang ditanyakan konsumen.</li>
+                            <li><strong>2. Kirim Video Demo Singkat:</strong> Berikan video demo ketukan panel baja & penguncian 5 titik agar konsumen yakin meskipun belum lihat fisik.</li>
+                            <li><strong>3. Tanyakan Ukuran Opening:</strong> Mintalah ukuran lubang gawang dinding (lebar x tinggi) untuk merekomendasikan varian yang tepat.</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-orange-50/60 p-5 rounded-xl border border-orange-100 space-y-3">
+                        <h4 class="font-bold text-orange-900 text-sm flex items-center gap-2 border-b border-orange-200 pb-2">
+                            <i class="fa-solid fa-truck-ramp-box text-orange-600"></i> Handling Objection Online
+                        </h4>
+                        <div class="space-y-3 text-xs">
+                            <div class="bg-white p-3 rounded-lg shadow-sm border border-orange-100">
+                                <p class="font-bold text-red-600">"Apakah bisa custom ukuran pintu?"</p>
+                                <p class="text-slate-600 mt-1"><strong>Solusi:</strong> "Pintu Fortress diproduksi dengan presisi pabrik untuk menjamin kekuatan kunci 5 titik. Kami menyediakan varian ukuran standar dari 80cm hingga 160cm yang mencakup hampir seluruh gawang rumah Indonesia."</p>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg shadow-sm border border-orange-100">
+                                <p class="font-bold text-red-600">"Pengiriman ke luar kota aman dari penyok?"</p>
+                                <p class="text-slate-600 mt-1"><strong>Solusi:</strong> "Sangat aman Bapak/Ibu, pengiriman menggunakan packing peti kayu berlapis bubble wrap tebal dan diasuransikan."</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-emerald-50/60 p-5 rounded-xl border border-emerald-100 space-y-3">
+                        <h4 class="font-bold text-emerald-900 text-sm flex items-center gap-2 border-b border-emerald-200 pb-2">
+                            <i class="fa-solid fa-paper-plane text-emerald-600"></i> Follow-Up & Closing SOP
+                        </h4>
+                        <ul class="space-y-2 text-xs text-slate-700 leading-relaxed">
+                            <li><strong>Template Salam:</strong> "Halo Bapak/Ibu [Nama], terima kasih telah menghubungi Grand Mitra Bangunan. Berikut e-katalog Pintu Baja Fortress pilihan terbaik..."</li>
+                            <li><strong>Follow-Up H+1:</strong> "Selamat pagi Bapak/Ibu, bagaimana dengan e-katalog Pintu Fortress kemarin? Apakah ada tipe yang cocok untuk konsep rumahnya?"</li>
+                            <li><strong>Prosedur DP / Order:</strong> Berikan Invoice resmi & panduan transfer ke rekening perusahaan.</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+        </div>
+
+        <!-- ================= TAB 3: PRICE LIST & KATALOG INTERAKTIF ================= -->
+        <div id="priceTab" class="tab-content hidden space-y-6">
+
+            <!-- INFO BUKAAN PINTU -->
+            <div class="bg-slate-100 border border-slate-200 border-l-4 border-navy rounded-2xl p-5">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <div class="md:col-span-2 space-y-2">
+                        <h3 class="font-bold text-navy text-sm sm:text-base flex items-center gap-2">
+                            <i class="fa-solid fa-circle-info"></i> Panduan Penentuan Arah Bukaan Pintu (L / R):
+                        </h3>
+                        <ul class="text-xs text-slate-600 space-y-1.5 ml-2">
+                            <li><span class="bg-navy text-white px-2 py-0.5 rounded text-[10px] font-bold mr-1">Buka Kiri (L)</span> Posisi engsel di sebelah kiri, pintu diayun terbuka ke arah kiri.</li>
+                            <li><span class="bg-navy text-white px-2 py-0.5 rounded text-[10px] font-bold mr-1">Buka Kanan (R)</span> Posisi engsel di sebelah kanan, pintu diayun terbuka ke arah kanan.</li>
+                        </ul>
+                    </div>
+                    <div class="text-center bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+                        <img src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEh5wS-xvdB9kg1rx7nmGIWZde6Nde5WV8sq5f9lTp-eYCqB7Cjwywpad2S0bq37NY5QzCtBdo01xVh1dgmIP7_raiYRjIPZLEBAcpwYV-nkQEB4Q7TemAvrECPZ3EeIfT6HphyKyWxHwULnYThRhzjqDXYP5LG5zAeCHFYdbyFA8ts977qKFZHcJu_DY_Eb/w1684-h1069-p-k-no-nu/Gemini_Generated_Image_m6gvzsm6gvzsm6gv.png" 
+                             alt="Ilustrasi Bukaan Pintu" class="max-h-28 mx-auto object-contain">
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONTROL PANEL -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="relative w-full sm:w-96">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-400 text-sm"></i>
+                    <input type="text" id="searchInput" placeholder="Cari tipe, nama, atau varian pintu..." 
+                           class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:outline-none focus:border-fortress transition"
+                           oninput="handleSearch()">
+                    <button id="clearBtn" onclick="clearSearch()" class="hidden absolute right-3 top-3 bg-slate-300 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-slate-400">&times;</button>
+                </div>
+
+                <div class="flex items-center space-x-3 text-xs sm:text-sm text-slate-600 w-full sm:w-auto justify-between sm:justify-end">
+                    <label for="rowsPerPageSelect" class="font-bold flex items-center gap-1.5 whitespace-nowrap">
+                        <i class="fa-solid fa-list-ol text-slate-400"></i> Tampilkan:
+                    </label>
+                    <select id="rowsPerPageSelect" onchange="handleRowsPerPageChange()" class="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-800 focus:outline-none">
+                        <option value="5">5 Data</option>
+                        <option value="10" selected>10 Data</option>
+                        <option value="20">20 Data</option>
+                        <option value="all">Semua Data</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- DESKTOP TABLE -->
+            <div class="hidden md:block bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+                <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead>
+                        <tr class="bg-navy text-white font-bold">
+                            <th class="p-4">Nama Produk / Varian</th>
+                            <th class="p-4">Tipe Pintu</th>
+                            <th class="p-4 text-center">Dimensi (P x L x T)</th>
+                            <th class="p-4 text-right">Harga Resmi</th>
+                            <th class="p-4 text-center">Katalog / Gambar</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100">
+                        <!-- Rendered via JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- MOBILE CARDS -->
+            <div id="cardsContainer" class="grid md:hidden grid-cols-1 gap-4">
+                <!-- Rendered via JS -->
+            </div>
+
+            <!-- PAGINATION -->
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs">
+                <div id="pageInfo" class="text-slate-500 font-medium">Menampilkan data...</div>
+                <div id="paginationButtons" class="flex items-center space-x-1.5 flex-wrap">
+                    <!-- Rendered via JS -->
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ================= TAB 4: EMBEDDED PDF DOCUMENT ================= -->
+        <div id="pdfTab" class="tab-content hidden space-y-4">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-3">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-file-pdf text-3xl text-red-600"></i>
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-sm">Dokumen Price List Resmi Fortress PDF</h3>
+                        <p class="text-xs text-slate-500">Brosur & daftar harga cetak langsung dari distributor</p>
+                    </div>
+                </div>
+                <a href="https://drive.google.com/file/d/1KDrqDP9KzHwX7RYC9VJq4J7Mm9KGbvu-/view" target="_blank" 
+                   class="bg-navy hover:bg-fortress text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2">
+                    <span>Buka di Tab Baru</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                </a>
+            </div>
+
+            <div class="w-full h-[650px] bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
+                <iframe src="https://drive.google.com/file/d/1KDrqDP9KzHwX7RYC9VJq4J7Mm9KGbvu-/preview" class="w-full h-full border-none" allow="autoplay" title="Daftar Harga PDF"></iframe>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-8 border-t border-slate-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 space-y-4">
+            <div class="bg-slate-800/50 p-4 rounded-xl border border-slate-700/50 space-y-2">
+                <p class="font-bold text-slate-200 flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-exclamation text-amber-500"></i> Syarat & Ketentuan Ketentuan Harga:
+                </p>
+                <ul class="list-disc list-inside space-y-1 text-slate-400 pl-1">
+                    <li>Harga tertera belum termasuk biaya pengiriman & pemasangan di lokasi.</li>
+                    <li>Harga belum termasuk biaya packing kayu / ekspedisi pengiriman luar kota.</li>
+                    <li>Harga bersifat tidak mengikat dan dapat berubah sewaktu-waktu tanpa pemberitahuan sebelumnya.</li>
+                    <li><em>Tanggal Efektif Price List: 6 Maret 2024</em></li>
+                </ul>
+            </div>
+            <div class="text-center pt-2 text-slate-500">
+                <p>&copy; 2024 Grand Mitra Bangunan — System Pintu Baja FORTRESS. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+</div>
+
+<!-- 3. JAVASCRIPT LOGIC -->
+<script>
+    // OTENTIKASI PASSWORD
+    function checkPassword() {
+        const input = document.getElementById('passwordInput').value;
+        const errorMsg = document.getElementById('errorMsg');
+        const overlay = document.getElementById('loginOverlay');
+        const container = document.getElementById('mainContainer');
+
+        if (input === 'gmb123') {
+            overlay.style.display = 'none';
+            container.classList.remove('hidden');
+            renderView();
+        } else {
+            errorMsg.classList.remove('hidden');
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').focus();
+        }
+    }
+
+    function handleKeyPress(event) {
+        if (event.key === 'Enter') {
+            checkPassword();
+        }
+    }
+
+    // SWITCH TAB MENU
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.classList.remove('active');
+            btn.classList.add('bg-slate-800', 'text-slate-300');
+        });
+
+        document.getElementById(tabId).classList.remove('hidden');
+        const activeBtn = document.getElementById('btn-' + tabId);
+        activeBtn.classList.add('active');
+        activeBtn.classList.remove('bg-slate-800', 'text-slate-300');
+    }
+
+    // DATA RESMI PRICE LIST FORTRESS
+    const originalFortressData = [
+        {"name": "LEGION 80", "type": "Single Door", "dimension": "80 x 200 x 4 Cm", "price": 1555000},
+        {"name": "URBAN 80", "type": "Single Door", "dimension": "80 x 210 x 4 Cm", "price": 2130000},
+        {"name": "URBAN 90", "type": "Single Door", "dimension": "90 x 210 x 4 Cm", "price": 2500000},
+        {"name": "ARMOR 90", "type": "Single Door", "dimension": "90 x 210 x 4 Cm", "price": 2850000},
+        {"name": "FORT 90", "type": "Single Door", "dimension": "90 x 210 x 5 Cm", "price": 3995000},
+        {"name": "FORT 120", "type": "Mother & Son", "dimension": "120 x 210 x 5 Cm", "price": 6100000},
+        {"name": "FORT 150", "type": "Double Door", "dimension": "150 x 210 x 5 Cm", "price": 7810000},
+        {"name": "MRB-FORT 90 (MARBLE)", "type": "Single Door", "dimension": "90 x 210 x 5 Cm", "price": 4290000},
+        {"name": "MRB-FORT 120 (MARBLE)", "type": "Mother & Son", "dimension": "120 x 210 x 5 Cm", "price": 6600000},
+        {"name": "MRB-FORT 150 (MARBLE)", "type": "Double Door", "dimension": "150 x 210 x 5 Cm", "price": 8580000},
+        {"name": "CBN-FORT 90 (BLACK CARBON)", "type": "Single Door", "dimension": "90 x 210 x 5 Cm", "price": 4290000},
+        {"name": "CBN-FORT 120 (BLACK CARBON)", "type": "Mother & Son", "dimension": "120 x 210 x 5 Cm", "price": 6600000},
+        {"name": "CBN-FORT 150 (BLACK CARBON)", "type": "Double Door", "dimension": "150 x 210 x 5 Cm", "price": 8580000},
+        {"name": "CBN-PRIME 90 (BLACK CARBON)", "type": "Single Door", "dimension": "90 x 230 x 5 Cm", "price": 5510000},
+        {"name": "CBN-PRIME 120 (BLACK CARBON)", "type": "Mother & Son", "dimension": "120 x 230 x 5 Cm", "price": 8400000},
+        {"name": "CBN-PRIME 150 (BLACK CARBON)", "type": "Double Door", "dimension": "150 x 230 x 5 Cm", "price": 10875000},
+        {"name": "SANC-FORT 100 (SANCTUARY)", "type": "Single Door", "dimension": "100 x 210 x 5 Cm", "price": 5225000},
+        {"name": "SANC-FORT 130 (SANCTUARY)", "type": "Mother & Son", "dimension": "130 x 210 x 5 Cm", "price": 7765000},
+        {"name": "SANC-FORT 160 (SANCTUARY)", "type": "Double Door", "dimension": "160 x 210 x 5 Cm", "price": 10375000},
+        {"name": "SHD.01 90 (SHIELD)", "type": "Single Door", "dimension": "90 x 240 x 5 Cm", "price": 7388000},
+        {"name": "SHD.01 120 (SHIELD)", "type": "Mother & Son", "dimension": "120 x 240 x 5 Cm", "price": 11881000},
+        {"name": "SHD.01 150 (SHIELD)", "type": "Double Door", "dimension": "150 x 240 x 5 Cm", "price": 15231000},
+        {"name": "PRIME 90", "type": "Single Door", "dimension": "90 x 220/230 x 5 Cm", "price": 5125000},
+        {"name": "PRIME 120", "type": "Mother & Son", "dimension": "120 x 220/230 x 5 Cm", "price": 7780000},
+        {"name": "PRIME 150", "type": "Double Door", "dimension": "150 x 220/230 x 5 Cm", "price": 10030000},
+        {"name": "SHD.02 & 03 90 (SHIELD)", "type": "Single Door", "dimension": "90 x 240 x 5 Cm", "price": 6261000},
+        {"name": "SHD.02 & 03 120 (SHIELD)", "type": "Mother & Son", "dimension": "120 x 240 x 5 Cm", "price": 9623000},
+        {"name": "SHD.02 & 03 150 (SHIELD)", "type": "Double Door", "dimension": "150 x 240 x 5 Cm", "price": 12338000},
+        {"name": "GLX 90 (GALAXY)", "type": "Single Door", "dimension": "90 x 230 x 5 Cm", "price": 7100000},
+        {"name": "GLX 120 (GALAXY)", "type": "Mother & Son", "dimension": "120 x 230 x 5 Cm", "price": 10925000},
+        {"name": "GLX 150 (GALAXY)", "type": "Double Door", "dimension": "150 x 230 x 5 Cm", "price": 14150000},
+        {"name": "OLY 100 (OLYMPUS)", "type": "Single Door", "dimension": "100 x 240 x 10 Cm", "price": 17600000},
+        {"name": "OLY 130 (OLYMPUS)", "type": "Mother & Son", "dimension": "130 x 240 x 10 Cm", "price": 24750000},
+        {"name": "OLY 160 (OLYMPUS)", "type": "Double Door", "dimension": "160 x 240 x 10 Cm", "price": 31900000},
+        {"name": "DYS 100 (DYNASTY)", "type": "Single Door", "dimension": "100 x 240 x 10 Cm", "price": 23250000},
+        {"name": "DYS 130 (DYNASTY)", "type": "Mother & Son", "dimension": "130 x 240 x 10 Cm", "price": 37500000},
+        {"name": "DYS 160 (DYNASTY)", "type": "Double Door", "dimension": "160 x 240 x 10 Cm", "price": 49400000}
+    ];
+
+    const fortressData = originalFortressData.map(item => {
+        const upperName = item.name.toUpperCase();
+        let link = "https://www.pintubajafortress.co.id/product/category/";
+
+        if (upperName.includes("ARMOR")) link += "armor";
+        else if (upperName.includes("URBAN")) link += "urban";
+        else if (upperName.includes("LEGION")) link += "legion";
+        else link += "fort";
+
+        return { ...item, link: link };
+    });
+
+    let filteredData = [...fortressData];
+    let currentPage = 1;
+    let rowsPerPage = 10;
+
+    function formatRupiah(number) {
+        return "Rp " + number.toLocaleString('id-ID');
+    }
+
+    function renderView() {
+        renderTable();
+        renderCards();
+        renderPaginationInfo();
+        renderPaginationButtons();
+    }
+
+    function getPaginatedData() {
+        const actualRowsPerPage = rowsPerPage === 'all' ? filteredData.length : parseInt(rowsPerPage);
+        const startIndex = (currentPage - 1) * actualRowsPerPage;
+        const endIndex = rowsPerPage === 'all' ? filteredData.length : startIndex + actualRowsPerPage;
+        return { data: filteredData.slice(startIndex, endIndex), startIndex, endIndex };
+    }
+
+    function renderTable() {
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '';
+        const { data } = getPaginatedData();
+
+        if (data.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-slate-400">Produk tidak ditemukan</td></tr>`;
+            return;
+        }
+
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.className = "hover:bg-slate-50 transition";
+            row.innerHTML = `
+                <td class="p-4 font-bold text-slate-800">${item.name}</td>
+                <td class="p-4"><span class="badge-type">${item.type}</span></td>
+                <td class="p-4 text-center text-slate-600 font-medium">${item.dimension}</td>
+                <td class="p-4 text-right font-extrabold text-red-600">${formatRupiah(item.price)}</td>
+                <td class="p-4 text-center">
+                    <a href="${item.link}" target="_blank" class="prod-link">
+                        <span>Lihat Gambar</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                    </a>
+                </td>
+            `;
+            tableBody.appendChild(row);
+        });
+    }
+
+    function renderCards() {
+        const cardsContainer = document.getElementById('cardsContainer');
+        cardsContainer.innerHTML = '';
+        const { data } = getPaginatedData();
+
+        if (data.length === 0) {
+            cardsContainer.innerHTML = `
+                <div class="text-center py-8 bg-white rounded-xl text-slate-400 border border-slate-200">
+                    <i class="fa-solid fa-box-open text-3xl mb-2"></i>
+                    <p class="text-xs">Produk tidak ditemukan</p>
+                </div>
+            `;
+            return;
+        }
+
+        data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3';
+            card.innerHTML = `
+                <div class="flex justify-between items-start gap-2">
+                    <h4 class="font-bold text-slate-900 text-sm">${item.name}</h4>
+                    <span class="badge-type">${item.type}</span>
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 text-xs space-y-1">
+                    <div class="flex justify-between text-slate-500">
+                        <span>Dimensi (PxLxT):</span>
+                        <span class="font-bold text-slate-800">${item.dimension}</span>
+                    </div>
+                </div>
+                <div class="flex justify-between items-center pt-1 border-t border-slate-100">
+                    <span class="text-[10px] uppercase font-bold text-slate-400">Harga Resmi</span>
+                    <span class="text-base font-black text-red-600">${formatRupiah(item.price)}</span>
+                </div>
+                <a href="${item.link}" target="_blank" class="w-full py-2 bg-navy hover:bg-fortress text-white text-xs font-bold rounded-xl text-center flex items-center justify-center gap-2 transition">
+                    <i class="fa-solid fa-image"></i>
+                    <span>Lihat Gambar / Katalog</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                </a>
+            `;
+            cardsContainer.appendChild(card);
+        });
+    }
+
+    function renderPaginationInfo() {
+        const totalItems = filteredData.length;
+        const actualRowsPerPage = rowsPerPage === 'all' ? totalItems : parseInt(rowsPerPage);
+        const startIndex = totalItems === 0 ? 0 : (currentPage - 1) * actualRowsPerPage + 1;
+        const endIndex = rowsPerPage === 'all' ? totalItems : Math.min(currentPage * actualRowsPerPage, totalItems);
+
+        document.getElementById('pageInfo').innerHTML = `Menampilkan <strong>${startIndex}-${endIndex}</strong> dari <strong>${totalItems}</strong> unit pintu`;
+    }
+
+    function renderPaginationButtons() {
+        const paginationButtons = document.getElementById('paginationButtons');
+        paginationButtons.innerHTML = '';
+        if (rowsPerPage === 'all') return;
+
+        const actualRowsPerPage = parseInt(rowsPerPage);
+        const totalPages = Math.ceil(filteredData.length / actualRowsPerPage);
+        if (totalPages <= 1) return;
+
+        const prevBtn = document.createElement('button');
+        prevBtn.className = "px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-bold disabled:opacity-50 disabled:cursor-not-allowed";
+        prevBtn.innerHTML = '<i class="fa-solid fa-chevron-left"></i> Prev';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => { currentPage--; renderView(); };
+        paginationButtons.appendChild(prevBtn);
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `px-3 py-1.5 rounded-lg font-bold ${i === currentPage ? 'bg-fortress text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`;
+                pageBtn.innerText = i;
+                pageBtn.onclick = () => { currentPage = i; renderView(); };
+                paginationButtons.appendChild(pageBtn);
+            } else if (i === currentPage - 2 || i === currentPage + 2) {
+                const dots = document.createElement('span');
+                dots.className = "px-1 text-slate-400";
+                dots.innerText = '...';
+                paginationButtons.appendChild(dots);
+            }
+        }
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = "px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg text-slate-700 font-bold disabled:opacity-50 disabled:cursor-not-allowed";
+        nextBtn.innerHTML = 'Next <i class="fa-solid fa-chevron-right"></i>';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => { currentPage++; renderView(); };
+        paginationButtons.appendChild(nextBtn);
+    }
+
+    function handleSearch() {
+        const searchInput = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('clearBtn');
+        const query = searchInput.value.toLowerCase().trim();
+
+        clearBtn.style.display = query.length > 0 ? 'flex' : 'none';
+
+        filteredData = fortressData.filter(item => 
+            item.name.toLowerCase().includes(query) || 
+            item.type.toLowerCase().includes(query) ||
+            item.dimension.toLowerCase().includes(query)
+        );
+
+        currentPage = 1;
+        renderView();
+    }
+
+    function clearSearch() {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.value = '';
+        document.getElementById('clearBtn').style.display = 'none';
+        filteredData = [...fortressData];
+        currentPage = 1;
+        renderView();
+        searchInput.focus();
+    }
+
+    function handleRowsPerPageChange() {
+        rowsPerPage = document.getElementById('rowsPerPageSelect').value;
+        currentPage = 1;
+        renderView();
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('passwordInput').focus();
+    });
+</script>
+
+</body>
+</html>

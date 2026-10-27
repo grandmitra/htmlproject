@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Knowledge, Hitungan Kubikasi & Kuis Kayu Bangunan</title>
+    
+    <!-- Mencegah isu link eksternal keluar dari iframe Google Sites -->
+    <base target="_self">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        html, body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            scroll-behavior: smooth; 
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 pb-16">
+
+    <!-- HEADER & NAVIGATION -->
+    <header class="bg-gradient-to-r from-amber-900 via-amber-800 to-amber-950 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-3">
+                <div class="flex items-center gap-3 w-full md:w-auto justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="bg-amber-500 text-amber-950 p-2.5 rounded-xl text-xl font-black">
+                            <i class="fa-solid fa-tree"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-lg sm:text-xl font-bold tracking-tight">Product Knowledge Kayu</h1>
+                            <p class="text-xs text-amber-200">Katalog, Hitungan Kubikasi & Modul Kuis</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NAV TABS (Menggunakan JS Scroll agar kompatibel dengan Iframe Google Sites) -->
+                <nav class="flex w-full md:w-auto gap-1 bg-amber-950/50 p-1 rounded-xl overflow-x-auto text-xs sm:text-sm font-semibold">
+                    <button onclick="scrollToSection('katalog')" id="nav-katalog" class="nav-btn bg-amber-500 text-amber-950 px-3.5 py-2 rounded-lg transition-all whitespace-nowrap shadow-sm">
+                        <i class="fa-solid fa-boxes-stacked mr-1"></i> Katalog
+                    </button>
+                    <button onclick="scrollToSection('kubikasi')" id="nav-kubikasi" class="nav-btn text-amber-100 hover:text-white px-3.5 py-2 rounded-lg transition-all whitespace-nowrap">
+                        <i class="fa-solid fa-calculator mr-1"></i> Hitungan Kubikasi
+                    </button>
+                    <button onclick="scrollToSection('kuis')" id="nav-kuis" class="nav-btn text-amber-100 hover:text-white px-3.5 py-2 rounded-lg transition-all whitespace-nowrap">
+                        <i class="fa-solid fa-graduation-cap mr-1"></i> Modul Kuis
+                    </button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTAINER UTAMA -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+
+        <!-- ================= SECTION 1: KATALOG PRODUCT KNOWLEDGE ================= -->
+        <section id="katalog" class="space-y-6 pt-2">
+            
+            <!-- INFORMASI PENTING BANCI vs FULL -->
+            <div class="bg-amber-50 border-l-4 border-amber-600 p-4 rounded-r-xl shadow-sm text-xs sm:text-sm text-amber-900">
+                <div class="flex items-start gap-3">
+                    <i class="fa-solid fa-circle-info text-amber-600 text-lg mt-0.5"></i>
+                    <div>
+                        <h3 class="font-bold text-base mb-1">Edukasi Toko: Ukuran Banci vs Ukuran Full</h3>
+                        <p class="leading-relaxed">
+                            Di toko bahan bangunan umum, kayu sering terbagi dua tipe: 
+                            <strong class="text-amber-950">Ukuran Full (Presisi)</strong> dan 
+                            <strong class="text-amber-950">Ukuran Banci (Toleransi)</strong> akibat proses penggergajian & pengeringan. Panjang standar nasional umumnya adalah <strong>3.8 meter hingga 4 meter</strong> per batang.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEARCH & FILTER -->
+            <div class="flex flex-col sm:flex-row gap-3 justify-between items-center">
+                <!-- Filter Tab Kategori -->
+                <div class="flex gap-2 overflow-x-auto w-full sm:w-auto pb-1 no-scrollbar text-xs">
+                    <button onclick="filterCategory('all', event)" class="filter-btn active bg-amber-800 text-white px-4 py-2 rounded-full font-medium shadow-sm whitespace-nowrap">Semua Kayu</button>
+                    <button onclick="filterCategory('reng', event)" class="filter-btn bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-full font-medium hover:bg-amber-50 whitespace-nowrap">Reng</button>
+                    <button onclick="filterCategory('kaso', event)" class="filter-btn bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-full font-medium hover:bg-amber-50 whitespace-nowrap">Kaso</button>
+                    <button onclick="filterCategory('balok', event)" class="filter-btn bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-full font-medium hover:bg-amber-50 whitespace-nowrap">Balok</button>
+                    <button onclick="filterCategory('papan', event)" class="filter-btn bg-white border border-slate-200 text-slate-700 px-4 py-2 rounded-full font-medium hover:bg-amber-50 whitespace-nowrap">Papan Cor</button>
+                </div>
+                
+                <!-- Search Input -->
+                <div class="w-full sm:w-64 relative">
+                    <input type="text" id="searchInput" onkeyup="filterProducts()" placeholder="Cari tipe kayu..." 
+                        class="w-full pl-9 pr-4 py-2 rounded-xl bg-white text-slate-800 placeholder-slate-400 border border-slate-200 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500 shadow-sm">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                </div>
+            </div>
+
+            <!-- GRID PRODUCT CARDS -->
+            <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- CARD 1: RENG MERANTI -->
+                <div class="product-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition-all" data-category="reng" data-title="kayu reng meranti 2x3 3x4">
+                    <div>
+                        <div class="relative h-44 bg-slate-200 overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1516455590571-18256e5bb9ff?auto=format&fit=crop&w=600&q=80" alt="Kayu Reng" class="w-full h-full object-cover">
+                            <span class="absolute top-3 left-3 bg-amber-600 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">Reng Atap</span>
+                        </div>
+                        <div class="p-4">
+                            <h2 class="text-base font-bold text-slate-900">Kayu Reng Meranti</h2>
+                            <p class="text-xs text-slate-500 mb-3">Dudukan Genteng & Rangka Atap ringan</p>
+                            
+                            <div class="space-y-1.5 text-xs border-y border-slate-100 py-2.5 mb-3">
+                                <div class="flex justify-between"><span class="text-slate-500">Material:</span><span class="font-semibold text-slate-800">Meranti Red / Campur</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Ukuran Standar:</span><span class="font-semibold text-slate-800">2x3 cm & 3x4 cm</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Panjang:</span><span class="font-semibold text-slate-800">3.8 m - 4.0 m</span></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 mb-1">Kegunaan Utama:</h4>
+                            <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                                <li>Pengikat penahan genteng pada atap.</li>
+                                <li>List penahan tepi plafon rumah.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 2: KASO 4x6 -->
+                <div class="product-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition-all" data-category="kaso" data-title="kayu kaso 4x6 meranti bekisting plafon">
+                    <div>
+                        <div class="relative h-44 bg-slate-200 overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?auto=format&fit=crop&w=600&q=80" alt="Kayu Kaso 4x6" class="w-full h-full object-cover">
+                            <span class="absolute top-3 left-3 bg-amber-700 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">Kaso 4x6</span>
+                        </div>
+                        <div class="p-4">
+                            <h2 class="text-base font-bold text-slate-900">Kayu Kaso 4x6 (Meranti)</h2>
+                            <p class="text-xs text-slate-500 mb-3">Rangka Plafon & Penyangga Bekisting</p>
+                            
+                            <div class="space-y-1.5 text-xs border-y border-slate-100 py-2.5 mb-3">
+                                <div class="flex justify-between"><span class="text-slate-500">Material:</span><span class="font-semibold text-slate-800">Meranti Lokal / MC</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Dimensi Nominal:</span><span class="font-semibold text-slate-800">4 cm x 6 cm</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Panjang:</span><span class="font-semibold text-slate-800">4.0 Meter</span></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 mb-1">Kegunaan Utama:</h4>
+                            <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                                <li>Rangka plafon gypsum/triplek.</li>
+                                <li>Tiang stut penyangga cetakan cor beton.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 3: KASO 5x7 -->
+                <div class="product-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition-all" data-category="kaso" data-title="kayu kaso 5x7 kamper borneo super">
+                    <div>
+                        <div class="relative h-44 bg-slate-200 overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=600&q=80" alt="Kayu Kaso 5x7" class="w-full h-full object-cover">
+                            <span class="absolute top-3 left-3 bg-amber-800 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">Kaso 5x7</span>
+                        </div>
+                        <div class="p-4">
+                            <h2 class="text-base font-bold text-slate-900">Kayu Kaso 5x7 (Kamper/Kruing)</h2>
+                            <p class="text-xs text-slate-500 mb-3">Rangka Atap Genteng Berat & Steger</p>
+                            
+                            <div class="space-y-1.5 text-xs border-y border-slate-100 py-2.5 mb-3">
+                                <div class="flex justify-between"><span class="text-slate-500">Material:</span><span class="font-semibold text-slate-800">Kamper / Kruing / Borneo</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Dimensi Nominal:</span><span class="font-semibold text-slate-800">5 cm x 7 cm</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Panjang:</span><span class="font-semibold text-slate-800">4.0 Meter</span></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 mb-1">Kegunaan Utama:</h4>
+                            <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                                <li>Konstruksi atap genteng keramik/beton.</li>
+                                <li>Struktur steger dan kuda-kuda bentang pendek.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 4: BALOK 6x12 -->
+                <div class="product-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition-all" data-category="balok" data-title="kayu balok 6x12 meranti kamper gording">
+                    <div>
+                        <div class="relative h-44 bg-slate-200 overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1538688525198-9b88f6f53126?auto=format&fit=crop&w=600&q=80" alt="Kayu Balok 6x12" class="w-full h-full object-cover">
+                            <span class="absolute top-3 left-3 bg-amber-900 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">Balok 6x12</span>
+                        </div>
+                        <div class="p-4">
+                            <h2 class="text-base font-bold text-slate-900">Kayu Balok 6x12</h2>
+                            <p class="text-xs text-slate-500 mb-3">Balok Kuda-Kuda & Gording Utama</p>
+                            
+                            <div class="space-y-1.5 text-xs border-y border-slate-100 py-2.5 mb-3">
+                                <div class="flex justify-between"><span class="text-slate-500">Material:</span><span class="font-semibold text-slate-800">Kamper / Meranti Super</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Dimensi Nominal:</span><span class="font-semibold text-slate-800">6 cm x 12 cm</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Panjang:</span><span class="font-semibold text-slate-800">4.0 Meter</span></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 mb-1">Kegunaan Utama:</h4>
+                            <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                                <li>Balok gording penopang kaso dan genteng.</li>
+                                <li>Struktur rangka utama kuda-kuda atap.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 5: BALOK 8x12 / 5x10 -->
+                <div class="product-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition-all" data-category="balok" data-title="kayu balok 8x12 5x10 tiang kusen">
+                    <div>
+                        <div class="relative h-44 bg-slate-200 overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=600&q=80" alt="Kayu Balok 8x12" class="w-full h-full object-cover">
+                            <span class="absolute top-3 left-3 bg-amber-900 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">Balok 8x12 / 5x10</span>
+                        </div>
+                        <div class="p-4">
+                            <h2 class="text-base font-bold text-slate-900">Kayu Balok 5x10 & 8x12</h2>
+                            <p class="text-xs text-slate-500 mb-3">Tiang Penyangga & Rangka Kusen Pintu</p>
+                            
+                            <div class="space-y-1.5 text-xs border-y border-slate-100 py-2.5 mb-3">
+                                <div class="flex justify-between"><span class="text-slate-500">Material:</span><span class="font-semibold text-slate-800">Kamper / Meranti / Mahoni</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Dimensi Nominal:</span><span class="font-semibold text-slate-800">5x10 cm & 8x12 cm</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Panjang:</span><span class="font-semibold text-slate-800">4.0 Meter</span></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 mb-1">Kegunaan Utama:</h4>
+                            <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                                <li>Bahan pembuatan kusen pintu & jendela.</li>
+                                <li>Tiang kolom penopang bangunan kayu.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CARD 6: PAPAN COR -->
+                <div class="product-card bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col justify-between hover:shadow-md transition-all" data-category="papan" data-title="kayu papan cor 2x20 3x20 sengon albasia meranti">
+                    <div>
+                        <div class="relative h-44 bg-slate-200 overflow-hidden">
+                            <img src="https://images.unsplash.com/photo-1541888946425-d0fbb186a5b3?auto=format&fit=crop&w=600&q=80" alt="Papan Cor" class="w-full h-full object-cover">
+                            <span class="absolute top-3 left-3 bg-stone-700 text-white text-[10px] font-bold px-2 py-0.5 rounded shadow">Papan Cor</span>
+                        </div>
+                        <div class="p-4">
+                            <h2 class="text-base font-bold text-slate-900">Papan Cor (Bekisting)</h2>
+                            <p class="text-xs text-slate-500 mb-3">Cetakan Beton Sloof, Tiang & Ringbalk</p>
+                            
+                            <div class="space-y-1.5 text-xs border-y border-slate-100 py-2.5 mb-3">
+                                <div class="flex justify-between"><span class="text-slate-500">Material:</span><span class="font-semibold text-slate-800">Sengon / Albasia / Meranti</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Ukuran Standar:</span><span class="font-semibold text-slate-800">2x20 cm & 3x20 cm</span></div>
+                                <div class="flex justify-between"><span class="text-slate-500">Panjang:</span><span class="font-semibold text-slate-800">2.0 m – 3.0 m</span></div>
+                            </div>
+                            <h4 class="text-xs font-bold text-slate-800 mb-1">Kegunaan Utama:</h4>
+                            <ul class="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                                <li>Dinding cetakan cor beton sementara.</li>
+                                <li>Anak tangga proyek & penutup bak.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+
+        <!-- ================= SECTION 2: HITUNGAN KUBIKASI LENGKAP ================= -->
+        <section id="kubikasi" class="space-y-6 mt-12 pt-6 border-t border-slate-200">
+            <div class="bg-amber-900 text-white p-6 rounded-2xl shadow-sm">
+                <h2 class="text-lg sm:text-xl font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-amber-400"></i> Detail Rumus & Perhitungan Kubikasi Kayu
+                </h2>
+                <p class="text-xs text-amber-200 mt-1">
+                    Panduan konversi volume per batang, isi batang per 1 m³ (satu kubik), serta perkiraan jumlah ikat di toko bahan bangunan.
+                </p>
+                
+                <div class="mt-4 bg-amber-950/60 p-3.5 rounded-xl text-xs space-y-1 font-mono border border-amber-800/60">
+                    <p class="text-amber-300 font-bold">Rumus Utama Kubikasi:</p>
+                    <p>• Volume 1 Batang (m³) = [Tinggi (m)] × [Lebar (m)] × [Panjang (m)]</p>
+                    <p>• Jumlah Batang per 1 Kubik = 1 m³ ÷ Volume 1 Batang</p>
+                </div>
+            </div>
+
+            <!-- CONTOH DETAILED BREAKDOWN CARD -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-4">
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-2">
+                    <i class="fa-solid fa-square-check text-amber-600"></i> Standar Contoh Perhitungan: Kaso 4x6 (Panjang 4 Meter)
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                    <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-100">
+                        <span class="text-slate-500 block">Ukuran Standar</span>
+                        <strong class="text-slate-900 text-sm">4 cm × 6 cm × 400 cm</strong>
+                    </div>
+                    <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-100">
+                        <span class="text-slate-500 block">Volume 1 Batang</span>
+                        <strong class="text-amber-800 text-sm">0,0096 m³</strong>
+                    </div>
+                    <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-100">
+                        <span class="text-slate-500 block">1 Kubik Isi Batang</span>
+                        <strong class="text-amber-800 text-sm">± 104 Batang</strong>
+                    </div>
+                    <div class="bg-amber-50/60 p-3 rounded-xl border border-amber-100">
+                        <span class="text-slate-500 block">Volume per Ikat (Isi 6)</span>
+                        <strong class="text-amber-800 text-sm">0,0576 m³ (≈ 17,3 Ikat/m³)</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABEL KUBIKASI DENGAN SEMUA UKURAN KAYU -->
+            <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm overflow-hidden">
+                <h3 class="text-sm font-bold text-slate-900 mb-3">Tabel Matriks Konversi Kubikasi Semua Ukuran Kayu</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs text-left border-collapse min-w-[700px]">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200">
+                                <th class="p-3">Jenis / Ukuran</th>
+                                <th class="p-3">Panjang (m)</th>
+                                <th class="p-3">Vol. 1 Batang (m³)</th>
+                                <th class="p-3">Isi Batang / 1 m³</th>
+                                <th class="p-3">Standar Ikat</th>
+                                <th class="p-3">Vol. per Ikat (m³)</th>
+                                <th class="p-3">Ikat / 1 m³</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-700">
+                            <tr class="hover:bg-amber-50/40">
+                                <td class="p-3 font-bold text-amber-900">Reng 2x3</td>
+                                <td class="p-3">4.0 m</td>
+                                <td class="p-3 font-mono">0,0024 m³</td>
+                                <td class="p-3 font-bold">± 416 btg</td>
+                                <td class="p-3">25 btg/ikat</td>
+                                <td class="p-3 font-mono">0,0600 m³</td>
+                                <td class="p-3">± 16,6 ikat</td>
+                            </tr>
+                            <tr class="hover:bg-amber-50/40">
+                                <td class="p-3 font-bold text-amber-900">Reng 3x4</td>
+                                <td class="p-3">4.0 m</td>
+                                <td class="p-3 font-mono">0,0048 m³</td>
+                                <td class="p-3 font-bold">± 208 btg</td>
+                                <td class="p-3">15 btg/ikat</td>
+                                <td class="p-3 font-mono">0,0720 m³</td>
+                                <td class="p-3">± 13,8 ikat</td>
+                            </tr>
+                            <tr class="hover:bg-amber-50/40 bg-amber-50/20">
+                                <td class="p-3 font-bold text-amber-900">Kaso 4x6</td>
+                                <td class="p-3">4.0 m</td>
+                                <td class="p-3 font-mono">0,0096 m³</td>
+                                <td class="p-3 font-bold text-amber-800">± 104 btg</td>
+                                <td class="p-3">6 btg/ikat</td>
+                                <td class="p-3 font-mono">0,0576 m³</td>
+                                <td class="p-3 font-bold text-amber-800">± 17,3 ikat</td>
+                            </tr>
+                            <tr class="hover:bg-amber-50/40">
+                                <td class="p-3 font-bold text-amber-900">Kaso 5x7</td>
+                                <td class="p-3">4.0 m</td>
+                                <td class="p-3 font-mono">0,0140 m³</td>
+                                <td class="p-3 font-bold">± 71 btg</td>
+                                <td class="p-3">4 btg/ikat</td>
+                                <td class="p-3 font-mono">0,0560 m³</td>
+                                <td class="p-3">± 17,8 ikat</td>
+                            </tr>
+                            <tr class="hover:bg-amber-50/40">
+                                <td class="p-3 font-bold text-amber-900">Balok 5x10</td>
+                                <td class="p-3">4.0 m</td>
+                                <td class="p-3 font-mono">0,0200 m³</td>
+                                <td class="p-3 font-bold">± 50 btg</td>
+                                <td class="p-3">Ecer / Btg</td>
+                                <td class="p-3 font-mono">-</td>
+                                <td class="p-3">-</td>
+                            </tr>
+                            <tr class="hover:bg-amber-50/40">
+                                <td class="p-3 font-bold text-amber-900">Balok 6x12</td>
+                                <td class="p-3">4.0 m</td>
+                                <td class="p-3 font-mono">0,0288 m³</td>
+                                <td class="p-3 font-bold">± 35 btg</td>
+                                <td class="p-3">Ecer / Btg</td>
+                                <td class="p-3 font-mono">-</td>
+                                <td class="p-3">-</td>
+                            </tr>
+                            <tr class="hover:bg-amber-50/40">
+                                <td class="p-3 font-bold text-amber-900">Balok 8x12</td>
+                                <td class="p-3">4.0 m</td>
+                                <td class="p-3 font-mono">0,0384 m³</td>
+                                <td class="p-3 font-bold">± 26 btg</td>
+                                <td class="p-3">Ecer / Btg</td>
+                                <td class="p-3 font-mono">-</td>
+                                <td class="p-3">-</td>
+                            </tr>
+                            <tr class="hover:bg-amber-50/40">
+                                <td class="p-3 font-bold text-amber-900">Papan Cor 2x20</td>
+                                <td class="p-3">3.0 m</td>
+                                <td class="p-3 font-mono">0,0120 m³</td>
+                                <td class="p-3 font-bold">± 83 lbr</td>
+                                <td class="p-3">Ecer / Lbr</td>
+                                <td class="p-3 font-mono">-</td>
+                                <td class="p-3">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- ================= SECTION 3: MODUL KUIS 10 SOAL ================= -->
+        <section id="kuis" class="space-y-6 mt-12 pt-6 border-t border-slate-200">
+            <div class="bg-gradient-to-r from-slate-900 to-amber-950 text-white p-6 rounded-2xl shadow-sm">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <span class="bg-amber-500/20 text-amber-300 text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md border border-amber-500/30">Evaluasi Pemahaman</span>
+                        <h2 class="text-lg sm:text-xl font-bold mt-1">Kuis Product Knowledge Kayu Bangunan</h2>
+                        <p class="text-xs text-slate-300 mt-0.5">Jawab 10 pertanyaan pilihan ganda di bawah ini. Nilai akan otomatis dikalkulasi setelah disubmit.</p>
+                    </div>
+                    <div class="hidden sm:block text-3xl text-amber-400 font-bold">
+                        10 <span class="text-xs text-slate-400 font-normal">Soal</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULT CARD (HIDDEN BY DEFAULT) -->
+            <div id="quizResultBox" class="hidden bg-white p-6 rounded-2xl border-2 border-amber-500 shadow-md text-center space-y-3">
+                <h3 class="text-base font-bold text-slate-800">Hasil Evaluasi Kuis Anda</h3>
+                <div id="scoreBadge" class="text-4xl font-extrabold text-amber-600">0 / 100</div>
+                <p id="scoreMessage" class="text-xs text-slate-600 font-medium"></p>
+                <div class="pt-2">
+                    <button onclick="resetQuiz()" class="bg-amber-800 text-white text-xs font-bold px-5 py-2.5 rounded-xl hover:bg-amber-900 transition-colors shadow">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> Ulangi Kuis
+                    </button>
+                </div>
+            </div>
+
+            <!-- QUIZ FORM -->
+            <form id="quizForm" onsubmit="calculateQuiz(event)" class="space-y-4">
+
+                <!-- SOAL 1 -->
+                <div class="quiz-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3" id="q1_box">
+                    <p class="text-xs sm:text-sm font-bold text-slate-800">1. Berapa panjang standar kayu olahan bangunan yang umum dijual di toko bahan bangunan Indonesia?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q1" value="A" class="accent-amber-700 mr-2" required> A. 2.0 meter
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q1" value="B" class="accent-amber-700 mr-2"> B. 3.8 meter – 4.0 meter
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q1" value="C" class="accent-amber-700 mr-2"> C. 6.0 meter
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q1" value="D" class="accent-amber-700 mr-2"> D. 1.5 meter
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SOAL 2 -->
+                <div class="quiz-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3" id="q2_box">
+                    <p class="text-xs sm:text-sm font-bold text-slate-800">2. Istilah untuk kayu di pasaran yang ukurannya sedikit berkurang dari ukuran nominal akibat penyusutan/penyerutan adalah...</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q2" value="A" class="accent-amber-700 mr-2" required> A. Ukuran Full
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q2" value="B" class="accent-amber-700 mr-2"> B. Ukuran Banci (Toleransi)
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q2" value="C" class="accent-amber-700 mr-2"> C. Ukuran Moduler
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q2" value="D" class="accent-amber-700 mr-2"> D. Ukuran Pas
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SOAL 3 -->
+                <div class="quiz-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3" id="q3_box">
+                    <p class="text-xs sm:text-sm font-bold text-slate-800">3. Berapakah volume (m³) 1 batang kayu Kaso 4x6 dengan panjang 4 meter?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q3" value="A" class="accent-amber-700 mr-2" required> A. 0,0096 m³
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q3" value="B" class="accent-amber-700 mr-2"> B. 0,0576 m³
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q3" value="C" class="accent-amber-700 mr-2"> C. 0,0140 m³
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q3" value="D" class="accent-amber-700 mr-2"> D. 0,0024 m³
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SOAL 4 -->
+                <div class="quiz-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3" id="q4_box">
+                    <p class="text-xs sm:text-sm font-bold text-slate-800">4. Dalam 1 kubik (1 m³), berapakah perkiraan isi jumlah batang untuk Kaso 4x6 (panjang 4 meter)?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q4" value="A" class="accent-amber-700 mr-2" required> A. ± 50 Batang
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q4" value="B" class="accent-amber-700 mr-2"> B. ± 71 Batang
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q4" value="C" class="accent-amber-700 mr-2"> C. ± 104 Batang
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q4" value="D" class="accent-amber-700 mr-2"> D. ± 208 Batang
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SOAL 5 -->
+                <div class="quiz-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3" id="q5_box">
+                    <p class="text-xs sm:text-sm font-bold text-slate-800">5. Jika 1 ikat Kaso 4x6 berisi 6 batang, berapa volume total per ikat kayu tersebut?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q5" value="A" class="accent-amber-700 mr-2" required> A. 0,0576 m³
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q5" value="B" class="accent-amber-700 mr-2"> B. 0,0140 m³
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q5" value="C" class="accent-amber-700 mr-2"> C. 0,0720 m³
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q5" value="D" class="accent-amber-700 mr-2"> D. 0,1040 m³
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SOAL 6 -->
+                <div class="quiz-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3" id="q6_box">
+                    <p class="text-xs sm:text-sm font-bold text-slate-800">6. Kayu jenis apakah yang memiliki tingkat keawetan paling tinggi dan sangat bagus untuk kusen & pintu?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q6" value="A" class="accent-amber-700 mr-2" required> A. Kayu Sengon
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q6" value="B" class="accent-amber-700 mr-2"> B. Kayu Kamper
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q6" value="C" class="accent-amber-700 mr-2"> C. Kayu Albasia
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q6" value="D" class="accent-amber-700 mr-2"> D. Kayu Borneo Kasar
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SOAL 7 -->
+                <div class="quiz-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3" id="q7_box">
+                    <p class="text-xs sm:text-sm font-bold text-slate-800">7. Kayu Reng ukuran 2x3 dan 3x4 pada umumnya digunakan untuk fungsi...</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q7" value="A" class="accent-amber-700 mr-2" required> A. Tiang penyangga cor beton
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q7" value="B" class="accent-amber-700 mr-2"> B. Dudukan genteng / rangka atap
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q7" value="C" class="accent-amber-700 mr-2"> C. Rangka kusen pintu
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q7" value="D" class="accent-amber-700 mr-2"> D. Balok gording utama
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SOAL 8 -->
+                <div class="quiz-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3" id="q8_box">
+                    <p class="text-xs sm:text-sm font-bold text-slate-800">8. Jenis kayu yang paling ekonomis dan khusus sering dipakai untuk papan cetakan cor (bekisting) sekali pakai adalah...</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q8" value="A" class="accent-amber-700 mr-2" required> A. Kayu Sengon / Albasia
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q8" value="B" class="accent-amber-700 mr-2"> B. Kayu Kamper Singkil
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q8" value="C" class="accent-amber-700 mr-2"> C. Kayu Jati Jepara
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q8" value="D" class="accent-amber-700 mr-2"> D. Kayu Bengkirai
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SOAL 9 -->
+                <div class="quiz-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3" id="q9_box">
+                    <p class="text-xs sm:text-sm font-bold text-slate-800">9. Kayu balok ukuran 6x12 dalam struktur konstruksi atap bangunan umumnya difungsikan sebagai...</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q9" value="A" class="accent-amber-700 mr-2" required> A. Lis profil plafon
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q9" value="B" class="accent-amber-700 mr-2"> B. Balok Kuda-Kuda & Gording Penopang
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q9" value="C" class="accent-amber-700 mr-2"> C. Papan penutup bak
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q9" value="D" class="accent-amber-700 mr-2"> D. Rangka penahan gypsum
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SOAL 10 -->
+                <div class="quiz-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3" id="q10_box">
+                    <p class="text-xs sm:text-sm font-bold text-slate-800">10. Berapakah perkiraan isi jumlah batang dalam 1 kubik (1 m³) untuk kayu Reng 2x3 (panjang 4 meter)?</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q10" value="A" class="accent-amber-700 mr-2" required> A. ± 104 Batang
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q10" value="B" class="accent-amber-700 mr-2"> B. ± 208 Batang
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q10" value="C" class="accent-amber-700 mr-2"> C. ± 416 Batang
+                        </label>
+                        <label class="flex items-center p-2.5 bg-slate-50 rounded-xl hover:bg-amber-50 cursor-pointer border border-slate-200">
+                            <input type="radio" name="q10" value="D" class="accent-amber-700 mr-2"> D. ± 50 Batang
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SUBMIT BUTTON -->
+                <div class="pt-2 text-center">
+                    <button type="submit" class="w-full sm:w-auto bg-amber-800 hover:bg-amber-900 text-white font-bold text-xs sm:text-sm px-8 py-3.5 rounded-xl shadow-md transition-all">
+                        <i class="fa-solid fa-paper-plane mr-2"></i> Submit & Hitung Nilai Kuis
+                    </button>
+                </div>
+
+            </form>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="mt-16 text-center text-xs text-slate-400 border-t border-slate-200 pt-6">
+        <p>© 2026 Integrated Product Knowledge & Evaluation System - Toko Bahan Bangunan</p>
+    </footer>
+
+    <!-- JAVASCRIPT SYSTEM & GOOGLE SITES EMBED COMPATIBILITY FIX -->
+    <script>
+        // Kunci Jawaban Kuis
+        const correctAnswers = {
+            q1: "B",
+            q2: "B",
+            q3: "A",
+            q4: "C",
+            q5: "A",
+            q6: "B",
+            q7: "B",
+            q8: "A",
+            q9: "B",
+            q10: "C"
+        };
+
+        // Scroll Halus antar Section tanpa Isu Cross-Origin Google Sites
+        function scrollToSection(targetId) {
+            const element = document.getElementById(targetId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            
+            // Update active state di Nav Header
+            const btns = document.querySelectorAll('.nav-btn');
+            btns.forEach(btn => {
+                btn.classList.remove('bg-amber-500', 'text-amber-950', 'shadow-sm');
+                btn.classList.add('text-amber-100');
+            });
+            const activeBtn = document.getElementById('nav-' + targetId);
+            if(activeBtn) {
+                activeBtn.classList.add('bg-amber-500', 'text-amber-950', 'shadow-sm');
+                activeBtn.classList.remove('text-amber-100');
+            }
+        }
+
+        // Otomatis Deteksi URL Hash saat Google Sites memuat iframe (#kubikasi, #kuis, dll)
+        function handleInitialHash() {
+            const hash = window.location.hash.replace('#', '');
+            if (hash && document.getElementById(hash)) {
+                setTimeout(() => {
+                    scrollToSection(hash);
+                }, 300);
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', handleInitialHash);
+        window.addEventListener('hashchange', handleInitialHash);
+
+        // Fitur Filter Kategori Produk
+        function filterCategory(category, evt) {
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => {
+                btn.classList.remove('bg-amber-800', 'text-white', 'active');
+                btn.classList.add('bg-white', 'border', 'border-slate-200', 'text-slate-700');
+            });
+            
+            if(evt && evt.currentTarget) {
+                evt.currentTarget.classList.remove('bg-white', 'border', 'border-slate-200', 'text-slate-700');
+                evt.currentTarget.classList.add('bg-amber-800', 'text-white', 'active');
+            }
+
+            const cards = document.querySelectorAll('.product-card');
+            cards.forEach(card => {
+                if (category === 'all' || card.getAttribute('data-category') === category) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Fitur Search Produk
+        function filterProducts() {
+            const input = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.product-card');
+
+            cards.forEach(card => {
+                const titleData = card.getAttribute('data-title').toLowerCase();
+                if (titleData.includes(input)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Kalkulasi Nilai Kuis
+        function calculateQuiz(e) {
+            e.preventDefault();
+            let score = 0;
+            let correctCount = 0;
+
+            for (let i = 1; i <= 10; i++) {
+                const qName = 'q' + i;
+                const selected = document.querySelector(`input[name="${qName}"]:checked`);
+                const box = document.getElementById(qName + '_box');
+
+                if (selected && selected.value === correctAnswers[qName]) {
+                    score += 10;
+                    correctCount++;
+                    box.classList.remove('border-slate-200', 'border-red-400');
+                    box.classList.add('border-emerald-500', 'bg-emerald-50/20');
+                } else {
+                    box.classList.remove('border-slate-200', 'border-emerald-500');
+                    box.classList.add('border-red-400', 'bg-red-50/20');
+                }
+            }
+
+            // Tampilkan Hasil
+            const resultBox = document.getElementById('quizResultBox');
+            const scoreBadge = document.getElementById('scoreBadge');
+            const scoreMessage = document.getElementById('scoreMessage');
+
+            scoreBadge.innerText = `${score} / 100`;
+            
+            if (score >= 80) {
+                scoreBadge.className = "text-4xl font-extrabold text-emerald-600";
+                scoreMessage.innerText = `Sangat Baik! Anda menjawab ${correctCount} dari 10 soal dengan benar. Pemahaman produk kayu sangat matang.`;
+            } else if (score >= 60) {
+                scoreBadge.className = "text-4xl font-extrabold text-amber-600";
+                scoreMessage.innerText = `Cukup Baik! Anda menjawab ${correctCount} dari 10 soal dengan benar. Pelajari kembali tabel kubikasi & material kayu.`;
+            } else {
+                scoreBadge.className = "text-4xl font-extrabold text-red-600";
+                scoreMessage.innerText = `Membutuhkan Review. Anda baru menjawab ${correctCount} dari 10 soal dengan benar. Silakan pelajari ulang materi di atas.`;
+            }
+
+            resultBox.classList.remove('hidden');
+            resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        // Reset Kuis
+        function resetQuiz() {
+            document.getElementById('quizForm').reset();
+            document.getElementById('quizResultBox').classList.add('hidden');
+            
+            for (let i = 1; i <= 10; i++) {
+                const box = document.getElementById('q' + i + '_box');
+                box.className = "quiz-card bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-3";
+            }
+            
+            scrollToSection('kuis');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Knowledge Jenis Kabel - Panduan Lengkap Teknik & Industri</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Font Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fffbebeb',
+                            100: '#fef3c7',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                            900: '#78350f',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .transition-all-custom {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+    <!-- Header Navigation Bar -->
+    <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 text-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold text-xl shadow-lg shadow-amber-500/20">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight">KabelPedia <span class="text-amber-400 font-normal text-xs sm:text-sm">Pro</span></h1>
+                        <p class="text-[11px] text-slate-400 font-medium">Katalog Product Knowledge Kabel Industri & Domestik</p>
+                    </div>
+                </div>
+
+                <!-- Right Action Header Button -->
+                <div class="flex items-center space-x-2 sm:space-x-3">
+                    <button onclick="toggleCalcModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 shadow-sm">
+                        <i class="fa-solid fa-calculator"></i>
+                        <span class="hidden sm:inline">Kalkulator Ukuran Kabel</span>
+                        <span class="sm:hidden">KHA Calc</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Top Banner / Quick Info -->
+        <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 rounded-2xl p-5 sm:p-6 mb-6 text-white shadow-md relative overflow-hidden border border-slate-800">
+            <div class="relative z-10 max-w-3xl">
+                <span class="bg-amber-500/20 text-amber-300 text-[10px] sm:text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider border border-amber-500/30">
+                    <i class="fa-solid fa-circle-check text-amber-400 mr-1"></i> Standar SNI & IEC Approved
+                </span>
+                <h2 class="text-xl sm:text-2xl font-bold mt-2.5 mb-1.5 leading-snug">Panduan Lengkap Spesifikasi & Karakteristik Kabel</h2>
+                <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                    Akses cepat informasi konduktor (Tembaga Cu & Aluminium Al), jenis konduktor (Kawat Pejal/Engkel vs. Serabut Fleksibel), standar warna PUIL 2011, isolasi, hingga format ukuran penampang ($N \times A\text{ mm}^2$).
+                </p>
+            </div>
+            <div class="absolute -right-8 -bottom-10 opacity-10 text-slate-100 pointer-events-none hidden md:block">
+                <i class="fa-solid fa-plug-circle-bolt text-[220px]"></i>
+            </div>
+        </div>
+
+        <!-- Layout Grid: Sidebar Search + Cards Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+            <!-- Sidebar Filters & Search (Left Column) -->
+            <aside class="lg:col-span-1 space-y-4">
+                
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm sticky top-20 space-y-4">
+                    
+                    <!-- Search Input -->
+                    <div>
+                        <label for="searchInput" class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Cari Tipe atau Aplikasi</label>
+                        <div class="relative">
+                            <input type="text" id="searchInput" onkeyup="filterCables()" placeholder="Misal: NYM 3x2.5, Serabut, FRC, MV..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-3 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:bg-white transition">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+                        </div>
+                    </div>
+
+                    <!-- Categories List -->
+                    <div>
+                        <label class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Kategori Kabel</label>
+                        <div class="flex lg:flex-col space-x-2 lg:space-x-0 lg:space-y-1.5 overflow-x-auto no-scrollbar pb-1 lg:pb-0 text-xs font-medium">
+                            <button onclick="filterCategory('all')" class="cat-btn active w-full text-left px-3.5 py-2.5 rounded-xl whitespace-nowrap font-semibold bg-amber-500 text-slate-950 shadow-sm transition">
+                                <i class="fa-solid fa-layer-group mr-2"></i> Semua Jenis Kabel
+                            </button>
+                            <button onclick="filterCategory('power')" class="cat-btn w-full text-left px-3.5 py-2.5 rounded-xl whitespace-nowrap bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/60 transition">
+                                <i class="fa-solid fa-bolt mr-2 text-amber-500"></i> Power (Cu & Al)
+                            </button>
+                            <button onclick="filterCategory('control')" class="cat-btn w-full text-left px-3.5 py-2.5 rounded-xl whitespace-nowrap bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/60 transition">
+                                <i class="fa-solid fa-sliders mr-2 text-blue-500"></i> Kontrol & Signal
+                            </button>
+                            <button onclick="filterCategory('special')" class="cat-btn w-full text-left px-3.5 py-2.5 rounded-xl whitespace-nowrap bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/60 transition">
+                                <i class="fa-solid fa-shield-cat mr-2 text-red-500"></i> Spesial (FRC & PV)
+                            </button>
+                            <button onclick="filterCategory('mv')" class="cat-btn w-full text-left px-3.5 py-2.5 rounded-xl whitespace-nowrap bg-slate-50 text-slate-700 hover:bg-slate-100 border border-slate-200/60 transition">
+                                <i class="fa-solid fa-tower-cell mr-2 text-purple-500"></i> Medium Voltage (MV)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Standar Kawat vs Serabut Quick Card -->
+                    <div class="pt-4 border-t border-slate-100">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">Panduan Kawat vs Serabut</span>
+                        <div class="space-y-1.5 text-[11px]">
+                            <div class="bg-amber-50 border border-amber-200/70 p-2 rounded-xl text-amber-900">
+                                <span class="font-bold flex items-center gap-1"><i class="fa-solid fa-square text-amber-600"></i> Kawat Engkel / Pejal:</span>
+                                <p class="text-[10px] text-amber-800 font-medium mt-0.5">NYA, NYM, NYY, NYFGBY (Satu/Beberapa kawat kaku, Class 1 & 2)</p>
+                            </div>
+                            <div class="bg-blue-50 border border-blue-200/70 p-2 rounded-xl text-blue-900">
+                                <span class="font-bold flex items-center gap-1"><i class="fa-solid fa-bars-staggered text-blue-600"></i> Fleksibel / Serabut:</span>
+                                <p class="text-[10px] text-blue-800 font-medium mt-0.5">NYMHY, NYAF, YSLY, LIYCY, PV Cable (Banyak kawat halus, Class 5)</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Brand Logos Grid -->
+                    <div class="pt-4 border-t border-slate-100">
+                        <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2.5">Merek Terkemuka SNI/IEC</span>
+                        <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                            <span class="bg-slate-50 border border-slate-200 text-slate-700 text-center py-1.5 px-2 rounded-lg font-medium">Supreme</span>
+                            <span class="bg-slate-50 border border-slate-200 text-slate-700 text-center py-1.5 px-2 rounded-lg font-medium">Eterna</span>
+                            <span class="bg-slate-50 border border-slate-200 text-slate-700 text-center py-1.5 px-2 rounded-lg font-medium">Jembo</span>
+                            <span class="bg-slate-50 border border-slate-200 text-slate-700 text-center py-1.5 px-2 rounded-lg font-medium">Multi Kabel</span>
+                            <span class="bg-slate-50 border border-slate-200 text-slate-700 text-center py-1.5 px-2 rounded-lg font-medium">Kabelmetal</span>
+                            <span class="bg-slate-50 border border-slate-200 text-slate-700 text-center py-1.5 px-2 rounded-lg font-medium">Kabelindo</span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </aside>
+
+            <!-- Main Cable Cards Content (Right 3 Columns) -->
+            <section class="lg:col-span-3">
+                
+                <!-- Cards Container -->
+                <div id="cableList" class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <!-- Dynamic rendering via JS -->
+                </div>
+
+                <!-- Empty State Message -->
+                <div id="emptyState" class="hidden bg-white rounded-2xl p-8 text-center border border-slate-200 space-y-3">
+                    <div class="w-12 h-12 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto text-xl">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h3 class="font-bold text-slate-800 text-base">Kabel Tidak Ditemukan</h3>
+                    <p class="text-xs text-slate-500">Coba kata kunci lain seperti "NYM 3x2.5", "NYY", "FRC", "Serabut", atau "Aluminium".</p>
+                </div>
+
+            </section>
+
+        </div>
+
+    </main>
+
+    <!-- Quick KHA Calculator Modal -->
+    <div id="calcModal" class="fixed inset-0 bg-slate-900/70 z-50 hidden backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+                <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                    <i class="fa-solid fa-calculator text-amber-500"></i> Estimator Ukuran Kabel (1-Fase)
+                </h3>
+                <button onclick="toggleCalcModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Total Daya Listrik (Watt):</label>
+                    <input type="number" id="wattInput" placeholder="Contoh: 2200" class="w-full p-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-amber-500">
+                </div>
+                <button onclick="calculateKHA()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2.5 rounded-xl transition">
+                    Hitung Rekomendasi Ukuran
+                </button>
+
+                <div id="calcResult" class="hidden p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1.5">
+                    <p class="text-slate-600">Arus Beban Estimasi: <strong id="resAmp" class="text-slate-900">0 A</strong></p>
+                    <p class="text-slate-600">Rekomendasi Ukuran Tembaga: <strong id="resCable" class="text-amber-600 font-bold">1.5 mm²</strong></p>
+                    <p class="text-slate-600">Contoh Format Beli Kabel:</p>
+                    <div class="p-2 bg-slate-900 text-amber-300 rounded-lg text-[11px] font-mono space-y-1">
+                        <p id="resExampleNYM">• NYM 3 x 2.5 mm² (Instalasi Kawat Rumah)</p>
+                        <p id="resExampleNYMHY">• NYMHY 3 x 2.5 mm² (Kabel Serabut Fleksibel)</p>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1">*Estimasi tegangan 220V pf 0.85 dengan margin keandalan KHA +25%.</p>
+                </div>
+            </div>
+
+            <button onclick="toggleCalcModal()" class="w-full bg-slate-200 hover:bg-slate-300 text-slate-800 font-semibold py-2 rounded-xl text-xs transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-2">
+            <p class="font-medium">KabelPedia Pro — Portal Knowledge Base Spesifikasi Kabel Indonesia (PUIL / SNI / IEC)</p>
+            <p class="text-slate-500 text-[11px]">Diproduksi sesuai standar pabrikan Eterna, Supreme, Jembo, Multi Kabel, Kabelmetal, Kabelindo & Lapp Kabel.</p>
+        </div>
+    </footer>
+
+    <!-- JavaScript Data & Logic -->
+    <script>
+        // SVG Visual Illustrations for each Cable
+        const svgIllustrations = {
+            "cu-cable": `
+                <svg viewBox="0 0 400 120" class="w-full h-auto rounded-xl bg-slate-900 border border-slate-800 p-2">
+                    <!-- Outer Sheath (NYM/NYY) -->
+                    <rect x="10" y="30" width="380" height="60" rx="12" fill="#334155" stroke="#475569" stroke-width="2"/>
+                    <text x="25" y="48" fill="#94a3b8" font-size="10" font-weight="bold">Karet/PVC Outer Sheath</text>
+
+                    <!-- Core 1 Black (L1) -->
+                    <rect x="120" y="42" width="250" height="10" rx="4" fill="#1e293b"/>
+                    <circle cx="365" cy="47" r="4" fill="#b45309"/> <!-- Solid Copper -->
+
+                    <!-- Core 2 Brown (L2) -->
+                    <rect x="120" y="55" width="250" height="10" rx="4" fill="#78350f"/>
+                    <circle cx="365" cy="60" r="4" fill="#d97706"/>
+
+                    <!-- Core 3 Yellow-Green (PE) -->
+                    <rect x="120" y="68" width="250" height="10" rx="4" fill="#15803d"/>
+                    <circle cx="365" cy="73" r="4" fill="#f59e0b"/>
+
+                    <text x="210" y="102" fill="#fbbf24" font-size="9" text-anchor="middle" font-weight="bold">Inti Tembaga (Solid/Serabut Class 1,2,5)</text>
+                </svg>
+            `,
+            "al-cable": `
+                <svg viewBox="0 0 400 120" class="w-full h-auto rounded-xl bg-slate-900 border border-slate-800 p-2">
+                    <!-- Aluminium Twisted / Aerial Cable Sheath -->
+                    <path d="M 10 40 Q 100 20 200 40 T 390 40" stroke="#64748b" stroke-width="22" fill="none" stroke-linecap="round"/>
+                    <path d="M 10 75 Q 100 55 200 75 T 390 75" stroke="#475569" stroke-width="22" fill="none" stroke-linecap="round"/>
+                    
+                    <!-- Inner Aluminium Strands (Silver) -->
+                    <circle cx="370" cy="40" r="7" fill="#cbd5e1" stroke="#94a3b8" stroke-width="2"/>
+                    <circle cx="370" cy="75" r="7" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2"/>
+                    
+                    <text x="200" y="105" fill="#cbd5e1" font-size="9" text-anchor="middle" font-weight="bold">Konduktor Aluminium (AAC/AAAC/NAYY) - Ringan & Ekonomis</text>
+                </svg>
+            `,
+            "mv-cable": `
+                <svg viewBox="0 0 400 120" class="w-full h-auto rounded-xl bg-slate-900 border border-slate-800 p-2">
+                    <!-- Outer Sheath Merah MV -->
+                    <rect x="10" y="25" width="380" height="70" rx="14" fill="#dc2626" stroke="#991b1b" stroke-width="2"/>
+                    <text x="25" y="42" fill="#fecaca" font-size="10" font-weight="bold">Outer PVC Merah (6kV - 36kV)</text>
+
+                    <!-- Steel Tape Armour Layer -->
+                    <rect x="110" y="33" width="270" height="54" rx="8" fill="#475569"/>
+                    
+                    <!-- XLPE Semi Conductive Screen -->
+                    <rect x="170" y="41" width="200" height="38" rx="6" fill="#0284c7"/>
+                    
+                    <!-- Copper Stranded Core -->
+                    <rect x="230" y="49" width="135" height="22" rx="4" fill="#d97706"/>
+                    <text x="295" y="64" fill="#ffffff" font-size="9" text-anchor="middle" font-weight="bold">Pilin Tembaga / XLPE</text>
+                </svg>
+            `,
+            "ysly-jz": `
+                <svg viewBox="0 0 400 120" class="w-full h-auto rounded-xl bg-slate-900 border border-slate-800 p-2">
+                    <!-- Grey Sheath -->
+                    <rect x="10" y="30" width="380" height="60" rx="10" fill="#64748b" stroke="#475569" stroke-width="2"/>
+                    <text x="20" y="48" fill="#e2e8f0" font-size="10" font-weight="bold">Kulit Luar Abu-Abu (Oil Resistant)</text>
+
+                    <!-- Numbered Cores -->
+                    <rect x="140" y="40" width="230" height="8" rx="3" fill="#0f172a"/>
+                    <text x="160" y="47" fill="#ffffff" font-size="7">1</text>
+                    <rect x="140" y="52" width="230" height="8" rx="3" fill="#0f172a"/>
+                    <text x="160" y="59" fill="#ffffff" font-size="7">2</text>
+                    <rect x="140" y="64" width="230" height="8" rx="3" fill="#15803d"/>
+                    <text x="160" y="71" fill="#fbbf24" font-size="7">GN/YE</text>
+
+                    <!-- Copper fine strands -->
+                    <circle cx="360" cy="44" r="3" fill="#f59e0b"/>
+                    <circle cx="360" cy="56" r="3" fill="#f59e0b"/>
+                    <circle cx="360" cy="68" r="3" fill="#f59e0b"/>
+                    <text x="250" y="98" fill="#94a3b8" font-size="9" text-anchor="middle">Serabut Fleksibel Berangka (Class 5)</text>
+                </svg>
+            `,
+            "liycy-jz": `
+                <svg viewBox="0 0 400 120" class="w-full h-auto rounded-xl bg-slate-900 border border-slate-800 p-2">
+                    <!-- Outer Sheath -->
+                    <rect x="10" y="30" width="380" height="60" rx="10" fill="#475569"/>
+                    
+                    <!-- Braid Shield (Screening) Mesh Pattern -->
+                    <rect x="90" y="35" width="290" height="50" rx="6" fill="#334155" stroke="#94a3b8" stroke-dasharray="3,3"/>
+                    <text x="100" y="50" fill="#38bdf8" font-size="9" font-weight="bold">Anyaman Tinned Copper Braid (Screen Shield)</text>
+
+                    <!-- Inner Twisted Cores -->
+                    <rect x="220" y="45" width="150" height="12" rx="3" fill="#0284c7"/>
+                    <rect x="220" y="60" width="150" height="12" rx="3" fill="#e11d48"/>
+
+                    <text x="250" y="100" fill="#38bdf8" font-size="9" text-anchor="middle">Anti-Interferensi Elektromagnetik (EMI)</text>
+                </svg>
+            `,
+            "frc-cable": `
+                <svg viewBox="0 0 400 120" class="w-full h-auto rounded-xl bg-slate-900 border border-slate-800 p-2">
+                    <!-- Orange Flame Retardant Sheath -->
+                    <rect x="10" y="30" width="380" height="60" rx="10" fill="#ea580c" stroke="#c2410c" stroke-width="2"/>
+                    <text x="25" y="48" fill="#ffedd5" font-size="10" font-weight="bold">LSZH Sheath Oranye Tahan Api</text>
+
+                    <!-- Mica Tape Layer -->
+                    <rect x="140" y="38" width="230" height="44" rx="6" fill="#f59e0b" stroke="#fef08a"/>
+                    <text x="150" y="52" fill="#78350f" font-size="9" font-weight="bold">Lapisan Pita MIKA (Mica Tape Fire Barrier)</text>
+
+                    <!-- Copper Conductor -->
+                    <rect x="270" y="46" width="90" height="28" rx="4" fill="#b45309"/>
+                    <text x="315" y="63" fill="#ffffff" font-size="9" font-weight="bold" text-anchor="middle">Tembaga</text>
+                </svg>
+            `,
+            "pv-cable": `
+                <svg viewBox="0 0 400 120" class="w-full h-auto rounded-xl bg-slate-900 border border-slate-800 p-2">
+                    <!-- Heavy Outer Insulation (Black/Red UV Resistant) -->
+                    <rect x="10" y="32" width="380" height="56" rx="12" fill="#0f172a" stroke="#059669" stroke-width="2"/>
+                    <text x="20" y="50" fill="#34d399" font-size="10" font-weight="bold">Double Insulation XLPO (UV & Weather Resistant)</text>
+
+                    <!-- Tinned Copper Stranded Conductor (Silver/White Look) -->
+                    <rect x="200" y="42" width="180" height="36" rx="6" fill="#cbd5e1" stroke="#94a3b8"/>
+                    <text x="290" y="64" fill="#0f172a" font-size="10" font-weight="bold" text-anchor="middle">Tembaga Lapis Timah (Tinned Cu Class 5)</text>
+                </svg>
+            `
+        };
+
+        // Complete Cable Dataset
+        const cableData = [
+            {
+                id: "cu-cable",
+                name: "Kabel Cu (Tembaga) Low Voltage",
+                subType: "NYA, NYM, NYY, NYFGBY, NYMHY, NYAF",
+                category: "power",
+                badge: "Power Low Voltage",
+                badgeColor: "bg-amber-100 text-amber-900 border-amber-300",
+                icon: "fa-solid fa-plug",
+                brands: ["Eterna", "Supreme", "Jembo", "Multi Kabel", "Kabelmetal", "Kabelindo"],
+                typesBreakdown: [
+                    { name: "NYA", structure: "Kawat Pejal (Tunggal)", detail: "1 Inti Kawat Tembaga Kaku (Class 1), Berlapis PVC. Tidak fleksibel.", usage: "Instalasi Pipa Rumah/Gedung." },
+                    { name: "NYM", structure: "Kawat Pejal (Multi-Core)", detail: "2 s/d 5 Inti Kawat Tembaga Kaku (Class 1/2) + Outer Sheath PVC Putih.", usage: "Instalasi Tembok/Plafon Indoor." },
+                    { name: "NYY", structure: "Kawat Pejal (Outdoor/Tanam)", detail: "1 s/d 5 Inti Kawat Tembaga Kaku (Class 1/2) + Double Sheath PVC Hitam.", usage: "Outdoor / Ditanam dengan Pipa Pelindung." },
+                    { name: "NYFGBY", structure: "Kawat Pejal + Armour Steel", detail: "Multi Inti Kawat Tembaga Kaku + Perisai Pita/Kawat Baja (Armour).", usage: "Ditanam Langsung Dalam Tanah Tanpa Pipa." },
+                    { name: "NYMHY", structure: "Serabut Fleksibel (Luar Putih)", detail: "2 s/d 5 Inti Tembaga Serabut Halus (Class 5) + PVC Putih Fleksibel.", usage: "Kabel Ekstensi / Alat Rumah Tangga Bergerak." },
+                    { name: "NYAF", structure: "Serabut Fleksibel (Single Core)", detail: "1 Inti Tembaga Serabut Halus (Class 5) Fleksibel.", usage: "Kabel Panel Listrik & Wiring Dalam Mesin." }
+                ],
+                material: {
+                    conductor: "Tembaga Murni (Bare Copper) - Kawat Kaku (Class 1/2) atau Serabut Halus (Class 5)",
+                    insulation: "PVC (Polyvinyl Chloride) / XLPE High-Grade",
+                    sheath: "PVC Khusus Tahan Cuaca & Kelembapan (Outer Sheath)"
+                },
+                color: {
+                    sheath: "NYM / NYMHY (Putih), NYY / NYFGBY (Hitam), NYA / NYAF (Tanpa Outer Sheath)",
+                    core: "Standar PUIL 2011: Hitam, Cokelat, Abu-abu, Biru, Kuning-Hijau"
+                },
+                sizesAvailable: {
+                    cores: "1, 2, 3, 4, 5, 7, hingga 12 Inti Core",
+                    crossSections: "1.5 mm², 2.5 mm², 4 mm², 6 mm², 10 mm², 16 mm², 25 mm², 35 mm², 50 mm², 70 mm², 95 mm², 120 mm², 150 mm², 240 mm², 300 mm²",
+                    examples: "NYM 3x2.5 mm², NYY 4x6 mm², NYFGBY 4x16 mm², NYMHY 3x1.5 mm², NYA 1x2.5 mm²"
+                },
+                voltage: "300/500V s/d 0.6/1kV (600/1000V)",
+                usage: "Instalasi daya listrik rumah tangga, gedung perkantoran, jaringan listrik dalam/luar ruangan, tanam tanah langsung (NYFGBY dengan pelindung plat baja).",
+                features: [
+                    "Konduktivitas listrik sangat tinggi & efisiensi daya optimal",
+                    "Tersedia tipe Kawat Kaku (NYM/NYY/NYFGBY) untuk instalasi permanen & Serabut (NYMHY/NYAF) untuk fleksibilitas",
+                    "Pilihan utama instalasi berdaya sedang hingga kapasitas tinggi"
+                ]
+            },
+            {
+                id: "al-cable",
+                name: "Kabel Al (Aluminium)",
+                subType: "AAC, AAAC, NAYY, NAYFGbY, Twisted Cable",
+                category: "power",
+                badge: "Power Utility / Overhead",
+                badgeColor: "bg-slate-200 text-slate-800 border-slate-300",
+                icon: "fa-solid fa-industry",
+                brands: ["Supreme", "Jembo", "Kabelmetal", "Kabelindo", "Multi Kabel"],
+                typesBreakdown: [
+                    { name: "AAC / AAAC", structure: "Kawat Pilin Telanjang (Bare)", detail: "Pilinan kawat aluminium alloy tanpa isolasi.", usage: "Saluran Udara Tegangan Tinggi/Menengah PLN." },
+                    { name: "NAYY", structure: "Kawat Aluminium Pejal/Pilin", detail: "Setara NYY namun dengan konduktor Aluminium.", usage: "Distribusi Tanam Tanah / Panel Utama Ekonomis." },
+                    { name: "Twisted Cable", structure: "Kawat Aluminium Berisolasi", detail: "Kabel pilin udara (Bicord/Quadruplex) isolasi XLPE/PVC.", usage: "Jaringan Distribusi Tiang Listrik PLN ke Rumah." }
+                ],
+                material: {
+                    conductor: "Aluminium Murni / Aluminium Alloy (AAC / AAAC / NAYY)",
+                    insulation: "PVC / XLPE (Cross-linked Polyethylene)",
+                    sheath: "PVC (Hitam) untuk kabel berkulit / Tanpa isolasi (Bare Conductor)"
+                },
+                color: {
+                    sheath: "Hitam (NAYY / NAYFGBY / Kabel Tiang PLN)",
+                    core: "Sesuai Standar Inti PUIL / Penanda Angka Stripping"
+                },
+                sizesAvailable: {
+                    cores: "1, 2, 3, 4 Core (Twisted Cable/NAYY)",
+                    crossSections: "16 mm², 25 mm², 35 mm², 50 mm², 70 mm², 95 mm², 120 mm², 150 mm², 185 mm², 240 mm², 300 mm²",
+                    examples: "Twisted 2x10 mm², Twisted 4x25 mm², NAYY 4x95 mm², NAYFGBY 4x120 mm²"
+                },
+                voltage: "0.6/1kV hingga Tegangan Menengah (Saluran Udara)",
+                usage: "Jaringan Distribusi PLN (Saluran Udara SUTM/SUTR), transmisi jarak jauh antar tiang, panel utama industri berkapasitas besar.",
+                features: [
+                    "Sangat ringan (memperkecil beban mekanis tiang & bentang kabel)",
+                    "Harga ekonomis untuk distribusi jarak jauh",
+                    "Tahan korosi atmosferik (khusus jenis campuran AAAC)"
+                ]
+            },
+            {
+                id: "mv-cable",
+                name: "Kabel MV (Medium Voltage)",
+                subType: "N2XSEBY, N2XSY, NA2XSEBY (Tegangan Menengah)",
+                category: "mv",
+                badge: "Tegangan Menengah (6kV-36kV)",
+                badgeColor: "bg-red-100 text-red-900 border-red-300",
+                icon: "fa-solid fa-tower-cell",
+                brands: ["Supreme", "Jembo", "Kabelmetal", "Kabelindo"],
+                typesBreakdown: [
+                    { name: "N2XSY", structure: "Kawat Tembaga Pilin Padat", detail: "Single Core / Multi Core berpelindung Copper Tape Screen.", usage: "Gardu Trafo & Gedung Bertingkat." },
+                    { name: "N2XSEBY", structure: "Kawat Tembaga + Steel Tape Armour", detail: "Triple Core berisolasi XLPE + Perisai Pita Baja.", usage: "Ditanam Langsung Dalam Tanah Beban Berat." }
+                ],
+                material: {
+                    conductor: "Tembaga (Cu) atau Aluminium (Al) - Stranded Compacted (Kawat Pilin Padat)",
+                    insulation: "XLPE (Cross-linked Polyethylene) + Semi-conducting Shield Layer",
+                    sheath: "Armour Kawat/Pita Baja (Flat Steel Wire / Tape) + Heavy Duty PVC Sheath"
+                },
+                color: {
+                    sheath: "Merah Khas MV (Standar Industri) atau Hitam",
+                    core: "Pita Pembungkus Merah, Kuning, Biru / Natural XLPE Color"
+                },
+                sizesAvailable: {
+                    cores: "1 Core (Single) atau 3 Core (Three-Phase)",
+                    crossSections: "25 mm², 35 mm², 50 mm², 70 mm², 95 mm², 120 mm², 150 mm², 185 mm², 240 mm², 300 mm², 400 mm², 500 mm²",
+                    examples: "N2XSEBY 3x70 mm² (20kV), N2XSY 1x150 mm² (20kV), NA2XSEBY 3x120 mm² (20kV)"
+                },
+                voltage: "6/10 kV, 12/20 kV, 18/30 kV (hingga 36 kV)",
+                usage: "Distribusi daya utama dari Substation PLN ke Industri, Pabrik, Mal, Gedung Tinggi, Trafo Step-down, & Jaringan Bawah Tanah.",
+                features: [
+                    "Dilengkapi pelindung semi-konduktif meredam stres medan listrik",
+                    "Sangat tahan terhadap lonjakan tegangan tinggi",
+                    "Pelindung Armour mekanis tahan tekanan beban tanah"
+                ]
+            },
+            {
+                id: "ysly-jz",
+                name: "YSLY-JZ / YSLY-JB",
+                subType: "Flexible Control Cable Unshielded",
+                category: "control",
+                badge: "Kabel Kontrol Fleksibel",
+                badgeColor: "bg-blue-100 text-blue-900 border-blue-300",
+                icon: "fa-solid fa-sliders",
+                brands: ["Lapp Kabel", "Helukabel", "Jembo", "Multi Kabel"],
+                typesBreakdown: [
+                    { name: "YSLY-JZ", structure: "Serabut Fleksibel (Class 5)", detail: "Multi Inti Berangka Hitam + 1 Inti Kuning-Hijau Grounding.", usage: "Panel Kontrol & Mesin Pabrik Standard." },
+                    { name: "YSLY-JB", structure: "Serabut Fleksibel (Class 5)", detail: "Multi Inti Warna / Berangka Tanpa Inti Kuning-Hijau.", usage: "Sirkuit Kontrol Arus Searah / Sinyal Khusus." }
+                ],
+                material: {
+                    conductor: "Tembaga Serabut Halus (Bare Copper Fine Wire - Class 5)",
+                    insulation: "Special PVC Compound (Tahan Tekanan Mekanis)",
+                    sheath: "PVC Khusus Tahan Minyak & Bahan Kimia (Oil Resistant)"
+                },
+                color: {
+                    sheath: "Abu-Abu Industri (Grey RAL 7001)",
+                    core: "Hitam berangka Putih + 1 Inti Kuning-Hijau (JZ) / Tanpa Kuning-Hijau (JB)"
+                },
+                sizesAvailable: {
+                    cores: "2, 3, 4, 5, 7, 12, 18, 25, 34, hingga 50 Core",
+                    crossSections: "0.5 mm², 0.75 mm², 1.0 mm², 1.5 mm², 2.5 mm², 4 mm², 6 mm², 10 mm², 16 mm²",
+                    examples: "YSLY-JZ 3x1.5 mm², YSLY-JZ 7x0.75 mm², YSLY-JZ 12x1.0 mm², YSLY-JZ 25x1.5 mm²"
+                },
+                voltage: "300/500V",
+                usage: "Instalasi panel kontrol mesin, jalur conveyor, otomasi pabrik, peralatan kontrol ruang terbatas indoor.",
+                features: [
+                    "Sangat fleksibel (Serabut Halus Class 5 mudah disalurkan)",
+                    "Penomoran angka pada inti mempermudah terminasi kabel",
+                    "Formulasi PVC tahan cairan oli/minyak industri"
+                ]
+            },
+            {
+                id: "liycy-jz",
+                name: "LIYCY-JZ / LIYCY-TP",
+                subType: "Shielded Screened Control & Data Cable",
+                category: "control",
+                badge: "Data & Signal Shielded",
+                badgeColor: "bg-indigo-100 text-indigo-900 border-indigo-300",
+                icon: "fa-solid fa-network-wired",
+                brands: ["Lapp Kabel", "Helukabel", "Jembo", "Multi Kabel"],
+                typesBreakdown: [
+                    { name: "LIYCY-JZ", structure: "Serabut Fleksibel + Braid Shield", detail: "Inti Berangka + Anyaman Tembaga Lapis Timah (Screen).", usage: "Kontrol Industri Anti-Interferensi Elektromagnetik." },
+                    { name: "LIYCY-TP", structure: "Serabut Twisted Pair + Braid Shield", detail: "Inti Berpasangan Terpilin (Twisted Pair) + Anyaman Braid.", usage: "Transmisi Sinyal Data RS485 / Sensor Presisi." }
+                ],
+                material: {
+                    conductor: "Tembaga Halus Serabut (Class 5)",
+                    insulation: "PVC / Special Polymer",
+                    sheath: "Anyaman Tembaga Lapis Timah (Tinned Copper Braid Shield) + PVC Outer"
+                },
+                color: {
+                    sheath: "Abu-Abu (Grey)",
+                    core: "Sesuai Standar DIN 47100 (Warna-warni) atau Hitam Berangka + Kuning/Hijau"
+                },
+                sizesAvailable: {
+                    cores: "2, 3, 4, 5, 7, 12, 18, 25 Core / (Pasangan TP: 2x2x0.5, 4x2x0.75 mm²)",
+                    crossSections: "0.14 mm², 0.25 mm², 0.34 mm², 0.5 mm², 0.75 mm², 1.0 mm², 1.5 mm², 2.5 mm²",
+                    examples: "LIYCY 4x0.5 mm², LIYCY-JZ 7x0.75 mm², LIYCY (TP) 2x2x0.5 mm²"
+                },
+                voltage: "300/500V",
+                usage: "Sistem instrumen presisi, komputer industri, peralatan medis, sensor, area pabrik dengan paparan frekuensi tinggi.",
+                features: [
+                    "Konduktor Serabut Halus Fleksibel + Braid Shielding >85%",
+                    "Mencegah gangguan gelombang elektromagnetik (Anti-EMI / Noise)",
+                    "Menjamin kestabilan transmisi data sinyal halus"
+                ]
+            },
+            {
+                id: "frc-cable",
+                name: "FRC (Fire Resistant Cable)",
+                subType: "MICA Tape + XLPE / LSZH (Fire Rated Cable)",
+                category: "special",
+                badge: "Tahan Api (Safety Critical)",
+                badgeColor: "bg-orange-100 text-orange-900 border-orange-300",
+                icon: "fa-solid fa-fire-extinguisher",
+                brands: ["Supreme", "Jembo", "Kabelmetal", "Kabelindo"],
+                typesBreakdown: [
+                    { name: "FRC Standard", structure: "Kawat / Stranded Tembaga + Mica Tape", detail: "Dilapisi Pita MIKA Tahan Panas Ekstrem + Isolasi LSZH.", usage: "Sistem Darurat Gedung Bertingkat." }
+                ],
+                material: {
+                    conductor: "Tembaga Murni (Bare Copper Annealed) - Solid / Stranded Class 1, 2 atau Class 5",
+                    insulation: "Pita MIKA (Mica Tape) Tahan Api + XLPE / LSZH",
+                    sheath: "LSZH (Low Smoke Zero Halogen) Sheath"
+                },
+                color: {
+                    sheath: "Oranye Cerdas (Orange) atau Merah",
+                    core: "Sesuai standar PUIL / Penanda Warna Tahan Panas"
+                },
+                sizesAvailable: {
+                    cores: "1, 2, 3, 4, 5 Core",
+                    crossSections: "1.5 mm², 2.5 mm², 4 mm², 6 mm², 10 mm², 16 mm², 25 mm², 35 mm², 50 mm², 70 mm², 95 mm², 120 mm²",
+                    examples: "FRC 2x1.5 mm², FRC 3x2.5 mm², FRC 4x6 mm², FRC 4x16 mm²"
+                },
+                voltage: "0.6/1kV",
+                usage: "Sistem Keselamatan Darurat: Lift pemadam, pompa pemadam (fire pump), sistem alarm kebakaran, lampu darurat gedung tinggi.",
+                features: [
+                    "TETAP MENGHANTARKAN LISTRIK saat terbakar (750°C - 950°C selama 3 jam)",
+                    "Low Smoke (asap sangat minim dan bening saat terbakar)",
+                    "Zero Halogen (bebas dari gas racun korosif yang membahayakan)"
+                ]
+            },
+            {
+                id: "pv-cable",
+                name: "PV CABLE (Solar Panel Cable)",
+                subType: "H1Z2Z2-K / Solar PV Wire Double Insulated",
+                category: "special",
+                badge: "Solar PV System (DC)",
+                badgeColor: "bg-emerald-100 text-emerald-900 border-emerald-300",
+                icon: "fa-solid fa-solar-panel",
+                brands: ["Jembo", "Lapp Solar", "Multi Kabel", "Helukabel"],
+                typesBreakdown: [
+                    { name: "H1Z2Z2-K", structure: "Serabut Halus Tinned Copper (Class 5)", detail: "Double Outer Insulation XLPO Tahan UV & Ozon.", usage: "Koneksi Panel Surya Outdoor." }
+                ],
+                material: {
+                    conductor: "Tembaga Serabut Halus Lapis Timah (Tinned Copper Wire Anti Oksidasi - Class 5)",
+                    insulation: "Crosslinked Polyolefin (XLPO) LSZH",
+                    sheath: "Crosslinked Polyolefin XLPO (UV & Ozone Heavy Resistance)"
+                },
+                color: {
+                    sheath: "Hitam (Positif/Negatif Outdoor) atau Merah",
+                    core: "Natural / Putih / Merah / Hitam"
+                },
+                sizesAvailable: {
+                    cores: "1 Core (Single Core Double Insulated)",
+                    crossSections: "2.5 mm², 4 mm², 6 mm², 10 mm², 16 mm², 25 mm², 35 mm²",
+                    examples: "PV Cable 1x4 mm², PV Cable 1x6 mm², PV Cable 1x10 mm²"
+                },
+                voltage: "1500V DC (Direct Current) / 1000V AC",
+                usage: "Menghubungkan antar Solar Panel (PV Module) ke Inverter / Combiner Box pada instalasi PLTS Rooftop & Solar Farm.",
+                features: [
+                    "Konduktor Serabut Halus Fleksibel lapis timah tahan korosi",
+                    "Tahan radiasi sinar UV ekstrem & cuaca luar ruangan hingga 25+ tahun",
+                    "Tahan rentang suhu ekstrem outdoor (-40°C hingga +90°C)"
+                ]
+            }
+        ];
+
+        // Render Cards Function (Optimized for Mobile & Desktop Grid)
+        function renderCables(items) {
+            const container = document.getElementById('cableList');
+            const emptyState = document.getElementById('emptyState');
+
+            if (items.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            container.innerHTML = items.map(cable => `
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all-custom flex flex-col justify-between overflow-hidden group">
+                    
+                    <div>
+                        <!-- Card Header -->
+                        <div class="p-4 sm:p-5 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white">
+                            <div class="flex items-start justify-between gap-3">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-11 h-11 rounded-xl bg-slate-900 text-amber-400 flex items-center justify-center text-xl shadow-md group-hover:scale-105 transition flex-shrink-0">
+                                        <i class="${cable.icon}"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-bold text-slate-900 text-base sm:text-lg leading-snug">${cable.name}</h3>
+                                        <p class="text-xs text-slate-500 font-medium">${cable.subType}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mt-3 flex flex-wrap items-center gap-1.5">
+                                <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${cable.badgeColor}">
+                                    ${cable.badge}
+                                </span>
+                                <span class="text-[10px] bg-slate-100 text-slate-700 font-semibold px-2.5 py-0.5 rounded-full border border-slate-200">
+                                    <i class="fa-solid fa-bolt text-amber-500 mr-1"></i>${cable.voltage}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Visual Illustration Banner SVG -->
+                        <div class="px-4 pt-4">
+                            <div class="relative">
+                                <span class="absolute top-2 left-2 bg-slate-950/80 text-amber-300 text-[9px] font-bold px-2 py-0.5 rounded backdrop-blur-sm">
+                                    <i class="fa-solid fa-eye mr-1"></i> Penampang Fisik
+                                </span>
+                                ${svgIllustrations[cable.id] || ''}
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="p-4 sm:p-5 space-y-4 text-xs">
+                            
+                            <!-- Breakdown Kawat vs Serabut -->
+                            ${cable.typesBreakdown ? `
+                            <div class="bg-amber-50/50 rounded-xl p-3 border border-amber-200/60 space-y-2">
+                                <div class="font-bold text-amber-900 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                                    <i class="fa-solid fa-layer-group text-amber-600"></i> Klasifikasi Struktur Konduktor:
+                                </div>
+                                <div class="grid grid-cols-1 gap-1.5">
+                                    ${cable.typesBreakdown.map(t => `
+                                        <div class="bg-white p-2 rounded-lg border border-amber-200/50 text-slate-700">
+                                            <div class="flex items-center justify-between">
+                                                <strong class="text-slate-900 font-bold text-xs">${t.name}</strong>
+                                                <span class="text-[10px] px-2 py-0.5 rounded font-semibold ${t.structure.includes('Serabut') ? 'bg-blue-100 text-blue-800' : 'bg-slate-100 text-slate-800'}">
+                                                    ${t.structure}
+                                                </span>
+                                            </div>
+                                            <p class="text-[11px] text-slate-600 mt-0.5">${t.detail}</p>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            <!-- Jumlah Core & Ukuran (Sizing) -->
+                            ${cable.sizesAvailable ? `
+                            <div class="bg-slate-900 text-white rounded-xl p-3.5 space-y-2 shadow-sm">
+                                <div class="font-bold text-amber-400 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                                    <i class="fa-solid fa-ruler-combined"></i> Jumlah Core & Ukuran Penampang (mm²)
+                                </div>
+                                <div class="space-y-1 text-[11px] text-slate-300">
+                                    <p><strong class="text-white">Jumlah Core Tersedia:</strong> ${cable.sizesAvailable.cores}</p>
+                                    <p><strong class="text-white">Penampang Standar:</strong> ${cable.sizesAvailable.crossSections}</p>
+                                    <p class="pt-1 border-t border-slate-800"><strong class="text-amber-300">Contoh Kode Ukuran Beli:</strong> <span class="bg-slate-800 text-amber-300 font-mono px-2 py-0.5 rounded text-[10px]">${cable.sizesAvailable.examples}</span></p>
+                                </div>
+                            </div>
+                            ` : ''}
+
+                            <!-- Bahan Material -->
+                            <div class="bg-slate-50 rounded-xl p-3 sm:p-3.5 border border-slate-100 space-y-1.5">
+                                <div class="font-bold text-slate-900 flex items-center gap-1.5 text-[11px] uppercase tracking-wider">
+                                    <i class="fa-solid fa-microchip text-amber-500"></i> Spesifikasi Material
+                                </div>
+                                <div class="space-y-1 text-slate-600">
+                                    <p><strong class="text-slate-800">Konduktor:</strong> ${cable.material.conductor}</p>
+                                    <p><strong class="text-slate-800">Isolasi:</strong> ${cable.material.insulation}</p>
+                                    <p><strong class="text-slate-800">Selubung (Sheath):</strong> ${cable.material.sheath}</p>
+                                </div>
+                            </div>
+
+                            <!-- Warna Kode -->
+                            <div class="space-y-1.5 bg-amber-50/40 p-3 rounded-xl border border-amber-100/80">
+                                <div class="flex items-start gap-2">
+                                    <i class="fa-solid fa-palette text-amber-600 mt-0.5"></i>
+                                    <div>
+                                        <strong class="text-slate-800 block">Warna Outer Sheath:</strong>
+                                        <p class="text-slate-600">${cable.color.sheath}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-start gap-2 pt-1 border-t border-amber-200/40">
+                                    <i class="fa-solid fa-layer-group text-amber-600 mt-0.5"></i>
+                                    <div>
+                                        <strong class="text-slate-800 block">Warna Inti (Core):</strong>
+                                        <p class="text-slate-600">${cable.color.core}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Fungsi & Aplikasi -->
+                            <div>
+                                <strong class="text-slate-900 flex items-center gap-1.5 mb-1">
+                                    <i class="fa-solid fa-circle-check text-emerald-500"></i> Fungsi & Aplikasi Utama:
+                                </strong>
+                                <p class="text-slate-600 leading-relaxed bg-emerald-50/40 p-3 rounded-xl border border-emerald-100">
+                                    ${cable.usage}
+                                </p>
+                            </div>
+
+                            <!-- Karakteristik -->
+                            <div>
+                                <strong class="text-slate-800 block mb-1">Keunggulan Utama:</strong>
+                                <ul class="space-y-1 text-slate-600">
+                                    ${cable.features.map(f => `
+                                        <li class="flex items-start gap-1.5">
+                                            <i class="fa-solid fa-check text-amber-500 mt-0.5 text-[10px]"></i>
+                                            <span>${f}</span>
+                                        </li>
+                                    `).join('')}
+                                </ul>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <!-- Card Footer Merek -->
+                    <div class="p-4 bg-slate-50 border-t border-slate-100 flex flex-wrap items-center gap-1">
+                        <span class="text-[11px] text-slate-400 font-medium mr-1">Merek Rekomendasi:</span>
+                        ${cable.brands.map(b => `
+                            <span class="bg-white text-slate-700 text-[10px] font-semibold px-2 py-0.5 rounded border border-slate-200 shadow-2xs">${b}</span>
+                        `).join('')}
+                    </div>
+
+                </div>
+            `).join('');
+        }
+
+        // Filtering Function
+        let currentCategory = 'all';
+
+        function filterCategory(cat) {
+            currentCategory = cat;
+            
+            // Update UI Active Category Buttons
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-amber-500', 'text-slate-950', 'shadow-sm', 'font-semibold');
+                btn.classList.add('bg-slate-50', 'text-slate-700', 'border', 'border-slate-200/60');
+            });
+
+            event.currentTarget.classList.add('active', 'bg-amber-500', 'text-slate-950', 'shadow-sm', 'font-semibold');
+            event.currentTarget.classList.remove('bg-slate-50', 'text-slate-700', 'border');
+
+            filterCables();
+        }
+
+        function filterCables() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+
+            const filtered = cableData.filter(cable => {
+                const matchCat = currentCategory === 'all' || cable.category === currentCategory;
+                const matchSearch = cable.name.toLowerCase().includes(query) ||
+                                    cable.subType.toLowerCase().includes(query) ||
+                                    cable.usage.toLowerCase().includes(query) ||
+                                    cable.brands.some(b => b.toLowerCase().includes(query)) ||
+                                    (cable.sizesAvailable && cable.sizesAvailable.examples.toLowerCase().includes(query));
+
+                return matchCat && matchSearch;
+            });
+
+            renderCables(filtered);
+        }
+
+        // Simple KHA Calculation Formula
+        function calculateKHA() {
+            const watt = parseFloat(document.getElementById('wattInput').value);
+            const resDiv = document.getElementById('calcResult');
+
+            if (!watt || watt <= 0) {
+                alert('Silakan masukkan total daya Watt yang valid.');
+                return;
+            }
+
+            // Estimate Ampere for 220V 1-Phase
+            const ampere = watt / (220 * 0.85);
+            let cableSize = "1.5 mm²";
+            let nymCode = "NYM 3 x 1.5 mm²";
+            let nymhyCode = "NYMHY 3 x 1.5 mm²";
+
+            if (ampere > 15 && ampere <= 20) {
+                cableSize = "2.5 mm²";
+                nymCode = "NYM 3 x 2.5 mm²";
+                nymhyCode = "NYMHY 3 x 2.5 mm²";
+            } else if (ampere > 20 && ampere <= 28) {
+                cableSize = "4 mm²";
+                nymCode = "NYM 3 x 4 mm²";
+                nymhyCode = "NYMHY 3 x 4 mm²";
+            } else if (ampere > 28 && ampere <= 36) {
+                cableSize = "6 mm²";
+                nymCode = "NYM 3 x 6 mm²";
+                nymhyCode = "NYMHY 3 x 6 mm²";
+            } else if (ampere > 36 && ampere <= 50) {
+                cableSize = "10 mm²";
+                nymCode = "NYM 3 x 10 mm²";
+                nymhyCode = "NYMHY 3 x 10 mm²";
+            } else if (ampere > 50) {
+                cableSize = "> 16 mm²";
+                nymCode = "NYY 4 x 16 mm²";
+                nymhyCode = "NYAF 1 x 16 mm²";
+            }
+
+            document.getElementById('resAmp').innerText = ampere.toFixed(1) + " A";
+            document.getElementById('resCable').innerText = cableSize;
+            document.getElementById('resExampleNYM').innerText = "• Kawat Engkel/Kaku: " + nymCode;
+            document.getElementById('resExampleNYMHY').innerText = "• Fleksibel Serabut: " + nymhyCode;
+            resDiv.classList.remove('hidden');
+        }
+
+        function toggleCalcModal() {
+            const modal = document.getElementById('calcModal');
+            modal.classList.toggle('hidden');
+        }
+
+        // Initial Render
+        window.onload = function() {
+            renderCables(cableData);
+        };
+    </script>
+</body>
+</html>

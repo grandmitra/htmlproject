@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Knowledge: Besi Hollow & Baja Ringan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .tab-btn.active {
+      border-bottom: 3px solid #1d4ed8;
+      color: #1d4ed8;
+      font-weight: 700;
+      background-color: #eff6ff;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased min-h-screen pb-12">
+
+  <!-- Header Mobile First -->
+  <header class="bg-gradient-to-r from-blue-900 to-indigo-800 text-white sticky top-0 z-50 shadow-md">
+    <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="bg-amber-400 text-blue-950 p-2 rounded-lg font-bold text-xl shadow">
+          <i class="fa-solid fa-warehouse"></i>
+        </div>
+        <div>
+          <h1 class="font-bold text-base leading-tight">Product Knowledge</h1>
+          <p class="text-xs text-blue-200">Panduan Toko Bahan Bangunan</p>
+        </div>
+      </div>
+      <span class="bg-blue-700/60 text-xs px-2.5 py-1 rounded-full border border-blue-400/40">V1.0</span>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="flex border-t border-blue-800/60 bg-white text-slate-600 text-xs font-medium overflow-x-auto custom-scrollbar">
+      <button onclick="switchTab('tab-hollow')" id="btn-hollow" class="tab-btn active flex-1 py-3 px-3 text-center whitespace-nowrap flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-cubes text-sm"></i> Hollow Besi
+      </button>
+      <button onclick="switchTab('tab-bajaringai')" id="btn-bajaringai" class="tab-btn flex-1 py-3 px-3 text-center whitespace-nowrap flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-layer-group text-sm"></i> Baja Ringan
+      </button>
+      <button onclick="switchTab('tab-quiz')" id="btn-quiz" class="tab-btn flex-1 py-3 px-3 text-center whitespace-nowrap flex items-center justify-center gap-1.5 text-amber-700">
+        <i class="fa-solid fa-graduation-cap text-sm"></i> Uji Kuis
+      </button>
+    </nav>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-md mx-auto px-3 pt-4">
+
+    <!-- TAB 1: HOLLOW BESI -->
+    <section id="tab-hollow" class="space-y-4">
+      <!-- Card Intro -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <div class="flex items-center gap-2 text-blue-800 font-bold text-sm mb-1">
+          <i class="fa-solid fa-circle-info"></i> Apa itu Besi Hollow?
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Besi hollow adalah pipa besi berbentuk kotak atau persegi panjang. Di toko bangunan, hollow dibagi berdasarkan jenis bahan pelapisnya: <b>Hollow Hitam</b> dan <b>Hollow Galvanis</b>. Standar panjang penjualan pabrik adalah <b>6 Meter</b>.
+        </p>
+      </div>
+
+      <!-- Item 1: Hollow Hitam -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-slate-800 text-white px-4 py-2.5 flex justify-between items-center">
+          <h2 class="font-bold text-sm flex items-center gap-2">
+            <span class="w-2.5 h-2.5 bg-slate-400 rounded-full"></span> Hollow Hitam (Stallbuis)
+          </h2>
+          <span class="text-[10px] bg-slate-700 text-slate-200 px-2 py-0.5 rounded">Ekonomis</span>
+        </div>
+        <div class="p-4 space-y-3">
+          <!-- Gambar Ilustrasi SVG -->
+          <div class="bg-slate-100 rounded-lg p-3 text-center border border-dashed border-slate-300">
+            <svg class="w-full h-24 mx-auto" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="40" y="20" width="120" height="60" fill="#334155" rx="4"/>
+              <rect x="52" y="32" width="96" height="36" fill="#f1f5f9" rx="2"/>
+              <text x="100" y="55" fill="#475569" font-size="10" font-weight="bold" text-anchor="middle">Hollow Hitam (Plat Hitam)</text>
+            </svg>
+            <p class="text-[11px] text-slate-500 mt-1">Ciri: Warna kehitaman/abu tua, terdapat lapisan oli pelindung tipis.</p>
+          </div>
+
+          <div class="text-xs space-y-2">
+            <p><strong>Bahan:</strong> Lembaran plat besi hitam (Hot Rolled Steel).</p>
+            <p><strong>Spesifikasi & Karakteristik:</strong></p>
+            <ul class="list-disc list-inside text-slate-600 space-y-1 pl-1">
+              <li>Mudah dilas dan dibentuk.</li>
+              <li>Rentan karat jika terkena air/hujan secara langsung.</li>
+              <li>Wajib dilapisi cat dasar (anti karat / menie) sebelum di-finishing.</li>
+            </ul>
+            <p><strong>Kegunaan Utama:</strong> Furniture industrial, rangka meja/kursi, pagar interior, railing tangga dalam rumah, karoseri.</p>
+          </div>
+
+          <!-- Tabel Ukuran Hollow Hitam -->
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-[11px] text-left border-collapse border border-slate-200">
+              <thead class="bg-slate-100 text-slate-700">
+                <tr>
+                  <th class="p-2 border border-slate-200">Dimensi (mm)</th>
+                  <th class="p-2 border border-slate-200">Tebal (mm)</th>
+                  <th class="p-2 border border-slate-200">Panjang</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 text-slate-600">
+                <tr>
+                  <td class="p-2 border font-medium">20 x 20 / 20 x 40</td>
+                  <td class="p-2 border">0.8 - 1.4</td>
+                  <td class="p-2 border">6 Meter</td>
+                </tr>
+                <tr class="bg-slate-50">
+                  <td class="p-2 border font-medium">30 x 30 / 40 x 40</td>
+                  <td class="p-2 border">1.0 - 1.8</td>
+                  <td class="p-2 border">6 Meter</td>
+                </tr>
+                <tr>
+                  <td class="p-2 border font-medium">40 x 60 / 50 x 100</td>
+                  <td class="p-2 border">1.2 - 2.0</td>
+                  <td class="p-2 border">6 Meter</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 2: Hollow Galvanis -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-blue-800 text-white px-4 py-2.5 flex justify-between items-center">
+          <h2 class="font-bold text-sm flex items-center gap-2">
+            <span class="w-2.5 h-2.5 bg-blue-300 rounded-full"></span> Hollow Galvanis (Zinc Coated)
+          </h2>
+          <span class="text-[10px] bg-blue-700 text-blue-100 px-2 py-0.5 rounded">Tahan Karat</span>
+        </div>
+        <div class="p-4 space-y-3">
+          <!-- Gambar Ilustrasi SVG -->
+          <div class="bg-slate-100 rounded-lg p-3 text-center border border-dashed border-slate-300">
+            <svg class="w-full h-24 mx-auto" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="40" y="20" width="120" height="60" fill="#94a3b8" stroke="#64748b" stroke-width="2" rx="4"/>
+              <rect x="52" y="32" width="96" height="36" fill="#f8fafc" rx="2"/>
+              <circle cx="65" cy="40" r="3" fill="#cbd5e1"/>
+              <circle cx="130" cy="60" r="4" fill="#cbd5e1"/>
+              <text x="100" y="55" fill="#334155" font-size="10" font-weight="bold" text-anchor="middle">Hollow Galvanis (Kilap Silver)</text>
+            </svg>
+            <p class="text-[11px] text-slate-500 mt-1">Ciri: Warna keperakan cerah/silver, mengkilat dengan totol kristal seng.</p>
+          </div>
+
+          <div class="text-xs space-y-2">
+            <p><strong>Bahan:</strong> Plat besi dengan lapisan Seng/Zinc (±97% Zinc).</p>
+            <p><strong>Spesifikasi & Karakteristik:</strong></p>
+            <ul class="list-disc list-inside text-slate-600 space-y-1 pl-1">
+              <li>Sangat tahan korosi dan cuaca luar (outdoor).</li>
+              <li>Tidak mudah berkarat walau tanpa dilapisi cat dasar.</li>
+              <li>Satu tingkat lebih mahal dibanding hollow hitam.</li>
+            </ul>
+            <p><strong>Kegunaan Utama:</strong> Kanopi rumah, pagar luar ruangan, railing balkon, perancah/steger, struktur outdoor.</p>
+          </div>
+
+          <!-- Tabel Ukuran Hollow Galvanis -->
+          <div class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-[11px] text-left border-collapse border border-slate-200">
+              <thead class="bg-blue-50 text-blue-900">
+                <tr>
+                  <th class="p-2 border border-slate-200">Dimensi (mm)</th>
+                  <th class="p-2 border border-slate-200">Tebal Standar</th>
+                  <th class="p-2 border border-slate-200">Panjang</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 text-slate-600">
+                <tr>
+                  <td class="p-2 border font-medium">15 x 30 / 20 x 20</td>
+                  <td class="p-2 border">0.6mm - 1.2mm</td>
+                  <td class="p-2 border">6 Meter</td>
+                </tr>
+                <tr class="bg-slate-50">
+                  <td class="p-2 border font-medium">20 x 40 / 40 x 40</td>
+                  <td class="p-2 border">0.7mm - 1.6mm</td>
+                  <td class="p-2 border">6 Meter</td>
+                </tr>
+                <tr>
+                  <td class="p-2 border font-medium">40 x 60 / 50 x 100</td>
+                  <td class="p-2 border">1.0mm - 2.0mm</td>
+                  <td class="p-2 border">6 Meter</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: BAJA RINGAN -->
+    <section id="tab-bajaringai" class="space-y-4 hidden">
+      <!-- Card Intro -->
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <div class="flex items-center gap-2 text-indigo-800 font-bold text-sm mb-1">
+          <i class="fa-solid fa-shield-halved"></i> Apa itu Baja Ringan?
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Baja ringan dibuat dari bahan <b>Galvalum (55% Alumunium, 43.5% Seng, 1.5% Silikon)</b> berkekuatan tarik tinggi (G550). Tahan anti-rayap, anti-karat, dan ringan.
+        </p>
+      </div>
+
+      <!-- Item 1: Kanal C (Truss) -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-indigo-900 text-white px-4 py-2.5 flex justify-between items-center">
+          <h2 class="font-bold text-sm flex items-center gap-2">
+            <i class="fa-solid fa-c"></i> Kanal C (Truss / Profil C)
+          </h2>
+          <span class="text-[10px] bg-indigo-700 text-indigo-100 px-2 py-0.5 rounded">Kuda-Kuda Atap</span>
+        </div>
+        <div class="p-4 space-y-3">
+          <!-- SVG Kanal C -->
+          <div class="bg-slate-100 rounded-lg p-3 text-center border border-dashed border-slate-300">
+            <svg class="w-full h-24 mx-auto" viewBox="0 0 200 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M120 20 H70 V80 H120 V70 H82 V30 H120 Z" fill="#475569"/>
+              <text x="135" y="55" fill="#1e293b" font-size="10" font-weight="bold">Profil C75</text>
+            </svg>
+            <p class="text-[11px] text-slate-500 mt-1">Bentuk huruf "C" dengan lekukan pengaku di pinggirnya.</p>
+          </div>
+
+          <div class="text-xs space-y-2">
+            <p><strong>Spesifikasi Utama:</strong> Kode <b>C75</b> (Tinggi profil 75 mm, lebar kaki 35 mm).</p>
+            <p><strong>Varian Ketebalan (TCT):</strong> 0.60 mm, 0.65 mm, 0.70 mm, 0.75 mm, 1.00 mm.</p>
+            <p><strong>Panjang Standar:</strong> 6 Meter.</p>
+            <p><strong>Kegunaan Utama:</strong> Rangka utama kuda-kuda atap rumah/gedung, gording, tiang kanopi ringan, rangka dinding sekat.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 2: Reng Baja Ringan -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-indigo-800 text-white px-4 py-2.5 flex justify-between items-center">
+          <h2 class="font-bold text-sm flex items-center gap-2">
+            <i class="fa-solid fa-bars"></i> Reng Baja Ringan (Batten)
+          </h2>
+          <span class="text-[10px] bg-indigo-600 text-indigo-100 px-2 py-0.5 rounded">Dudukan Genteng</span>
+        </div>
+        <div class="p-4 space-y-3">
+          <!-- SVG Reng -->
+          <div class="bg-slate-100 rounded-lg p-3 text-center border border-dashed border-slate-300">
+            <svg class="w-full h-20 mx-auto" viewBox="0 0 200 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M40 60 L60 20 H140 L160 60 H140 L130 40 H70 L60 60 Z" fill="#64748b"/>
+              <text x="100" y="35" fill="#ffffff" font-size="9" font-weight="bold" text-anchor="middle">Profil Reng (Hat)</text>
+            </svg>
+            <p class="text-[11px] text-slate-500 mt-1">Bentuk trapesium simetris (Profil U/Topi).</p>
+          </div>
+
+          <div class="text-xs space-y-2">
+            <p><strong>Spesifikasi Utama:</strong> Tinggi profil 28 mm - 32 mm.</p>
+            <p><strong>Varian Ketebalan:</strong> 0.40 mm, 0.45 mm, 0.50 mm.</p>
+            <p><strong>Panjang Standar:</strong> 6 Meter.</p>
+            <p><strong>Kegunaan Utama:</strong> Tempat mengikat/mendudukkan genteng (metal, keramik, beton, spandek) di atas susunan Kanal C.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Item 3: Hollow Baja Ringan (Hollow Plafon) -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+        <div class="bg-teal-800 text-white px-4 py-2.5 flex justify-between items-center">
+          <h2 class="font-bold text-sm flex items-center gap-2">
+            <i class="fa-solid fa-border-all"></i> Hollow Plafon (Hollow Gypsum)
+          </h2>
+          <span class="text-[10px] bg-teal-600 text-teal-100 px-2 py-0.5 rounded">Khusus Plafon</span>
+        </div>
+        <div class="p-4 space-y-3">
+          <div class="text-xs space-y-2">
+            <p><strong>Bahan:</strong> Galvalum / Galvanis tipis (beralur/siku terlipat).</p>
+            <p><strong>Perbedaan Penting:</strong> Berbeda dengan Hollow Besi Bangunan, Hollow Plafon ukurannya lebih tipis dan panjangnya <b>4 Meter</b> (bukan 6m).</p>
+            <p><strong>Ukuran Pasaran:</strong></p>
+            <ul class="list-disc list-inside text-slate-600 space-y-1 pl-1">
+              <li><b>Istilah 2x4:</b> Ukuran riil ±15x30 mm atau 20x38 mm.</li>
+              <li><b>Istilah 4x4:</b> Ukuran riil ±30x38 mm atau 35x35 mm.</li>
+            </ul>
+            <p><strong>Tebal Standar:</strong> 0.25 mm, 0.30 mm, 0.35 mm, 0.40 mm.</p>
+            <p><strong>Kegunaan Utama:</strong> Rangka penggantung plafon Gypsum/PVC/GRC dan rangka partisi sekat ruangan indoor.</p>
+          </div>
+
+          <!-- Ringkasan Perbedaan Tabel -->
+          <div class="overflow-x-auto custom-scrollbar pt-2">
+            <table class="w-full text-[11px] border-collapse border border-slate-200">
+              <thead class="bg-slate-100 font-bold">
+                <tr>
+                  <th class="p-2 border">Jenis Item</th>
+                  <th class="p-2 border">Panjang</th>
+                  <th class="p-2 border">Fungsi Utama</th>
+                </tr>
+              </thead>
+              <tbody class="text-slate-600">
+                <tr>
+                  <td class="p-2 border font-medium">Kanal C (Truss)</td>
+                  <td class="p-2 border">6 Meter</td>
+                  <td class="p-2 border">Rangka Kuda-Kuda Atap</td>
+                </tr>
+                <tr class="bg-slate-50">
+                  <td class="p-2 border font-medium">Reng Baja Ringan</td>
+                  <td class="p-2 border">6 Meter</td>
+                  <td class="p-2 border">Dudukan Genteng</td>
+                </tr>
+                <tr>
+                  <td class="p-2 border font-medium">Hollow Plafon</td>
+                  <td class="p-2 border font-bold text-amber-700">4 Meter</td>
+                  <td class="p-2 border">Rangka Plafon / Gypsum</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: QUIZ MULTIPLE CHOICE -->
+    <section id="tab-quiz" class="space-y-4 hidden">
+      <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
+        <div class="flex items-center justify-between mb-2">
+          <h2 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-amber-600"></i> Evaluasi Product Knowledge
+          </h2>
+          <span class="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">8 Soal</span>
+        </div>
+        <p class="text-xs text-slate-500">Uji pemahaman Anda mengenai spesifikasi, ukuran, dan kegunaan item besi toko bahan bangunan.</p>
+      </div>
+
+      <!-- Scoring Banner (Hidden by default) -->
+      <div id="quiz-result-card" class="hidden bg-white p-5 rounded-xl shadow-md border-2 text-center space-y-3">
+        <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider">Hasil Skor Anda</h3>
+        <div id="score-circle" class="text-4xl font-extrabold text-blue-700">0 / 100</div>
+        <p id="score-message" class="text-xs font-medium text-slate-600"></p>
+        <button onclick="resetQuiz()" class="w-full bg-slate-800 text-white text-xs py-2.5 rounded-lg font-bold hover:bg-slate-700 transition">
+          <i class="fa-solid fa-rotate-right mr-1"></i> Ulangi Kuis
+        </button>
+      </div>
+
+      <!-- Quiz Form -->
+      <form id="quiz-form" onsubmit="submitQuiz(event)" class="space-y-4">
+
+        <!-- Q1 -->
+        <div class="quiz-q-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-xs space-y-3" data-q="1">
+          <p class="font-bold text-slate-800">1. Berapa panjang standar pabrik untuk Hollow Besi (Hitam & Galvanis) yang dijual di toko bangunan?</p>
+          <div class="space-y-2">
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q1" value="A" class="mr-2"> A. 3 Meter
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q1" value="B" class="mr-2"> B. 4 Meter
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q1" value="C" class="mr-2"> C. 6 Meter
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q1" value="D" class="mr-2"> D. 12 Meter
+            </label>
+          </div>
+          <div class="explanation hidden text-[11px] p-2.5 rounded bg-slate-100 mt-2"></div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="quiz-q-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-xs space-y-3" data-q="2">
+          <p class="font-bold text-slate-800">2. Jenis hollow mana yang paling cocok direkomendasikan untuk pembeli yang ingin membuat pagar outdoor tahan cuaca/karat?</p>
+          <div class="space-y-2">
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q2" value="A" class="mr-2"> A. Hollow Hitam / Stallbuis
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q2" value="B" class="mr-2"> B. Hollow Galvanis
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q2" value="C" class="mr-2"> C. Hollow Plafon Gypsum 2x4
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q2" value="D" class="mr-2"> D. Reng Baja Ringan
+            </label>
+          </div>
+          <div class="explanation hidden text-[11px] p-2.5 rounded bg-slate-100 mt-2"></div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="quiz-q-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-xs space-y-3" data-q="3">
+          <p class="font-bold text-slate-800">3. Apakah fungsi utama dari profil Kanal C (C75) pada pekerjaan konstruksi baja ringan?</p>
+          <div class="space-y-2">
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q3" value="A" class="mr-2"> A. Sebagai dudukan langsung tempat paku genteng
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q3" value="B" class="mr-2"> B. Sebagai penggantung papan gypsum plafon
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q3" value="C" class="mr-2"> C. Rangka utama struktur kuda-kuda atap
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q3" value="D" class="mr-2"> D. Sebagai tulangan dalam cor beton
+            </label>
+          </div>
+          <div class="explanation hidden text-[11px] p-2.5 rounded bg-slate-100 mt-2"></div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="quiz-q-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-xs space-y-3" data-q="4">
+          <p class="font-bold text-slate-800">4. Berapakah panjang standar untuk Hollow Plafon (Hollow Gypsum)?</p>
+          <div class="space-y-2">
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q4" value="A" class="mr-2"> A. 6 Meter
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q4" value="B" class="mr-2"> B. 4 Meter
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q4" value="C" class="mr-2"> C. 3 Meter
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q4" value="D" class="mr-2"> D. 2 Meter
+            </label>
+          </div>
+          <div class="explanation hidden text-[11px] p-2.5 rounded bg-slate-100 mt-2"></div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="quiz-q-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-xs space-y-3" data-q="5">
+          <p class="font-bold text-slate-800">5. Reng Baja Ringan dipasang di atas rangka Kanal C berfungsi sebagai...</p>
+          <div class="space-y-2">
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q5" value="A" class="mr-2"> A. Tiang penyangga utama
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q5" value="B" class="mr-2"> B. Dudukan/tumpuan genteng atau atap spandek
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q5" value="C" class="mr-2"> C. Penahan pondasi dinding
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q5" value="D" class="mr-2"> D. Rangka lisplank luar
+            </label>
+          </div>
+          <div class="explanation hidden text-[11px] p-2.5 rounded bg-slate-100 mt-2"></div>
+        </div>
+
+        <!-- Q6 -->
+        <div class="quiz-q-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-xs space-y-3" data-q="6">
+          <p class="font-bold text-slate-800">6. Unsur utama dalam bahan pelapis Galvalum pada baja ringan adalah...</p>
+          <div class="space-y-2">
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q6" value="A" class="mr-2"> A. 100% Tembaga murni
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q6" value="B" class="mr-2"> B. Campuran Aluminium (55%) dan Seng/Zinc (43.5%)
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q6" value="C" class="mr-2"> C. Campuran Plastik PVC dan Alumunium
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q6" value="D" class="mr-2"> D. Lapisan Cat Minyak Hitam
+            </label>
+          </div>
+          <div class="explanation hidden text-[11px] p-2.5 rounded bg-slate-100 mt-2"></div>
+        </div>
+
+        <!-- Q7 -->
+        <div class="quiz-q-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-xs space-y-3" data-q="7">
+          <p class="font-bold text-slate-800">7. Mengapa Hollow Hitam wajib dicat anti-karat (menie) sebelum dipakai di area yang terbuka?</p>
+          <div class="space-y-2">
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q7" value="A" class="mr-2"> A. Agar hollow menjadi lebih lentur
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q7" value="B" class="mr-2"> B. Karena terbuat dari besi mentah tanpa lapisan tahan karat
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q7" value="C" class="mr-2"> C. Agar hollow bisa memanjang otomatis
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q7" value="D" class="mr-2"> D. Supaya harganya bertambah mahal
+            </label>
+          </div>
+          <div class="explanation hidden text-[11px] p-2.5 rounded bg-slate-100 mt-2"></div>
+        </div>
+
+        <!-- Q8 -->
+        <div class="quiz-q-card bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-xs space-y-3" data-q="8">
+          <p class="font-bold text-slate-800">8. Ukuran sebutan istilah "2x4" dan "4x4" pada Hollow Plafon mengacu pada...</p>
+          <div class="space-y-2">
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q8" value="A" class="mr-2"> A. Ukuran meter persegi
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q8" value="B" class="mr-2"> B. Ketebalan besi dalam Milimeter
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q8" value="C" class="mr-2"> C. Istilah ukuran penampang profil (sebanding cm / inchi nominal)
+            </label>
+            <label class="flex items-center p-2.5 rounded-lg border border-slate-200 cursor-pointer hover:bg-slate-50">
+              <input type="radio" name="q8" value="D" class="mr-2"> D. Jumlah lubang baut
+            </label>
+          </div>
+          <div class="explanation hidden text-[11px] p-2.5 rounded bg-slate-100 mt-2"></div>
+        </div>
+
+        <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-xl shadow-md text-xs transition duration-200 flex items-center justify-center gap-2">
+          <i class="fa-solid fa-paper-plane"></i> Kirim Jawaban & Lihat Skor
+        </button>
+
+      </form>
+    </section>
+
+  </main>
+
+  <script>
+    // Tab Switcher Logic
+    function switchTab(tabId) {
+      document.getElementById('tab-hollow').classList.add('hidden');
+      document.getElementById('tab-bajaringai').classList.add('hidden');
+      document.getElementById('tab-quiz').classList.add('hidden');
+
+      document.getElementById('btn-hollow').classList.remove('active');
+      document.getElementById('btn-bajaringai').classList.remove('active');
+      document.getElementById('btn-quiz').classList.remove('active');
+
+      document.getElementById(tabId).classList.remove('hidden');
+      if (tabId === 'tab-hollow') document.getElementById('btn-hollow').classList.add('active');
+      if (tabId === 'tab-bajaringai') document.getElementById('btn-bajaringai').classList.add('active');
+      if (tabId === 'tab-quiz') document.getElementById('btn-quiz').classList.add('active');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Correct Answer Key & Explanations
+    const quizKey = {
+      q1: { answer: "C", exp: "Jawaban Benar: C. Hollow besi bangunan standar memiliki panjang 6 Meter per batang." },
+      q2: { answer: "B", exp: "Jawaban Benar: B. Hollow Galvanis memiliki lapisan zinc yang tahan benturan karat cuaca outdoor." },
+      q3: { answer: "C", exp: "Jawaban Benar: C. Profil C75 dirancang khusus untuk menahan beban rangka utama/kuda-kuda atap." },
+      q4: { answer: "B", exp: "Jawaban Benar: B. Hollow plafon gypsum diproduksi dengan panjang standar 4 Meter." },
+      q5: { answer: "B", exp: "Jawaban Benar: B. Reng berfungsi sebagai bilah melintang tempat menyangkutkan/mengikat genteng." },
+      q6: { answer: "B", exp: "Jawaban Benar: B. Galvalum terdiri dari 55% Aluminium dan 43.5% Seng yang membuatnya sangat tahan karat." },
+      q7: { answer: "B", exp: "Jawaban Benar: B. Hollow hitam adalah plat besi biasa tanpa lapisan pelindung, sehingga cepat berkarat bila kena air." },
+      q8: { answer: "C", exp: "Jawaban Benar: C. Istilah 2x4 dan 4x4 adalah penamaan profil perdagangan pasar (ukuran riil berkisar 15x30mm s/d 35x35mm)." }
+    };
+
+    function submitQuiz(event) {
+      event.preventDefault();
+      let score = 0;
+      const totalQuestions = Object.keys(quizKey).length;
+      const form = document.getElementById('quiz-form');
+
+      for (let i = 1; i <= totalQuestions; i++) {
+        const qName = 'q' + i;
+        const selected = form.elements[qName]?.value;
+        const qCard = document.querySelector(`.quiz-q-card[data-q="${i}"]`);
+        const expBox = qCard.querySelector('.explanation');
+
+        expBox.classList.remove('hidden');
+        expBox.innerHTML = quizKey[qName].exp;
+
+        if (selected === quizKey[qName].answer) {
+          score += 1;
+          qCard.classList.remove('border-slate-200', 'border-red-400');
+          qCard.classList.add('border-emerald-500', 'bg-emerald-50/30');
+          expBox.classList.add('text-emerald-800', 'bg-emerald-100/70');
+          expBox.classList.remove('text-red-800', 'bg-red-100/70');
+        } else {
+          qCard.classList.remove('border-slate-200', 'border-emerald-500');
+          qCard.classList.add('border-red-400', 'bg-red-50/30');
+          expBox.classList.add('text-red-800', 'bg-red-100/70');
+          expBox.classList.remove('text-emerald-800', 'bg-emerald-100/70');
+        }
+      }
+
+      const finalScore = Math.round((score / totalQuestions) * 100);
+      const resultCard = document.getElementById('quiz-result-card');
+      const scoreCircle = document.getElementById('score-circle');
+      const scoreMessage = document.getElementById('score-message');
+
+      resultCard.classList.remove('hidden');
+
+      scoreCircle.innerText = `${finalScore} / 100`;
+
+      if (finalScore >= 80) {
+        resultCard.className = "bg-white p-5 rounded-xl shadow-md border-2 border-emerald-500 text-center space-y-3";
+        scoreCircle.className = "text-4xl font-extrabold text-emerald-600";
+        scoreMessage.innerText = "Luar Biasa! Pemahaman Product Knowledge Anda Sangat Baik.";
+      } else if (finalScore >= 60) {
+        resultCard.className = "bg-white p-5 rounded-xl shadow-md border-2 border-amber-400 text-center space-y-3";
+        scoreCircle.className = "text-4xl font-extrabold text-amber-600";
+        scoreMessage.innerText = "Cukup Bagus. Pelajari kembali materi spesifikasi untuk nilai sempurna.";
+      } else {
+        resultCard.className = "bg-white p-5 rounded-xl shadow-md border-2 border-red-400 text-center space-y-3";
+        scoreCircle.className = "text-4xl font-extrabold text-red-600";
+        scoreMessage.innerText = "Perlu Belajar Lagi. Silakan baca ulang tab Hollow Besi & Baja Ringan.";
+      }
+
+      resultCard.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function resetQuiz() {
+      document.getElementById('quiz-form').reset();
+      document.getElementById('quiz-result-card').classList.add('hidden');
+      
+      const cards = document.querySelectorAll('.quiz-q-card');
+      cards.forEach(card => {
+        card.classList.remove('border-emerald-500', 'border-red-400', 'bg-emerald-50/30', 'bg-red-50/30');
+        card.classList.add('border-slate-200');
+        const expBox = card.querySelector('.explanation');
+        expBox.classList.add('hidden');
+      });
+
+      window.scrollTo({ top: document.getElementById('tab-quiz').offsetTop - 60, behavior: 'smooth' });
+    }
+  </script>
+</body>
+</html>

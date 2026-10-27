@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katalog & Price List GMB</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PapaParse for CSV Parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- SheetJS XLSX for Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        .glass-badge {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col pb-10">
+
+    <header class="bg-gradient-to-r from-blue-700 via-indigo-700 to-slate-800 text-white sticky top-0 z-30 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Logo & Brand Title -->
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 shadow-inner">
+                    <i class="fa-solid fa-boxes-stacked text-xl text-amber-300"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight tracking-wide">Katalog GMB</h1>
+                    <p class="text-xs text-blue-200">Price List & Material Database</p>
+                </div>
+            </div>
+
+            <!-- Header Action Controls & Cache Status -->
+            <div class="flex items-center gap-2.5">
+                <!-- Sync / Cache Badge -->
+                <div id="syncBadge" title="Status Sinkronisasi Data" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium glass-badge border border-white/20 text-slate-100">
+                    <span id="syncDot" class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="syncStatusText">Memuat Cache...</span>
+                </div>
+
+                <!-- Manual Refresh Button -->
+                <button onclick="forceRefreshData()" title="Perbarui Data dari Server" class="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white transition-all active:scale-95 text-xs flex items-center gap-1">
+                    <i id="refreshIcon" class="fa-solid fa-rotate"></i>
+                    <span class="hidden md:inline">Sync</span>
+                </button>
+
+                <!-- Role Toggle Badge -->
+                <button id="roleBadgeBtn" onclick="handleRoleButtonClick()" class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white/15 hover:bg-white/25 border border-white/20 transition-all duration-200 active:scale-95 shadow-sm">
+                    <span id="roleBadgeIcon" class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span id="roleBadgeText">Sales Mode</span>
+                    <i id="roleLockIcon" class="fa-solid fa-lock text-[10px] ml-0.5 opacity-70"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 pt-4 w-full flex-grow">
+        
+        <!-- Filter Controls Box -->
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 mb-4 space-y-3">
+            
+            <!-- Multi-Search Input Row -->
+            <div class="flex flex-col sm:flex-row items-center gap-2">
+                <!-- Search Field Dropdown Selector -->
+                <div class="w-full sm:w-48 flex-shrink-0">
+                    <select id="searchFieldSelect" onchange="handleSearchInput()" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all" selected>🔍 Semua Kolom</option>
+                        <option value="ref">🏷️ Material Reference</option>
+                        <option value="desc">📝 Description</option>
+                    </select>
+                </div>
+
+                <!-- Search Keyword Input Field -->
+                <div class="relative flex-grow w-full">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        oninput="handleSearchInput()" 
+                        placeholder="Ketik kata kunci pencarian..." 
+                        class="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all duration-200"
+                    />
+                    <button 
+                        id="clearSearchBtn" 
+                        onclick="clearSearch()" 
+                        class="hidden absolute right-3 top-2 text-slate-400 hover:text-slate-600 p-1 rounded-full focus:outline-none active:scale-95"
+                        title="Hapus pencarian">
+                        <i class="fa-solid fa-xmark text-base"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center justify-between pt-1 gap-2">
+                <!-- View Mode Switcher -->
+                <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200/60 text-xs font-medium">
+                    <button 
+                        id="btnCardView" 
+                        onclick="switchView('card')" 
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200 shadow-sm bg-white text-blue-700 font-semibold">
+                        <i class="fa-solid fa-grip-vertical"></i>
+                        <span>Card</span>
+                    </button>
+                    <button 
+                        id="btnTableView" 
+                        onclick="switchView('table')" 
+                        class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all duration-200">
+                        <i class="fa-solid fa-table-list"></i>
+                        <span>Tabel</span>
+                    </button>
+                </div>
+
+                <!-- Right Action Buttons: Export Excel & Page Size -->
+                <div class="flex items-center gap-2">
+                    <!-- Export Excel Button -->
+                    <button 
+                        onclick="exportToExcel()" 
+                        class="flex items-center gap-1.5 px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-semibold text-xs rounded-xl shadow-sm transition-all duration-200">
+                        <i class="fa-solid fa-file-excel text-sm"></i>
+                        <span>Export Excel</span>
+                    </button>
+
+                    <!-- Page Size Selector -->
+                    <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1">
+                        <span class="text-[11px] text-slate-500 hidden sm:inline">Baris:</span>
+                        <select id="pageSizeSelect" onchange="changePageSize()" class="bg-transparent text-xs font-semibold text-slate-700 focus:outline-none">
+                            <option value="10" selected>10</option>
+                            <option value="25">25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Margin Config Bar (Visible only in Admin Mode) -->
+            <div id="adminModalConfigBar" class="hidden pt-2.5 border-t border-slate-100 flex-wrap items-center justify-between text-xs gap-2">
+                <div class="flex items-center gap-1.5 text-amber-800 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/80 font-medium">
+                    <i class="fa-solid fa-calculator"></i>
+                    <span>Sistem Analisis Profit Admin:</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <label class="text-slate-500 font-medium">Kolom Acuan Modal / HPP:</label>
+                    <select id="modalColumnSelect" onchange="recalculateAdminMargins()" class="bg-slate-50 border border-slate-200 rounded-lg py-1 px-2.5 text-xs font-medium focus:ring-2 focus:ring-indigo-500">
+                        <!-- Options populated via JS -->
+                    </select>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Toast Notification for Background Updates -->
+        <div id="toastNotification" class="hidden fixed bottom-5 right-5 z-50 bg-slate-900/95 text-white text-xs px-4 py-3 rounded-2xl shadow-xl border border-slate-700 flex items-center gap-3 transition-all duration-300">
+            <i class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+            <div>
+                <p id="toastMessage" class="font-medium">Data berhasil disinkronkan dari server!</p>
+            </div>
+            <button onclick="hideToast()" class="text-slate-400 hover:text-white ml-2"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <!-- Initial Loading Indicator -->
+        <div id="loadingState" class="py-12 flex flex-col items-center justify-center text-slate-500 space-y-3">
+            <div class="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-sm font-medium animate-pulse">Mengambil data katalog dari database...</p>
+        </div>
+
+        <!-- Error State Alert -->
+        <div id="errorState" class="hidden bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl p-5 my-4 text-center space-y-3">
+            <div class="w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mx-auto text-rose-600">
+                <i class="fa-solid fa-triangle-exclamation text-xl"></i>
+            </div>
+            <h3 class="font-bold text-base">Gagal Memuat Data</h3>
+            <p id="errorMessage" class="text-xs text-rose-600 max-w-md mx-auto">Tidak dapat terhubung ke Google Sheets CSV. Periksa koneksi internet Anda.</p>
+            <button onclick="forceRefreshData()" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-medium text-xs rounded-xl shadow-sm transition-all duration-200">
+                <i class="fa-solid fa-rotate-right mr-1"></i> Coba Lagi
+            </button>
+        </div>
+
+        <!-- Results Summary Bar -->
+        <div id="resultSummary" class="hidden flex items-center justify-between mb-3 text-xs text-slate-500 px-1">
+            <span>Menampilkan <strong id="showingRangeText" class="text-slate-800">0 - 0</strong> dari <strong id="totalItemsText" class="text-slate-800">0</strong> item</span>
+            <span id="activeRoleNotice" class="font-medium text-slate-600 bg-slate-200/60 px-2 py-0.5 rounded">Tampilan Sales</span>
+        </div>
+
+        <!-- CARD VIEW CONTAINER -->
+        <div id="cardContainer" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            <!-- Rendered dynamically -->
+        </div>
+
+        <!-- TABLE VIEW CONTAINER -->
+        <div id="tableContainer" class="hidden bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+            <div class="overflow-x-auto custom-scrollbar">
+                <table class="w-full text-left text-xs text-slate-700">
+                    <thead id="tableHeader" class="bg-slate-100 text-slate-800 font-bold border-b border-slate-200 uppercase tracking-wider text-[11px]">
+                        <!-- Rendered dynamically -->
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-100">
+                        <!-- Rendered dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Empty Search Result State -->
+        <div id="emptyState" class="hidden py-12 text-center text-slate-400 space-y-2">
+            <i class="fa-solid fa-box-open text-4xl text-slate-300 mb-1"></i>
+            <p class="font-medium text-slate-600 text-sm">Tidak ada data yang ditemukan</p>
+            <p class="text-xs text-slate-400">Coba gunakan kata kunci lain atau pilih filter 'Semua Kolom'.</p>
+        </div>
+
+        <!-- PAGINATION BAR -->
+        <div id="paginationBar" class="hidden mt-5 bg-white rounded-2xl p-3 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="text-xs text-slate-500 order-2 sm:order-1">
+                Halaman <span id="currentPageNum" class="font-bold text-slate-800">1</span> dari <span id="totalPagesNum" class="font-bold text-slate-800">1</span>
+            </div>
+            
+            <div class="flex items-center space-x-1.5 order-1 sm:order-2">
+                <button 
+                    id="prevPageBtn" 
+                    onclick="changePage(-1)" 
+                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:hover:bg-slate-100 text-slate-700 font-medium rounded-xl text-xs transition-all duration-200 flex items-center gap-1">
+                    <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                    <span>Sebelumnya</span>
+                </button>
+                
+                <div id="pageNumberButtons" class="hidden sm:flex items-center space-x-1">
+                    <!-- Page buttons populated dynamically -->
+                </div>
+
+                <button 
+                    id="nextPageBtn" 
+                    onclick="changePage(1)" 
+                    class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 disabled:opacity-40 disabled:hover:bg-slate-100 text-slate-700 font-medium rounded-xl text-xs transition-all duration-200 flex items-center gap-1">
+                    <span>Berikutnya</span>
+                    <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Admin Password Login Modal -->
+    <div id="passwordModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div id="passwordModalContent" class="bg-white rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-100 transform transition-all scale-95 opacity-0 duration-200 space-y-4">
+            
+            <div class="flex items-center justify-between">
+                <div class="w-10 h-10 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600">
+                    <i class="fa-solid fa-user-shield text-lg"></i>
+                </div>
+                <button onclick="closeAdminModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-full">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div>
+                <h2 class="text-base font-bold text-slate-900">Akses Mode Admin</h2>
+                <p class="text-xs text-slate-500 mt-1">Masukkan kata sandi admin untuk melihat Price List Modal, Diskon, dan analisis margin keuntungan.</p>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-3">
+                <div class="relative">
+                    <input 
+                        type="password" 
+                        id="adminPasswordInput" 
+                        placeholder="Password admin..." 
+                        class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white"
+                        required 
+                    />
+                    <button 
+                        type="button" 
+                        onclick="togglePasswordVisibility()" 
+                        class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 text-sm">
+                        <i id="eyeIcon" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+
+                <!-- Error Notice -->
+                <div id="modalErrorMsg" class="hidden p-2.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-600 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation text-rose-500"></i>
+                    <span id="modalErrorText">Kata sandi salah!</span>
+                </div>
+
+                <div class="flex gap-2 pt-1">
+                    <button 
+                        type="button" 
+                        onclick="closeAdminModal()" 
+                        class="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition-all">
+                        Batal
+                    </button>
+                    <button 
+                        type="submit" 
+                        class="w-1/2 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs rounded-xl shadow-md transition-all">
+                        Masuk Admin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Updated Google Sheets Database CSV Endpoint
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQxH8FSlCxpQj0X-sNBRFBUaCk1uOMoaBRlHPJAml12Ya7cJ5GJTUF3Dv1kpA0ZaL4Q9vzlAujwyCYB/pub?gid=353331812&single=true&output=csv';
+
+        // LocalStorage Cache Keys
+        const CACHE_DATA_KEY = 'gmb_catalog_cache_data';
+        const CACHE_TIME_KEY = 'gmb_catalog_cache_time';
+
+        // Application State
+        let rawData = [];
+        let filteredData = [];
+        let headers = [];
+        
+        let currentPage = 1;
+        let pageSize = 10;
+        let currentView = 'card';   // 'card' or 'table'
+        let userRole = 'sales';     // 'sales' or 'admin'
+        let searchQuery = '';
+        let searchField = 'all';    // 'all', 'ref', 'desc'
+        
+        let selectedModalColumn = '';
+
+        // Columns defined for Sales Mode Export & Table View
+        const SALES_HEADERS = [
+            'Material Reference',
+            'Description',
+            'Bahasa Umum',
+            'Fungsi / Kegunaan Utama',
+            'HARGAJUAL1 ( include Ppn)',
+            'HARGAJUAL2(include Ppn)',
+            'HARGAJUAL3 ( Include Ppn)'
+        ];
+
+        window.onload = function() {
+            initDataLoad();
+        };
+
+        // Dual-Layer Data Loading: Instant LocalStorage Cache + Background Live Sync
+        function initDataLoad() {
+            const hasCache = loadFromLocalStorage();
+
+            if (!hasCache) {
+                // First time load: show loading indicator and fetch live
+                showLoading(true);
+            } else {
+                // Cached data presented instantly!
+                showLoading(false);
+                applyFiltersAndRender();
+            }
+
+            // Always trigger background sync to fetch latest Google Sheets data
+            fetchLiveCSVData(!hasCache);
+        }
+
+        // LocalStorage Reader
+        function loadFromLocalStorage() {
+            try {
+                const cachedDataStr = localStorage.getItem(CACHE_DATA_KEY);
+                const cachedTimeStr = localStorage.getItem(CACHE_TIME_KEY);
+
+                if (cachedDataStr && cachedTimeStr) {
+                    const parsed = JSON.parse(cachedDataStr);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        rawData = parsed;
+                        headers = Object.keys(rawData[0]);
+                        detectModalColumn();
+                        updateSyncBadge('cache', cachedTimeStr);
+                        return true;
+                    }
+                }
+            } catch (e) {
+                console.warn('LocalStorage parse error:', e);
+            }
+            return false;
+        }
+
+        // LocalStorage Writer
+        function saveToLocalStorage(data) {
+            try {
+                const nowStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                localStorage.setItem(CACHE_DATA_KEY, JSON.stringify(data));
+                localStorage.setItem(CACHE_TIME_KEY, nowStr);
+                updateSyncBadge('live', nowStr);
+            } catch (e) {
+                console.warn('LocalStorage save error:', e);
+            }
+        }
+
+        function fetchLiveCSVData(isFirstLoad = false) {
+            const icon = document.getElementById('refreshIcon');
+            if (icon) icon.classList.add('animate-spin');
+
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (icon) icon.classList.remove('animate-spin');
+                    showLoading(false);
+                    showError(false);
+
+                    if (results.data && results.data.length > 0) {
+                        const newHeaders = results.meta.fields || Object.keys(results.data[0]);
+                        
+                        // Detect data changes
+                        const isDataChanged = JSON.stringify(rawData) !== JSON.stringify(results.data);
+
+                        rawData = results.data;
+                        headers = newHeaders;
+                        detectModalColumn();
+
+                        // Update LocalStorage Cache
+                        saveToLocalStorage(rawData);
+
+                        applyFiltersAndRender();
+
+                        if (!isFirstLoad && isDataChanged) {
+                            showToast("Data diperbarui dari Google Sheets server!");
+                        }
+                    } else if (isFirstLoad) {
+                        showError(true, "Data CSV di server kosong atau format tidak valid.");
+                    }
+                },
+                error: function(err) {
+                    if (icon) icon.classList.remove('animate-spin');
+                    showLoading(false);
+                    if (rawData.length === 0) {
+                        showError(true, "Gagal terhubung ke Google Sheets. Periksa koneksi internet.");
+                    } else {
+                        updateSyncBadge('offline');
+                    }
+                    console.error('PapaParse Fetch Error:', err);
+                }
+            });
+        }
+
+        // Force Manual Refresh
+        function forceRefreshData() {
+            showToast("Memperbarui data dari server...");
+            fetchLiveCSVData(false);
+        }
+
+        function detectModalColumn() {
+            const selectEl = document.getElementById('modalColumnSelect');
+            if (!selectEl) return;
+            selectEl.innerHTML = '';
+
+            let matched = '';
+            headers.forEach(h => {
+                const opt = document.createElement('option');
+                opt.value = h;
+                opt.textContent = h;
+                selectEl.appendChild(opt);
+
+                const lower = h.toLowerCase();
+                if (!matched && (lower.includes('modal') || lower.includes('hpp') || lower.includes('cost'))) {
+                    matched = h;
+                }
+            });
+
+            if (matched) {
+                selectedModalColumn = matched;
+            } else if (headers.length > 0) {
+                // Default fallback to 7th header if available
+                selectedModalColumn = headers[6] || headers[0];
+            }
+            selectEl.value = selectedModalColumn;
+        }
+
+        function recalculateAdminMargins() {
+            selectedModalColumn = document.getElementById('modalColumnSelect').value;
+            renderData();
+        }
+
+        function handleSearchInput() {
+            const input = document.getElementById('searchInput');
+            const fieldSelect = document.getElementById('searchFieldSelect');
+            
+            searchQuery = input.value.trim().toLowerCase();
+            searchField = fieldSelect.value;
+            
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (searchQuery.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('searchInput');
+            input.value = '';
+            searchQuery = '';
+            document.getElementById('clearSearchBtn').classList.add('hidden');
+            currentPage = 1;
+            applyFiltersAndRender();
+            input.focus();
+        }
+
+        // Filter Data based on Multi-Search Selection
+        function applyFiltersAndRender() {
+            if (!searchQuery) {
+                filteredData = [...rawData];
+            } else {
+                const keys = getHeaderKeyMap();
+
+                filteredData = rawData.filter(row => {
+                    if (searchField === 'ref') {
+                        const val = row[keys.ref] || row['Material Reference'] || '';
+                        return String(val).toLowerCase().includes(searchQuery);
+                    } else if (searchField === 'desc') {
+                        const val = row[keys.desc] || row['Description'] || '';
+                        return String(val).toLowerCase().includes(searchQuery);
+                    } else {
+                        // Search across all fields
+                        return Object.values(row).some(val => 
+                            String(val || '').toLowerCase().includes(searchQuery)
+                        );
+                    }
+                });
+            }
+
+            renderData();
+        }
+
+        function renderData() {
+            const totalItems = filteredData.length;
+            const totalPages = Math.ceil(totalItems / pageSize) || 1;
+
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, totalItems);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            // Summary Info
+            document.getElementById('showingRangeText').textContent = totalItems > 0 ? `${startIndex + 1} - ${endIndex}` : '0 - 0';
+            document.getElementById('totalItemsText').textContent = totalItems;
+            document.getElementById('resultSummary').classList.remove('hidden');
+
+            const emptyState = document.getElementById('emptyState');
+            const cardContainer = document.getElementById('cardContainer');
+            const tableContainer = document.getElementById('tableContainer');
+
+            if (totalItems === 0) {
+                emptyState.classList.remove('hidden');
+                cardContainer.classList.add('hidden');
+                tableContainer.classList.add('hidden');
+                document.getElementById('paginationBar').classList.add('hidden');
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            if (currentView === 'card') {
+                cardContainer.classList.remove('hidden');
+                tableContainer.classList.add('hidden');
+                renderCardView(pageData);
+            } else {
+                cardContainer.classList.add('hidden');
+                tableContainer.classList.remove('hidden');
+                renderTableView(pageData);
+            }
+
+            renderPaginationControls(totalPages);
+        }
+
+        function renderCardView(items) {
+            const container = document.getElementById('cardContainer');
+            const keys = getHeaderKeyMap();
+
+            container.innerHTML = items.map((item, index) => {
+                const ref = getRowValue(item, keys.ref, 'Material Reference', 'Ref');
+                const desc = getRowValue(item, keys.desc, 'Description', 'Deskripsi');
+                const bahasaUmum = getRowValue(item, keys.bahasa, 'Bahasa Umum');
+                const fungsi = getRowValue(item, keys.fungsi, 'Fungsi / Kegunaan Utama', 'Fungsi');
+                
+                const priceList = getRowValue(item, keys.priceList, 'Price List 2026(sebelum PPN)');
+                const disc = getRowValue(item, keys.disc, 'Disc 22%(sebelum PPN)');
+                const modalGMB = getRowValue(item, keys.modal, 'Modal GMB ( include Ppn)');
+
+                const h1 = getRowValue(item, keys.h1, 'HARGAJUAL1 ( include Ppn)');
+                const h2 = getRowValue(item, keys.h2, 'HARGAJUAL2(include Ppn)');
+                const h3 = getRowValue(item, keys.h3, 'HARGAJUAL3 ( Include Ppn)');
+
+                const cleanRef = String(ref).trim();
+                const isRefValid = cleanRef && cleanRef !== '-';
+                const productUrl = isRefValid ? `https://www.se.com/id/id/product/${encodeURIComponent(cleanRef)}` : '#';
+
+                // Admin Profit Margin Calculation Block
+                let adminBlock = '';
+                if (userRole === 'admin') {
+                    const modalVal = parseCurrencyNumber(item[selectedModalColumn] || modalGMB);
+                    
+                    const m1 = calcMargin(h1, modalVal);
+                    const m2 = calcMargin(h2, modalVal);
+                    const m3 = calcMargin(h3, modalVal);
+
+                    adminBlock = `
+                        <div class="mt-3 pt-3 border-t border-slate-200/80 bg-slate-50/90 -mx-4 -mb-4 p-3.5 rounded-b-2xl space-y-2">
+                            <!-- Raw Price List & Modal -->
+                            <div class="grid grid-cols-2 gap-2 pb-2 border-b border-slate-200/60 text-[11px]">
+                                <div>
+                                    <span class="text-slate-400 block">Price List 2026:</span>
+                                    <span class="font-semibold text-slate-700">${formatRupiah(priceList)}</span>
+                                </div>
+                                <div>
+                                    <span class="text-slate-400 block">Disc 22%:</span>
+                                    <span class="font-semibold text-slate-700">${escapeHTML(disc)}</span>
+                                </div>
+                                <div class="col-span-2 flex justify-between items-center pt-1">
+                                    <span class="text-indigo-900 font-semibold">Modal GMB (Inc PPN):</span>
+                                    <span class="font-bold text-indigo-700 text-xs">${formatRupiah(modalVal)}</span>
+                                </div>
+                            </div>
+
+                            <!-- Margin Details -->
+                            <div class="space-y-1.5 text-xs">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-500 text-[11px]">Margin HJ1:</span>
+                                    <span class="font-bold px-2 py-0.5 rounded ${m1.badgeClass} text-[11px]">
+                                        ${formatRupiah(m1.val)} (${m1.pct}%)
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-500 text-[11px]">Margin HJ2:</span>
+                                    <span class="font-bold px-2 py-0.5 rounded ${m2.badgeClass} text-[11px]">
+                                        ${formatRupiah(m2.val)} (${m2.pct}%)
+                                    </span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-slate-500 text-[11px]">Margin HJ3:</span>
+                                    <span class="font-bold px-2 py-0.5 rounded ${m3.badgeClass} text-[11px]">
+                                        ${formatRupiah(m3.val)} (${m3.pct}%)
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                return `
+                    <div class="bg-white rounded-2xl p-4 border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between">
+                        <div>
+                            <!-- Header Ref & Badge dengan Hyperlink Schneider -->
+                            <div class="flex items-start justify-between gap-2 mb-2">
+                                ${isRefValid ? `
+                                    <a href="${productUrl}" target="_blank" rel="noopener noreferrer" title="Buka produk ${escapeHTML(ref)} di Schneider Electric" class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 hover:text-blue-900 border border-blue-200 text-[11px] font-bold rounded-lg tracking-wide uppercase inline-flex items-center gap-1.5 transition-colors">
+                                        <span>${escapeHTML(ref)}</span>
+                                        <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-70"></i>
+                                    </a>
+                                ` : `
+                                    <span class="px-2.5 py-1 bg-slate-100 text-slate-600 border border-slate-200 text-[11px] font-bold rounded-lg tracking-wide uppercase">
+                                        ${escapeHTML(ref)}
+                                    </span>
+                                `}
+                                <span class="text-[10px] font-medium text-slate-400">#${(currentPage - 1) * pageSize + index + 1}</span>
+                            </div>
+
+                            <!-- Description -->
+                            <h2 class="font-bold text-slate-800 text-sm leading-snug mb-1.5">
+                                ${escapeHTML(desc)}
+                            </h2>
+
+                            <!-- Bahasa Umum & Fungsi -->
+                            ${bahasaUmum !== '-' ? `
+                                <div class="mb-2 text-xs text-indigo-600 bg-indigo-50/60 px-2.5 py-1 rounded-lg border border-indigo-100 inline-block font-medium">
+                                    <i class="fa-solid fa-tag mr-1 text-[10px]"></i> ${escapeHTML(bahasaUmum)}
+                                </div>
+                            ` : ''}
+
+                            ${fungsi !== '-' ? `
+                                <p class="text-xs text-slate-500 line-clamp-2 mb-3 italic">
+                                    <i class="fa-solid fa-circle-info mr-1 text-slate-400"></i>${escapeHTML(fungsi)}
+                                </p>
+                            ` : '<div class="mb-3"></div>'}
+
+                            <!-- Sales Prices Grid -->
+                            <div class="space-y-1.5 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-slate-500 font-medium">Harga Jual 1 (Inc PPN)</span>
+                                    <span class="font-bold text-blue-700 text-sm">${formatRupiah(h1)}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-slate-500">Harga Jual 2 (Inc PPN)</span>
+                                    <span class="font-semibold text-slate-700">${formatRupiah(h2)}</span>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="text-slate-500">Harga Jual 3 (Inc PPN)</span>
+                                    <span class="font-semibold text-slate-700">${formatRupiah(h3)}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${adminBlock}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderTableView(items) {
+            const headerEl = document.getElementById('tableHeader');
+            const bodyEl = document.getElementById('tableBody');
+
+            let displayHeaders = [];
+            
+            if (userRole === 'sales') {
+                displayHeaders = SALES_HEADERS.filter(h => headers.some(orig => isHeaderMatch(orig, h)));
+                if (displayHeaders.length === 0) displayHeaders = SALES_HEADERS;
+            } else {
+                displayHeaders = [
+                    ...headers, 
+                    'Untung HJ1 (Rp)', 'Margin HJ1 (%)',
+                    'Untung HJ2 (Rp)', 'Margin HJ2 (%)',
+                    'Untung HJ3 (Rp)', 'Margin HJ3 (%)'
+                ];
+            }
+
+            // Table Header
+            headerEl.innerHTML = `
+                <tr>
+                    <th class="py-3 px-3.5 w-12 text-center">No</th>
+                    ${displayHeaders.map(h => `<th class="py-3 px-3.5 whitespace-nowrap">${escapeHTML(h)}</th>`).join('')}
+                </tr>
+            `;
+
+            // Table Body
+            const keys = getHeaderKeyMap();
+            
+            bodyEl.innerHTML = items.map((item, idx) => {
+                const rowNum = (currentPage - 1) * pageSize + idx + 1;
+                
+                const cellsHTML = displayHeaders.map(col => {
+                    // Calculated Margin Columns
+                    if (col.startsWith('Untung HJ') || col.startsWith('Margin HJ')) {
+                        const modalVal = parseCurrencyNumber(item[selectedModalColumn]);
+                        let hjVal = 0;
+                        if (col.includes('HJ1')) hjVal = parseCurrencyNumber(item[keys.h1] || item['HARGAJUAL1 ( include Ppn)']);
+                        else if (col.includes('HJ2')) hjVal = parseCurrencyNumber(item[keys.h2] || item['HARGAJUAL2(include Ppn)']);
+                        else if (col.includes('HJ3')) hjVal = parseCurrencyNumber(item[keys.h3] || item['HARGAJUAL3 ( Include Ppn)']);
+
+                        const m = calcMargin(hjVal, modalVal);
+
+                        if (col.startsWith('Untung HJ')) {
+                            return `<td class="py-3 px-3.5 whitespace-nowrap ${m.textClass} font-semibold">${formatRupiah(m.val)}</td>`;
+                        } else {
+                            return `<td class="py-3 px-3.5 whitespace-nowrap ${m.textClass} font-bold">${m.pct}%</td>`;
+                        }
+                    }
+
+                    const actualKey = findActualKey(item, col);
+                    let val = actualKey ? item[actualKey] : '-';
+
+                    if (!val && val !== 0) val = '-';
+                    
+                    // Format currency headers
+                    if (col.toLowerCase().includes('hargajual') || col.toLowerCase().includes('price list') || col.toLowerCase().includes('modal') || col === selectedModalColumn) {
+                        return `<td class="py-3 px-3.5 whitespace-nowrap font-semibold text-slate-800">${formatRupiah(val)}</td>`;
+                    }
+
+                    // Material Reference Hyperlink untuk Tampilan Table
+                    if (col === 'Material Reference' || isHeaderMatch(col, 'Material Reference')) {
+                        const cleanVal = String(val).trim();
+                        if (cleanVal && cleanVal !== '-') {
+                            const targetUrl = `https://www.se.com/id/id/product/${encodeURIComponent(cleanVal)}`;
+                            return `<td class="py-3 px-3.5 whitespace-nowrap font-bold text-blue-700">
+                                <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" title="Buka produk ${escapeHTML(cleanVal)} di Schneider Electric" class="hover:underline inline-flex items-center gap-1 hover:text-blue-900 transition-colors">
+                                    <span>${escapeHTML(val)}</span>
+                                    <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-70"></i>
+                                </a>
+                            </td>`;
+                        }
+                        return `<td class="py-3 px-3.5 whitespace-nowrap font-bold text-slate-500">${escapeHTML(val)}</td>`;
+                    }
+
+                    return `<td class="py-3 px-3.5 whitespace-nowrap">${escapeHTML(val)}</td>`;
+                }).join('');
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition-colors">
+                        <td class="py-3 px-3.5 text-center text-slate-400 font-medium">${rowNum}</td>
+                        ${cellsHTML}
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function exportToExcel() {
+            if (filteredData.length === 0) {
+                alert("Tidak ada data untuk di-export.");
+                return;
+            }
+
+            let exportHeaders = [];
+            const keys = getHeaderKeyMap();
+
+            if (userRole === 'sales') {
+                exportHeaders = [
+                    'Material Reference',
+                    'Description',
+                    'Bahasa Umum',
+                    'Fungsi / Kegunaan Utama',
+                    'HARGAJUAL1 ( include Ppn)',
+                    'HARGAJUAL2(include Ppn)',
+                    'HARGAJUAL3 ( Include Ppn)'
+                ];
+            } else {
+                exportHeaders = [
+                    ...headers,
+                    'Untung HJ1 (Rp)', 'Margin HJ1 (%)',
+                    'Untung HJ2 (Rp)', 'Margin HJ2 (%)',
+                    'Untung HJ3 (Rp)', 'Margin HJ3 (%)'
+                ];
+            }
+
+            const dataToExport = filteredData.map((row, i) => {
+                let obj = { "No": i + 1 };
+                
+                exportHeaders.forEach(col => {
+                    if (col.startsWith('Untung HJ') || col.startsWith('Margin HJ')) {
+                        const modalVal = parseCurrencyNumber(row[selectedModalColumn]);
+                        let hjVal = 0;
+                        if (col.includes('HJ1')) hjVal = parseCurrencyNumber(row[keys.h1] || row['HARGAJUAL1 ( include Ppn)']);
+                        else if (col.includes('HJ2')) hjVal = parseCurrencyNumber(row[keys.h2] || row['HARGAJUAL2(include Ppn)']);
+                        else if (col.includes('HJ3')) hjVal = parseCurrencyNumber(row[keys.h3] || row['HARGAJUAL3 ( Include Ppn)']);
+
+                        const m = calcMargin(hjVal, modalVal);
+
+                        if (col.startsWith('Untung')) {
+                            obj[col] = m.val;
+                        } else {
+                            obj[col] = m.pct + '%';
+                        }
+                    } else {
+                        const actualKey = findActualKey(row, col);
+                        let val = actualKey ? row[actualKey] : '';
+                        
+                        // Numeric parsing for pricing in excel
+                        if (col.toLowerCase().includes('hargajual') || col.toLowerCase().includes('price list') || col.toLowerCase().includes('modal')) {
+                            obj[col] = parseCurrencyNumber(val);
+                        } else {
+                            obj[col] = val || '';
+                        }
+                    }
+                });
+                return obj;
+            });
+
+            // Create Workbook
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Katalog GMB");
+
+            // Generate filename with date
+            const dateStr = new Date().toISOString().slice(0, 10);
+            const filename = `Katalog_GMB_${userRole.toUpperCase()}_${dateStr}.xlsx`;
+
+            XLSX.writeFile(workbook, filename);
+            showToast(`File Excel berhasil di-download (${userRole.toUpperCase()} Mode)`);
+        }
+
+        function handleRoleButtonClick() {
+            if (userRole === 'admin') {
+                userRole = 'sales';
+                updateRoleUI();
+                renderData();
+                showToast("Beralih ke Sales Mode");
+            } else {
+                openAdminModal();
+            }
+        }
+
+        function openAdminModal() {
+            const modal = document.getElementById('passwordModal');
+            const content = document.getElementById('passwordModalContent');
+            document.getElementById('adminPasswordInput').value = '';
+            document.getElementById('modalErrorMsg').classList.add('hidden');
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeAdminModal() {
+            const modal = document.getElementById('passwordModal');
+            const content = document.getElementById('passwordModalContent');
+            
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const passwordInput = document.getElementById('adminPasswordInput').value;
+
+            if (passwordInput === 'gmb123') {
+                userRole = 'admin';
+                closeAdminModal();
+                updateRoleUI();
+                renderData();
+                showToast("Akses Admin berhasil dibuka!");
+            } else {
+                const errorBox = document.getElementById('modalErrorMsg');
+                document.getElementById('modalErrorText').textContent = 'Kata sandi salah! Silakan coba lagi.';
+                errorBox.classList.remove('hidden');
+            }
+        }
+
+        function updateRoleUI() {
+            const badgeText = document.getElementById('roleBadgeText');
+            const badgeIcon = document.getElementById('roleBadgeIcon');
+            const lockIcon = document.getElementById('roleLockIcon');
+            const notice = document.getElementById('activeRoleNotice');
+            const adminBar = document.getElementById('adminModalConfigBar');
+
+            if (userRole === 'admin') {
+                badgeText.textContent = 'Admin Mode';
+                badgeIcon.className = 'w-2 h-2 rounded-full bg-amber-400 animate-ping';
+                lockIcon.className = 'fa-solid fa-lock-open text-[10px] ml-0.5 text-amber-300';
+                notice.textContent = 'Tampilan Admin (Seluruh Kolom & Profit Margin)';
+                notice.className = 'font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 px-2 py-0.5 rounded-md';
+                adminBar.classList.remove('hidden');
+                adminBar.classList.add('flex');
+            } else {
+                badgeText.textContent = 'Sales Mode';
+                badgeIcon.className = 'w-2 h-2 rounded-full bg-emerald-400';
+                lockIcon.className = 'fa-solid fa-lock text-[10px] ml-0.5 opacity-70';
+                notice.textContent = 'Tampilan Sales';
+                notice.className = 'font-medium text-slate-600 bg-slate-200/60 px-2 py-0.5 rounded';
+                adminBar.classList.add('hidden');
+                adminBar.classList.remove('flex');
+            }
+        }
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('adminPasswordInput');
+            const icon = document.getElementById('eyeIcon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.className = 'fa-solid fa-eye-slash';
+            } else {
+                input.type = 'password';
+                icon.className = 'fa-solid fa-eye';
+            }
+        }
+
+        function renderPaginationControls(totalPages) {
+            const paginationBar = document.getElementById('paginationBar');
+            paginationBar.classList.remove('hidden');
+
+            document.getElementById('currentPageNum').textContent = currentPage;
+            document.getElementById('totalPagesNum').textContent = totalPages;
+
+            document.getElementById('prevPageBtn').disabled = (currentPage === 1);
+            document.getElementById('nextPageBtn').disabled = (currentPage === totalPages);
+
+            const numContainer = document.getElementById('pageNumberButtons');
+            numContainer.innerHTML = '';
+
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const btn = document.createElement('button');
+                btn.className = `w-8 h-8 rounded-lg text-xs font-semibold transition-all ${
+                    i === currentPage 
+                        ? 'bg-blue-600 text-white shadow-sm' 
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`;
+                btn.textContent = i;
+                btn.onclick = () => {
+                    currentPage = i;
+                    renderData();
+                };
+                numContainer.appendChild(btn);
+            }
+        }
+
+        function changePage(delta) {
+            currentPage += delta;
+            renderData();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('pageSizeSelect').value, 10);
+            currentPage = 1;
+            renderData();
+        }
+
+        function switchView(mode) {
+            currentView = mode;
+            const btnCard = document.getElementById('btnCardView');
+            const btnTable = document.getElementById('btnTableView');
+
+            if (mode === 'card') {
+                btnCard.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200 shadow-sm bg-white text-blue-700 font-semibold";
+                btnTable.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all duration-200";
+            } else {
+                btnTable.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-all duration-200 shadow-sm bg-white text-blue-700 font-semibold";
+                btnCard.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all duration-200";
+            }
+
+            renderData();
+        }
+
+        function calcMargin(priceVal, modalVal) {
+            const sell = parseCurrencyNumber(priceVal);
+            const cost = parseCurrencyNumber(modalVal);
+
+            const val = sell - cost;
+            const pct = sell > 0 ? ((val / sell) * 100).toFixed(2) : '0';
+
+            const isPositive = val >= 0;
+            return {
+                val: val,
+                pct: pct,
+                badgeClass: isPositive ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200',
+                textClass: isPositive ? 'text-emerald-600' : 'text-rose-600'
+            };
+        }
+
+        function getHeaderKeyMap() {
+            return {
+                ref: findKeyInHeaders(['material reference', 'reference', 'ref']),
+                desc: findKeyInHeaders(['description', 'deskripsi']),
+                bahasa: findKeyInHeaders(['bahasa umum', 'bahasa']),
+                fungsi: findKeyInHeaders(['fungsi', 'kegunaan']),
+                priceList: findKeyInHeaders(['price list 2026', 'price list', 'pricelist']),
+                disc: findKeyInHeaders(['disc 22%', 'disc']),
+                modal: findKeyInHeaders(['modal gmb', 'modal']),
+                h1: findKeyInHeaders(['hargajual1', 'harga jual 1']),
+                h2: findKeyInHeaders(['hargajual2', 'harga jual 2']),
+                h3: findKeyInHeaders(['hargajual3', 'harga jual 3'])
+            };
+        }
+
+        function findKeyInHeaders(keywords) {
+            return headers.find(h => {
+                const lower = h.toLowerCase().replace(/\s+/g, '');
+                return keywords.some(kw => lower.includes(kw.replace(/\s+/g, '')));
+            }) || '';
+        }
+
+        function findActualKey(item, targetHeader) {
+            if (item[targetHeader] !== undefined) return targetHeader;
+            const targetClean = targetHeader.toLowerCase().replace(/\s+/g, '');
+            return Object.keys(item).find(k => k.toLowerCase().replace(/\s+/g, '') === targetClean);
+        }
+
+        function isHeaderMatch(h1, h2) {
+            return h1.toLowerCase().replace(/\s+/g, '') === h2.toLowerCase().replace(/\s+/g, '');
+        }
+
+        function getRowValue(item, matchedKey, ...fallbackHeaders) {
+            if (matchedKey && item[matchedKey] !== undefined) return item[matchedKey];
+            for (let h of fallbackHeaders) {
+                const actual = findActualKey(item, h);
+                if (actual && item[actual] !== undefined) return item[actual];
+            }
+            return '-';
+        }
+
+        function formatRupiah(val) {
+            if (val === null || val === undefined || val === '' || val === '-') return '-';
+            const num = parseCurrencyNumber(val);
+            if (isNaN(num) || num === 0) return escapeHTML(String(val));
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(num);
+        }
+
+        function parseCurrencyNumber(val) {
+            if (!val) return 0;
+            if (typeof val === 'number') return val;
+            let str = String(val).replace(/[^0-9,-]/g, '').replace(',', '.');
+            let num = parseFloat(str);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function updateSyncBadge(type, timeStr = '') {
+            const badge = document.getElementById('syncBadge');
+            const dot = document.getElementById('syncDot');
+            const text = document.getElementById('syncStatusText');
+
+            if (!badge) return;
+            badge.classList.remove('hidden');
+
+            if (type === 'live') {
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-pulse';
+                text.textContent = `Sync Server (${timeStr})`;
+            } else if (type === 'cache') {
+                dot.className = 'w-2 h-2 rounded-full bg-sky-400';
+                text.textContent = `Offline Cache (${timeStr})`;
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-amber-400';
+                text.textContent = `Tersimpan Lokal`;
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toastNotification');
+            const toastMsg = document.getElementById('toastMessage');
+            toastMsg.textContent = msg;
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                hideToast();
+            }, 3500);
+        }
+
+        function hideToast() {
+            document.getElementById('toastNotification').classList.add('hidden');
+        }
+
+        function showLoading(visible) {
+            const loading = document.getElementById('loadingState');
+            if (visible) loading.classList.remove('hidden');
+            else loading.classList.add('hidden');
+        }
+
+        function showError(visible, msg = '') {
+            const err = document.getElementById('errorState');
+            if (visible) {
+                document.getElementById('errorMessage').textContent = msg;
+                err.classList.remove('hidden');
+            } else {
+                err.classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>

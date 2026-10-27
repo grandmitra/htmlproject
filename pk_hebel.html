@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Knowledge & Kalkulator Bata Ringan (AAC / Hebel)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        concrete: {
+                            50: '#f6f7f8',
+                            100: '#eceee0',
+                            200: '#d5d9dc',
+                            500: '#717d8a',
+                            800: '#343a40',
+                            900: '#212529',
+                        },
+                        brand: {
+                            blue: '#1e3a8a',
+                            accent: '#f97316',
+                            light: '#f1f5f9',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom styling & print utilities */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+            .print-full { width: 100% !important; max-width: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-amber-500 selection:text-white">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 bg-slate-900 text-white shadow-md border-b border-slate-800">
+        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 to-orange-600 flex items-center justify-center font-black text-xl text-white shadow-lg shadow-amber-500/30">
+                    <i class="fa-solid font-bold fa-cubes"></i>
+                </div>
+                <div>
+                    <h1 class="font-extrabold text-base sm:text-lg tracking-tight text-white leading-tight">BATA RINGAN <span class="text-amber-400">AAC</span></h1>
+                    <p class="text-xs text-slate-400">Product Knowledge & Calculator Jabodetabek</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <a href="#kalkulator" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5 shadow-md">
+                    <i class="fa-solid fa-calculator"></i>
+                    <span class="hidden sm:inline">Kalkulator</span>
+                </a>
+                <button onclick="sharePage()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition" title="Bagikan">
+                    <i class="fa-solid fa-share-nodes text-sm"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Jabodetabek Update Banner -->
+    <div class="bg-slate-800 text-slate-300 text-xs py-2 px-4 text-center border-b border-slate-700">
+        <span class="inline-block bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded font-semibold text-[10px] mr-2">UPDATE HARGA</span>
+        Pasaran Jabodetabek TERBARU (Update Toko Retail & Grosir Direct Trucking)
+    </div>
+
+    <main class="max-w-6xl mx-auto px-4 py-6 w-full space-y-8">
+
+        <!-- Hero Section & Overview -->
+        <section class="bg-gradient-to-br from-slate-900 via-slate-800 to-blue-950 rounded-2xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-700">
+            <div class="absolute -right-10 -bottom-10 opacity-10 pointer-events-none">
+                <i class="fa-solid fa-cubes text-[220px] text-white"></i>
+            </div>
+            <div class="relative z-10 max-w-3xl space-y-4">
+                <div class="inline-flex items-center gap-2 bg-blue-500/20 text-blue-300 border border-blue-500/30 px-3 py-1 rounded-full text-xs font-semibold">
+                    <i class="fa-solid fa-circle-check text-blue-400"></i> Autoclaved Aerated Concrete (AAC)
+                </div>
+                <h2 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white leading-tight">
+                    Panduan Lengkap Spesiﬁkasi, Standar Harga & Estimasi Proyek
+                </h2>
+                <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+                    Bata ringan (Hebel AAC) adalah material dinding presisi tinggi, berbahan dasar pasir silika, semen, kapur, dan alumunium pasta. Menawarkan pengerjaan dinding 3x lebih cepat dibanding bata merah konvensional.
+                </p>
+                <div class="pt-2 flex flex-wrap gap-3 text-xs text-slate-200">
+                    <div class="bg-slate-800/80 backdrop-blur border border-slate-700 px-3 py-2 rounded-xl flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-amber-400"></i>
+                        <span>Ketebalan Standard: <strong>7.5 cm & 10 cm</strong></span>
+                    </div>
+                    <div class="bg-slate-800/80 backdrop-blur border border-slate-700 px-3 py-2 rounded-xl flex items-center gap-2">
+                        <i class="fa-solid fa-truck-field text-amber-400"></i>
+                        <span>1 DO Pasaran: <strong>12.6 m³ - 14.4 m³</strong></span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Spesifikasi & Ukuran Standar -->
+        <section id="spesifikasi" class="space-y-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-ruler-combined text-amber-500"></i> Spesifikasi & Dimensi Standar
+                    </h3>
+                    <p class="text-xs sm:text-sm text-slate-500">Perbandingan ukuran 7.5 cm dan 10 cm dalam 1 m³ (Kubik)</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Card Ukuran 7.5 cm -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 bg-blue-600 text-white font-bold text-xs px-3 py-1 rounded-bl-xl shadow-sm">
+                        Favorit Renovasi / Rumah Tipe Kecil
+                    </div>
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xl">
+                            7.5
+                        </div>
+                        <div class="text-right pr-12">
+                            <span class="text-xs text-slate-400 block font-medium">Ketebalan</span>
+                            <span class="text-lg font-bold text-slate-800">7.5 cm</span>
+                        </div>
+                    </div>
+
+                    <h4 class="font-bold text-slate-900 text-base mb-2">Ukuran Standar: 60 x 20 x 7.5 cm</h4>
+                    
+                    <div class="grid grid-cols-2 gap-3 mt-4 text-xs">
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <span class="text-slate-500 block mb-0.5">Volume per Pcs</span>
+                            <span class="font-bold text-slate-800 text-sm">0.009 m³</span>
+                        </div>
+                        <div class="bg-amber-50 p-3 rounded-xl border border-amber-100/60">
+                            <span class="text-amber-800 block mb-0.5 font-medium">1 Kubik (m³) Isi</span>
+                            <span class="font-extrabold text-amber-600 text-base">111 Pcs</span>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <span class="text-slate-500 block mb-0.5">Daya Sebar Dinding</span>
+                            <span class="font-bold text-slate-800 text-sm">± 13.3 m² / m³</span>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <span class="text-slate-500 block mb-0.5">Rekomendasi</span>
+                            <span class="font-semibold text-slate-700">Sekat Ruang, Dinding Interior</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                        <span><i class="fa-solid fa-weight-hanging text-slate-400 mr-1"></i> Berat: ± 6.5 - 7 kg/pcs</span>
+                        <span class="text-blue-600 font-semibold">Efisiensi Ruang Tinggi</span>
+                    </div>
+                </div>
+
+                <!-- Card Ukuran 10 cm -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition relative overflow-hidden group">
+                    <div class="absolute top-0 right-0 bg-emerald-600 text-white font-bold text-xs px-3 py-1 rounded-bl-xl shadow-sm">
+                        Standard Dinding Luar & Proyek
+                    </div>
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-xl">
+                            10
+                        </div>
+                        <div class="text-right pr-12">
+                            <span class="text-xs text-slate-400 block font-medium">Ketebalan</span>
+                            <span class="text-lg font-bold text-slate-800">10 cm</span>
+                        </div>
+                    </div>
+
+                    <h4 class="font-bold text-slate-900 text-base mb-2">Ukuran Standar: 60 x 20 x 10 cm</h4>
+
+                    <div class="grid grid-cols-2 gap-3 mt-4 text-xs">
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <span class="text-slate-500 block mb-0.5">Volume per Pcs</span>
+                            <span class="font-bold text-slate-800 text-sm">0.012 m³</span>
+                        </div>
+                        <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-100/60">
+                            <span class="text-emerald-800 block mb-0.5 font-medium">1 Kubik (m³) Isi</span>
+                            <span class="font-extrabold text-emerald-600 text-base">83 Pcs</span>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <span class="text-slate-500 block mb-0.5">Daya Sebar Dinding</span>
+                            <span class="font-bold text-slate-800 text-sm">± 10.0 m² / m³</span>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <span class="text-slate-500 block mb-0.5">Rekomendasi</span>
+                            <span class="font-semibold text-slate-700">Dinding Luar, Utama & Pagar</span>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                        <span><i class="fa-solid fa-weight-hanging text-slate-400 mr-1"></i> Berat: ± 8.5 - 9 kg/pcs</span>
+                        <span class="text-emerald-600 font-semibold">Peredam Suara Lebih Baik</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Standard Harga Jabodetabek -->
+        <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                <div>
+                    <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-tags text-amber-500"></i> Standard Harga Pasaran Jabodetabek
+                    </h3>
+                    <p class="text-xs text-slate-500">Estimasi harga toko eceran vs pembelian grosir (1 DOing / Pabrik)</p>
+                </div>
+                <span class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 self-start sm:self-auto">
+                    <i class="fa-solid fa-location-dot text-red-500 mr-1"></i> Jakarta, Bogor, Depok, Tangerang, Bekasi
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Retail Store Price -->
+                <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 hover:bg-white transition space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Eceran Toko Bangunan</span>
+                        <i class="fa-solid fa-store text-blue-500"></i>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-extrabold text-slate-900">Rp 600k <span class="text-sm font-normal text-slate-500">- 750k</span></div>
+                        <span class="text-xs text-slate-500">per Meter Kubik (m³)</span>
+                    </div>
+                    <ul class="text-xs text-slate-600 space-y-1.5 border-t border-slate-200 pt-3">
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500 text-[10px]"></i> Cocok untuk kebutuhan kecil (< 10 m³)</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-emerald-500 text-[10px]"></i> Pengiriman fleksibel dengan pikap</li>
+                    </ul>
+                </div>
+
+                <!-- Wholesale DO Price -->
+                <div class="border-2 border-amber-500 rounded-xl p-4 bg-amber-50/30 relative space-y-3">
+                    <div class="absolute -top-3 right-3 bg-amber-500 text-slate-950 font-black text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wider">
+                        PALING HEMAT
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-amber-900 uppercase tracking-wider">Grosir / 1 DO (Direct Trucking)</span>
+                        <i class="fa-solid fa-truck-monster text-amber-600"></i>
+                    </div>
+                    <div>
+                        <div class="text-2xl font-extrabold text-amber-900">Rp 520k <span class="text-sm font-normal text-amber-700">- 620k</span></div>
+                        <span class="text-xs text-amber-800">per Meter Kubik (m³)</span>
+                    </div>
+                    <ul class="text-xs text-amber-900/80 space-y-1.5 border-t border-amber-200/60 pt-3">
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-amber-600 text-[10px]"></i> Minimal Order 1 DO (12.6 - 14.4 m³)</li>
+                        <li class="flex items-center gap-2"><i class="fa-solid fa-check text-amber-600 text-[10px]"></i> Kirim langsung dari Pabrik / Depo Besar</li>
+                    </ul>
+                </div>
+
+                <!-- Per Piece Unit Price -->
+                <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 hover:bg-white transition space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Eceran Satuan (Pcs)</span>
+                        <i class="fa-solid fa-cubes-stacked text-purple-500"></i>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-xs text-slate-500">Ukuran 7.5 cm:</span>
+                            <span class="font-extrabold text-slate-800 text-sm">Rp 6.500 - 8.000</span>
+                        </div>
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-xs text-slate-500">Ukuran 10 cm:</span>
+                            <span class="font-extrabold text-slate-800 text-sm">Rp 8.500 - 10.500</span>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-slate-500 border-t border-slate-200 pt-3">
+                        * Catatan: Harga dapat bervariasi tergantung merk (Gracia, Powerblock, Broco, Citation, Leibel, dll) & ongkos bongkar lokasi.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interactive Kalkulator Bata Ringan & Mortar -->
+        <section id="kalkulator" class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 sm:p-7 text-white shadow-xl space-y-6 border border-slate-700">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-700 pb-4">
+                <div>
+                    <div class="inline-flex items-center gap-1.5 text-xs text-amber-400 font-bold uppercase tracking-wider mb-1">
+                        <i class="fa-solid fa-calculator"></i> Fitur Estimasi Otomatis
+                    </div>
+                    <h3 class="text-2xl font-extrabold text-white">Kalkulator Kebutuhan Bata & Mortar</h3>
+                    <p class="text-xs text-slate-400">Hitung kubikasi, jumlah pcs, dan estimasi semen perekat secara presisi</p>
+                </div>
+                <div class="flex items-center gap-2 bg-slate-800/90 p-1.5 rounded-xl border border-slate-700 self-start md:self-auto">
+                    <button type="button" onclick="setCalcMode('dimensions')" id="btn-mode-dim" class="px-3 py-1.5 rounded-lg text-xs font-bold transition bg-amber-500 text-slate-950">
+                        Panjang x Tinggi
+                    </button>
+                    <button type="button" onclick="setCalcMode('area')" id="btn-mode-area" class="px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white">
+                        Langsung Luas (m²)
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Input Controls (7 cols) -->
+                <div class="lg:col-span-7 space-y-4">
+                    
+                    <!-- Dimension Inputs -->
+                    <div id="input-dimensions-group" class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Panjang Dinding (Meter)</label>
+                            <div class="relative">
+                                <input type="number" id="input-length" value="10" step="0.1" min="0" oninput="calculateMaterial()" 
+                                    class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-white font-bold focus:outline-none focus:border-amber-500 text-sm pl-8">
+                                <i class="fa-solid fa-arrows-left-right text-slate-500 absolute left-3 top-3 text-xs"></i>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Tinggi Dinding (Meter)</label>
+                            <div class="relative">
+                                <input type="number" id="input-height" value="3" step="0.1" min="0" oninput="calculateMaterial()" 
+                                    class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-white font-bold focus:outline-none focus:border-amber-500 text-sm pl-8">
+                                <i class="fa-solid fa-arrows-up-down text-slate-500 absolute left-3 top-3 text-xs"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Direct Area Input (Hidden by default) -->
+                    <div id="input-area-group" class="hidden">
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Total Luas Dinding (m²)</label>
+                        <div class="relative">
+                            <input type="number" id="input-total-area" value="30" step="0.5" min="0" oninput="calculateMaterial()" 
+                                class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-white font-bold focus:outline-none focus:border-amber-500 text-sm pl-8">
+                            <i class="fa-solid fa-vector-square text-slate-500 absolute left-3 top-3 text-xs"></i>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <!-- Deductions (Doors/Windows) -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Pengurangan Pintu/Jendela (m²)</label>
+                            <div class="relative">
+                                <input type="number" id="input-deduction" value="2" step="0.5" min="0" oninput="calculateMaterial()" 
+                                    class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-white font-bold focus:outline-none focus:border-amber-500 text-sm pl-8">
+                                <i class="fa-solid fa-door-open text-slate-500 absolute left-3 top-3 text-xs"></i>
+                            </div>
+                        </div>
+
+                        <!-- Thickness Select -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Ketebalan Bata</label>
+                            <select id="select-thickness" onchange="calculateMaterial()" 
+                                class="w-full bg-slate-800 border border-slate-600 rounded-xl px-3 py-2.5 text-white font-bold focus:outline-none focus:border-amber-500 text-sm">
+                                <option value="7.5">7.5 cm (Sekat / Interior)</option>
+                                <option value="10" selected>10 cm (Dinding Luar / Standar)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Safety Factor & Price Mode Options -->
+                    <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/80 space-y-3">
+                        <div class="flex items-center justify-between text-xs">
+                            <span class="text-slate-300 flex items-center gap-1.5">
+                                <i class="fa-solid fa-shield-halved text-amber-400"></i> Faktor Buangan / Waste Limit (+5%)
+                            </span>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="toggle-waste" checked onchange="calculateMaterial()" class="sr-only peer">
+                                <div class="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500"></div>
+                            </label>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs pt-2 border-t border-slate-700/50">
+                            <span class="text-slate-300">Tipe Skala Pembelian:</span>
+                            <div class="flex items-center gap-3">
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="price_type" value="retail" checked onchange="calculateMaterial()" class="accent-amber-500">
+                                    <span class="text-slate-300">Eceran</span>
+                                </label>
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="radio" name="price_type" value="wholesale" onchange="calculateMaterial()" class="accent-amber-500">
+                                    <span class="text-amber-400 font-semibold">Grosir (1 DO)</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Calculation Results Output (5 cols) -->
+                <div class="lg:col-span-5 bg-slate-950/80 rounded-xl p-4 sm:p-5 border border-amber-500/30 flex flex-col justify-between space-y-4 shadow-inner">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <span class="text-xs uppercase font-extrabold text-amber-400 tracking-wider">Hasil Perhitungan</span>
+                            <span class="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded" id="calc-badge-thickness">Ketebalan: 10 cm</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                                <span class="text-slate-400 block text-[10px]">Luas Bersih (Net)</span>
+                                <span id="res-net-area" class="text-base font-bold text-white">28.00 m²</span>
+                            </div>
+                            <div class="bg-slate-900 p-2.5 rounded-lg border border-slate-800">
+                                <span class="text-slate-400 block text-[10px]">Volume Kubikasi</span>
+                                <span id="res-volume" class="text-base font-extrabold text-amber-400">2.80 m³</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-900 p-3 rounded-lg border border-slate-800 space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="text-slate-300"><i class="fa-solid fa-cubes text-amber-400 mr-1.5"></i> Total Bata Ringan:</span>
+                                <span id="res-pcs" class="font-extrabold text-base text-white">245 Pcs</span>
+                            </div>
+                            <div class="flex justify-between items-center text-xs pt-1 border-t border-slate-800/80">
+                                <span class="text-slate-300"><i class="fa-solid fa-bag-shopping text-blue-400 mr-1.5"></i> Semen Mortar (40kg):</span>
+                                <span id="res-mortar" class="font-extrabold text-base text-blue-400">3 Sak</span>
+                            </div>
+                        </div>
+
+                        <!-- Cost Estimation Box -->
+                        <div class="bg-gradient-to-r from-amber-500/10 to-orange-500/10 p-3.5 rounded-xl border border-amber-500/40">
+                            <span class="text-[10px] text-amber-300 font-bold uppercase tracking-wider block mb-0.5">Estimasi Total Biaya Material (Bata + Mortar)</span>
+                            <div id="res-cost-range" class="text-xl sm:text-2xl font-black text-amber-400">
+                                Rp 1.875.000 - Rp 2.355.000
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1">
+                                *Asumsi harga mortar Rp 65.000 - Rp 85.000 / sak (40kg).
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="copyQuoteSummary()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center gap-1.5 shadow">
+                            <i class="fa-solid fa-copy"></i>
+                            <span>Salin Ringkasan</span>
+                        </button>
+                        <button onclick="resetCalculator()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 px-3 rounded-lg text-xs transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-rotate-right"></i>
+                            <span>Reset Input</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Keunggulan Produk & Perbandingan Material -->
+        <section class="space-y-6">
+            <div class="text-center max-w-2xl mx-auto">
+                <h3 class="text-2xl font-extrabold text-slate-900">Mengapa Memilih Bata Ringan AAC?</h3>
+                <p class="text-xs sm:text-sm text-slate-500 mt-1">Keunggulan teknis yang menjadikannya pilihan utama konstruksi modern</p>
+            </div>
+
+            <!-- 4 Key Advantages Grid -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                    <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-feather"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm">Bobot Ringan & Presisi</h4>
+                    <p class="text-xs text-slate-500">Mengurangi beban struktur gedung & ukuran sangat presisi (toleransi ±1-2 mm).</p>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                    <div class="w-10 h-10 rounded-lg bg-red-100 text-red-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-fire-burner"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm">Tahan Api s.d 4 Jam</h4>
+                    <p class="text-xs text-slate-500">Sifat anorganik membuat bata tahan terhadap suhu tinggi dan tidak merambatkan api.</p>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-temperature-arrow-down"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm">Isolasi Termal Baik</h4>
+                    <p class="text-xs text-slate-500">Pori-pori udara terperangkap menahan panas luar, menjadikan ruangan lebih sejuk.</p>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2">
+                    <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-stopwatch"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm">Pemasangan Cepat</h4>
+                    <p class="text-xs text-slate-500">Dimensi besar (60x20cm) mempercepat laju pasang hingga 3x dibanding bata merah.</p>
+                </div>
+            </div>
+
+            <!-- Comparison Table Matrix -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+                    <h4 class="font-bold text-sm sm:text-base flex items-center gap-2">
+                        <i class="fa-solid fa-table-list text-amber-400"></i> Perbandingan: Bata Ringan vs Bata Merah vs Batako
+                    </h4>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-slate-100 border-b border-slate-200 text-slate-700">
+                                <th class="p-3 font-bold">Parameter</th>
+                                <th class="p-3 font-bold text-blue-600 bg-blue-50/50">Bata Ringan (AAC)</th>
+                                <th class="p-3 font-bold">Bata Merah</th>
+                                <th class="p-3 font-bold">Batako Press</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-600">
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Kecepatan Pasang</td>
+                                <td class="p-3 bg-blue-50/20 font-semibold text-emerald-600">Sangat Cepat (20 m²/hari)</td>
+                                <td class="p-3">Lambat (6-8 m²/hari)</td>
+                                <td class="p-3">Sedang (10-12 m²/hari)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Ketebalan Spesi Mortar</td>
+                                <td class="p-3 bg-blue-50/20 font-bold text-blue-700">2 - 3 mm (Thinbed)</td>
+                                <td class="p-3">20 - 30 mm (Semen Pasir)</td>
+                                <td class="p-3">15 - 20 mm (Semen Pasir)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Berat Dinding Tertas</td>
+                                <td class="p-3 bg-blue-50/20 font-semibold text-slate-800">± 50 - 60 kg/m²</td>
+                                <td class="p-3">± 250 kg/m²</td>
+                                <td class="p-3">± 120 kg/m²</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Hasil Permukaan</td>
+                                <td class="p-3 bg-blue-50/20 font-semibold text-slate-800">Rata, Presisi (Acian Langsung)</td>
+                                <td class="p-3">Tidak Rata (Perlu Plester Tebal)</td>
+                                <td class="p-3">Kasar (Perlu Plester)</td>
+                            </tr>
+                            <tr>
+                                <td class="p-3 font-semibold text-slate-800">Resiko Retak Rambut</td>
+                                <td class="p-3 bg-blue-50/20 font-semibold text-emerald-600">Rendah</td>
+                                <td class="p-3">Sedang - Tinggi</td>
+                                <td class="p-3">Tinggi</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tips Pemasangan & Konsumsi Mortar -->
+        <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+            <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+                <i class="fa-solid fa-screwdriver-wrench text-amber-500"></i> Panduan & Tips Pemasangan Terbaik
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Step 1 -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center">1</span>
+                        <h4 class="font-bold text-slate-800 text-sm">Leveling Layer Pertama</h4>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Gunakan adukan semen pasir konvensional tebal 2-3 cm khusus pada **baris paling bawah** untuk meratakan deviasi permukaan sloof beton.
+                    </p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center">2</span>
+                        <h4 class="font-bold text-slate-800 text-sm">Gunakan Roskam Bergigi</h4>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Aplikasi Semen Mortar Thinbed wajib menggunakan roskam bergigi (6x6 mm) agar ketebalan siar konsisten pada 2-3 mm & hemat material.
+                    </p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-2">
+                    <div class="flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold text-xs flex items-center justify-center">3</span>
+                        <h4 class="font-bold text-slate-800 text-sm">Pengikat Angkur & Kolom</h4>
+                    </div>
+                    <p class="text-xs text-slate-600 leading-relaxed">
+                        Pasang besi angkur pengikat tiap 3 baris pasangan bata yang terhubung langsung ke kolom praktis/struktur utama untuk ketahanan gempa.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Mortar Standard Box -->
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 font-bold">
+                        <i class="fa-solid fa-mortar-pestle"></i>
+                    </div>
+                    <div>
+                        <h5 class="font-bold text-blue-950 text-sm">Standar Konsumsi Mortar Perekat</h5>
+                        <p class="text-xs text-blue-800">1 sak Semen Mortar (40 kg) cukup untuk memasang **1 m³ bata ringan** (atau ±10 - 11 m² dinding).</p>
+                    </div>
+                </div>
+                <span class="text-xs font-bold bg-blue-600 text-white px-3 py-1.5 rounded-lg whitespace-nowrap self-stretch sm:self-auto text-center">
+                    Tebal Siar: 2-3 mm
+                </span>
+            </div>
+        </section>
+
+        <!-- Frequently Asked Questions -->
+        <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+            <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2 border-b border-slate-100 pb-3">
+                <i class="fa-solid fa-circle-question text-amber-500"></i> Pertanyaan Sering Diajukan (FAQ)
+            </h3>
+
+            <div class="space-y-3" id="faq-accordion">
+                <!-- FAQ 1 -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(this)" class="w-full text-left p-3.5 bg-slate-50 hover:bg-slate-100 transition font-bold text-slate-800 text-xs sm:text-sm flex justify-between items-center">
+                        <span>Berapa isi bata ringan dalam 1 kubik (m³)?</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-200"></i>
+                    </button>
+                    <div class="p-3.5 text-xs text-slate-600 bg-white border-t border-slate-100 hidden leading-relaxed">
+                        Untuk ketebalan **7.5 cm**, 1 kubik berisi **111 pcs** (daya sebar ±13.3 m²).<br>
+                        Untuk ketebalan **10 cm**, 1 kubik berisi **83 pcs** (daya sebar ±10 m²).
+                    </div>
+                </div>
+
+                <!-- FAQ 2 -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(this)" class="w-full text-left p-3.5 bg-slate-50 hover:bg-slate-100 transition font-bold text-slate-800 text-xs sm:text-sm flex justify-between items-center">
+                        <span>Berapa kubik bata ringan minimal untuk pembelian 1 DO?</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-200"></i>
+                    </button>
+                    <div class="p-3.5 text-xs text-slate-600 bg-white border-t border-slate-100 hidden leading-relaxed">
+                        Kapasitas pengiriman 1 Truk DO (Delivery Order) Pabrik rata-rata berkisar antara **12.6 m³ sampai 14.4 m³** (sekitar 1.050 - 1.200 pcs untuk ukuran 10cm). Pembelian 1 DO mendapatkan harga grosir pabrik yang jauh lebih murah.
+                    </div>
+                </div>
+
+                <!-- FAQ 3 -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <button onclick="toggleFaq(this)" class="w-full text-left p-3.5 bg-slate-50 hover:bg-slate-100 transition font-bold text-slate-800 text-xs sm:text-sm flex justify-between items-center">
+                        <span>Apakah bata ringan boleh dipasang menggunakan semen pasir biasa?</span>
+                        <i class="fa-solid fa-chevron-down text-slate-400 transition-transform duration-200"></i>
+                    </button>
+                    <div class="p-3.5 text-xs text-slate-600 bg-white border-t border-slate-100 hidden leading-relaxed">
+                        **Tidak direkomendasikan.** Bata ringan memiliki tingkat daya serap air yang berbeda dari bata merah. Menggunakan adukan semen biasa akan membuat air terserap terlalu cepat sehingga adukan lepas dan timbul retak. Wajib menggunakan **Semen Mortar Thinbed khusus Bata Ringan**.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 text-xs py-6 border-t border-slate-800 mt-12">
+        <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+            <div>
+                <p class="font-bold text-white">Product Knowledge & Calculator Bata Ringan AAC</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">Disusun untuk tim retail bahan bangunan, kontraktor, dan pemilik proyek Jabodetabek.</p>
+            </div>
+            <div class="flex items-center gap-3 text-slate-400">
+                <button onclick="window.print()" class="hover:text-white transition flex items-center gap-1 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700">
+                    <i class="fa-solid fa-print"></i> Cetak Dokumen
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-900 text-white border border-amber-500 px-4 py-3 rounded-xl shadow-2xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-amber-500 text-slate-950 flex items-center justify-center font-bold text-sm">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <p id="toast-title" class="font-bold text-xs text-white">Berhasil!</p>
+            <p id="toast-msg" class="text-[11px] text-slate-300">Ringkasan telah disalin ke clipboard.</p>
+        </div>
+    </div>
+
+    <script>
+        // State variables
+        let calcMode = 'dimensions'; // 'dimensions' or 'area'
+
+        // Constants for AAC Block
+        // 7.5cm: 111 pcs/m³, 1 m³ = 13.33 m²
+        // 10cm: 83.33 pcs/m³, 1 m³ = 10 m²
+        const SPECS = {
+            '7.5': {
+                pcsPerM3: 111,
+                coveragePerM3: 13.333,
+                priceRetailMin: 600000,
+                priceRetailMax: 750000,
+                priceWholesaleMin: 520000,
+                priceWholesaleMax: 620000
+            },
+            '10': {
+                pcsPerM3: 83.333,
+                coveragePerM3: 10.0,
+                priceRetailMin: 600000,
+                priceRetailMax: 750000,
+                priceWholesaleMin: 520000,
+                priceWholesaleMax: 620000
+            }
+        };
+
+        const MORTAR_PRICE_MIN = 65000; // Rp / sak 40kg
+        const MORTAR_PRICE_MAX = 85000; // Rp / sak 40kg
+
+        // Set Calculation Mode Switcher
+        function setCalcMode(mode) {
+            calcMode = mode;
+            const btnDim = document.getElementById('btn-mode-dim');
+            const btnArea = document.getElementById('btn-mode-area');
+            const dimGroup = document.getElementById('input-dimensions-group');
+            const areaGroup = document.getElementById('input-area-group');
+
+            if (mode === 'dimensions') {
+                btnDim.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition bg-amber-500 text-slate-950";
+                btnArea.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white";
+                dimGroup.classList.remove('hidden');
+                areaGroup.classList.add('hidden');
+            } else {
+                btnArea.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition bg-amber-500 text-slate-950";
+                btnDim.className = "px-3 py-1.5 rounded-lg text-xs font-bold transition text-slate-300 hover:text-white";
+                areaGroup.classList.remove('hidden');
+                dimGroup.classList.add('hidden');
+            }
+            calculateMaterial();
+        }
+
+        // Calculation Function
+        function calculateMaterial() {
+            let grossArea = 0;
+
+            if (calcMode === 'dimensions') {
+                const length = parseFloat(document.getElementById('input-length').value) || 0;
+                const height = parseFloat(document.getElementById('input-height').value) || 0;
+                grossArea = length * height;
+            } else {
+                grossArea = parseFloat(document.getElementById('input-total-area').value) || 0;
+            }
+
+            const deduction = parseFloat(document.getElementById('input-deduction').value) || 0;
+            let netArea = Math.max(0, grossArea - deduction);
+
+            // Safety Waste Toggle (+5%)
+            const includeWaste = document.getElementById('toggle-waste').checked;
+            const effectiveArea = includeWaste ? netArea * 1.05 : netArea;
+
+            // Selected Thickness
+            const thickness = document.getElementById('select-thickness').value;
+            const spec = SPECS[thickness];
+
+            // Calculations
+            // Volume in m³ = Area / coveragePerM3
+            const volumeM3 = effectiveArea / spec.coveragePerM3;
+            
+            // Total Pcs = Volume * pcsPerM3
+            const totalPcs = Math.ceil(volumeM3 * spec.pcsPerM3);
+
+            // Mortar calculation: 1 sak per 1 m³ bata (or rounded up for project safety)
+            const mortarSaks = Math.max(1, Math.ceil(volumeM3));
+
+            // Price Mode Check
+            const priceType = document.querySelector('input[name="price_type"]:checked').value;
+            let minUnitPrice = (priceType === 'wholesale') ? spec.priceWholesaleMin : spec.priceRetailMin;
+            let maxUnitPrice = (priceType === 'wholesale') ? spec.priceWholesaleMax : spec.priceRetailMax;
+
+            // Total Cost Calculation (Bata + Mortar)
+            const minCostBata = volumeM3 * minUnitPrice;
+            const maxCostBata = volumeM3 * maxUnitPrice;
+
+            const minCostMortar = mortarSaks * MORTAR_PRICE_MIN;
+            const maxCostMortar = mortarSaks * MORTAR_PRICE_MAX;
+
+            const totalMinCost = minCostBata + minCostMortar;
+            const totalMaxCost = maxCostBata + maxCostMortar;
+
+            // Render Output Elements
+            document.getElementById('calc-badge-thickness').innerText = `Ketebalan: ${thickness} cm`;
+            document.getElementById('res-net-area').innerText = `${netArea.toFixed(2)} m²`;
+            document.getElementById('res-volume').innerText = `${volumeM3.toFixed(2)} m³`;
+            document.getElementById('res-pcs').innerText = `${formatNumber(totalPcs)} Pcs`;
+            document.getElementById('res-mortar').innerText = `${mortarSaks} Sak (40kg)`;
+            document.getElementById('res-cost-range').innerText = `Rp ${formatRupiah(totalMinCost)} - ${formatRupiah(totalMaxCost)}`;
+        }
+
+        // Formatting Helpers
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID').format(num);
+        }
+
+        function formatRupiah(num) {
+            return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 0 }).format(Math.round(num));
+        }
+
+        // Reset Calculator
+        function resetCalculator() {
+            document.getElementById('input-length').value = "10";
+            document.getElementById('input-height').value = "3";
+            document.getElementById('input-total-area').value = "30";
+            document.getElementById('input-deduction').value = "2";
+            document.getElementById('select-thickness').value = "10";
+            document.getElementById('toggle-waste').checked = true;
+            document.querySelector('input[name="price_type"][value="retail"]').checked = true;
+            calculateMaterial();
+            showToast("Reset Berhasil", "Input kalkulator telah dikembalikan ke standar.");
+        }
+
+        // Copy Calculation Summary
+        function copyQuoteSummary() {
+            const netArea = document.getElementById('res-net-area').innerText;
+            const volume = document.getElementById('res-volume').innerText;
+            const pcs = document.getElementById('res-pcs').innerText;
+            const mortar = document.getElementById('res-mortar').innerText;
+            const costRange = document.getElementById('res-cost-range').innerText;
+            const thickness = document.getElementById('select-thickness').value;
+
+            const text = `*ESTIMASI KEBUTUHAN BATA RINGAN AAC*\n` +
+                         `-----------------------------------\n` +
+                         `• Ketebalan Bata : ${thickness} cm\n` +
+                         `• Luas Bersih    : ${netArea}\n` +
+                         `• Total Volume   : ${volume}\n` +
+                         `• Kebutuhan Bata : ${pcs}\n` +
+                         `• Semen Mortar   : ${mortar}\n` +
+                         `• Estimasi Biaya : ${costRange}\n` +
+                         `-----------------------------------\n` +
+                         `*Catatan: Estimasi sudah termasuk waste margin 5% & mortar thinbed.`;
+
+            // Clipboard copy fallbacks
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text);
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
+
+            showToast("Disalin ke Clipboard!", "Ringkasan estimasi siap dikirim ke pesan WhatsApp/Catatan.");
+        }
+
+        // FAQ Toggle Accordion
+        function toggleFaq(btn) {
+            const content = btn.nextElementSibling;
+            const icon = btn.querySelector('i');
+            
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                content.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        // Share Page
+        function sharePage() {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Product Knowledge & Kalkulator Bata Ringan AAC',
+                    url: window.location.href,
+                }).catch(() => {});
+            } else {
+                copyQuoteSummary();
+            }
+        }
+
+        // Custom Toast Notification
+        function showToast(title, message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerText = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+
+        // Initial Calculation on Load
+        window.addEventListener('DOMContentLoaded', () => {
+            calculateMaterial();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Knowledge Material Bangunan: Batu Split & Pasir</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        industrial: {
+                            50: '#f4f6f8',
+                            100: '#e5e9f0',
+                            200: '#cbd5e1',
+                            500: '#64748b',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                            950: '#090d16',
+                        },
+                        amberGold: {
+                            400: '#fbbf24',
+                            500: '#f59e0b',
+                            600: '#d97706',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white !important; color: black !important; }
+        }
+    </style>
+</head>
+<body class="bg-industrial-950 text-slate-100 font-sans antialiased min-h-screen flex flex-col justify-between selection:bg-amberGold-500 selection:text-slate-950 pb-20 md:pb-0">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 bg-industrial-900/90 backdrop-blur-md border-b border-industrial-800 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amberGold-500 to-orange-600 flex items-center justify-center font-black text-xl text-industrial-950 shadow-lg shadow-amberGold-500/20">
+                    <i class="fa-solid fa-[#fa-truck-ramp-box] fa-mountain-city"></i>
+                </div>
+                <div>
+                    <h1 class="font-black text-base sm:text-lg tracking-tight text-white leading-tight flex items-center gap-2">
+                        PK MATERIAL <span class="text-amberGold-400 font-extrabold text-xs px-2 py-0.5 rounded bg-amberGold-500/10 border border-amberGold-500/30">SPLIT & PASIR</span>
+                    </h1>
+                    <p class="text-[11px] text-slate-400 hidden sm:block">Katalog Produk, Recommender Pintar & Kalkulator Muatan Armada</p>
+                </div>
+            </div>
+
+            <!-- Desktop Nav Links -->
+            <nav class="hidden md:flex items-center space-x-1 text-xs font-semibold text-slate-300">
+                <button onclick="scrollToSection('recommender')" class="px-3 py-2 rounded-lg hover:bg-industrial-800 hover:text-amberGold-400 transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-wand-magic-sparkles text-amberGold-400"></i> Rekomendasi
+                </button>
+                <button onclick="scrollToSection('split-catalog')" class="px-3 py-2 rounded-lg hover:bg-industrial-800 hover:text-amberGold-400 transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-cubes text-blue-400"></i> Batu Split
+                </button>
+                <button onclick="scrollToSection('pasir-catalog')" class="px-3 py-2 rounded-lg hover:bg-industrial-800 hover:text-amberGold-400 transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-dumpster text-emerald-400"></i> Pasir Bangunan
+                </button>
+                <button onclick="scrollToSection('armada-calc')" class="px-3 py-2 rounded-lg hover:bg-industrial-800 hover:text-amberGold-400 transition flex items-center gap-1.5 cursor-pointer">
+                    <i class="fa-solid fa-truck-moving text-orange-400"></i> Armada & Calc
+                </button>
+            </nav>
+
+            <div class="flex items-center space-x-2">
+                <button onclick="copyFullPKSummary()" class="bg-amberGold-500 hover:bg-amberGold-600 text-industrial-950 font-extrabold px-3 py-2 rounded-xl text-xs transition flex items-center gap-1.5 shadow-md shadow-amberGold-500/20 active:scale-95">
+                    <i class="fa-solid fa-copy"></i>
+                    <span class="hidden sm:inline">Salin PK Ringkas</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-6 w-full space-y-8 flex-1">
+
+        <!-- Hero & Quick Search Section -->
+        <section class="bg-gradient-to-br from-industrial-900 via-industrial-800 to-slate-900 rounded-3xl p-6 sm:p-8 border border-industrial-800 shadow-2xl relative overflow-hidden">
+            <div class="absolute -right-12 -bottom-12 opacity-5 pointer-events-none text-white">
+                <i class="fa-solid fa-truck-monster text-[260px]"></i>
+            </div>
+
+            <div class="relative z-10 max-w-3xl space-y-4">
+                <div class="inline-flex items-center gap-2 bg-amberGold-500/10 border border-amberGold-500/30 text-amberGold-400 px-3 py-1 rounded-full text-xs font-bold">
+                    <i class="fa-solid fa-shield-halved"></i> Standar Mutu Material & Panduan Penjualan Toko/Proyek
+                </div>
+                <h2 class="text-2xl sm:text-4xl font-black text-white tracking-tight leading-tight">
+                    Panduan Lengkap Batu Split, Pasir Bangunan & Estimasi Armada
+                </h2>
+                <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+                    Identifikasi grade material secara tepat, tentukan rasio campuran semen, dan hitung kebutuhan armada pengiriman (Pick Up, Engkel CDE, CDD Double) secara akurat.
+                </p>
+
+                <!-- Search Input Bar -->
+                <div class="pt-2">
+                    <div class="relative max-w-xl">
+                        <input type="text" id="global-search" oninput="handleSearch()" placeholder="Cari material atau kegunaan (misal: dak, plester, 1x2, bangka, engkel)..." 
+                            class="w-full bg-industrial-950/90 border border-industrial-700 rounded-2xl px-4 py-3.5 pl-11 text-white font-medium text-sm focus:outline-none focus:border-amberGold-500 transition shadow-inner">
+                        <i class="fa-solid fa-magnifying-glass absolute left-4 top-4 text-slate-400 text-sm"></i>
+                        <button onclick="clearSearch()" id="clear-search-btn" class="hidden absolute right-3 top-3 bg-industrial-800 text-slate-400 hover:text-white rounded-lg p-1 text-xs">
+                            <i class="fa-solid fa-xmark px-1"></i>
+                        </button>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-3 text-[11px] text-slate-400 items-center">
+                        <span class="font-bold text-slate-500"><i class="fa-solid fa-bolt text-amberGold-400 mr-1"></i>Pencarian Cepat:</span>
+                        <button onclick="quickSearch('dak')" class="bg-industrial-800/80 hover:bg-industrial-700 px-2.5 py-1 rounded-lg border border-industrial-700 transition">#Dak Cor</button>
+                        <button onclick="quickSearch('plester')" class="bg-industrial-800/80 hover:bg-industrial-700 px-2.5 py-1 rounded-lg border border-industrial-700 transition">#Plesteran</button>
+                        <button onclick="quickSearch('bangka')" class="bg-industrial-800/80 hover:bg-industrial-700 px-2.5 py-1 rounded-lg border border-industrial-700 transition">#Pasir Bangka</button>
+                        <button onclick="quickSearch('1x2')" class="bg-industrial-800/80 hover:bg-industrial-700 px-2.5 py-1 rounded-lg border border-industrial-700 transition">#Split 1x2</button>
+                        <button onclick="quickSearch('cdd')" class="bg-industrial-800/80 hover:bg-industrial-700 px-2.5 py-1 rounded-lg border border-industrial-700 transition">#Truk CDD</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mode Rekomendasi Pintar (Pilih Proyek Anda) -->
+        <section id="recommender" class="bg-gradient-to-br from-industrial-900 to-industrial-800 rounded-3xl p-5 sm:p-7 border border-industrial-700/80 shadow-xl space-y-6">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-industrial-700 pb-4">
+                <div>
+                    <div class="inline-flex items-center gap-2 text-amberGold-400 font-bold text-xs uppercase tracking-wider mb-1">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> Mode Rekomendasi Pintar
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-black text-white">Sistem Pemilihan Material Berdasarkan Jenis Proyek</h3>
+                    <p class="text-xs text-slate-400">Pilih jenis pekerjaan konstruksi untuk mendapatkan pasangan Pasir, Batu Split, dan Rasio Campuran yang presisi.</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Dropdown / Select Project -->
+                <div class="lg:col-span-5 space-y-4">
+                    <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider">
+                        1. Pilih Jenis Pekerjaan Konstruksi:
+                    </label>
+                    <div class="space-y-2" id="project-selector-list">
+                        <!-- Dynamic Radio Options -->
+                    </div>
+                </div>
+
+                <!-- Recommendation Output Card -->
+                <div class="lg:col-span-7 bg-industrial-950/90 rounded-2xl p-5 border border-amberGold-500/30 flex flex-col justify-between space-y-4 shadow-xl relative overflow-hidden">
+                    <div class="absolute -right-8 -top-8 w-28 h-28 bg-amberGold-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+                    <div class="space-y-4 relative z-10">
+                        <div class="flex items-center justify-between border-b border-industrial-800 pb-3">
+                            <span class="text-xs uppercase font-black text-amberGold-400 tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-circle-check"></i> Formulasi Ideal Material
+                            </span>
+                            <span class="text-[10px] font-bold bg-amberGold-500/20 text-amberGold-400 border border-amberGold-500/30 px-2.5 py-1 rounded-full" id="rec-project-title">
+                                Cor Dak / Kolom Bertulang
+                            </span>
+                        </div>
+
+                        <!-- 3 Column Spec Output -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <!-- Sand Spec -->
+                            <div class="bg-industrial-900/90 p-3.5 rounded-xl border border-industrial-800 space-y-1">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block flex items-center gap-1">
+                                    <i class="fa-solid fa-dumpster text-emerald-400"></i> Rekomendasi Pasir
+                                </span>
+                                <h4 class="font-black text-sm text-white" id="rec-sand-name">Pasir Sukabumi / Lampung</h4>
+                                <span class="inline-block text-[10px] font-bold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded" id="rec-sand-grade">Grade Kasar (1-4mm)</span>
+                            </div>
+
+                            <!-- Split Spec -->
+                            <div class="bg-industrial-900/90 p-3.5 rounded-xl border border-industrial-800 space-y-1">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block flex items-center gap-1">
+                                    <i class="fa-solid fa-cubes text-blue-400"></i> Rekomendasi Split
+                                </span>
+                                <h4 class="font-black text-sm text-white" id="rec-split-name">Split 1x2 (10-20 mm)</h4>
+                                <span class="inline-block text-[10px] font-bold text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded" id="rec-split-grade">Ukuran Standar Cor</span>
+                            </div>
+
+                            <!-- Mix Ratio -->
+                            <div class="bg-industrial-900/90 p-3.5 rounded-xl border border-industrial-800 space-y-1">
+                                <span class="text-[10px] uppercase font-bold text-slate-400 block flex items-center gap-1">
+                                    <i class="fa-solid fa-calculator text-amberGold-400"></i> Rasio Campuran
+                                </span>
+                                <h4 class="font-black text-sm text-amberGold-400" id="rec-mix-ratio">1 Semen : 2 Pasir : 3 Split</h4>
+                                <span class="inline-block text-[10px] text-slate-400">Standar Mutu K-225/K-250</span>
+                            </div>
+                        </div>
+
+                        <!-- Practical Tips & Technical Note -->
+                        <div class="bg-industrial-900/60 p-4 rounded-xl border border-industrial-800/80 space-y-1.5 text-xs">
+                            <span class="font-bold text-slate-200 flex items-center gap-1.5 text-xs">
+                                <i class="fa-solid fa-lightbulb text-amberGold-400"></i> Tips Penting Lapangan & Standar Mutu:
+                            </span>
+                            <p class="text-slate-300 leading-relaxed text-[11px]" id="rec-tips">
+                                Gunakan pasir berbatu kasar tajam dengan kadar lumpur &lt;3%. Campuran Split 1x2 memastikan kerapatan struktur beton tanpa sarang lebah (honeycomb) di dalam rajutan besi behel.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 flex justify-end">
+                        <button onclick="copyRecommendation()" class="w-full sm:w-auto bg-industrial-800 hover:bg-industrial-700 text-slate-200 font-bold px-4 py-2 rounded-xl text-xs transition border border-industrial-700 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-share-nodes text-amberGold-400"></i> Salin Rekomendasi Ini
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Catalog 1: BATU SPLIT (Agregat Batu Pecah) -->
+        <section id="split-catalog" class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-industrial-800 pb-3">
+                <div>
+                    <h3 class="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-cubes text-blue-500"></i> KATALOG BATU SPLIT (Agregat Batu Pecah)
+                    </h3>
+                    <p class="text-xs text-slate-400">Grade ukuran fraksi, fungsi struktural, & kapasitas armada pengiriman</p>
+                </div>
+                <span class="text-xs font-semibold px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/30 self-start sm:self-auto">
+                    7 Variasi Agregat Standar
+                </span>
+            </div>
+
+            <!-- Split Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="split-cards-container">
+                <!-- Dynamically populated via JavaScript -->
+            </div>
+        </section>
+
+        <!-- Catalog 2: PASIR BANGUNAN -->
+        <section id="pasir-catalog" class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-industrial-800 pb-3">
+                <div>
+                    <h3 class="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+                        <i class="fa-solid fa-dumpster text-emerald-500"></i> KATALOG PASIR BANGUNAN
+                    </h3>
+                    <p class="text-xs text-slate-400">Klasifikasi berdasarkan asal tambang (origin) & grade tekstur butiran</p>
+                </div>
+                <div class="flex items-center gap-2 self-start sm:self-auto">
+                    <button onclick="filterSandTab('all')" id="sand-tab-all" class="px-3 py-1 rounded-lg text-xs font-bold bg-amberGold-500 text-industrial-950 transition">Semua</button>
+                    <button onclick="filterSandTab('origin')" id="sand-tab-origin" class="px-3 py-1 rounded-lg text-xs font-bold bg-industrial-800 text-slate-300 hover:text-white transition">Asal Tambang</button>
+                    <button onclick="filterSandTab('grade')" id="sand-tab-grade" class="px-3 py-1 rounded-lg text-xs font-bold bg-industrial-800 text-slate-300 hover:text-white transition">Grade Tekstur</button>
+                </div>
+            </div>
+
+            <!-- Sand Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="pasir-cards-container">
+                <!-- Dynamically populated via JavaScript -->
+            </div>
+        </section>
+
+        <!-- Section 3: ARMADA FLEET & INTERACTIVE CALCULATOR -->
+        <section id="armada-calc" class="space-y-6">
+            
+            <!-- Fleet Comparison Header -->
+            <div class="border-b border-industrial-800 pb-3">
+                <h3 class="text-xl sm:text-2xl font-black text-white flex items-center gap-2">
+                    <i class="fa-solid fa-truck-moving text-orange-500"></i> SPESIFIKASI ARMADA & KALKULATOR MUATAN
+                </h3>
+                <p class="text-xs text-slate-400">Kapasitas kubikasi bak standar vs munjung & simulasi ritase pengiriman</p>
+            </div>
+
+            <!-- Armada Comparison Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                <!-- Pick Up / Kijang -->
+                <div class="bg-industrial-900 rounded-2xl p-5 border border-industrial-800 hover:border-orange-500/50 transition space-y-4 relative overflow-hidden group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-black uppercase text-orange-400 bg-orange-500/10 px-2 py-0.5 rounded border border-orange-500/20">Armada Kecil</span>
+                            <h4 class="font-black text-lg text-white mt-1">Pick Up / Kijang Bak</h4>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-industrial-800 flex items-center justify-center text-orange-400 text-xl font-black">
+                            <i class="fa-solid fa-truck-pickup"></i>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-industrial-950 p-2.5 rounded-xl border border-industrial-800/80">
+                            <span class="text-slate-400 block text-[10px]">Bak Rata Standar</span>
+                            <span class="font-extrabold text-white text-sm">± 0.8 - 1.0 m³</span>
+                        </div>
+                        <div class="bg-industrial-950 p-2.5 rounded-xl border border-industrial-800/80">
+                            <span class="text-slate-400 block text-[10px]">Muatan Munjung</span>
+                            <span class="font-extrabold text-amberGold-400 text-sm">± 1.2 m³</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5 text-xs text-slate-300 border-t border-industrial-800 pt-3">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Kapasitas Tonase:</span>
+                            <span class="font-bold text-white">1.2 - 1.5 Ton</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Akses Jalan:</span>
+                            <span class="font-bold text-emerald-400">Gang Sempit / Perumahan</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Engkel (CDE - 4 Roda) -->
+                <div class="bg-industrial-900 rounded-2xl p-5 border-2 border-amberGold-500/40 relative space-y-4 shadow-lg">
+                    <div class="absolute -top-3 right-4 bg-amberGold-500 text-industrial-950 font-black text-[10px] px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                        PALING POPULER
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-black uppercase text-amberGold-400 bg-amberGold-500/10 px-2 py-0.5 rounded border border-amberGold-500/20">CDE - 4 Roda</span>
+                            <h4 class="font-black text-lg text-white mt-1">Colt Diesel Engkel</h4>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-industrial-800 flex items-center justify-center text-amberGold-400 text-xl font-black">
+                            <i class="fa-solid fa-truck-flatbed"></i>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-industrial-950 p-2.5 rounded-xl border border-industrial-800/80">
+                            <span class="text-slate-400 block text-[10px]">Bak Rata Standar</span>
+                            <span class="font-extrabold text-white text-sm">± 3.0 - 3.5 m³</span>
+                        </div>
+                        <div class="bg-industrial-950 p-2.5 rounded-xl border border-industrial-800/80">
+                            <span class="text-slate-400 block text-[10px]">Muatan Munjung</span>
+                            <span class="font-extrabold text-amberGold-400 text-sm">± 4.0 m³</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5 text-xs text-slate-300 border-t border-industrial-800 pt-3">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Kapasitas Tonase:</span>
+                            <span class="font-bold text-white">4.5 - 5.5 Ton</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Akses Jalan:</span>
+                            <span class="font-bold text-amberGold-400">Jalan Lingkungan / Toko Retail</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CDD (Colt Diesel Double - 6 Roda) -->
+                <div class="bg-industrial-900 rounded-2xl p-5 border border-industrial-800 hover:border-blue-500/50 transition space-y-4 relative overflow-hidden group">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] font-black uppercase text-blue-400 bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">CDD - 6 Roda</span>
+                            <h4 class="font-black text-lg text-white mt-1">Colt Diesel Double</h4>
+                        </div>
+                        <div class="w-12 h-12 rounded-xl bg-industrial-800 flex items-center justify-center text-blue-400 text-xl font-black">
+                            <i class="fa-solid fa-truck-front"></i>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                        <div class="bg-industrial-950 p-2.5 rounded-xl border border-industrial-800/80">
+                            <span class="text-slate-400 block text-[10px]">Bak Rata Standar</span>
+                            <span class="font-extrabold text-white text-sm">± 6.0 - 7.0 m³</span>
+                        </div>
+                        <div class="bg-industrial-950 p-2.5 rounded-xl border border-industrial-800/80">
+                            <span class="text-slate-400 block text-[10px]">Muatan Munjung</span>
+                            <span class="font-extrabold text-amberGold-400 text-sm">± 7.5 - 8.0 m³</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5 text-xs text-slate-300 border-t border-industrial-800 pt-3">
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Kapasitas Tonase:</span>
+                            <span class="font-bold text-white">9.0 - 11.0 Ton</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-400">Akses Jalan:</span>
+                            <span class="font-bold text-blue-400">Jalan Raya Utama / Proyek Besar</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Interactive Load Calculator Widget -->
+            <div class="bg-gradient-to-br from-industrial-900 to-slate-900 rounded-3xl p-5 sm:p-7 border border-industrial-700 shadow-xl space-y-6">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-industrial-800 pb-3">
+                    <div>
+                        <div class="inline-flex items-center gap-1.5 text-xs text-amberGold-400 font-bold uppercase tracking-wider mb-0.5">
+                            <i class="fa-solid fa-calculator"></i> Fitur Simulator Pengiriman
+                        </div>
+                        <h4 class="text-xl font-black text-white">Kalkulator Estimasi Ritase & Armada Truk</h4>
+                    </div>
+                    <span class="text-xs text-slate-400">Hitung berapa rit Pick Up, Engkel, atau CDD yang perlu dipesan</span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                    <!-- Inputs -->
+                    <div class="lg:col-span-5 space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">1. Total Volume Material Dibutuhkan (m³)</label>
+                            <div class="relative">
+                                <input type="number" id="calc-volume" value="12" min="0.5" step="0.5" oninput="calculateArmada()" 
+                                    class="w-full bg-industrial-950 border border-industrial-700 rounded-xl px-4 py-3 text-white font-black text-base focus:outline-none focus:border-amberGold-500 pl-10">
+                                <i class="fa-solid fa-cube absolute left-3.5 top-3.5 text-slate-500 text-sm"></i>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">Jenis Material</label>
+                                <select id="calc-material-type" onchange="calculateArmada()" class="w-full bg-industrial-950 border border-industrial-700 rounded-xl px-3 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-amberGold-500">
+                                    <option value="pasir" selected>Pasir Bangunan (± 1.4 t/m³)</option>
+                                    <option value="split">Batu Split (± 1.35 t/m³)</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">Gaya Muatan Bak</label>
+                                <select id="calc-load-style" onchange="calculateArmada()" class="w-full bg-industrial-950 border border-industrial-700 rounded-xl px-3 py-2.5 text-xs font-bold text-white focus:outline-none focus:border-amberGold-500">
+                                    <option value="munjung" selected>Munjung (Maksimal)</option>
+                                    <option value="rata">Rata Bak (Standar)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Output Triangulation -->
+                    <div class="lg:col-span-7 bg-industrial-950 rounded-2xl p-5 border border-industrial-800 space-y-4">
+                        <span class="text-xs uppercase font-black text-amberGold-400 tracking-wider block border-b border-industrial-800 pb-2">
+                            Hasil Estimasi Ritase Armada (Dibulatkan Ke Atas)
+                        </span>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <!-- Pick Up Result -->
+                            <div class="bg-industrial-900 p-3.5 rounded-xl border border-industrial-800 text-center space-y-1">
+                                <span class="text-[10px] text-slate-400 font-bold block">Pick Up / Kijang</span>
+                                <div class="text-2xl font-black text-orange-400" id="res-pickup-rit">10 Rit</div>
+                                <span class="text-[10px] text-slate-500 block" id="res-pickup-weight">Est. Weight: 16.8 Ton</span>
+                            </div>
+
+                            <!-- CDE Engkel Result -->
+                            <div class="bg-industrial-900 p-3.5 rounded-xl border border-amberGold-500/30 text-center space-y-1 relative">
+                                <span class="text-[10px] text-amberGold-400 font-bold block">CDE Engkel (4 Roda)</span>
+                                <div class="text-2xl font-black text-amberGold-400" id="res-cde-rit">3 Rit</div>
+                                <span class="text-[10px] text-slate-400 block" id="res-cde-weight">Est. Weight: 16.8 Ton</span>
+                            </div>
+
+                            <!-- CDD Double Result -->
+                            <div class="bg-industrial-900 p-3.5 rounded-xl border border-industrial-800 text-center space-y-1">
+                                <span class="text-[10px] text-blue-400 font-bold block">CDD Double (6 Roda)</span>
+                                <div class="text-2xl font-black text-blue-400" id="res-cdd-rit">2 Rit</div>
+                                <span class="text-[10px] text-slate-500 block" id="res-cdd-weight">Est. Weight: 16.8 Ton</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between text-xs pt-2 border-t border-industrial-800 text-slate-400">
+                            <span><i class="fa-solid fa-circle-info text-amberGold-400 mr-1"></i> Rekomendasi Efisiensi: <strong class="text-white" id="res-best-truck">Gunakan 2 Rit Truk CDD Double</strong></span>
+                            <button onclick="copyArmadaCalculation()" class="text-amberGold-400 hover:underline font-bold text-[11px] flex items-center gap-1">
+                                <i class="fa-solid fa-copy"></i> Salin Estimasi
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-industrial-900 text-slate-400 text-xs py-8 border-t border-industrial-800 mt-12 no-print">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4 text-center md:text-left">
+            <div>
+                <p class="font-black text-white text-sm">Product Knowledge & Simulator Material Bangunan</p>
+                <p class="text-[11px] text-slate-500 mt-0.5">Spesifikasi Standar Batu Split & Pasir Bangunan Indonesia.</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <button onclick="window.print()" class="bg-industrial-800 hover:bg-industrial-700 text-slate-300 font-bold px-3.5 py-2 rounded-xl border border-industrial-700 transition text-xs flex items-center gap-1.5">
+                    <i class="fa-solid fa-print"></i> Cetak / Save PDF
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Mobile Bottom Navigation Bar (Applike UI) -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-industrial-900/95 backdrop-blur-md border-t border-industrial-800 px-2 py-1.5 flex justify-around items-center text-[10px] font-bold text-slate-400 no-print">
+        <button onclick="scrollToSection('recommender')" class="flex flex-col items-center gap-1 p-1 hover:text-amberGold-400 transition cursor-pointer">
+            <i class="fa-solid fa-wand-magic-sparkles text-sm text-amberGold-400"></i>
+            <span>Pintar</span>
+        </button>
+        <button onclick="scrollToSection('split-catalog')" class="flex flex-col items-center gap-1 p-1 hover:text-blue-400 transition cursor-pointer">
+            <i class="fa-solid fa-cubes text-sm text-blue-400"></i>
+            <span>Split</span>
+        </button>
+        <button onclick="scrollToSection('pasir-catalog')" class="flex flex-col items-center gap-1 p-1 hover:text-emerald-400 transition cursor-pointer">
+            <i class="fa-solid fa-dumpster text-sm text-emerald-400"></i>
+            <span>Pasir</span>
+        </button>
+        <button onclick="scrollToSection('armada-calc')" class="flex flex-col items-center gap-1 p-1 hover:text-orange-400 transition cursor-pointer">
+            <i class="fa-solid fa-truck-moving text-sm text-orange-400"></i>
+            <span>Armada</span>
+        </button>
+    </nav>
+
+    <!-- Toast Notification Overlay -->
+    <div id="toast" class="fixed bottom-16 md:bottom-6 right-4 left-4 md:left-auto md:w-96 bg-industrial-900 text-white border border-amberGold-500 p-4 rounded-2xl shadow-2xl z-50 transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3 pointer-events-none">
+        <div class="w-9 h-9 rounded-xl bg-amberGold-500 text-industrial-950 flex items-center justify-center font-black text-base flex-shrink-0">
+            <i class="fa-solid fa-check"></i>
+        </div>
+        <div>
+            <h5 id="toast-title" class="font-extrabold text-xs text-white">Berhasil!</h5>
+            <p id="toast-msg" class="text-[11px] text-slate-300">Informasi telah disalin ke clipboard.</p>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scroll function for Google Sites / Atari Sandboxed Embeds
+        function scrollToSection(elementId) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Data Models
+        const SPLIT_DATA = [
+            {
+                id: 'abu-batu',
+                name: 'Abu Batu',
+                size: '0 - 5 mm',
+                grade: 'Grade Fine / Pasir Sintetis',
+                color: 'blue',
+                icon: 'fa-box-archive',
+                uses: 'Paving block, batako press, campuran hotmix aspal, plesteran kasar dasar.',
+                desc: 'Fraksi terkecil dari hasil pemecahan stone crusher. Memiliki gradasi halus yang berfungsi sebagai pengisi (filler) void pada adukan.',
+                truckRec: 'Pick Up / Engkel / CDD'
+            },
+            {
+                id: 'screening',
+                name: 'Split Screening',
+                size: '5 - 10 mm (0.5x1 cm)',
+                grade: 'Grade Precision / Thin Precast',
+                color: 'blue',
+                icon: 'fa-border-all',
+                uses: 'Campuran aspal presisi, paving block high grade, beton pracetak tipis, roster.',
+                desc: 'Batu pecah ukuran kecil seragam. Sangat disukai untuk produk pracetak yang membutuhkan tingkat kerapatan tinggi tanpa rongga.',
+                truckRec: 'Engkel / CDD'
+            },
+            {
+                id: 'split-1x2',
+                name: 'Split 1x2 (Paling Populer)',
+                size: '10 - 20 mm (1x2 cm)',
+                grade: 'Standard Cor Bertulang Wajib',
+                color: 'amberGold',
+                icon: 'fa-building-columns',
+                uses: 'Cor beton bertulang utama: Dak rumah, kolom praktis, sloof, cakar ayam, beam.',
+                desc: 'Ukuran paling umum & standar utama dalam proyek bangunan gedung & perumahan. Menghasilkan mutu beton kental presisi tinggi.',
+                truckRec: 'Pick Up / Engkel / CDD'
+            },
+            {
+                id: 'split-2x3',
+                name: 'Split 2x3',
+                size: '20 - 30 mm (2x3 cm)',
+                grade: 'Medium-Heavy Structural Concrete',
+                color: 'blue',
+                icon: 'fa-warehouse',
+                uses: 'Beton cor tebal skala medium-berat: Lantai pabrik/gudang, jalan beton, pondasi dalam.',
+                desc: 'Batu split ukuran sedang dengan daya dukung tekan sangat kuat untuk struktur masif berketebalan >15cm.',
+                truckRec: 'Engkel / CDD'
+            },
+            {
+                id: 'split-3x5',
+                name: 'Split 3x5',
+                size: '30 - 50 mm (3x5 cm)',
+                grade: 'Base Course & Ballast',
+                color: 'blue',
+                icon: 'fa-train-track',
+                uses: 'Bantalan rel kereta api, penahan erosi tanah, lapisan dasar pengerasan jalan (sub-base).',
+                desc: 'Agregat batu kasar untuk menyerap getaran, mengalirkan air dengan baik, dan menahan beban terpusat tinggi.',
+                truckRec: 'CDD Double'
+            },
+            {
+                id: 'batu-gajah',
+                name: 'Batu Gajah / Split 5x7',
+                size: '> 50 mm (5x7 cm / Boulders)',
+                grade: 'Retaining Wall & Heavy Base',
+                color: 'blue',
+                icon: 'fa-hill-rockslide',
+                uses: 'Penahan tebing (retaining wall), penahan ombak dermaga, isi bronjong kawat, pondasi sungai.',
+                desc: 'Batu belah/pecah berukuran besar khusus untuk pekerjaan sipil penahan longsor dan struktur pengaman air.',
+                truckRec: 'CDD Double / Tronton'
+            },
+            {
+                id: 'agregat-ab',
+                name: 'Agregat A & B (Base Course)',
+                size: 'Campuran Proposional',
+                grade: 'Road Base Foundation',
+                color: 'blue',
+                icon: 'fa-road',
+                uses: 'Pengerasan fondasi jalan sebelum proses pengaspalan (Base Course Class A/B).',
+                desc: 'Campuran terukur dari batu split berbagai ukuran, pasir, dan abu batu untuk dipadatkan menjadi fondasi jalan yang stabil.',
+                truckRec: 'CDD Double'
+            }
+        ];
+
+        const PASIR_DATA = [
+            {
+                id: 'pasir-bangka',
+                name: 'Pasir Bangka',
+                category: 'origin',
+                origin: 'Kepulauan Bangka',
+                color: 'Putih / Kuning Coklat',
+                mudContent: '< 3% (Sangat Rendah)',
+                textureGrade: 'Grade Super Fine / Smooth',
+                uses: 'Acian halus, plesteran super mulus, perekat keramik, cor beton mutu tinggi.',
+                desc: 'Pasir kualitas tertinggi dengan kandungan kuarsa tinggi dan kadar lumpur sangat minim. Hasil acian tidak berpori.',
+                badgeColor: 'emerald'
+            },
+            {
+                id: 'pasir-lampung',
+                name: 'Pasir Lampung',
+                category: 'origin',
+                origin: 'Lampung',
+                color: 'Kuning Kemerahan / Coklat',
+                mudContent: '3% - 5%',
+                textureGrade: 'Grade Medium - High Grade (HG)',
+                uses: 'Pasangan bata, plesteran tembok, cor beton bertulang.',
+                desc: 'Sangat disukai tukang karena butirannya tajam dan padat, serta memiliki daya ikat semen yang sangat kuat.',
+                badgeColor: 'emerald'
+            },
+            {
+                id: 'pasir-rangkas',
+                name: 'Pasir Rangkas / Jawilan',
+                category: 'origin',
+                origin: 'Rangkasbitung / Banten',
+                color: 'Abu-abu Kecoklatan',
+                mudContent: '4% - 6%',
+                textureGrade: 'Grade Medium Universal',
+                uses: 'Pasang bata merah/hebel, cor dasar, plesteran ekonomis.',
+                desc: 'Pasir ekonomis serbaguna yang paling banyak digunakan di wilayah Jabodetabek untuk pekerjaan dinding umum.',
+                badgeColor: 'emerald'
+            },
+            {
+                id: 'pasir-sukabumi',
+                name: 'Pasir Sukabumi / Cimangkok',
+                category: 'origin',
+                origin: 'Sukabumi',
+                color: 'Hitam Pekat',
+                mudContent: '< 3%',
+                textureGrade: 'Grade Coarse (Kasar Tajam)',
+                uses: 'Gold Standard Cor Beton Readymix, dak bertulang, struktur berat.',
+                desc: 'Pasir vulkanik hitam bertulang tajam. Merupakan pilihan utama standar arsitek/kontraktor untuk struktur cor berat.',
+                badgeColor: 'emerald'
+            },
+            {
+                id: 'pasir-vulkanik',
+                name: 'Pasir Gunung / Vulkanik',
+                category: 'origin',
+                origin: 'Merapi / Kelud / Gunung Berapi',
+                color: 'Hitam Keabu-abuan',
+                mudContent: 'Sangat Rendah',
+                textureGrade: 'Grade Kasar Tajam',
+                uses: 'Cor beton bertulang, pasangan batu kali, fondasi.',
+                desc: 'Butirannya bersudut tajam alami dengan tingkat kekerasan mineral tinggi, mengikat semen secara maksimal.',
+                badgeColor: 'emerald'
+            },
+            {
+                id: 'pasir-elod',
+                name: 'Pasir Elod / Urug',
+                category: 'origin',
+                origin: 'Lokal Rawa / Sungai Depok',
+                color: 'Coklat Gelap Bergumpal',
+                mudContent: '> 15% (Tinggi)',
+                textureGrade: 'Grade Extra Kasar / Urug',
+                uses: 'Khusus pengurugan lahan & peninggian tanah.',
+                desc: 'Memiliki kandungan tanah/lumpur tinggi. Dilarang keras dipakai untuk adukan cor beton atau plesteran.',
+                badgeColor: 'orange'
+            }
+        ];
+
+        const PROJECTS_RECOMMENDER = {
+            'dak-kolom': {
+                title: 'Cor Dak Rumah / Kolom Bertulang',
+                sandName: 'Pasir Sukabumi / Lampung',
+                sandGrade: 'Grade Kasar (1 - 4 mm)',
+                splitName: 'Split 1x2 (10 - 20 mm)',
+                splitGrade: 'Standar Cor Bertulang',
+                mixRatio: '1 Semen : 2 Pasir : 3 Split',
+                tips: 'Wajib gunakan pasir kasar tajam kadar lumpur <3% & batu split 1x2. Pastikan penggetaran (vibrator) merata agar beton padat tanpa celah.'
+            },
+            'plester-dinding': {
+                title: 'Plesteran Dinding Tembok',
+                sandName: 'Pasir Bangka / Lampung Saring',
+                sandGrade: 'Grade Medium HG / Halus',
+                splitName: 'Non-Split / Abu Batu (Optional)',
+                splitGrade: 'Tidak Digunakan',
+                mixRatio: '1 Semen : 4 - 5 Pasir',
+                tips: 'Saring/ayak pasir terlebih dahulu untuk membuang kerikil. Siram permukaan dinding sebelum memplester agar adukan menempel sempurna.'
+            },
+            'pasang-bata': {
+                title: 'Pasangan Bata Merah / Batako',
+                sandName: 'Pasir Rangkas / Lampung / Gunung',
+                sandGrade: 'Grade Medium Universal',
+                splitName: 'Non-Split',
+                splitGrade: 'Tidak Digunakan',
+                mixRatio: '1 Semen : 4 - 6 Pasir',
+                tips: 'Gunakan pasir medium yang rekat. Untuk Bata Ringan (Hebel), direkomendasikan menggunakan Semen Instant Mortar Thinbed.'
+            },
+            'acian-finishing': {
+                title: 'Acian Halus & Profil Dinding',
+                sandName: 'Pasir Bangka Super Fine',
+                sandGrade: 'Grade Super Halus',
+                splitName: 'Non-Split',
+                splitGrade: 'Tidak Digunakan',
+                mixRatio: '1 Semen : 1 Pasir Halus (Atau Semen Instant)',
+                tips: 'Pastikan plesteran sudah kering sempurna (minimal 7 hari) sebelum diaci agar acian tidak retak rambut atau terkelupas.'
+            },
+            'pondasi-batu': {
+                title: 'Pondasi Batu Kali / Sloof Dasar',
+                sandName: 'Pasir Gunung / Sukabumi / Lampung',
+                sandGrade: 'Grade Kasar Tajam',
+                splitName: 'Split 2x3 / Batu Kali Belah',
+                splitGrade: 'Medium Coarse',
+                mixRatio: '1 Semen : 3 Pasir : 4 Split/Batu',
+                tips: 'Adukan harus cukup basah agar meresap ke sela-sela batu kali. Berikan kisi besi sloof di bagian atas pondasi.'
+            },
+            'pengerasan-jalan': {
+                title: 'Pengerasan Jalan / Sub-Base',
+                sandName: 'Abu Batu + Pasir Urug',
+                sandGrade: 'Grade Agregat Filler',
+                splitName: 'Agregat A/B & Split 3x5',
+                splitGrade: 'Coarse Base Course',
+                mixRatio: 'Formula Agregat Padat',
+                tips: 'Gunakan roller pemadat (stumper) per lapisan 15cm agar struktur jalan tidak ambles saat dilalui kendaraan berat.'
+            }
+        };
+
+        // Initialize & Render Components
+        window.addEventListener('DOMContentLoaded', () => {
+            renderProjectsSelector();
+            renderSplitCards(SPLIT_DATA);
+            renderPasirCards(PASIR_DATA);
+            calculateArmada();
+        });
+
+        // Render Recommender Options
+        function renderProjectsSelector() {
+            const container = document.getElementById('project-selector-list');
+            let html = '';
+            
+            Object.keys(PROJECTS_RECOMMENDER).forEach((key, index) => {
+                const item = PROJECTS_RECOMMENDER[key];
+                const checked = index === 0 ? 'checked' : '';
+                html += `
+                    <label class="flex items-center gap-3 p-3 rounded-xl bg-industrial-950 border border-industrial-800 hover:border-amberGold-500/50 cursor-pointer transition">
+                        <input type="radio" name="project_rec" value="${key}" ${checked} onchange="updateRecommendation('${key}')" class="accent-amberGold-500 w-4 h-4">
+                        <span class="text-xs font-bold text-slate-200">${item.title}</span>
+                    </label>
+                `;
+            });
+
+            container.innerHTML = html;
+            updateRecommendation('dak-kolom');
+        }
+
+        // Update Recommender Output Card
+        function updateRecommendation(key) {
+            const data = PROJECTS_RECOMMENDER[key];
+            if (!data) return;
+
+            document.getElementById('rec-project-title').innerText = data.title;
+            document.getElementById('rec-sand-name').innerText = data.sandName;
+            document.getElementById('rec-sand-grade').innerText = data.sandGrade;
+            document.getElementById('rec-split-name').innerText = data.splitName;
+            document.getElementById('rec-split-grade').innerText = data.splitGrade;
+            document.getElementById('rec-mix-ratio').innerText = data.mixRatio;
+            document.getElementById('rec-tips').innerText = data.tips;
+        }
+
+        // Render Split Cards
+        function renderSplitCards(items) {
+            const container = document.getElementById('split-cards-container');
+            if (items.length === 0) {
+                container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-500 text-xs">Tidak ada data batu split yang cocok.</div>`;
+                return;
+            }
+
+            let html = '';
+            items.forEach(item => {
+                html += `
+                    <div class="bg-industrial-900 rounded-2xl p-5 border border-industrial-800 hover:border-blue-500/40 transition space-y-3 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <div class="flex items-start justify-between gap-2">
+                                <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-lg flex-shrink-0">
+                                    <i class="fa-solid ${item.icon}"></i>
+                                </div>
+                                <span class="text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                    ${item.size}
+                                </span>
+                            </div>
+
+                            <div>
+                                <h4 class="font-black text-white text-base">${item.name}</h4>
+                                <span class="text-[11px] font-semibold text-slate-400 block">${item.grade}</span>
+                            </div>
+
+                            <p class="text-xs text-slate-300 leading-relaxed">${item.desc}</p>
+                        </div>
+
+                        <div class="space-y-2 pt-3 border-t border-industrial-800/80 text-xs">
+                            <div class="bg-industrial-950 p-2.5 rounded-xl border border-industrial-800/60">
+                                <span class="text-slate-400 block text-[10px] font-bold uppercase mb-0.5"><i class="fa-solid fa-list-check text-amberGold-400 mr-1"></i> Aplikasi Utama:</span>
+                                <span class="text-slate-200 font-medium text-[11px]">${item.uses}</span>
+                            </div>
+                            <div class="flex items-center justify-between text-[11px] text-slate-400 px-1">
+                                <span>Rekomendasi Armada:</span>
+                                <strong class="text-blue-400">${item.truckRec}</strong>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Render Pasir Cards
+        function renderPasirCards(items) {
+            const container = document.getElementById('pasir-cards-container');
+            if (items.length === 0) {
+                container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-500 text-xs">Tidak ada data pasir yang cocok.</div>`;
+                return;
+            }
+
+            let html = '';
+            items.forEach(item => {
+                html += `
+                    <div class="bg-industrial-900 rounded-2xl p-5 border border-industrial-800 hover:border-emerald-500/40 transition space-y-3 flex flex-col justify-between">
+                        <div class="space-y-2">
+                            <div class="flex items-start justify-between gap-2">
+                                <span class="text-[10px] font-black uppercase px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                    ${item.origin}
+                                </span>
+                                <span class="text-[10px] font-bold text-slate-400">
+                                    Lumpur: <strong class="text-white">${item.mudContent}</strong>
+                                </span>
+                            </div>
+
+                            <div>
+                                <h4 class="font-black text-white text-base">${item.name}</h4>
+                                <span class="text-[11px] font-bold text-emerald-400 block">${item.textureGrade}</span>
+                            </div>
+
+                            <p class="text-xs text-slate-300 leading-relaxed">${item.desc}</p>
+                        </div>
+
+                        <div class="space-y-2 pt-3 border-t border-industrial-800/80 text-xs">
+                            <div class="grid grid-cols-2 gap-2 text-[11px] mb-1">
+                                <div class="bg-industrial-950 p-2 rounded-lg border border-industrial-800">
+                                    <span class="text-slate-400 block text-[9px]">Warna Karakter</span>
+                                    <span class="font-bold text-slate-200">${item.color}</span>
+                                </div>
+                                <div class="bg-industrial-950 p-2 rounded-lg border border-industrial-800">
+                                    <span class="text-slate-400 block text-[9px]">Kadar Lumpur</span>
+                                    <span class="font-bold text-emerald-400">${item.mudContent}</span>
+                                </div>
+                            </div>
+                            <div class="bg-industrial-950 p-2.5 rounded-xl border border-industrial-800/60">
+                                <span class="text-slate-400 block text-[10px] font-bold uppercase mb-0.5"><i class="fa-solid fa-check-double text-emerald-400 mr-1"></i> Peruntukan Ideal:</span>
+                                <span class="text-slate-200 font-medium text-[11px]">${item.uses}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        // Filter Sand Tabs
+        function filterSandTab(tab) {
+            document.getElementById('sand-tab-all').className = "px-3 py-1 rounded-lg text-xs font-bold bg-industrial-800 text-slate-300 hover:text-white transition";
+            document.getElementById('sand-tab-origin').className = "px-3 py-1 rounded-lg text-xs font-bold bg-industrial-800 text-slate-300 hover:text-white transition";
+            document.getElementById('sand-tab-grade').className = "px-3 py-1 rounded-lg text-xs font-bold bg-industrial-800 text-slate-300 hover:text-white transition";
+
+            if (tab === 'all') {
+                document.getElementById('sand-tab-all').className = "px-3 py-1 rounded-lg text-xs font-bold bg-amberGold-500 text-industrial-950 transition";
+                renderPasirCards(PASIR_DATA);
+            } else if (tab === 'origin') {
+                document.getElementById('sand-tab-origin').className = "px-3 py-1 rounded-lg text-xs font-bold bg-amberGold-500 text-industrial-950 transition";
+                renderPasirCards(PASIR_DATA.filter(i => i.category === 'origin'));
+            } else {
+                document.getElementById('sand-tab-grade').className = "px-3 py-1 rounded-lg text-xs font-bold bg-amberGold-500 text-industrial-950 transition";
+                renderPasirCards(PASIR_DATA);
+            }
+        }
+
+        // Calculate Armada Loads
+        function calculateArmada() {
+            const volM3 = parseFloat(document.getElementById('calc-volume').value) || 0;
+            const matType = document.getElementById('calc-material-type').value;
+            const loadStyle = document.getElementById('calc-load-style').value;
+
+            // Density factors (Ton / m³)
+            const density = matType === 'pasir' ? 1.4 : 1.35;
+            const totalWeightTon = volM3 * density;
+
+            // Truck Vol Capacities (m³)
+            // Pick Up: Rata = 0.9, Munjung = 1.2
+            // CDE Engkel: Rata = 3.25, Munjung = 4.0
+            // CDD Double: Rata = 6.5, Munjung = 7.5
+            const capPickUp = loadStyle === 'munjung' ? 1.2 : 0.9;
+            const capCDE = loadStyle === 'munjung' ? 4.0 : 3.25;
+            const capCDD = loadStyle === 'munjung' ? 7.5 : 6.5;
+
+            const ritPickUp = Math.max(1, Math.ceil(volM3 / capPickUp));
+            const ritCDE = Math.max(1, Math.ceil(volM3 / capCDE));
+            const ritCDD = Math.max(1, Math.ceil(volM3 / capCDD));
+
+            document.getElementById('res-pickup-rit').innerText = `${ritPickUp} Rit`;
+            document.getElementById('res-pickup-weight').innerText = `Est. Weight: ${(totalWeightTon).toFixed(1)} Ton`;
+
+            document.getElementById('res-cde-rit').innerText = `${ritCDE} Rit`;
+            document.getElementById('res-cde-weight').innerText = `Est. Weight: ${(totalWeightTon).toFixed(1)} Ton`;
+
+            document.getElementById('res-cdd-rit').innerText = `${ritCDD} Rit`;
+            document.getElementById('res-cdd-weight').innerText = `Est. Weight: ${(totalWeightTon).toFixed(1)} Ton`;
+
+            let bestRec = "";
+            if (volM3 <= 2.0) {
+                bestRec = `Gunakan ${ritPickUp} Rit Pick Up (Akses Mudah)`;
+            } else if (volM3 <= 5.0) {
+                bestRec = `Gunakan ${ritCDE} Rit Truk CDE Engkel`;
+            } else {
+                bestRec = `Gunakan ${ritCDD} Rit Truk CDD Double (Paling Paling Efisien)`;
+            }
+
+            document.getElementById('res-best-truck').innerText = bestRec;
+        }
+
+        // Global Search & Quick Search Filter
+        function handleSearch() {
+            const query = document.getElementById('global-search').value.toLowerCase().trim();
+            const clearBtn = document.getElementById('clear-search-btn');
+
+            if (query.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            const filteredSplit = SPLIT_DATA.filter(item => 
+                item.name.toLowerCase().includes(query) ||
+                item.size.toLowerCase().includes(query) ||
+                item.uses.toLowerCase().includes(query) ||
+                item.desc.toLowerCase().includes(query)
+            );
+
+            const filteredPasir = PASIR_DATA.filter(item => 
+                item.name.toLowerCase().includes(query) ||
+                item.origin.toLowerCase().includes(query) ||
+                item.uses.toLowerCase().includes(query) ||
+                item.textureGrade.toLowerCase().includes(query) ||
+                item.desc.toLowerCase().includes(query)
+            );
+
+            renderSplitCards(filteredSplit);
+            renderPasirCards(filteredPasir);
+        }
+
+        function quickSearch(keyword) {
+            document.getElementById('global-search').value = keyword;
+            handleSearch();
+        }
+
+        function clearSearch() {
+            document.getElementById('global-search').value = '';
+            handleSearch();
+        }
+
+        // Clipboard Copy Utilities
+        function copyTextToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text);
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+            }
+        }
+
+        function copyRecommendation() {
+            const project = document.getElementById('rec-project-title').innerText;
+            const sand = document.getElementById('rec-sand-name').innerText;
+            const split = document.getElementById('rec-split-name').innerText;
+            const mix = document.getElementById('rec-mix-ratio').innerText;
+
+            const text = `*REKOMENDASI MATERIAL PROYEK*\n` +
+                         `-----------------------------------\n` +
+                         `• Pekerjaan   : ${project}\n` +
+                         `• Jenis Pasir : ${sand}\n` +
+                         `• Batu Split  : ${split}\n` +
+                         `• Rasio Semen : ${mix}\n` +
+                         `-----------------------------------\n` +
+                         `*Dibuat via PK Material Bangunan App`;
+
+            copyTextToClipboard(text);
+            showToast("Berhasil Disalin!", "Rekomendasi proyek siap dikirim ke WhatsApp.");
+        }
+
+        function copyArmadaCalculation() {
+            const vol = document.getElementById('calc-volume').value;
+            const best = document.getElementById('res-best-truck').innerText;
+            const pickup = document.getElementById('res-pickup-rit').innerText;
+            const cde = document.getElementById('res-cde-rit').innerText;
+            const cdd = document.getElementById('res-cdd-rit').innerText;
+
+            const text = `*ESTIMASI ARMADA PENGIRIMAN MATERIAL*\n` +
+                         `-----------------------------------\n` +
+                         `• Kebutuhan Volume : ${vol} m³\n` +
+                         `• Opsi Pick Up     : ${pickup}\n` +
+                         `• Opsi CDE Engkel  : ${cde}\n` +
+                         `• Opsi CDD Double  : ${cdd}\n` +
+                         `• Rekomendasi Utama: ${best}\n` +
+                         `-----------------------------------`;
+
+            copyTextToClipboard(text);
+            showToast("Disalin ke Clipboard!", "Ringkasan estimasi ritase armada siap dikirim.");
+        }
+
+        function copyFullPKSummary() {
+            const text = `*PRODUCT KNOWLEDGE: BATU SPLIT & PASIR BANGUNAN*\n` +
+                         `-----------------------------------\n` +
+                         `1. BATU SPLIT STANDAR:\n` +
+                         `   • Split 1x2 (10-20mm) : Standar Wajib Cor Bertulang / Dak\n` +
+                         `   • Split 2x3 (20-30mm) : Cor Tebal / Lantai Pabrik\n` +
+                         `   • Abu Batu (0-5mm)   : Paving Block & Aspal Hotmix\n\n` +
+                         `2. PASIR BANGUNAN:\n` +
+                         `   • Pasir Bangka   : Putih, Lumpur <3%, Super Halus (Acian)\n` +
+                         `   • Pasir Lampung  : Kuning/Coklat, Tajam (Bata & Cor)\n` +
+                         `   • Pasir Sukabumi : Hitam Kasar Tajam (Readymix / Structure)\n\n` +
+                         `3. UKURAN ARMADA:\n` +
+                         `   • Pick Up : ± 0.8 - 1.2 m³\n` +
+                         `   • CDE Engkel (4 Roda) : ± 3.5 - 4.0 m³\n` +
+                         `   • CDD Double (6 Roda) : ± 6.5 - 7.5 m³`;
+
+            copyTextToClipboard(text);
+            showToast("PK Ringkas Disalin!", "Product knowledge material siap dibagikan.");
+        }
+
+        // Custom Toast Notification
+        function showToast(title, message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-title').innerText = title;
+            document.getElementById('toast-msg').innerText = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
