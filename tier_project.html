@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Inventory & Slicer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+        
+        /* Spinner animation */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
+
+    <!-- Mobile overlay -->
+    <div id="mobileOverlay" class="fixed inset-0 bg-slate-900 bg-opacity-50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar" class="bg-white w-72 h-full flex flex-col shadow-xl fixed lg:static z-50 transform -translate-x-full lg:translate-x-0 transition-transform duration-300 ease-in-out border-r border-slate-200">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-blue-600 text-white">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                InventoryPro
+            </h1>
+            <button onclick="toggleSidebar()" class="lg:hidden p-1 hover:bg-blue-700 rounded text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+
+        <div class="p-5 flex-1 overflow-y-auto">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-sm font-semibold text-slate-500 uppercase tracking-wider">Filter Data</h2>
+                <button onclick="resetAllFilters()" class="text-xs bg-red-100 text-red-600 hover:bg-red-200 px-2 py-1.5 rounded font-medium transition-colors flex items-center gap-1 shadow-sm">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Reset Semua
+                </button>
+            </div>
+            
+            <!-- Multi-text Search -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Pencarian Deskripsi</label>
+                <div class="relative">
+                    <input type="text" id="searchInput" placeholder="mcb, besi, semen..." 
+                           class="w-full pl-3 pr-10 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm shadow-sm transition-shadow">
+                    <button id="clearSearchBtn" onclick="clearSearch()" class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-red-500 hidden">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+                <p class="text-xs text-slate-500 mt-1">Pisahkan dengan koma untuk multi-pencarian (OR)</p>
+            </div>
+
+            <!-- Department Slicer -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-slate-700">Departemen</label>
+                    <button onclick="clearDeptFilter()" class="text-xs text-blue-600 hover:text-blue-800">Clear</button>
+                </div>
+                <div id="deptSlicerContainer" class="space-y-2 max-h-40 overflow-y-auto pr-2 border border-slate-200 rounded-lg p-2 bg-slate-50">
+                    <!-- Checkboxes will be injected here -->
+                    <div class="text-sm text-slate-500 italic">Memuat departemen...</div>
+                </div>
+            </div>
+
+            <!-- Kategori Slicer -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-slate-700">Kategori (KAT)</label>
+                    <button onclick="clearKatFilter()" class="text-xs text-blue-600 hover:text-blue-800">Clear</button>
+                </div>
+                <div id="katSlicerContainer" class="space-y-2 max-h-40 overflow-y-auto pr-2 border border-slate-200 rounded-lg p-2 bg-slate-50">
+                    <!-- Checkboxes will be injected here -->
+                    <div class="text-sm text-slate-500 italic">Memuat kategori...</div>
+                </div>
+            </div>
+
+            <!-- Qty Stok Filter -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-slate-700 mb-2">Filter Qty Stok</label>
+                <select id="qtyFilterSelect" class="w-full border border-slate-300 rounded-lg text-sm px-3 py-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm transition-shadow">
+                    <option value="all">Semua Qty</option>
+                    <option value=">0">Lebih dari 0 ( > 0 )</option>
+                    <option value="=0">Sama dengan 0 ( = 0 )</option>
+                    <option value="<0">Kurang dari 0 ( < 0 )</option>
+                </select>
+            </div>
+
+            <!-- Harga (HJ1) Filter -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-slate-700">Rentang Harga (HJ1)</label>
+                    <button onclick="clearPriceFilter()" class="text-xs text-blue-600 hover:text-blue-800">Clear</button>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="number" id="minPriceInput" placeholder="Min" class="w-full border border-slate-300 rounded-lg text-sm px-2 py-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
+                    <span class="text-slate-400 font-medium">-</span>
+                    <input type="number" id="maxPriceInput" placeholder="Max" class="w-full border border-slate-300 rounded-lg text-sm px-2 py-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm">
+                </div>
+            </div>
+
+            <!-- Tahap Proyek Filter -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <label class="block text-sm font-medium text-slate-700" title="Filter berdasarkan tahap proyek">Tahap Proyek (T1-T15)</label>
+                    <button onclick="clearTahapFilter()" class="text-xs text-blue-600 hover:text-blue-800">Clear</button>
+                </div>
+                <div class="grid grid-cols-5 gap-1.5" id="tahapFilterContainer">
+                    <!-- Buttons will be injected here -->
+                </div>
+                <p class="text-[11px] text-slate-500 mt-2 leading-tight" id="tahapDescInfo">Pilih tahap untuk memfilter material spesifik.</p>
+            </div>
+        </div>
+        
+        <div class="p-4 border-t border-slate-100 bg-slate-50">
+            <div class="text-xs text-slate-500 mb-2">Terakhir diperbarui: <span id="lastUpdated" class="font-medium text-slate-700">-</span></div>
+            <button onclick="fetchData(true)" class="w-full flex items-center justify-center gap-2 bg-white border border-slate-300 text-slate-700 px-4 py-2 rounded-lg hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-500 shadow-sm transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Refresh Data
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden w-full relative">
+        <!-- Top Header for Mobile -->
+        <header class="lg:hidden bg-white shadow-sm border-b border-slate-200 p-4 flex items-center justify-between z-30">
+            <h1 class="text-lg font-bold text-slate-800">Inventory Dashboard</h1>
+            <button onclick="toggleSidebar()" class="p-2 rounded-lg text-slate-600 hover:bg-slate-100 focus:outline-none">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+            
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="absolute inset-0 bg-white bg-opacity-90 z-20 flex flex-col items-center justify-center hidden">
+                <div class="loader mb-4"></div>
+                <p class="text-slate-600 font-medium" id="loadingText">Memuat data...</p>
+            </div>
+
+            <!-- Scorecards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <!-- Card 1 -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center gap-4 transition-transform hover:-translate-y-1">
+                    <div class="p-3 bg-blue-100 text-blue-600 rounded-lg">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Total SKU (Ditampilkan)</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="scoreTotalSKU">0</h3>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center gap-4 transition-transform hover:-translate-y-1">
+                    <div class="p-3 bg-green-100 text-green-600 rounded-lg">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Total Qty Stok</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="scoreTotalQty">0</h3>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex items-center gap-4 transition-transform hover:-translate-y-1">
+                    <div class="p-3 bg-purple-100 text-purple-600 rounded-lg">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-slate-500">Total Kategori</p>
+                        <h3 class="text-2xl font-bold text-slate-800" id="scoreTotalKat">0</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Table Section -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col h-[calc(100vh-280px)] lg:h-[calc(100vh-220px)] min-h-[400px]">
+                
+                <!-- Table Toolbar -->
+                <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div class="flex items-center gap-2">
+                        <label class="text-sm text-slate-600">Tampilkan</label>
+                        <select id="pageSize" class="border border-slate-300 rounded-lg text-sm px-2 py-1 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="100">100</option>
+                        </select>
+                        <label class="text-sm text-slate-600">baris</label>
+                    </div>
+                    
+                    <button onclick="exportToExcel()" class="w-full sm:w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Export ke Excel
+                    </button>
+                </div>
+
+                <!-- Table Wrapper (Scrollable) -->
+                <div class="flex-1 overflow-auto">
+                    <table class="min-w-full divide-y divide-slate-200 w-full text-left border-collapse">
+                        <thead class="bg-slate-50 sticky top-0 shadow-sm z-10">
+                            <tr>
+                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">Departement</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">SKU</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider min-w-[200px]">Description</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">UOM</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap text-right">HJ R</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap text-right">HJ1</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap text-right">HJ2</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap text-right">HJ3</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">BP Code</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-blue-600 uppercase tracking-wider whitespace-nowrap text-right bg-blue-50">Qty Stok</th>
+                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">Kat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="bg-white divide-y divide-slate-100">
+                            <!-- Rows will be generated here -->
+                        </tbody>
+                    </table>
+                    
+                    <!-- Empty State -->
+                    <div id="emptyState" class="hidden flex flex-col items-center justify-center p-8 text-slate-500">
+                        <svg class="w-16 h-16 mb-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                        <p class="text-lg font-medium">Data tidak ditemukan</p>
+                        <p class="text-sm">Coba sesuaikan filter pencarian atau departemen.</p>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="bg-white px-4 py-3 border-t border-slate-200 flex items-center justify-between sm:px-6 mt-auto">
+                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm text-slate-700">
+                                Menampilkan <span id="pageInfoStart" class="font-medium">0</span> sampai <span id="pageInfoEnd" class="font-medium">0</span> dari <span id="pageInfoTotal" class="font-medium">0</span> hasil
+                            </p>
+                        </div>
+                        <div>
+                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                                <button id="btnPrev" onclick="changePage(-1)" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" /></svg>
+                                </button>
+                                <span id="pageNumbers" class="relative inline-flex items-center px-4 py-2 border border-slate-300 bg-white text-sm font-medium text-slate-700">
+                                    1 / 1
+                                </span>
+                                <button id="btnNext" onclick="changePage(1)" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-slate-300 bg-white text-sm font-medium text-slate-500 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" /></svg>
+                                </button>
+                            </nav>
+                        </div>
+                    </div>
+                    <!-- Mobile Pagination -->
+                    <div class="flex items-center justify-between w-full sm:hidden">
+                        <button id="btnPrevMobile" onclick="changePage(-1)" class="relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50">
+                            Previous
+                        </button>
+                        <span id="pageInfoMobile" class="text-sm text-slate-600">1/1</span>
+                        <button id="btnNextMobile" onclick="changePage(1)" class="relative inline-flex items-center px-4 py-2 border border-slate-300 text-sm font-medium rounded-md text-slate-700 bg-white hover:bg-slate-50 disabled:opacity-50">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Data Source
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR0mlfaAqCc0aGF10YflxcU36zXxPWDKCCW8UDSInEfax28u00n5YSGa6qPA1Wkr_eeb0KYWMsJ9kVG/pub?gid=1776144885&single=true&output=csv';
+        const STORAGE_KEY = 'inventory_data_cache';
+        const STORAGE_TIME_KEY = 'inventory_data_time';
+
+        // State Management
+        let rawData = [];
+        let filteredData = [];
+        let uniqueDepartments = new Set();
+        let selectedDepartments = new Set();
+        let uniqueCategories = new Set();
+        let selectedCategories = new Set();
+        let selectedQtyFilter = 'all';
+        let minPriceFilter = null;
+        let maxPriceFilter = null;
+        
+        // Data Tahap (T1 - T15)
+        const tahapData = [
+            { id: 'T1', keywords: ['BESI BETON', 'SEMEN', 'MOLEN', 'TRIPLEK'], desc: 'Pondasi & Struktur Awal' },
+            { id: 'T2', keywords: ['PAGAR ALAS'], desc: 'Pembatasan & Keamanan' },
+            { id: 'T3', keywords: ['PIPA', 'TANGKI AIR', 'POMPA', 'FIT PIPA'], desc: 'Instalasi ME & Saluran' },
+            { id: 'T4', keywords: ['BONDEX', 'WIREMESH'], desc: 'Pengecoran Lantai' },
+            { id: 'T5', keywords: ['ATAP', 'SPANDEK', 'BAJA RINGAN'], desc: 'Penutupan Atas Struktur' },
+            { id: 'T6', keywords: ['BATA', 'HEBEL', 'PARTISI', 'GYPSUM', 'GRC'], desc: 'Pemasangan Partisi Ruang' },
+            { id: 'T7', keywords: ['KUSEN', 'PINTU', 'JENDELA', 'KACA'], desc: 'Kusen & Bukaan' },
+            { id: 'T8', keywords: ['KABEL', 'LAMPU', 'SAKLAR', 'MCB', 'PANEL'], desc: 'Kelistrikan & Panel' },
+            { id: 'T9', keywords: ['KERAMIK', 'GRANIT', 'LANTAI', 'VINYL'], desc: 'Finishing Lantai' },
+            { id: 'T10', keywords: ['CAT', 'THINNER', 'KUAS', 'DEMPUL', 'ROLL'], desc: 'Pengecatan' },
+            { id: 'T11', keywords: ['CLOSET', 'WASTAFEL', 'KRAN', 'SANITARY'], desc: 'Sanitasi & Plumbing' },
+            { id: 'T12', keywords: ['PLAFON', 'HOLLOW', 'LIST'], desc: 'Pemasangan Plafon' },
+            { id: 'T13', keywords: ['KUNCI', 'ENGSEL', 'HANDLE', 'SILINDER'], desc: 'Aksesoris Pintu/Jendela' },
+            { id: 'T14', keywords: ['PAVING', 'ASPAL', 'TAMAN'], desc: 'Lansekap & Eksterior' },
+            { id: 'T15', keywords: ['CLEANING', 'SAPU', 'PEL', 'SABUN'], desc: 'Pembersihan & Handover' }
+        ];
+        let selectedTahap = null;
+        
+        // Pagination State
+        let currentPage = 1;
+        let rowsPerPage = 25;
+
+        // DOM Elements
+        const DOM = {
+            tableBody: document.getElementById('tableBody'),
+            emptyState: document.getElementById('emptyState'),
+            loadingOverlay: document.getElementById('loadingOverlay'),
+            loadingText: document.getElementById('loadingText'),
+            searchInput: document.getElementById('searchInput'),
+            clearSearchBtn: document.getElementById('clearSearchBtn'),
+            deptSlicerContainer: document.getElementById('deptSlicerContainer'),
+            katSlicerContainer: document.getElementById('katSlicerContainer'),
+            qtyFilterSelect: document.getElementById('qtyFilterSelect'),
+            minPriceInput: document.getElementById('minPriceInput'),
+            maxPriceInput: document.getElementById('maxPriceInput'),
+            tahapFilterContainer: document.getElementById('tahapFilterContainer'),
+            tahapDescInfo: document.getElementById('tahapDescInfo'),
+            pageSizeSelect: document.getElementById('pageSize'),
+            lastUpdated: document.getElementById('lastUpdated'),
+            sidebar: document.getElementById('sidebar'),
+            mobileOverlay: document.getElementById('mobileOverlay'),
+            
+            // Scorecards
+            scoreTotalSKU: document.getElementById('scoreTotalSKU'),
+            scoreTotalQty: document.getElementById('scoreTotalQty'),
+            scoreTotalKat: document.getElementById('scoreTotalKat'),
+            
+            // Pagination controls
+            pageInfoStart: document.getElementById('pageInfoStart'),
+            pageInfoEnd: document.getElementById('pageInfoEnd'),
+            pageInfoTotal: document.getElementById('pageInfoTotal'),
+            pageNumbers: document.getElementById('pageNumbers'),
+            pageInfoMobile: document.getElementById('pageInfoMobile'),
+            btnPrev: document.getElementById('btnPrev'),
+            btnNext: document.getElementById('btnNext'),
+            btnPrevMobile: document.getElementById('btnPrevMobile'),
+            btnNextMobile: document.getElementById('btnNextMobile')
+        };
+
+        // Format Utilities
+        const formatNumber = (num) => {
+            if (!num || isNaN(num)) return num || '-';
+            return new Intl.NumberFormat('id-ID').format(num);
+        };
+        
+        const parseNumber = (str) => {
+            if (!str) return 0;
+            if (typeof str === 'number') return str;
+            // Remove non-numeric characters except dots and commas, then attempt to parse
+            let cleanStr = str.replace(/[^\d.-]/g, '');
+            return parseFloat(cleanStr) || 0;
+        };
+
+        // Fetch and parse data
+        async function fetchData(forceRefresh = false) {
+            showLoading(true, forceRefresh ? 'Mengambil data dari server...' : 'Memuat data...');
+            
+            try {
+                // Check local storage first if not forcing refresh
+                if (!forceRefresh) {
+                    const cachedData = localStorage.getItem(STORAGE_KEY);
+                    const cacheTime = localStorage.getItem(STORAGE_TIME_KEY);
+                    
+                    if (cachedData && cacheTime) {
+                        rawData = JSON.parse(cachedData);
+                        DOM.lastUpdated.innerText = cacheTime;
+                        processRawData();
+                        showLoading(false);
+                        return;
+                    }
+                }
+
+                // Fetch from CSV
+                const response = await fetch(CSV_URL);
+                if (!response.ok) throw new Error('Network response was not ok');
+                const csvText = await response.text();
+
+                // Parse CSV using PapaParse
+                Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        // Filter out completely empty rows that might slip through
+                        rawData = results.data.filter(row => row.SKU || row.DESCRIPTION);
+                        
+                        // Save to LocalStorage
+                        try {
+                            localStorage.setItem(STORAGE_KEY, JSON.stringify(rawData));
+                            const now = new Date().toLocaleString('id-ID');
+                            localStorage.setItem(STORAGE_TIME_KEY, now);
+                            DOM.lastUpdated.innerText = now;
+                        } catch (e) {
+                            console.warn("Could not save to localStorage (quota exceeded?)", e);
+                        }
+                        
+                        processRawData();
+                        showLoading(false);
+                    },
+                    error: function(error) {
+                        console.error("Error parsing CSV:", error);
+                        alert("Gagal memproses data CSV.");
+                        showLoading(false);
+                    }
+                });
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                alert("Gagal mengambil data dari Google Sheets. Pastikan koneksi internet stabil.");
+                showLoading(false);
+            }
+        }
+
+        function processRawData() {
+            // Extract unique departments & categories for Slicer
+            uniqueDepartments.clear();
+            uniqueCategories.clear();
+            
+            rawData.forEach(row => {
+                if (row.Departement) {
+                    uniqueDepartments.add(row.Departement.trim());
+                }
+                if (row.Kat) {
+                    uniqueCategories.add(row.Kat.trim());
+                }
+            });
+
+            renderDeptSlicer();
+            renderKatSlicer();
+            renderTahapFilter();
+            applyFilters(); // Initial render
+        }
+
+        function renderDeptSlicer() {
+            DOM.deptSlicerContainer.innerHTML = '';
+            
+            if (uniqueDepartments.size === 0) {
+                DOM.deptSlicerContainer.innerHTML = '<div class="text-sm text-slate-500 italic">Tidak ada departemen</div>';
+                return;
+            }
+
+            // Sort alphabetically
+            const sortedDepts = Array.from(uniqueDepartments).sort();
+
+            sortedDepts.forEach(dept => {
+                const id = `dept_${dept.replace(/\s+/g, '_')}`;
+                const isChecked = selectedDepartments.has(dept) ? 'checked' : '';
+                
+                const html = `
+                    <div class="flex items-center hover:bg-slate-100 p-1 rounded transition-colors">
+                        <input type="checkbox" id="${id}" value="${dept}" ${isChecked}
+                               class="dept-checkbox w-4 h-4 text-blue-600 bg-white border-slate-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer">
+                        <label for="${id}" class="ml-2 text-sm font-medium text-slate-700 cursor-pointer flex-1 truncate" title="${dept}">
+                            ${dept}
+                        </label>
+                    </div>
+                `;
+                DOM.deptSlicerContainer.insertAdjacentHTML('beforeend', html);
+            });
+
+            // Add event listeners to new checkboxes
+            document.querySelectorAll('.dept-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        selectedDepartments.add(e.target.value);
+                    } else {
+                        selectedDepartments.delete(e.target.value);
+                    }
+                    applyFilters();
+                });
+            });
+        }
+
+        function clearDeptFilter() {
+            selectedDepartments.clear();
+            document.querySelectorAll('.dept-checkbox').forEach(cb => cb.checked = false);
+            applyFilters();
+        }
+
+        // Render Kat Slicer
+        function renderKatSlicer() {
+            DOM.katSlicerContainer.innerHTML = '';
+            
+            if (uniqueCategories.size === 0) {
+                DOM.katSlicerContainer.innerHTML = '<div class="text-sm text-slate-500 italic">Tidak ada kategori</div>';
+                return;
+            }
+
+            const sortedKats = Array.from(uniqueCategories).sort();
+
+            sortedKats.forEach(kat => {
+                const id = `kat_${kat.replace(/[^a-zA-Z0-9]/g, '_')}`;
+                const isChecked = selectedCategories.has(kat) ? 'checked' : '';
+                
+                const html = `
+                    <div class="flex items-center hover:bg-slate-100 p-1 rounded transition-colors">
+                        <input type="checkbox" id="${id}" value="${kat}" ${isChecked}
+                               class="kat-checkbox w-4 h-4 text-purple-600 bg-white border-slate-300 rounded focus:ring-purple-500 focus:ring-2 cursor-pointer">
+                        <label for="${id}" class="ml-2 text-sm font-medium text-slate-700 cursor-pointer flex-1 truncate" title="${kat}">
+                            ${kat}
+                        </label>
+                    </div>
+                `;
+                DOM.katSlicerContainer.insertAdjacentHTML('beforeend', html);
+            });
+
+            document.querySelectorAll('.kat-checkbox').forEach(cb => {
+                cb.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        selectedCategories.add(e.target.value);
+                    } else {
+                        selectedCategories.delete(e.target.value);
+                    }
+                    applyFilters();
+                });
+            });
+        }
+
+        function clearKatFilter() {
+            selectedCategories.clear();
+            document.querySelectorAll('.kat-checkbox').forEach(cb => cb.checked = false);
+            applyFilters();
+        }
+
+        // Harga (HJ1) Filter Setup
+        const handlePriceChange = () => {
+            minPriceFilter = DOM.minPriceInput.value !== '' ? parseFloat(DOM.minPriceInput.value) : null;
+            maxPriceFilter = DOM.maxPriceInput.value !== '' ? parseFloat(DOM.maxPriceInput.value) : null;
+            applyFilters();
+        };
+
+        DOM.minPriceInput.addEventListener('input', () => {
+            clearTimeout(window.priceTimeout);
+            window.priceTimeout = setTimeout(handlePriceChange, 400);
+        });
+        
+        DOM.maxPriceInput.addEventListener('input', () => {
+            clearTimeout(window.priceTimeout);
+            window.priceTimeout = setTimeout(handlePriceChange, 400);
+        });
+
+        function clearPriceFilter() {
+            DOM.minPriceInput.value = '';
+            DOM.maxPriceInput.value = '';
+            minPriceFilter = null;
+            maxPriceFilter = null;
+            applyFilters();
+        }
+
+        // Qty Stok Filter Setup
+        DOM.qtyFilterSelect.addEventListener('change', (e) => {
+            selectedQtyFilter = e.target.value;
+            applyFilters();
+        });
+
+        // Global Reset All
+        function resetAllFilters() {
+            // Text Search
+            DOM.searchInput.value = '';
+            DOM.clearSearchBtn.classList.add('hidden');
+            
+            // Dept
+            selectedDepartments.clear();
+            document.querySelectorAll('.dept-checkbox').forEach(cb => cb.checked = false);
+            
+            // Kat
+            selectedCategories.clear();
+            document.querySelectorAll('.kat-checkbox').forEach(cb => cb.checked = false);
+            
+            // Tahap
+            selectedTahap = null;
+            DOM.tahapDescInfo.innerHTML = `Pilih tahap untuk memfilter material spesifik.`;
+            renderTahapFilter();
+            
+            // Qty
+            DOM.qtyFilterSelect.value = 'all';
+            selectedQtyFilter = 'all';
+            
+            // Harga
+            DOM.minPriceInput.value = '';
+            DOM.maxPriceInput.value = '';
+            minPriceFilter = null;
+            maxPriceFilter = null;
+            
+            applyFilters();
+        }
+
+        // Tahap Proyek Filter Logic
+        function renderTahapFilter() {
+            DOM.tahapFilterContainer.innerHTML = '';
+            tahapData.forEach(t => {
+                const btn = document.createElement('button');
+                const isActive = selectedTahap === t.id;
+                
+                btn.className = `py-1.5 text-[11px] font-bold rounded border transition-all shadow-sm ${
+                    isActive 
+                    ? 'bg-blue-600 text-white border-blue-600 transform scale-105' 
+                    : 'bg-white text-slate-600 border-slate-300 hover:bg-blue-50 hover:border-blue-300'
+                }`;
+                btn.innerText = t.id;
+                btn.title = `${t.desc} \nMaterial: ${t.keywords.join(', ')}`;
+                
+                btn.onclick = () => {
+                    selectedTahap = isActive ? null : t.id; // Toggle selection
+                    
+                    if (selectedTahap) {
+                        DOM.tahapDescInfo.innerHTML = `<strong class="text-slate-700">${t.id} - ${t.desc}</strong><br/>Filter: <span class="italic">${t.keywords.join(', ')}</span>`;
+                    } else {
+                        DOM.tahapDescInfo.innerHTML = `Pilih tahap untuk memfilter material spesifik.`;
+                    }
+                    
+                    renderTahapFilter();
+                    applyFilters();
+                };
+                
+                DOM.tahapFilterContainer.appendChild(btn);
+            });
+        }
+
+        function clearTahapFilter() {
+            selectedTahap = null;
+            DOM.tahapDescInfo.innerHTML = `Pilih tahap untuk memfilter material spesifik.`;
+            renderTahapFilter();
+            applyFilters();
+        }
+
+        // Event listener for search
+        DOM.searchInput.addEventListener('input', (e) => {
+            const val = e.target.value;
+            DOM.clearSearchBtn.classList.toggle('hidden', val.length === 0);
+            // Debounce lightly
+            clearTimeout(window.searchTimeout);
+            window.searchTimeout = setTimeout(() => {
+                applyFilters();
+            }, 300);
+        });
+
+        function clearSearch() {
+            DOM.searchInput.value = '';
+            DOM.clearSearchBtn.classList.add('hidden');
+            applyFilters();
+        }
+
+        function applyFilters() {
+            currentPage = 1; // Reset to page 1 on new filter
+            const searchText = DOM.searchInput.value.toLowerCase();
+            
+            // Split search text by comma for multi-filter (OR logic)
+            // e.g., "mcb, besi" -> ["mcb", "besi"]
+            const searchTerms = searchText.split(',')
+                .map(term => term.trim())
+                .filter(term => term.length > 0);
+
+            filteredData = rawData.filter(row => {
+                // 1. Department Filter
+                if (selectedDepartments.size > 0 && !selectedDepartments.has(row.Departement?.trim())) {
+                    return false;
+                }
+                
+                // 2. Kategori (KAT) Filter
+                if (selectedCategories.size > 0 && !selectedCategories.has(row.Kat?.trim())) {
+                    return false;
+                }
+
+                // 3. Multi-text Search Filter on Description
+                if (searchTerms.length > 0) {
+                    const desc = (row.DESCRIPTION || '').toLowerCase();
+                    // Match if description includes ANY of the search terms (OR Logic)
+                    const matchFound = searchTerms.some(term => desc.includes(term));
+                    if (!matchFound) return false;
+                }
+                
+                // 4. Tahap (T1-T15) Filter
+                if (selectedTahap) {
+                    const tahap = tahapData.find(t => t.id === selectedTahap);
+                    if (tahap) {
+                        const desc = (row.DESCRIPTION || '').toUpperCase();
+                        // Match if description includes ANY of the keywords from selected Tahap
+                        const matchFound = tahap.keywords.some(kw => desc.includes(kw));
+                        if (!matchFound) return false;
+                    }
+                }
+
+                // 5. Qty Stok Filter
+                const qty = parseNumber(row['Qty Stok']);
+                if (selectedQtyFilter === '>0' && qty <= 0) return false;
+                if (selectedQtyFilter === '=0' && qty !== 0) return false;
+                if (selectedQtyFilter === '<0' && qty >= 0) return false;
+
+                // 6. Rentang Harga (HJ1) Filter
+                const hj1 = parseNumber(row['HJ1']);
+                if (minPriceFilter !== null && hj1 < minPriceFilter) return false;
+                if (maxPriceFilter !== null && hj1 > maxPriceFilter) return false;
+
+                return true;
+            });
+
+            updateScorecards();
+            renderTable();
+        }
+
+        function updateScorecards() {
+            const totalSKU = filteredData.length;
+            let totalQty = 0;
+            const uniqueKat = new Set();
+
+            filteredData.forEach(row => {
+                totalQty += parseNumber(row['Qty Stok']);
+                if (row.Kat) uniqueKat.add(row.Kat.trim());
+            });
+
+            DOM.scoreTotalSKU.innerText = formatNumber(totalSKU);
+            DOM.scoreTotalQty.innerText = formatNumber(totalQty);
+            DOM.scoreTotalKat.innerText = formatNumber(uniqueKat.size);
+        }
+
+        DOM.pageSizeSelect.addEventListener('change', (e) => {
+            rowsPerPage = parseInt(e.target.value);
+            currentPage = 1;
+            renderTable();
+        });
+
+        function renderTable() {
+            DOM.tableBody.innerHTML = '';
+            
+            if (filteredData.length === 0) {
+                DOM.emptyState.classList.remove('hidden');
+                DOM.tableBody.parentElement.classList.add('hidden');
+                updatePaginationControls();
+                return;
+            } else {
+                DOM.emptyState.classList.add('hidden');
+                DOM.tableBody.parentElement.classList.remove('hidden');
+            }
+
+            // Pagination Math
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+
+            // Render Rows
+            pageData.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-blue-50 transition-colors group';
+                // Zebra striping
+                if (index % 2 !== 0) tr.classList.add('bg-slate-50/50');
+
+                // Determine if Qty is low for styling (example logic, assuming < 5 is low)
+                const qty = parseNumber(row['Qty Stok']);
+                const qtyClass = qty <= 0 ? 'text-red-600 font-bold bg-red-50' : 
+                               (qty < 10 ? 'text-orange-600 font-bold' : 'text-slate-800 font-medium bg-blue-50/30 group-hover:bg-transparent');
+
+                tr.innerHTML = `
+                    <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap">${row.Departement || '-'}</td>
+                    <td class="px-4 py-3 text-sm font-medium text-slate-800 whitespace-nowrap">${row.SKU || '-'}</td>
+                    <td class="px-4 py-3 text-sm text-slate-700 max-w-xs truncate" title="${row.DESCRIPTION || ''}">${row.DESCRIPTION || '-'}</td>
+                    <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">${row.UOM || '-'}</td>
+                    <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap text-right">${formatNumber(row['HJ R'])}</td>
+                    <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap text-right">${formatNumber(row['HJ1'])}</td>
+                    <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap text-right">${formatNumber(row['HJ2'])}</td>
+                    <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap text-right">${formatNumber(row['HJ3'])}</td>
+                    <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">${row['Buying Price code'] || '-'}</td>
+                    <td class="px-4 py-3 text-sm text-right whitespace-nowrap ${qtyClass}">${formatNumber(qty)}</td>
+                    <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">
+                            ${row.Kat || '-'}
+                        </span>
+                    </td>
+                `;
+                DOM.tableBody.appendChild(tr);
+            });
+
+            updatePaginationControls(startIndex, endIndex, totalPages);
+        }
+
+        function updatePaginationControls(start = 0, end = 0, totalPages = 0) {
+            const total = filteredData.length;
+            
+            DOM.pageInfoStart.innerText = total === 0 ? 0 : start + 1;
+            DOM.pageInfoEnd.innerText = end;
+            DOM.pageInfoTotal.innerText = formatNumber(total);
+            
+            DOM.pageNumbers.innerText = `${currentPage} / ${totalPages || 1}`;
+            DOM.pageInfoMobile.innerText = `${currentPage} / ${totalPages || 1}`;
+
+            const disablePrev = currentPage <= 1;
+            const disableNext = currentPage >= totalPages;
+
+            DOM.btnPrev.disabled = disablePrev;
+            DOM.btnPrevMobile.disabled = disablePrev;
+            DOM.btnNext.disabled = disableNext;
+            DOM.btnNextMobile.disabled = disableNext;
+        }
+
+        function changePage(direction) {
+            currentPage += direction;
+            renderTable();
+            // Scroll to top of table
+            DOM.tableBody.parentElement.scrollTop = 0;
+        }
+
+        function exportToExcel() {
+            if (filteredData.length === 0) {
+                alert("Tidak ada data untuk diekspor!");
+                return;
+            }
+            
+            showLoading(true, 'Menyiapkan file Excel...');
+
+            // Allow UI to update before processing heavy task
+            setTimeout(() => {
+                try {
+                    // Create a new workbook
+                    const wb = XLSX.utils.book_new();
+                    // Convert JSON to worksheet
+                    const ws = XLSX.utils.json_to_sheet(filteredData);
+                    
+                    // Add worksheet to workbook
+                    XLSX.utils.book_append_sheet(wb, ws, "Data Inventory");
+                    
+                    // Generate file and trigger download
+                    const dateStr = new Date().toISOString().slice(0,10);
+                    XLSX.writeFile(wb, `Inventory_Export_${dateStr}.xlsx`);
+                } catch (error) {
+                    console.error("Export error:", error);
+                    alert("Gagal mengekspor data.");
+                } finally {
+                    showLoading(false);
+                }
+            }, 100);
+        }
+
+        function toggleSidebar() {
+            DOM.sidebar.classList.toggle('-translate-x-full');
+            DOM.mobileOverlay.classList.toggle('hidden');
+        }
+
+        function showLoading(show, text = 'Memuat...') {
+            if (show) {
+                DOM.loadingText.innerText = text;
+                DOM.loadingOverlay.classList.remove('hidden');
+            } else {
+                DOM.loadingOverlay.classList.add('hidden');
+            }
+        }
+
+        // Initialize application on load
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchData();
+        });
+
+    </script>
+</body>
+</html>
