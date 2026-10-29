@@ -17,33 +17,33 @@
     <style>
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6;
+            background-color: #f8fafc;
         }
         
         /* Custom scrollbar for horizontal scrolling table */
         .table-container::-webkit-scrollbar {
-            height: 8px;
+            height: 6px;
         }
         .table-container::-webkit-scrollbar-track {
-            background: #f1f1f1; 
+            background: #f1f5f9; 
             border-radius: 4px;
         }
         .table-container::-webkit-scrollbar-thumb {
-            background: #c1c1c1; 
+            background: #cbd5e1; 
             border-radius: 4px;
         }
         .table-container::-webkit-scrollbar-thumb:hover {
-            background: #a8a8a8; 
+            background: #94a3b8; 
         }
 
         /* Loading spinner CSS */
         .loader {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #3b82f6;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #3b82f6;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+            width: 32px;
+            height: 32px;
+            animation: spin 0.8s linear infinite;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
@@ -53,38 +53,38 @@
 </head>
 <body class="text-gray-800 antialiased min-h-screen flex flex-col">
 
-    <div class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <div class="flex-grow w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
         
-        <header class="mb-6">
-            <h1 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">Data Oustanding Indent</h1>
-            <p class="text-sm text-gray-500 mt-1">Sistem Laporan Pesanan Customer</p>
+        <header class="mb-5">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-900 tracking-tight">Data Outstanding Indent</h1>
+            <p class="text-xs text-gray-500 mt-0.5">Sistem Laporan Pesanan Customer</p>
         </header>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-3.5 mb-4">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-3">
                 
                 <!-- Search Box -->
                 <div class="relative flex-grow max-w-2xl w-full">
-                    <label for="searchInput" class="block text-sm font-semibold text-gray-700 mb-2">Pencarian Data (Cari Vendor, No. PR, atau Nama/No. Item)</label>
+                    <label for="searchInput" class="block text-xs font-semibold text-gray-700 mb-1">Pencarian Data (Vendor, No. PR, atau Nama/No. Item)</label>
                     <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
                                 <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
                             </svg>
                         </div>
                         <input 
                             type="text" 
                             id="searchInput" 
-                            class="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm placeholder-gray-400 transition-colors"
+                            class="block w-full pl-8 pr-8 py-1.5 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 text-xs placeholder-gray-400 transition-colors"
                             placeholder="Ketik kata kunci di sini..."
                         >
                         <!-- Clear Text Button -->
                         <button 
                             id="clearSearchBtn" 
-                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 hidden focus:outline-none"
+                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-gray-400 hover:text-gray-600 hidden focus:outline-none"
                             title="Bersihkan teks"
                         >
-                            <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
@@ -92,9 +92,9 @@
                 </div>
 
                 <!-- Page Size Selector -->
-                <div class="flex items-center space-x-2 pb-1">
-                    <label for="pageSize" class="text-sm text-gray-600 whitespace-nowrap">Tampilkan per hal:</label>
-                    <select id="pageSize" class="border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5">
+                <div class="flex items-center space-x-2">
+                    <label for="pageSize" class="text-xs text-gray-600 whitespace-nowrap">Tampilkan:</label>
+                    <select id="pageSize" class="border border-gray-300 text-gray-900 text-xs rounded-md focus:ring-blue-500 focus:border-blue-500 block p-1.5 bg-white">
                         <option value="5">5 Form</option>
                         <option value="10" selected>10 Form</option>
                         <option value="25">25 Form</option>
@@ -103,67 +103,68 @@
                 </div>
                 
                 <!-- Refresh Button -->
-                <div class="flex items-center pb-1">
-                    <button id="btnRefresh" class="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 rounded-lg px-3 py-2.5 transition-colors focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-auto" title="Muat ulang data dari server">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                        <span class="text-sm font-medium">Muat Ulang</span>
+                <div class="flex items-center">
+                    <button id="btnRefresh" class="flex items-center justify-center bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 rounded-md px-3 py-1.5 transition-colors focus:ring-2 focus:ring-blue-500 outline-none w-full md:w-auto" title="Muat ulang data dari server">
+                        <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        <span class="text-xs font-semibold">Muat Ulang</span>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Loading State -->
-        <div id="loadingState" class="flex flex-col items-center justify-center py-20">
-            <div class="loader mb-4"></div>
-            <p class="text-gray-500 font-medium animate-pulse">Mengambil data dari server...</p>
+        <div id="loadingState" class="flex flex-col items-center justify-center py-16">
+            <div class="loader mb-3"></div>
+            <p class="text-xs text-gray-500 font-medium animate-pulse">Mengambil data dari server...</p>
         </div>
         
         <!-- Error State -->
-        <div id="errorState" class="hidden bg-red-50 border border-red-200 text-red-600 rounded-xl p-6 text-center mb-6">
-            <svg class="w-10 h-10 mx-auto mb-2 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <p id="errorMessage" class="font-medium">Gagal memuat data.</p>
+        <div id="errorState" class="hidden bg-red-50 border border-red-200 text-red-600 rounded-lg p-4 text-center mb-4">
+            <svg class="w-8 h-8 mx-auto mb-1 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <p id="errorMessage" class="text-xs font-medium">Gagal memuat data.</p>
         </div>
 
         <!-- Table Data -->
-        <div id="tableWrapper" class="hidden bg-transparent md:bg-white border-0 md:border border-gray-200 shadow-none md:shadow-sm rounded-xl md:overflow-hidden mb-6 pb-2 md:pb-0">
+        <div id="tableWrapper" class="hidden bg-transparent md:bg-white border-0 md:border border-gray-200 shadow-sm rounded-lg md:overflow-hidden mb-4">
             <div class="table-container overflow-x-hidden md:overflow-x-auto w-full">
-                <table class="w-full text-sm text-left text-gray-600 whitespace-nowrap block md:table">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b border-gray-200 hidden md:table-header-group">
+                <table class="w-full text-xs text-left text-gray-600 block md:table">
+                    <thead class="text-[11px] text-gray-700 uppercase bg-slate-100 border-b border-gray-200 hidden md:table-header-group">
                         <tr class="md:table-row">
-                            <th scope="col" class="px-4 py-3 min-w-[120px]">Tgl PO</th>
-                            <th scope="col" class="px-4 py-3 min-w-[100px]">ETA</th>
-                            <th scope="col" class="px-4 py-3 min-w-[120px]">PR NO</th>
-                            <th scope="col" class="px-4 py-3 min-w-[120px]">ITEM NO</th>
-                            <th scope="col" class="px-4 py-3 min-w-[200px]">ITEM NAME</th>
-                            <th scope="col" class="px-4 py-3 min-w-[200px]">ITEM NAME 2</th>
-                            <th scope="col" class="px-4 py-3 min-w-[80px] text-right">QTY</th>
-                            <th scope="col" class="px-4 py-3 min-w-[80px]">UNIT</th>
+                            <th scope="col" class="px-3 py-2 w-[110px] whitespace-nowrap">TGL PO</th>
+                            <th scope="col" class="px-3 py-2 w-[90px] whitespace-nowrap">ETA</th>
+                            <th scope="col" class="px-3 py-2 w-[110px] whitespace-nowrap">PR NO</th>
+                            <th scope="col" class="px-3 py-2 w-[110px] whitespace-nowrap">ITEM NO</th>
+                            <th scope="col" class="px-3 py-2 min-w-[220px]">ITEM NAME</th>
+                            <th scope="col" class="px-3 py-2 min-w-[200px]">ITEM NAME 2</th>
+                            <th scope="col" class="px-3 py-2 w-[80px] text-right whitespace-nowrap">QTY</th>
+                            <th scope="col" class="px-3 py-2 w-[70px] whitespace-nowrap">UNIT</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody" class="block md:table-row-group">
-                        <!-- Data will be injected here via JS -->
+                        <!-- Data injected via JS -->
                     </tbody>
                 </table>
             </div>
             
             <!-- Empty State -->
-            <div id="emptyState" class="hidden text-center py-12 text-gray-500">
-                <svg class="w-12 h-12 mx-auto text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
-                <p class="text-base font-medium text-gray-900">Tidak ada data ditemukan</p>
-                <p class="text-sm">Coba sesuaikan kata kunci pencarian Anda.</p>
+            <div id="emptyState" class="hidden text-center py-10 text-gray-500">
+                <svg class="w-10 h-10 mx-auto text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                <p class="text-sm font-semibold text-gray-800">Tidak ada data ditemukan</p>
+                <p class="text-xs text-gray-500 mt-0.5">Coba sesuaikan kata kunci pencarian Anda.</p>
             </div>
         </div>
 
-        <div id="paginationWrapper" class="hidden flex flex-col md:flex-row justify-between items-center bg-white p-4 border border-gray-200 rounded-xl shadow-sm gap-4">
-            <span class="text-sm text-gray-600">
-                Menampilkan Halaman <span id="pageInfoCurrent" class="font-semibold text-gray-900">0</span> dari <span id="pageInfoTotal" class="font-semibold text-gray-900">0</span> 
-                (Total: <span id="pageInfoTotalItems" class="font-semibold text-gray-900">0</span> Form Mother)
+        <!-- Pagination Wrapper -->
+        <div id="paginationWrapper" class="hidden flex flex-col md:flex-row justify-between items-center bg-white px-4 py-2.5 border border-gray-200 rounded-lg shadow-sm gap-3">
+            <span class="text-xs text-gray-600">
+                Halaman <span id="pageInfoCurrent" class="font-bold text-gray-900">0</span> dari <span id="pageInfoTotal" class="font-bold text-gray-900">0</span> 
+                (Total: <span id="pageInfoTotalItems" class="font-bold text-gray-900">0</span> Form PO)
             </span>
             <div class="inline-flex rounded-md shadow-sm" role="group">
-                <button type="button" id="btnPrev" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-l-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button type="button" id="btnPrev" class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-l-md hover:bg-gray-50 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
                     Sebelumnya
                 </button>
-                <button type="button" id="btnNext" class="px-4 py-2 text-sm font-medium text-gray-900 bg-white border border-gray-300 rounded-r-lg hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-2 focus:ring-blue-700 focus:text-blue-700 disabled:opacity-50 disabled:cursor-not-allowed border-l-0">
+                <button type="button" id="btnNext" class="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-r-md hover:bg-gray-50 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed border-l-0 transition-colors">
                     Selanjutnya
                 </button>
             </div>
@@ -217,11 +218,10 @@
             // Fallback for DD/MM/YYYY or DD-MM-YYYY
             const parts = dateString.split(/[-/]/);
             if (parts.length === 3) {
-                // Assuming DD/MM/YYYY
                 const fallback = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`).getTime();
                 if (!isNaN(fallback)) return fallback;
             }
-            return 0; // Epoch fallback
+            return 0;
         }
 
         // Format Number (ID Locale)
@@ -233,7 +233,6 @@
         }
 
         function fetchData(forceRefresh = false) {
-            // Tampilkan state loading
             elLoadingState.classList.remove('hidden');
             elTableWrapper.classList.add('hidden');
             elPaginationWrapper.classList.add('hidden');
@@ -243,22 +242,18 @@
             const cachedData = localStorage.getItem(CACHE_KEY);
             const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
 
-            // Cek apakah menggunakan cache jika tidak dipaksa refresh
             if (!forceRefresh && cachedData && cachedTime) {
                 const timeDiff = now - parseInt(cachedTime);
                 if (timeDiff < CACHE_EXPIRY_MS) {
                     try {
                         allData = JSON.parse(cachedData);
-                        console.log("Memuat data dari Local Storage (Cache)");
                         processData();
-                        return; // Berhenti di sini, tidak perlu fetch server
+                        return;
                     } catch (e) {
                         console.warn("Gagal membaca cache, mengambil ulang dari server.", e);
                     }
                 }
             }
-
-            console.log("Mengambil data baru dari server...");
             
             Papa.parse(DATA_URL, {
                 download: true,
@@ -274,7 +269,6 @@
                     }
                     allData = results.data;
                     
-                    // Simpan data ke LocalStorage untuk cache
                     try {
                         localStorage.setItem(CACHE_KEY, JSON.stringify(allData));
                         localStorage.setItem(CACHE_TIME_KEY, now.toString());
@@ -285,9 +279,7 @@
                     processData();
                 },
                 error: function(err) {
-                    // Jika gagal fetch namun ada data cache lama (offline fallback)
                     if (cachedData) {
-                        console.warn("Koneksi gagal, memuat data cache lama.");
                         allData = JSON.parse(cachedData);
                         processData();
                     } else {
@@ -306,7 +298,6 @@
         }
 
         function processData() {
-            // 1. Filter Data (By VENDOR_NAME, PR_NO, ITEM_NO, ITEM_NAME)
             let filteredRaw = allData;
             const q = searchQuery.toLowerCase().trim();
             
@@ -321,7 +312,7 @@
                 });
             }
 
-            // 2. Group by Mother (FORM_NO)
+            // Group by Mother (FORM_NO)
             const grouped = {};
             filteredRaw.forEach(row => {
                 const formNo = row.FORM_NO || 'UNKNOWN_FORM';
@@ -335,18 +326,15 @@
                 }
                 grouped[formNo].children.push(row);
                 
-                // Track latest date within the mother to sort descending
                 const timestamp = parseCustomDate(row.FORM_DATE);
                 if (timestamp > grouped[formNo].latestDate) {
                     grouped[formNo].latestDate = timestamp;
                 }
             });
 
-            // 3. Convert Map to Array and Sort Descending by Form Date (Latest Top)
             filteredMothers = Object.values(grouped);
             filteredMothers.sort((a, b) => b.latestDate - a.latestDate);
 
-            // Reset page if needed & Render
             const maxPage = Math.ceil(filteredMothers.length / itemsPerPage) || 1;
             if (currentPage > maxPage) currentPage = maxPage;
             
@@ -358,12 +346,10 @@
             elErrorState.classList.add('hidden');
             elTableWrapper.classList.remove('hidden');
             
-            // Handle Empty State
             if (filteredMothers.length === 0) {
                 elTableBody.innerHTML = '';
                 elEmptyState.classList.remove('hidden');
                 elPaginationWrapper.classList.add('hidden');
-                // Hide table header strictly
                 elTableBody.parentElement.classList.add('hidden'); 
                 return;
             } else {
@@ -373,78 +359,85 @@
                 elTableBody.parentElement.classList.remove('hidden'); 
             }
 
-            // Calculate Pagination
             const startIndex = (currentPage - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
             const currentMothers = filteredMothers.slice(startIndex, endIndex);
             
-            // Build Table HTML
             let html = '';
             
             currentMothers.forEach((mother, mIndex) => {
                 const groupId = `group-${mIndex}`;
-                // Render Mother Row (Drill-down header)
+                
+                // Render Mother Row (Compact, Clean & Distinct)
                 html += `
-                    <tr class="bg-blue-50 hover:bg-blue-100 border-y border-blue-200 md:border-y-0 md:border-t-2 md:border-blue-200 cursor-pointer mother-row transition-colors block md:table-row mb-3 md:mb-0 rounded-xl md:rounded-none shadow-sm md:shadow-none" data-group="${groupId}" title="Klik untuk melihat/menyembunyikan detail">
-                        <td colspan="8" class="px-4 py-3 font-semibold text-blue-900 block md:table-cell md:sticky left-0">
-                            <div class="flex flex-row items-center justify-between gap-2 w-full whitespace-normal">
-                                <div class="flex flex-col md:flex-row md:items-center gap-1 md:gap-4">
-                                    <span><span class="text-blue-500/80 mr-1 text-xs uppercase tracking-wider">NO PO:</span> ${mother.formNo}</span>
+                    <tr class="bg-blue-50/70 hover:bg-blue-100/80 border-y border-blue-200/80 md:border-t-2 md:border-b-0 cursor-pointer mother-row transition-colors block md:table-row mb-2 md:mb-0 rounded-lg md:rounded-none shadow-sm md:shadow-none" data-group="${groupId}" title="Klik untuk expand/collapse">
+                        <td colspan="8" class="px-3 py-2 text-xs font-semibold text-blue-950 block md:table-cell border-l-4 border-l-blue-600">
+                            <div class="flex flex-row items-center justify-between gap-2 w-full">
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                    <span class="inline-flex items-center">
+                                        <span class="text-blue-600/70 mr-1 text-[10px] uppercase font-bold tracking-wider">NO PO:</span> 
+                                        <span class="font-bold text-blue-900">${mother.formNo}</span>
+                                    </span>
                                     <span class="hidden md:inline text-blue-300">|</span>
-                                    <span><span class="text-blue-500/80 mr-1 text-xs uppercase tracking-wider">VENDOR:</span> ${mother.vendorName}</span>
-                                    <span class="hidden md:inline text-blue-300">|</span>
-                                    <span class="text-xs w-max bg-white border border-blue-200 text-blue-700 py-0.5 px-2 rounded-full font-medium whitespace-nowrap">${mother.children.length} Item Detail</span>
+                                    <span class="inline-flex items-center">
+                                        <span class="text-blue-600/70 mr-1 text-[10px] uppercase font-bold tracking-wider">VENDOR:</span> 
+                                        <span class="text-gray-800 font-medium">${mother.vendorName}</span>
+                                    </span>
+                                    <span class="text-[10px] bg-blue-100 text-blue-800 border border-blue-300/60 px-2 py-0.5 rounded-full font-bold">
+                                        ${mother.children.length} Item
+                                    </span>
                                 </div>
-                                <div class="text-blue-500 bg-white rounded-full p-1.5 shadow-sm flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-5 h-5 transform transition-transform duration-200 chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                <div class="text-blue-600 bg-white border border-blue-200 rounded-full p-1 shadow-2xs flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4 transform transition-transform duration-200 chevron-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 </div>
                             </div>
                         </td>
                     </tr>
                 `;
                 
-                // Sort children by date descending as well inside the mother group
                 const sortedChildren = mother.children.sort((a, b) => parseCustomDate(b.FORM_DATE) - parseCustomDate(a.FORM_DATE));
 
-                // Render Child Rows (Hidden by default)
+                // Render Child Rows (Compact & Full Wrap Text for Item Name)
                 sortedChildren.forEach(child => {
                     html += `
-                        <tr class="bg-white border border-gray-200 md:border-0 md:border-b hover:bg-gray-50 transition-colors child-row hidden ${groupId} block md:table-row mb-4 md:mb-0 rounded-xl md:rounded-none mx-2 md:mx-0 shadow-sm md:shadow-none overflow-hidden">
-                            <td class="px-4 py-2.5 md:px-4 md:py-3 md:pl-8 md:border-l-4 md:border-l-blue-200 flex flex-col md:table-cell border-b border-gray-100 md:border-0 bg-gray-50 md:bg-transparent">
-                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase mb-1">FORM DATE</span>
-                                <span class="font-medium md:font-normal text-gray-900 md:text-gray-600">${child.FORM_DATE || '-'}</span>
+                        <tr class="bg-slate-50/40 border border-gray-200 md:border-0 md:border-b md:border-gray-200/70 hover:bg-blue-50/30 transition-colors child-row hidden ${groupId} block md:table-row mb-3 md:mb-0 rounded-lg md:rounded-none mx-1 md:mx-0 shadow-2xs md:shadow-none">
+                            <td class="px-3 py-1.5 md:pl-6 md:border-l-2 md:border-l-blue-400 flex flex-col md:table-cell border-b border-gray-100 md:border-0 bg-slate-100/50 md:bg-transparent text-gray-700 whitespace-nowrap">
+                                <span class="md:hidden font-bold text-[10px] text-gray-400 uppercase mb-0.5">TGL PO</span>
+                                <span>${child.FORM_DATE || '-'}</span>
                             </td>
-                            <td class="px-4 py-2.5 md:px-4 md:py-3 flex justify-between items-center md:table-cell border-b border-gray-100 md:border-0">
-                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase">ETA</span>
-                                <span class="text-right md:text-left">${child.ETA || '-'}</span>
+                            <td class="px-3 py-1.5 flex justify-between items-center md:table-cell border-b border-gray-100 md:border-0 text-gray-600 whitespace-nowrap">
+                                <span class="md:hidden font-bold text-[10px] text-gray-400 uppercase">ETA</span>
+                                <span>${child.ETA || '-'}</span>
                             </td>
-                            <td class="px-4 py-2.5 md:px-4 md:py-3 font-medium text-gray-800 flex justify-between items-center md:table-cell border-b border-gray-100 md:border-0">
-                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase">PR NO</span>
-                                <span class="text-right md:text-left">${child.PR_NO || '-'}</span>
+                            <td class="px-3 py-1.5 font-medium text-gray-800 flex justify-between items-center md:table-cell border-b border-gray-100 md:border-0 whitespace-nowrap">
+                                <span class="md:hidden font-bold text-[10px] text-gray-400 uppercase">PR NO</span>
+                                <span>${child.PR_NO || '-'}</span>
                             </td>
-                            <td class="px-4 py-2.5 md:px-4 md:py-3 flex justify-between items-center md:table-cell border-b border-gray-100 md:border-0">
-                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase">ITEM NO</span>
-                                <span class="text-right md:text-left">${child.ITEM_NO || '-'}</span>
+                            <td class="px-3 py-1.5 flex justify-between items-center md:table-cell border-b border-gray-100 md:border-0 text-gray-700 whitespace-nowrap font-mono text-[11px]">
+                                <span class="md:hidden font-bold text-[10px] text-gray-400 uppercase">ITEM NO</span>
+                                <span>${child.ITEM_NO || '-'}</span>
                             </td>
-                            <td class="px-4 py-2.5 md:px-4 md:py-3 flex flex-col md:table-cell border-b border-gray-100 md:border-0">
-                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase mb-1">ITEM NAME</span>
-                                <div class="w-full md:max-w-xs md:truncate text-gray-800 md:text-gray-600 whitespace-normal md:whitespace-nowrap" title="${child.ITEM_NAME || ''}">
+                            <!-- ITEM NAME WRAP TEXT DISPLAY -->
+                            <td class="px-3 py-1.5 flex flex-col md:table-cell border-b border-gray-100 md:border-0">
+                                <span class="md:hidden font-bold text-[10px] text-gray-400 uppercase mb-0.5">ITEM NAME</span>
+                                <div class="w-full text-gray-900 font-medium leading-tight whitespace-normal break-words max-w-xs md:max-w-md py-0.5">
                                     ${child.ITEM_NAME || '-'}
                                 </div>
                             </td>
-                            <td class="px-4 py-2.5 md:px-4 md:py-3 flex flex-col md:table-cell border-b border-gray-100 md:border-0">
-                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase mb-1">ITEM NAME 2</span>
-                                <div class="w-full md:max-w-xs md:truncate text-gray-500 md:text-gray-600 whitespace-normal md:whitespace-nowrap" title="${child.ITEM_NAME2 || ''}">
+                            <!-- ITEM NAME 2 WRAP TEXT DISPLAY -->
+                            <td class="px-3 py-1.5 flex flex-col md:table-cell border-b border-gray-100 md:border-0">
+                                <span class="md:hidden font-bold text-[10px] text-gray-400 uppercase mb-0.5">ITEM NAME 2</span>
+                                <div class="w-full text-gray-500 leading-tight whitespace-normal break-words max-w-xs py-0.5">
                                     ${child.ITEM_NAME2 || '-'}
                                 </div>
                             </td>
-                            <td class="px-4 py-2.5 md:px-4 md:py-3 flex justify-between items-center md:table-cell border-b border-gray-100 md:border-0">
-                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase">QTY</span>
-                                <span class="text-right font-medium text-gray-700">${formatNumber(child.QTY)}</span>
+                            <td class="px-3 py-1.5 flex justify-between items-center md:table-cell border-b border-gray-100 md:border-0 text-right font-semibold text-gray-800 whitespace-nowrap">
+                                <span class="md:hidden font-bold text-[10px] text-gray-400 uppercase">QTY</span>
+                                <span>${formatNumber(child.QTY)}</span>
                             </td>
-                            <td class="px-4 py-2.5 md:px-4 md:py-3 flex justify-between items-center md:table-cell">
-                                <span class="md:hidden font-bold text-xs text-gray-500 uppercase">UNIT</span>
-                                <span class="text-right md:text-left">${child.ITEM_UNIT || '-'}</span>
+                            <td class="px-3 py-1.5 flex justify-between items-center md:table-cell text-gray-600 whitespace-nowrap">
+                                <span class="md:hidden font-bold text-[10px] text-gray-400 uppercase">UNIT</span>
+                                <span>${child.ITEM_UNIT || '-'}</span>
                             </td>
                         </tr>
                     `;
@@ -453,7 +446,7 @@
 
             elTableBody.innerHTML = html;
 
-            // Add Click Events for Drill-down
+            // Drill-down Click Handler
             const motherRows = elTableBody.querySelectorAll('.mother-row');
             motherRows.forEach(row => {
                 row.addEventListener('click', function() {
@@ -463,7 +456,6 @@
                     
                     let isExpanded = false;
                     
-                    // Toggle child visibility
                     childRows.forEach(child => {
                         if (child.classList.contains('hidden')) {
                             child.classList.remove('hidden');
@@ -473,15 +465,14 @@
                         }
                     });
 
-                    // Update styling and chevron rotation based on state
                     if (isExpanded) {
                         chevron.classList.add('rotate-180');
-                        this.classList.add('bg-blue-100');
-                        this.classList.remove('bg-blue-50');
+                        this.classList.add('bg-blue-100/90');
+                        this.classList.remove('bg-blue-50/70');
                     } else {
                         chevron.classList.remove('rotate-180');
-                        this.classList.add('bg-blue-50');
-                        this.classList.remove('bg-blue-100');
+                        this.classList.add('bg-blue-50/70');
+                        this.classList.remove('bg-blue-100/90');
                     }
                 });
             });
@@ -494,29 +485,22 @@
             elPageInfoTotal.textContent = totalPages;
             elPageInfoTotalItems.textContent = totalMothers;
 
-            // Update Button States
             elBtnPrev.disabled = currentPage === 1;
             elBtnNext.disabled = currentPage === totalPages;
         }
 
-        
-        // Search Input Event
+        // Search Handlers
         elSearchInput.addEventListener('input', (e) => {
             searchQuery = e.target.value;
-            
-            // Toggle Clear Button
             if (searchQuery.length > 0) {
                 elClearSearchBtn.classList.remove('hidden');
             } else {
                 elClearSearchBtn.classList.add('hidden');
             }
-            
-            // Debounce or process directly (Direct since local data)
             currentPage = 1;
             processData();
         });
 
-        // Clear Search Event
         elClearSearchBtn.addEventListener('click', () => {
             elSearchInput.value = '';
             searchQuery = '';
@@ -526,33 +510,30 @@
             processData();
         });
 
-        // Page Size Event
+        // Page Size Handler
         elPageSize.addEventListener('change', (e) => {
             itemsPerPage = parseInt(e.target.value);
-            currentPage = 1; // Reset to page 1
+            currentPage = 1;
             processData();
         });
 
-        // Refresh Button Event
+        // Refresh Handler
         elBtnRefresh.addEventListener('click', () => {
             const icon = elBtnRefresh.querySelector('svg');
-            icon.classList.add('animate-spin'); // Tambahkan efek putar saat diklik
+            icon.classList.add('animate-spin');
             
-            // Panggil fungsi fetchData dengan parameter forceRefresh = true
             fetchData(true);
             
-            // Hapus animasi setelah 1 detik
             setTimeout(() => {
                 icon.classList.remove('animate-spin');
-            }, 1000);
+            }, 800);
         });
 
-        // Pagination Buttons Events
+        // Pagination Buttons Handlers
         elBtnPrev.addEventListener('click', () => {
             if (currentPage > 1) {
                 currentPage--;
                 renderUI();
-                // Scroll back to top of table
                 elTableWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
         });
@@ -569,7 +550,6 @@
         window.addEventListener('DOMContentLoaded', () => {
             fetchData();
         });
-
     </script>
 </body>
 </html>
