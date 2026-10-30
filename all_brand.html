@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Penjualan Multi-Brand</title>
+    
+    <!-- Dependencies -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        [v-cloak] { display: none; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans antialiased text-gray-800 h-screen overflow-hidden">
+    <div id="app" v-cloak class="h-full flex flex-col">
+        
+        <!-- Modal Autentikasi berdasarkan Brand -->
+        <div v-if="!isAuthenticated" class="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-6 sm:p-8 transform transition-all">
+                <div class="text-center mb-6">
+                    <div class="bg-indigo-100 text-indigo-600 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Autentikasi Dashboard</h2>
+                    <p class="text-sm text-gray-500 mt-1">Pilih brand dan masukkan password akses</p>
+                </div>
+                <form @submit.prevent="handleLogin" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Pilih Brand</label>
+                        <select v-model="selectedBrandName" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm bg-white" required>
+                            <option value="" disabled>-- Pilih Brand --</option>
+                            <option v-for="b in brandList" :key="b.brand" :value="b.brand">{{ b.brand }}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-600 mb-1">Password</label>
+                        <input type="password" v-model="passwordInput" placeholder="Masukkan Password..." class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-center text-lg tracking-widest" autofocus required>
+                        <p v-if="loginError" class="text-red-500 text-xs mt-2 text-center font-medium">{{ loginErrorMessage }}</p>
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-lg transition-colors shadow-md">
+                        Masuk Dashboard
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Main Dashboard Wrapper -->
+        <div v-if="isAuthenticated" class="flex flex-col md:flex-row h-full">
+            
+            <!-- Sidebar Filter (Kiri) -->
+            <aside class="bg-white shadow-lg flex-shrink-0 flex flex-col h-auto md:h-full z-10 transition-all duration-300 relative"
+                   :class="sidebarOpen ? 'w-full md:w-72' : 'w-full md:w-0 overflow-hidden opacity-0 md:opacity-100'">
+                
+                <!-- Mobile Header Filter -->
+                <div class="p-4 bg-indigo-600 text-white flex justify-between items-center md:hidden cursor-pointer" @click="mobileFilterOpen = !mobileFilterOpen">
+                    <span class="font-bold">Filter Data</span>
+                    <svg v-if="!mobileFilterOpen" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                    <svg v-else class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" /></svg>
+                </div>
+
+                <div class="p-5 overflow-y-auto flex-1 w-72" :class="{'hidden md:block': !mobileFilterOpen}">
+                    <div class="flex items-center justify-between mb-4 border-b pb-2 hidden md:flex">
+                        <h2 class="text-xl font-bold text-gray-800">Filter Dashboard</h2>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <!-- Pilihan Brand (Koneksi dari Sheet) -->
+                        <div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 space-y-2">
+                            <label class="block text-xs font-bold uppercase text-indigo-700">Pilih Brand Active</label>
+                            <select v-model="selectedBrandName" @change="changeBrand" class="w-full px-3 py-2 border border-indigo-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm font-semibold text-indigo-900">
+                                <option v-for="b in brandList" :key="b.brand" :value="b.brand">{{ b.brand }}</option>
+                            </select>
+                        </div>
+
+                        <!-- Custom Tanggal (Start & End Date) -->
+                        <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
+                            <label class="block text-xs font-bold uppercase text-gray-500">Filter Custom Tanggal</label>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Start Date</label>
+                                <input type="date" v-model="filters.startDate" class="w-full px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">End Date</label>
+                                <input type="date" v-model="filters.endDate" class="w-full px-3 py-1.5 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white">
+                            </div>
+                        </div>
+
+                        <!-- Departemen -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-1">Departemen</label>
+                            <select v-model="filters.departemen" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="">-- Semua Departemen --</option>
+                                <option v-for="opt in options.departemen" :value="opt">{{ opt }}</option>
+                            </select>
+                        </div>
+
+                        <!-- Kategori -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-1">Kategori</label>
+                            <select v-model="filters.kategori" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="">-- Semua Kategori --</option>
+                                <option v-for="opt in options.kategori" :value="opt">{{ opt }}</option>
+                            </select>
+                        </div>
+
+                        <!-- Subkategori -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-600 mb-1">Subkategori</label>
+                            <select v-model="filters.subkategori" class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="">-- Semua Subkategori --</option>
+                                <option v-for="opt in options.subkategori" :value="opt">{{ opt }}</option>
+                            </select>
+                        </div>
+
+                        <!-- Salesman Name -->
+                        <div class="relative salesman-dropdown-container">
+                            <label class="block text-sm font-semibold text-gray-600 mb-1">Salesman Name (Kolom AP)</label>
+                            <div class="relative">
+                                <input type="text" 
+                                       v-model="salesmanSearchQuery" 
+                                       @focus="showSalesmanDropdown = true" 
+                                       @input="onSalesmanInput" 
+                                       placeholder="Ketik / Pilih Salesman..." 
+                                       class="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white text-sm">
+                                <button v-if="filters.salesman" @click="clearSalesman" class="absolute inset-y-0 right-0 flex items-center pr-2 text-gray-400 hover:text-gray-600">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                            </div>
+                            
+                            <div v-show="showSalesmanDropdown && filteredSalesmanOptions.length > 0" class="absolute left-0 right-0 mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-48 overflow-y-auto z-50">
+                                <div @click="selectSalesman('')" class="px-3 py-2 text-sm text-gray-500 hover:bg-indigo-50 cursor-pointer border-b">
+                                    -- Semua Salesman --
+                                </div>
+                                <div v-for="(opt, idx) in filteredSalesmanOptions" 
+                                     :key="idx" 
+                                     @click="selectSalesman(opt)" 
+                                     class="px-3 py-2 text-sm text-gray-700 hover:bg-indigo-50 cursor-pointer truncate">
+                                    {{ opt }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button @click="resetFilters" class="w-full mt-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-md font-semibold transition-colors">
+                            Reset Semua Filter
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content Area (Kanan) -->
+            <main class="flex-1 flex flex-col h-full overflow-hidden relative">
+                
+                <!-- Loading Overlay -->
+                <div v-if="isLoading" class="absolute inset-0 bg-white/80 z-50 flex items-center justify-center">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto"></div>
+                        <p class="mt-4 font-semibold text-indigo-600">Memuat Data Brand {{ selectedBrandName }}...</p>
+                    </div>
+                </div>
+
+                <!-- Topbar -->
+                <div class="bg-white shadow-sm p-4 flex flex-col lg:flex-row justify-between items-center gap-4 z-20 relative">
+                    
+                    <div class="flex items-center gap-3 w-full lg:w-auto">
+                        <!-- Toggle Hide/Unhide Sidebar (Desktop) -->
+                        <button @click="sidebarOpen = !sidebarOpen" class="hidden md:flex items-center justify-center p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors" title="Toggle Sidebar">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            </svg>
+                        </button>
+
+                        <div class="font-bold text-lg text-indigo-900 hidden sm:block">
+                            {{ activeBrand ? activeBrand.brand : 'Dashboard' }}
+                        </div>
+
+                        <!-- Dropdown Tahun -->
+                        <div class="relative dropdown-container flex-1 lg:flex-none">
+                            <button @click="toggleDropdown('tahun')" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-2 flex items-center justify-between min-w-[140px] focus:ring-indigo-500">
+                                <span class="truncate">Tahun {{ filters.tahun.length === 0 ? '(Kosong)' : (filters.tahun.length === options.tahun.length ? '(Semua)' : `(${filters.tahun.length})`) }}</span>
+                                <svg class="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div v-show="dropdowns.tahun" class="absolute top-full mt-1 left-0 bg-white border shadow-lg rounded-lg w-full min-w-[200px] max-h-60 overflow-y-auto py-1 z-50">
+                                <div class="flex border-b px-2 py-1.5 bg-gray-50 gap-1">
+                                    <button @click="selectAll('tahun')" class="flex-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-1 px-2 rounded">Pilih Semua</button>
+                                    <button @click="clearAll('tahun')" class="flex-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-1 px-2 rounded">Hapus Semua</button>
+                                </div>
+                                <label v-for="opt in options.tahun" :key="opt" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" :value="opt" v-model="filters.tahun" class="rounded text-indigo-600 mr-3 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-700">{{ opt }}</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Dropdown Bulan -->
+                        <div class="relative dropdown-container flex-1 lg:flex-none">
+                            <button @click="toggleDropdown('bulan')" class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg px-4 py-2 flex items-center justify-between min-w-[140px] focus:ring-indigo-500">
+                                <span class="truncate">Bulan {{ filters.bulan.length === 0 ? '(Kosong)' : (filters.bulan.length === options.bulan.length ? '(Semua)' : `(${filters.bulan.length})`) }}</span>
+                                <svg class="w-4 h-4 ml-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </button>
+                            <div v-show="dropdowns.bulan" class="absolute top-full mt-1 left-0 bg-white border shadow-lg rounded-lg w-full min-w-[200px] max-h-60 overflow-y-auto py-1 z-50">
+                                <div class="flex border-b px-2 py-1.5 bg-gray-50 gap-1">
+                                    <button @click="selectAll('bulan')" class="flex-1 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold py-1 px-2 rounded">Pilih Semua</button>
+                                    <button @click="clearAll('bulan')" class="flex-1 text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-1 px-2 rounded">Hapus Semua</button>
+                                </div>
+                                <label v-for="opt in options.bulan" :key="opt" class="flex items-center px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" :value="opt" v-model="filters.bulan" class="rounded text-indigo-600 mr-3 focus:ring-indigo-500">
+                                    <span class="text-sm text-gray-700">{{ getMonthName(opt) }}</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search & Actions -->
+                    <div class="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto justify-end">
+                        <div class="relative w-full sm:w-64 lg:w-80">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <input type="text" v-model="searchQuery" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 block w-full pl-10 pr-10 p-2" placeholder="Cari Item, Salesman, dll...">
+                            <button v-if="searchQuery" @click="searchQuery = ''" class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center space-x-3 w-full sm:w-auto justify-end">
+                            <div class="hidden sm:flex bg-gray-100 p-1 rounded-lg">
+                                <button @click="viewMode = 'table'" :class="{'bg-white shadow': viewMode === 'table'}" class="px-3 py-1 rounded-md text-sm font-medium text-gray-700 transition-all">Table</button>
+                                <button @click="viewMode = 'card'" :class="{'bg-white shadow': viewMode === 'card'}" class="px-3 py-1 rounded-md text-sm font-medium text-gray-700 transition-all">Card</button>
+                            </div>
+                            
+                            <button @click="exportToExcel" class="flex items-center bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                Export Excel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scrollable Content Area -->
+                <div class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+                    
+                    <!-- Scorecards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-indigo-500">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">Total Qty</p>
+                            <h3 class="text-xl font-bold text-gray-800">{{ formatNumber(scoreCards.totalQty) }}</h3>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-purple-500">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">Item No (Unique)</p>
+                            <h3 class="text-xl font-bold text-gray-800">{{ formatNumber(scoreCards.uniqueItemCount) }}</h3>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-yellow-400">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">Rata-rata Disc Remark</p>
+                            <h3 class="text-xl font-bold text-gray-800">{{ scoreCards.count ? (scoreCards.disc / scoreCards.count).toFixed(2) : 0 }}%</h3>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-blue-500">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">Total Gross Amount</p>
+                            <h3 class="text-xl font-bold text-gray-800">{{ formatCurrency(scoreCards.gross) }}</h3>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-red-500">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">Total VAT Amount</p>
+                            <h3 class="text-xl font-bold text-gray-800">{{ formatCurrency(scoreCards.vat) }}</h3>
+                        </div>
+                        <div class="bg-white rounded-xl shadow-sm p-4 border-l-4 border-green-500">
+                            <p class="text-xs text-gray-500 font-semibold mb-1">Total Net Amount</p>
+                            <h3 class="text-xl font-bold text-gray-800">{{ formatCurrency(scoreCards.net) }}</h3>
+                        </div>
+                    </div>
+
+                    <!-- Data Container -->
+                    <div class="bg-white rounded-xl shadow-sm overflow-hidden flex flex-col mb-8">
+                        <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
+                            <h3 class="font-bold text-gray-700">Data Penjualan</h3>
+                            <span class="text-sm text-gray-500">Menampilkan {{ paginatedData.length }} dari {{ filteredData.length }} data</span>
+                        </div>
+
+                        <!-- Table View -->
+                        <div class="overflow-x-auto" v-show="viewMode === 'table' && !isMobile">
+                            <table class="w-full text-sm text-left text-gray-600">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-100 whitespace-nowrap select-none">
+                                    <tr>
+                                        <th @click="sortBy('FORM_DATE')" class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors">
+                                            Date <span class="text-indigo-600 font-bold">{{ getSortIcon('FORM_DATE') }}</span>
+                                        </th>
+                                        <th @click="sortBy('SALESMAN_NAME')" class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors">
+                                            Salesman Name <span class="text-indigo-600 font-bold">{{ getSortIcon('SALESMAN_NAME') }}</span>
+                                        </th>
+                                        <th @click="sortBy('ITEM_NO')" class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors">
+                                            Item No <span class="text-indigo-600 font-bold">{{ getSortIcon('ITEM_NO') }}</span>
+                                        </th>
+                                        <th @click="sortBy('ITEM_NAME')" class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors">
+                                            Item Name <span class="text-indigo-600 font-bold">{{ getSortIcon('ITEM_NAME') }}</span>
+                                        </th>
+                                        <th @click="sortBy('ITEM_UNIT')" class="px-4 py-3 cursor-pointer hover:bg-gray-200 transition-colors">
+                                            Unit <span class="text-indigo-600 font-bold">{{ getSortIcon('ITEM_UNIT') }}</span>
+                                        </th>
+                                        <th @click="sortBy('QTY')" class="px-4 py-3 text-right cursor-pointer hover:bg-gray-200 transition-colors">
+                                            Qty <span class="text-indigo-600 font-bold">{{ getSortIcon('QTY') }}</span>
+                                        </th>
+                                        <th @click="sortBy('UNIT_PRICE')" class="px-4 py-3 text-right cursor-pointer hover:bg-gray-200 transition-colors">
+                                            Unit Price <span class="text-indigo-600 font-bold">{{ getSortIcon('UNIT_PRICE') }}</span>
+                                        </th>
+                                        <th @click="sortBy('DISC_REMARK')" class="px-4 py-3 text-right cursor-pointer hover:bg-gray-200 transition-colors">
+                                            Disc <span class="text-indigo-600 font-bold">{{ getSortIcon('DISC_REMARK') }}</span>
+                                        </th>
+                                        <th @click="sortBy('GROSS_AMOUNT')" class="px-4 py-3 text-right cursor-pointer hover:bg-gray-200 transition-colors">
+                                            Gross <span class="text-indigo-600 font-bold">{{ getSortIcon('GROSS_AMOUNT') }}</span>
+                                        </th>
+                                        <th @click="sortBy('VAT_AMOUNT')" class="px-4 py-3 text-right cursor-pointer hover:bg-gray-200 transition-colors">
+                                            VAT <span class="text-indigo-600 font-bold">{{ getSortIcon('VAT_AMOUNT') }}</span>
+                                        </th>
+                                        <th @click="sortBy('NET_AMOUNT')" class="px-4 py-3 text-right cursor-pointer hover:bg-gray-200 transition-colors">
+                                            Net Amount <span class="text-indigo-600 font-bold">{{ getSortIcon('NET_AMOUNT') }}</span>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr v-for="(row, index) in paginatedData" :key="index" class="border-b hover:bg-gray-50">
+                                        <td class="px-4 py-3 whitespace-nowrap font-medium text-indigo-600">{{ formatDateString(row.FORM_DATE) }}</td>
+                                        <td class="px-4 py-3 whitespace-nowrap font-medium text-gray-800">{{ getSalesmanValue(row) }}</td>
+                                        <td class="px-4 py-3 font-medium text-gray-900">{{ row.ITEM_NO }}</td>
+                                        <td class="px-4 py-3 min-w-[200px]">{{ row.ITEM_NAME }}</td>
+                                        <td class="px-4 py-3">{{ row.ITEM_UNIT }}</td>
+                                        <td class="px-4 py-3 text-right">{{ formatNumber(row.QTY) }}</td>
+                                        <td class="px-4 py-3 text-right">{{ formatCurrency(row.UNIT_PRICE) }}</td>
+                                        <td class="px-4 py-3 text-right">{{ formatPercent(row.DISC_REMARK) }}</td>
+                                        <td class="px-4 py-3 text-right">{{ formatCurrency(row.GROSS_AMOUNT) }}</td>
+                                        <td class="px-4 py-3 text-right">{{ formatCurrency(row.VAT_AMOUNT) }}</td>
+                                        <td class="px-4 py-3 text-right font-semibold text-indigo-600">{{ formatCurrency(row.NET_AMOUNT) }}</td>
+                                    </tr>
+                                    <tr v-if="paginatedData.length === 0">
+                                        <td colspan="11" class="px-4 py-8 text-center text-gray-500">Tidak ada data ditemukan. (Sesuaikan filter Anda)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Card View -->
+                        <div class="p-4 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4" v-show="viewMode === 'card' || isMobile">
+                            <div v-for="(row, index) in paginatedData" :key="index" class="border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow bg-white">
+                                <div class="flex justify-between items-start mb-2 border-b pb-2">
+                                    <div>
+                                        <span class="text-xs font-bold bg-indigo-100 text-indigo-800 px-2 py-1 rounded">{{ row.ITEM_NO }}</span>
+                                        <span class="text-xs ml-2 text-gray-500 font-semibold">{{ formatDateString(row.FORM_DATE) }}</span>
+                                        <h4 class="font-bold text-gray-800 mt-2 text-sm">{{ row.ITEM_NAME }}</h4>
+                                        <p class="text-xs text-indigo-600 font-semibold mt-1">Salesman: {{ getSalesmanValue(row) }}</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <span class="text-xs text-gray-500 block">Net Amount</span>
+                                        <span class="font-bold text-green-600">{{ formatCurrency(row.NET_AMOUNT) }}</span>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-y-2 text-sm mt-3">
+                                    <div class="text-gray-500">Qty: <span class="text-gray-800 font-medium">{{ formatNumber(row.QTY) }} {{ row.ITEM_UNIT }}</span></div>
+                                    <div class="text-gray-500">Price: <span class="text-gray-800 font-medium">{{ formatCurrency(row.UNIT_PRICE) }}</span></div>
+                                    <div class="text-gray-500">Gross: <span class="text-gray-800 font-medium">{{ formatCurrency(row.GROSS_AMOUNT) }}</span></div>
+                                    <div class="text-gray-500">VAT: <span class="text-gray-800 font-medium">{{ formatCurrency(row.VAT_AMOUNT) }}</span></div>
+                                    <div class="text-gray-500 col-span-2">Disc: <span class="text-gray-800 font-medium">{{ formatPercent(row.DISC_REMARK) }}</span></div>
+                                </div>
+                            </div>
+                            <div v-if="paginatedData.length === 0" class="col-span-full py-8 text-center text-gray-500">
+                                Tidak ada data ditemukan. (Sesuaikan filter Anda)
+                            </div>
+                        </div>
+
+                        <!-- Pagination -->
+                        <div class="border-t p-4 flex flex-col sm:flex-row justify-between items-center gap-4 bg-gray-50">
+                            <div class="flex items-center space-x-2 text-sm text-gray-600">
+                                <span>Tampilkan</span>
+                                <select v-model="itemsPerPage" @change="currentPage = 1" class="border rounded p-1">
+                                    <option :value="10">10</option>
+                                    <option :value="25">25</option>
+                                    <option :value="50">50</option>
+                                    <option :value="100">100</option>
+                                </select>
+                                <span>data per halaman</span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-1">
+                                <button @click="currentPage--" :disabled="currentPage === 1" class="px-3 py-1 border rounded bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">&laquo; Prev</button>
+                                <span class="px-3 py-1 text-sm font-medium">Hal {{ currentPage }} / {{ totalPages || 1 }}</span>
+                                <button @click="currentPage++" :disabled="currentPage >= totalPages" class="px-3 py-1 border rounded bg-white text-gray-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">Next &raquo;</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        // GANTI URL INI DENGAN URL WEB APP DEPLOYMENT GOOGLE APPS SCRIPT ANDA
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwRySD782O6_g2gGzF3BNtioFF_IPo8hQn8-OKAJ407Qn9iuULCMmWuBYB1xv1be_8_qQ/exec';
+
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    isAuthenticated: false,
+                    passwordInput: '',
+                    loginError: false,
+                    loginErrorMessage: 'Password salah, silakan coba lagi.',
+
+                    brandList: [],
+                    selectedBrandName: '',
+                    activeBrand: null,
+
+                    sidebarOpen: true,
+                    mobileFilterOpen: false,
+
+                    rawData: [],
+                    isLoading: false,
+                    isMobile: window.innerWidth < 768,
+                    viewMode: 'table',
+                    searchQuery: '',
+                    
+                    sortKey: '',
+                    sortOrder: 'asc',
+                    
+                    dropdowns: {
+                        tahun: false,
+                        bulan: false
+                    },
+                    
+                    salesmanSearchQuery: '',
+                    showSalesmanDropdown: false,
+                    salesmanColumnKey: '', 
+                    
+                    filters: {
+                        tahun: [],
+                        bulan: [],
+                        startDate: '',
+                        endDate: '',
+                        departemen: '',
+                        kategori: '',
+                        subkategori: '',
+                        salesman: ''
+                    },
+                    
+                    options: {
+                        tahun: [],
+                        bulan: [],
+                        departemen: [],
+                        kategori: [],
+                        subkategori: [],
+                        salesman: []
+                    },
+
+                    currentPage: 1,
+                    itemsPerPage: 10
+                }
+            },
+            computed: {
+                filteredSalesmanOptions() {
+                    if (!this.salesmanSearchQuery) return this.options.salesman;
+                    const q = this.salesmanSearchQuery.toLowerCase();
+                    return this.options.salesman.filter(item => String(item).toLowerCase().includes(q));
+                },
+                filteredData() {
+                    if (this.filters.tahun.length === 0 || this.filters.bulan.length === 0) return [];
+                    
+                    let result = this.rawData.filter(row => {
+                        const rowTahun = this.getCol(row, ['TAHUN']);
+                        const rowBulan = this.getCol(row, ['BULAN']);
+                        return this.filters.tahun.includes(rowTahun) && this.filters.bulan.includes(rowBulan);
+                    });
+
+                    if (this.filters.startDate || this.filters.endDate) {
+                        const start = this.filters.startDate ? new Date(this.filters.startDate) : null;
+                        const end = this.filters.endDate ? new Date(this.filters.endDate) : null;
+                        if (end) end.setHours(23, 59, 59, 999);
+
+                        result = result.filter(row => {
+                            const rowDate = this.parseDate(row.FORM_DATE);
+                            if (!rowDate) return false;
+                            if (start && rowDate < start) return false;
+                            if (end && rowDate > end) return false;
+                            return true;
+                        });
+                    }
+
+                    if (this.filters.departemen) result = result.filter(row => this.getCol(row, ['DEPARTEMEN']) === this.filters.departemen);
+                    if (this.filters.kategori) result = result.filter(row => this.getCol(row, ['KATEGORI', 'KATEGOR']) === this.filters.kategori);
+                    if (this.filters.subkategori) result = result.filter(row => this.getCol(row, ['SUBKATEGORI']) === this.filters.subkategori);
+                    
+                    if (this.filters.salesman) {
+                        result = result.filter(row => {
+                            const val = this.getSalesmanValue(row);
+                            return val === this.filters.salesman;
+                        });
+                    }
+
+                    if (this.searchQuery) {
+                        const q = this.searchQuery.toLowerCase();
+                        result = result.filter(row => {
+                            return (
+                                (row.ITEM_NO && String(row.ITEM_NO).toLowerCase().includes(q)) ||
+                                (row.ITEM_NAME && String(row.ITEM_NAME).toLowerCase().includes(q)) ||
+                                (this.getSalesmanValue(row) && String(this.getSalesmanValue(row)).toLowerCase().includes(q))
+                            );
+                        });
+                    }
+
+                    if (this.sortKey) {
+                        result.sort((a, b) => {
+                            let valA = this.getSortValue(a, this.sortKey);
+                            let valB = this.getSortValue(b, this.sortKey);
+
+                            if (valA < valB) return this.sortOrder === 'asc' ? -1 : 1;
+                            if (valA > valB) return this.sortOrder === 'asc' ? 1 : -1;
+                            return 0;
+                        });
+                    }
+
+                    return result;
+                },
+                paginatedData() {
+                    const start = (this.currentPage - 1) * this.itemsPerPage;
+                    const end = start + this.itemsPerPage;
+                    return this.filteredData.slice(start, end);
+                },
+                totalPages() {
+                    return Math.ceil(this.filteredData.length / this.itemsPerPage);
+                },
+                scoreCards() {
+                    const uniqueItems = new Set();
+                    const acc = this.filteredData.reduce((acc, row) => {
+                        acc.disc += this.parseNum(row.DISC_REMARK);
+                        acc.gross += this.parseNum(row.GROSS_AMOUNT);
+                        acc.vat += this.parseNum(row.VAT_AMOUNT);
+                        acc.net += this.parseNum(row.NET_AMOUNT);
+                        acc.totalQty += this.parseNum(row.QTY);
+                        acc.count += 1;
+                        if (row.ITEM_NO) uniqueItems.add(String(row.ITEM_NO).trim());
+                        return acc;
+                    }, { disc: 0, gross: 0, vat: 0, net: 0, totalQty: 0, count: 0 });
+
+                    acc.uniqueItemCount = uniqueItems.size;
+                    return acc;
+                }
+            },
+            watch: {
+                filteredData: {
+                    handler() {
+                        this.currentPage = 1;
+                    },
+                    deep: true
+                }
+            },
+            mounted() {
+                window.addEventListener('resize', () => {
+                    this.isMobile = window.innerWidth < 768;
+                });
+                
+                document.addEventListener('click', this.closeDropdowns);
+                this.fetchBrandConfig();
+            },
+            beforeUnmount() {
+                document.removeEventListener('click', this.closeDropdowns);
+            },
+            methods: {
+                async fetchBrandConfig() {
+                    try {
+                        const response = await fetch(APPS_SCRIPT_URL);
+                        const result = await response.json();
+                        
+                        if (result.status === 'success' && result.brands.length > 0) {
+                            this.brandList = result.brands;
+                            this.selectedBrandName = this.brandList[0].brand;
+                        } else {
+                            alert("Gagal memuat konfigurasi brand dari Apps Script.");
+                        }
+                    } catch (e) {
+                        console.error("Error loading brand config:", e);
+                        alert("Terjadi kesalahan saat menghubungkan ke Apps Script API.");
+                    }
+                },
+                handleLogin() {
+                    const target = this.brandList.find(b => b.brand === this.selectedBrandName);
+                    if (!target) {
+                        this.loginError = true;
+                        this.loginErrorMessage = 'Silakan pilih brand terlebih dahulu.';
+                        return;
+                    }
+
+                    if (this.passwordInput === target.password) {
+                        this.activeBrand = target;
+                        this.isAuthenticated = true;
+                        this.loginError = false;
+                        this.fetchDataForBrand(target);
+                    } else {
+                        this.loginError = true;
+                        this.loginErrorMessage = 'Password salah untuk brand ' + target.brand;
+                        this.passwordInput = '';
+                    }
+                },
+                changeBrand() {
+                    const target = this.brandList.find(b => b.brand === this.selectedBrandName);
+                    if (target) {
+                        this.activeBrand = target;
+                        this.resetFilters();
+                        this.fetchDataForBrand(target);
+                    }
+                },
+                fetchDataForBrand(brandObj) {
+                    if (!brandObj || !brandObj.linkurl) return;
+                    
+                    this.isLoading = true;
+                    this.rawData = [];
+
+                    Papa.parse(brandObj.linkurl, {
+                        download: true,
+                        header: true,
+                        dynamicTyping: true,
+                        skipEmptyLines: true,
+                        complete: (results) => {
+                            this.rawData = results.data;
+                            this.extractOptions();
+                            this.isLoading = false;
+                        },
+                        error: (error) => {
+                            console.error("Error fetching CSV:", error);
+                            alert(`Gagal mengambil data CSV untuk brand ${brandObj.brand}.`);
+                            this.isLoading = false;
+                        }
+                    });
+                },
+                extractOptions() {
+                    if (this.rawData.length === 0) return;
+
+                    const keys = Object.keys(this.rawData[0]);
+                    if (keys.length > 41) {
+                        this.salesmanColumnKey = keys[41]; 
+                    } else {
+                        this.salesmanColumnKey = keys.find(k => k.toUpperCase().includes('SALESMAN')) || 'SALESMAN_NAME';
+                    }
+
+                    const tahuns = new Set();
+                    const bulans = new Set();
+                    const depts = new Set();
+                    const kats = new Set();
+                    const subkats = new Set();
+                    const sales = new Set();
+
+                    this.rawData.forEach(row => {
+                        const tahun = this.getCol(row, ['TAHUN']);
+                        const bulan = this.getCol(row, ['BULAN']);
+                        const dept = this.getCol(row, ['DEPARTEMEN']);
+                        const kat = this.getCol(row, ['KATEGORI', 'KATEGOR']);
+                        const subkat = this.getCol(row, ['SUBKATEGORI']);
+                        const salesm = row[this.salesmanColumnKey] ? String(row[this.salesmanColumnKey]).trim() : '';
+
+                        if (tahun) tahuns.add(tahun);
+                        if (bulan) bulans.add(bulan);
+                        if (dept) depts.add(dept);
+                        if (kat) kats.add(kat);
+                        if (subkat) subkats.add(subkat);
+                        if (salesm) sales.add(salesm);
+                    });
+
+                    this.options.tahun = Array.from(tahuns).sort((a,b) => b - a);
+                    
+                    const monthOrder = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "01", "02", "03", "04", "05", "06", "07", "08", "09"];
+                    this.options.bulan = Array.from(bulans).sort((a, b) => {
+                        let idxA = monthOrder.indexOf(String(a));
+                        let idxB = monthOrder.indexOf(String(b));
+                        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+                        return parseInt(a) - parseInt(b);
+                    });
+                    
+                    this.filters.tahun = [...this.options.tahun];
+                    this.filters.bulan = [...this.options.bulan];
+
+                    this.options.departemen = Array.from(depts).sort();
+                    this.options.kategori = Array.from(kats).sort();
+                    this.options.subkategori = Array.from(subkats).sort();
+                    this.options.salesman = Array.from(sales).sort();
+                },
+                getSalesmanValue(row) {
+                    if (this.salesmanColumnKey && row[this.salesmanColumnKey] !== undefined) {
+                        return String(row[this.salesmanColumnKey]).trim();
+                    }
+                    return this.getCol(row, ['SALESMAN_NAME']);
+                },
+                onSalesmanInput() {
+                    this.showSalesmanDropdown = true;
+                    if (!this.salesmanSearchQuery) {
+                        this.filters.salesman = '';
+                    }
+                },
+                selectSalesman(val) {
+                    this.filters.salesman = val;
+                    this.salesmanSearchQuery = val;
+                    this.showSalesmanDropdown = false;
+                },
+                clearSalesman() {
+                    this.filters.salesman = '';
+                    this.salesmanSearchQuery = '';
+                    this.showSalesmanDropdown = false;
+                },
+                sortBy(key) {
+                    if (this.sortKey === key) {
+                        this.sortOrder = this.sortOrder === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        this.sortKey = key;
+                        this.sortOrder = 'asc';
+                    }
+                },
+                getSortIcon(key) {
+                    if (this.sortKey !== key) return '↕';
+                    return this.sortOrder === 'asc' ? '▲' : '▼';
+                },
+                getSortValue(row, key) {
+                    if (key === 'SALESMAN_NAME') {
+                        return this.getSalesmanValue(row).toLowerCase();
+                    }
+                    let val = row[key];
+                    if (key === 'FORM_DATE') {
+                        const d = this.parseDate(val);
+                        return d ? d.getTime() : 0;
+                    }
+                    if (['QTY', 'UNIT_PRICE', 'DISC_REMARK', 'GROSS_AMOUNT', 'VAT_AMOUNT', 'NET_AMOUNT'].includes(key)) {
+                        return this.parseNum(val);
+                    }
+                    return val ? String(val).toLowerCase() : '';
+                },
+                getMonthName(monthNum) {
+                    const monthNames = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                    const idx = parseInt(monthNum);
+                    return !isNaN(idx) && monthNames[idx] ? `${monthNum} - ${monthNames[idx]}` : monthNum;
+                },
+                selectAll(type) {
+                    this.filters[type] = [...this.options[type]];
+                },
+                clearAll(type) {
+                    this.filters[type] = [];
+                },
+                getCol(row, possibleKeys) {
+                    for (let key of possibleKeys) {
+                        if (row[key] !== undefined && row[key] !== null) return String(row[key]).trim();
+                    }
+                    return '';
+                },
+                parseDate(dateString) {
+                    if (!dateString) return null;
+                    if (dateString instanceof Date) return dateString;
+                    if (typeof dateString === 'number') {
+                        return new Date(Math.round((dateString - 25569) * 86400 * 1000));
+                    }
+                    const s = String(dateString).trim();
+                    const parts = s.split(/[\/\-\s]/);
+                    if (parts.length >= 3) {
+                        if (parts[2].length === 4) {
+                            return new Date(`${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}`);
+                        }
+                        if (parts[0].length === 4) {
+                            return new Date(`${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`);
+                        }
+                    }
+                    const d = new Date(s);
+                    return isNaN(d.getTime()) ? null : d;
+                },
+                formatDateString(dateString) {
+                    const d = this.parseDate(dateString);
+                    if (!d) return '-';
+                    const day = String(d.getDate()).padStart(2, '0');
+                    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sept", "Okt", "Nov", "Des"];
+                    const month = monthNames[d.getMonth()];
+                    const year = d.getFullYear();
+                    return `${day} ${month} ${year}`;
+                },
+                parseNum(val) {
+                    if (typeof val === 'number') return val;
+                    if (!val) return 0;
+                    return parseFloat(val.toString().replace(/,/g, '')) || 0;
+                },
+                formatCurrency(value) {
+                    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(this.parseNum(value));
+                },
+                formatNumber(value) {
+                    return new Intl.NumberFormat('id-ID').format(this.parseNum(value));
+                },
+                formatPercent(value) {
+                    return this.parseNum(value) + '%';
+                },
+                closeDropdowns(e) {
+                    if (!e.target.closest('.dropdown-container')) {
+                        this.dropdowns.tahun = false;
+                        this.dropdowns.bulan = false;
+                    }
+                    if (!e.target.closest('.salesman-dropdown-container')) {
+                        this.showSalesmanDropdown = false;
+                    }
+                },
+                toggleDropdown(type) {
+                    if (type === 'tahun') {
+                        this.dropdowns.tahun = !this.dropdowns.tahun;
+                        this.dropdowns.bulan = false;
+                    } else {
+                        this.dropdowns.bulan = !this.dropdowns.bulan;
+                        this.dropdowns.tahun = false;
+                    }
+                },
+                resetFilters() {
+                    this.filters = {
+                        tahun: [...this.options.tahun],
+                        bulan: [...this.options.bulan],
+                        startDate: '',
+                        endDate: '',
+                        departemen: '',
+                        kategori: '',
+                        subkategori: '',
+                        salesman: ''
+                    };
+                    this.salesmanSearchQuery = '';
+                    this.searchQuery = '';
+                    this.sortKey = '';
+                    this.sortOrder = 'asc';
+                },
+                exportToExcel() {
+                    if (this.filteredData.length === 0) {
+                        alert("Tidak ada data untuk diexport.");
+                        return;
+                    }
+                    
+                    const excelData = this.filteredData.map(row => {
+                        return {
+                            'FORM_DATE': row.FORM_DATE,
+                            'DEPARTEMEN': this.getCol(row, ['DEPARTEMEN']),
+                            'KATEGORI': this.getCol(row, ['KATEGORI', 'KATEGOR']),
+                            'SUBKATEGORI': this.getCol(row, ['SUBKATEGORI']),
+                            'SALESMAN_NAME': this.getSalesmanValue(row),
+                            'ITEM_NO': row.ITEM_NO,
+                            'ITEM_NAME': row.ITEM_NAME,
+                            'ITEM_UNIT': row.ITEM_UNIT,
+                            'QTY': this.parseNum(row.QTY),
+                            'UNIT_PRICE': this.parseNum(row.UNIT_PRICE),
+                            'DISC_REMARK': this.parseNum(row.DISC_REMARK),
+                            'GROSS_AMOUNT': this.parseNum(row.GROSS_AMOUNT),
+                            'VAT_AMOUNT': this.parseNum(row.VAT_AMOUNT),
+                            'NET_AMOUNT': this.parseNum(row.NET_AMOUNT)
+                        }
+                    });
+
+                    const ws = XLSX.utils.json_to_sheet(excelData);
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Data Penjualan");
+                    
+                    const filename = `Report_Penjualan_${this.selectedBrandName}.xlsx`;
+                    XLSX.writeFile(wb, filename);
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
