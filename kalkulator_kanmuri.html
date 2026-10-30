@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kalkulator & Estimasi Penawaran Kanmuri KFF Onyx Black</title>
+  <title>Kalkulator Atap & Estimasi Penawaran Kanmuri KFF</title>
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome -->
@@ -27,9 +27,9 @@
       <div>
         <h1 class="text-2xl font-bold flex items-center gap-2">
           <i class="fa-solid fa-calculator text-amber-500"></i>
-          Kalkulator & Estimasi Penawaran Kanmuri KFF
+          Kalkulator & Estimasi Penawaran Kanmuri
         </h1>
-        <p class="text-slate-400 text-sm mt-1">Kanmuri Full Flat (KFF) Onyx Black - Estimasi & Penawaran Harga Flexible</p>
+        <p class="text-slate-400 text-sm mt-1">Simulasi Kebutuhan Genteng Kanmuri App & Penawaran Harga Proyek</p>
       </div>
       <div class="flex gap-2">
         <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition shadow">
@@ -44,7 +44,122 @@
 
   <main class="max-w-6xl mx-auto px-4 mt-6 space-y-8">
 
-    <!-- Section 1: Form Input Ukuran Atap -->
+    <!-- MODUL BARU: Kalkulator Kebutuhan Genteng (Adaptasi Aplikasi Kanmuri Roof Play Store) -->
+    <section class="bg-white rounded-xl p-6 shadow-md border border-amber-200 no-print relative overflow-hidden">
+      <div class="absolute top-0 right-0 bg-amber-500 text-slate-900 text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">
+        <i class="fa-mobile-screen-button mr-1"></i> Kanmuri PlayStore App Engine
+      </div>
+      
+      <h2 class="text-lg font-bold text-slate-900 mb-4 border-b pb-2 flex items-center gap-2">
+        <i class="fa-solid fa-house-chimney-crack text-amber-600"></i>
+        Modul Kalkulator Kebutuhan Genteng (Sesuai Aplikasi Kanmuri)
+      </h2>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Input Parameter Bangunan -->
+        <div class="lg:col-span-5 space-y-4 bg-slate-50 p-4 rounded-lg border border-slate-200">
+          <h3 class="font-bold text-slate-700 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-amber-600"></i> Parameter Atap & Bangunan
+          </h3>
+          
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Pilih Tipe Genteng Kanmuri</label>
+            <select id="appTipeGenteng" onchange="hitungAppKanmuri()" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-amber-500 outline-none bg-white">
+              <option value="KFF" selected>Full Flat (KFF) - 11.5 pcs/m² | Nok 3.3 pcs/m'</option>
+              <option value="KM">Milenio (KM) - 13.5 pcs/m² | Nok 3.9 pcs/m'</option>
+              <option value="KE">Espanica (KE) - 14.2 pcs/m² | Nok 3.9 pcs/m'</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 uppercase mb-1">Model Atap Bangunan</label>
+            <select id="appModelAtap" onchange="hitungAppKanmuri()" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-amber-500 outline-none bg-white">
+              <option value="perisai" selected>Atap Perisai / Limasan (4 Bidang)</option>
+              <option value="pelana">Atap Pelana / Gabel (2 Bidang)</option>
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Panjang Bangunan (m)</label>
+              <input type="number" id="appPanjang" value="12" step="0.1" oninput="hitungAppKanmuri()" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Lebar Bangunan (m)</label>
+              <input type="number" id="appLebar" value="8" step="0.1" oninput="hitungAppKanmuri()" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Sudut Kemiringan (°)</label>
+              <input type="number" id="appSudut" value="30" step="1" oninput="hitungAppKanmuri()" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">Overtek / Tiris (m)</label>
+              <input type="number" id="appOvertek" value="0.8" step="0.1" oninput="hitungAppKanmuri()" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-amber-500 outline-none">
+            </div>
+          </div>
+
+          <div class="pt-2">
+            <button onclick="terapkanKePenawaran()" class="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-4 rounded-lg text-xs flex items-center justify-center gap-2 shadow transition">
+              <i class="fa-solid fa-right-to-bracket"></i> Terapkan Hasil ke Penawaran
+            </button>
+          </div>
+        </div>
+
+        <!-- Output Kalkulasi App -->
+        <div class="lg:col-span-7 bg-slate-900 text-white p-5 rounded-lg flex flex-col justify-between space-y-4 shadow-inner">
+          <div>
+            <h3 class="text-amber-400 font-bold text-sm mb-3 border-b border-slate-700 pb-2 flex items-center justify-between">
+              <span><i class="fa-solid fa-square-poll-vertical mr-1"></i> Hasil Estimasi Simulasi Aplikasi Kanmuri</span>
+              <span id="badgeTipeGenteng" class="bg-amber-500/20 text-amber-300 text-[10px] px-2 py-0.5 rounded border border-amber-500/30">FULL FLAT</span>
+            </h3>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs mb-4">
+              <div class="bg-slate-800 p-2.5 rounded border border-slate-700">
+                <span class="text-slate-400 block text-[10px]">Luas Bidang Atap</span>
+                <span class="text-base font-bold text-white" id="appOutLuas">0 m²</span>
+              </div>
+              <div class="bg-slate-800 p-2.5 rounded border border-slate-700">
+                <span class="text-slate-400 block text-[10px]">Panjang Nok</span>
+                <span class="text-base font-bold text-white" id="appOutNok">0 m'</span>
+              </div>
+              <div class="bg-slate-800 p-2.5 rounded border border-slate-700">
+                <span class="text-slate-400 block text-[10px]">Panjang Jurai</span>
+                <span class="text-base font-bold text-white" id="appOutJurai">0 m'</span>
+              </div>
+            </div>
+
+            <div class="space-y-2 text-xs">
+              <div class="flex justify-between items-center bg-slate-800/60 p-2 rounded px-3">
+                <span class="text-slate-300">Genteng Utama + Waste 10%:</span>
+                <span class="font-bold text-amber-400 text-sm" id="appOutGentengPcs">0 pcs (<span id="appOutGentengBdl">0</span> BDL)</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-800/60 p-2 rounded px-3">
+                <span class="text-slate-300">Kebutuhan Genteng Nok / Kerpus:</span>
+                <span class="font-bold text-amber-400 text-sm" id="appOutNokPcs">0 pcs</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-800/60 p-2 rounded px-3">
+                <span class="text-slate-300">Estimasi Kebutuhan Reng:</span>
+                <span class="font-bold text-slate-200" id="appOutReng">0 m'</span>
+              </div>
+              <div class="flex justify-between items-center bg-slate-800/60 p-2 rounded px-3">
+                <span class="text-slate-300">Estimasi Sekrup Genteng:</span>
+                <span class="font-bold text-slate-200" id="appOutSekrup">0 pcs</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-[10px] text-slate-400 border-t border-slate-800 pt-2 flex items-center gap-1">
+            <i class="fa-solid fa-circle-info text-amber-400"></i>
+            <span>Simulasi ini mengacu pada formula resmi daya tutup genteng Kanmuri Loco Pabrik.</span>[cite: 1, 2]
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 1: Form Input Ukuran Atap Manual -->
     <section class="bg-white rounded-xl p-6 shadow-md border border-slate-200 no-print">
       <h2 class="text-lg font-bold text-slate-900 mb-4 border-b pb-2 flex items-center gap-2">
         <i class="fa-solid fa-ruler-combined text-amber-600"></i>
@@ -332,7 +447,13 @@
 
   <!-- Script Logika Perhitungan & Interaktivitas -->
   <script>
-    // Database Harga & Spesifikasi Kanmuri KFF Onyx Black (Pricelist)
+    // Database Spesifikasi Daya Tutup & Harga Kanmuri
+    const SPEK_KANMURI = {
+      KFF: { namaTipe: "Full Flat (KFF)", gentengPerM2: 11.5, nokPerM: 3.3, bdlFactor: 2.3 },
+      KM:  { namaTipe: "Milenio (KM)", gentengPerM2: 13.5, nokPerM: 3.9, bdlFactor: 2.0 },
+      KE:  { namaTipe: "Espanica (KE)", gentengPerM2: 14.2, nokPerM: 3.9, bdlFactor: 2.0 }
+    };
+
     const DB_KFF = {
       KFF1: { nama: "Genteng Utama KFF1 Onyx Black", harga: 23500, satuan: "pcs" },
       KFF2: { nama: "Nok / Bumbungan KFF2 Onyx Black", harga: 49000, satuan: "pcs" },
@@ -342,11 +463,79 @@
       KFF12: { nama: "Genteng Talang KFF12 Onyx Black", harga: 92500, satuan: "pcs" }
     };
 
-    // Data Penawaran Flexible Default dengan Diskon 10%
     let itemsPenawaran = [];
 
+    // --- LOGIKA MODUL KALKULATOR APLIKASI KANMURI ---
+    function hitungAppKanmuri() {
+      const tipe = document.getElementById('appTipeGenteng').value;
+      const model = document.getElementById('appModelAtap').value;
+      const p = parseFloat(document.getElementById('appPanjang').value) || 0;
+      const l = parseFloat(document.getElementById('appLebar').value) || 0;
+      const sudutDeg = parseFloat(document.getElementById('appSudut').value) || 0;
+      const overtek = parseFloat(document.getElementById('appOvertek').value) || 0;
+
+      const spek = SPEK_KANMURI[tipe];
+      document.getElementById('badgeTipeGenteng').innerText = spek.namaTipe.toUpperCase();
+
+      // Hitung dimensi efektif termasuk overtek
+      const pEfektif = p + (2 * overtek);
+      const lEfektif = l + (2 * overtek);
+      const sudutRad = (sudutDeg * Math.PI) / 180;
+      const cosSudut = Math.cos(sudutRad);
+
+      // Luas bidang atap
+      const luasAtap = (pEfektif * lEfektif) / cosSudut;
+      
+      // Hitung panjang nok & jurai berdasarkan model
+      let panjNok = 0;
+      let panjJurai = 0;
+
+      if (model === 'perisai') {
+        panjNok = Math.max(0, pEfektif - lEfektif);
+        const tinggiAtap = (lEfektif / 2) * Math.tan(sudutRad);
+        const st = lEfektif / 2;
+        panjJurai = 4 * Math.sqrt((st * st) + (st * st) + (tinggiAtap * tinggiAtap));
+      } else {
+        // Pelana
+        panjNok = pEfektif;
+        panjJurai = 0;
+      }
+
+      // Kebutuhan genteng & aksesoris
+      const gentengPcsNoWaste = luasAtap * spek.gentengPerM2;
+      const gentengPcsWithWaste = Math.ceil(gentengPcsNoWaste * 1.10); // Waste 10%
+      const gentengBdl = (gentengPcsWithWaste / (spek.gentengPerM2 * spek.bdlFactor)).toFixed(1);
+      
+      const nokPcs = Math.ceil((panjNok + panjJurai) * spek.nokPerM);
+      const rengMeter = Math.ceil(luasAtap * 3.6); // Kebutuhan reng rata-rata
+      const sekrupPcs = Math.ceil(gentengPcsWithWaste * 1.2);
+
+      // Render Hasil ke UI Modul App
+      document.getElementById('appOutLuas').innerText = `${luasAtap.toFixed(2)} m²`;
+      document.getElementById('appOutNok').innerText = `${panjNok.toFixed(2)} m'`;
+      document.getElementById('appOutJurai').innerText = `${panjJurai.toFixed(2)} m'`;
+      
+      document.getElementById('appOutGentengPcs').innerHTML = `${gentengPcsWithWaste.toLocaleString('id-ID')} pcs (<span id="appOutGentengBdl">${gentengBdl}</span> BDL)`;
+      document.getElementById('appOutNokPcs').innerText = `${nokPcs.toLocaleString('id-ID')} pcs`;
+      document.getElementById('appOutReng').innerText = `${rengMeter.toLocaleString('id-ID')} m'`;
+      document.getElementById('appOutSekrup').innerText = `${sekrupPcs.toLocaleString('id-ID')} pcs`;
+
+      return { luasAtap, panjNok, panjJurai, gentengPcsWithWaste, nokPcs };
+    }
+
+    function terapkanKePenawaran() {
+      const res = hitungAppKanmuri();
+      document.getElementById('inpLuasAtap').value = res.luasAtap.toFixed(2);
+      document.getElementById('inpNok').value = res.panjNok.toFixed(2);
+      document.getElementById('inpJuraiLuar').value = res.panjJurai.toFixed(2);
+      hitungSemua();
+      
+      // Scroll smooth ke tabel penawaran
+      document.getElementById('tblPenawaran').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // --- LOGIKA KALKULATOR UTAMA & TABEL PENAWARAN ---
     function hitungSemua() {
-      // 1. Ambil input
       const luasAtap = parseFloat(document.getElementById('inpLuasAtap').value) || 0;
       const mNok = parseFloat(document.getElementById('inpNok').value) || 0;
       const mJuraiLuar = parseFloat(document.getElementById('inpJuraiLuar').value) || 0;
@@ -354,7 +543,6 @@
       const mStarter = parseFloat(document.getElementById('inpStarter').value) || 0;
       const wastePct = parseFloat(document.getElementById('inpWastePct').value) || 0;
 
-      // 2. Hitung Luas Padanan M²
       const m2Nok = (mNok / 3).toFixed(2);
       const m2JuraiLuar = (mJuraiLuar / 3).toFixed(2);
       const m2JuraiDalam = mJuraiDalam.toFixed(2);
@@ -365,7 +553,6 @@
       const pembulatanM2 = (Math.ceil(totalM2 / 2.3) * 2.3).toFixed(2);
       const totalBDL = (pembulatanM2 / 2.3).toFixed(2);
 
-      // 3. Hitung Jumlah Pcs Barang
       const pcsLuasAtap = Math.ceil(luasAtap * 11.5);
       const pcsNok = Math.ceil(mNok * 3.3);
       const pcsJuraiLuar = Math.ceil(mJuraiLuar * 3.3);
@@ -374,7 +561,6 @@
       const pcsWaste = Math.ceil(parseFloat(m2Waste) * 11.5);
       const totalPcsGentengUtama = Math.ceil(pembulatanM2 * 11.5);
 
-      // 4. Update Tampilan Ringkasan Tabel
       document.getElementById('outM2_1').innerText = `${luasAtap.toFixed(2)} M²`;
       document.getElementById('outPcs_1').innerText = `${pcsLuasAtap.toLocaleString('id-ID')} pcs`;
 
@@ -401,7 +587,6 @@
       document.getElementById('outM2_Pembulatan').innerText = `${pembulatanM2} M² (${totalBDL} BDL)`;
       document.getElementById('outPcs_TotalGenteng').innerText = `${totalPcsGentengUtama.toLocaleString('id-ID')} pcs`;
 
-      // 5. Sinkronkan Otomatis ke Tabel Penawaran Harga jika dipicu dari parameter utama
       sinkronkanKeTabelPenawaran(totalPcsGentengUtama, pcsNok + pcsJuraiLuar, pcsStarter, pcsJuraiDalam);
     }
 
@@ -498,7 +683,6 @@
       document.getElementById('txtGrandTotal').innerText = `Rp ${Math.round(grandTotal).toLocaleString('id-ID')}`;
     }
 
-    // Export to Excel Function
     function exportToExcel() {
       const wb = XLSX.utils.book_new();
 
@@ -515,8 +699,8 @@
       XLSX.writeFile(wb, "Penawaran_Kanmuri_KFF_Onyx_Black.xlsx");
     }
 
-    // Inisialisasi awal saat halaman dimuat
     window.onload = function() {
+      hitungAppKanmuri();
       hitungSemua();
     };
   </script>
