@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Penawaran Kanmuri KFF Onyx Black</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS (XLSX Export) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- html2pdf.js for PDF Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        @media print {
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+            .shadow-lg, .shadow-md, .shadow-sm { box-shadow: none !important; }
+            .border { border-color: #cbd5e1 !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col justify-between">
+
+    <!-- Header / Navbar -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-30 no-print">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-red-600 text-white p-2 rounded-xl shadow-sm">
+                    <i class="fa-solid fa-calculator text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg md:text-xl tracking-tight leading-none">KANMURI <span class="text-red-500 font-semibold">KFF ESTIMATOR</span></h1>
+                    <p class="text-xs text-slate-400 mt-1">Kalkulator Kebutuhan & Penawaran Full Flat Onyx Black</p>
+                </div>
+            </div>
+            
+            <!-- Export Actions Header -->
+            <div class="flex items-center gap-2">
+                <button onclick="exportToExcel()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                    <i class="fa-solid fa-file-excel text-sm"></i>
+                    <span class="hidden sm:inline">Export</span> Excel
+                </button>
+                <button onclick="exportToPDF()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                    <i class="fa-solid fa-file-pdf text-sm"></i>
+                    <span class="hidden sm:inline">Export</span> PDF
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl w-full mx-auto px-4 py-6 space-y-6 flex-grow">
+
+        <!-- Printable Document Title (Visible on Print / PDF) -->
+        <div class="hidden print-only mb-6 border-b pb-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-2xl font-bold text-slate-900">PENAWARAN HARGA GENTENG KANMURI</h1>
+                    <p class="text-sm text-slate-600">Tipe: Full Flat (KFF) - Warna: Onyx Black</p>
+                </div>
+                <div class="text-right text-xs text-slate-500">
+                    <p id="printDate"></p>
+                    <p>Status: Estimasi Penawaran Resmi</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1: Parameter Pengukuran Atap -->
+        <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 md:p-6 no-print">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-ruler-combined text-red-600 text-lg"></i>
+                    <h2 class="font-bold text-slate-800 text-base md:text-lg">Parameter Pengukuran Luas & Atap</h2>
+                </div>
+                <button onclick="loadSampleData()" class="text-xs text-red-600 hover:text-red-700 font-semibold flex items-center gap-1 bg-red-50 hover:bg-red-100 px-2.5 py-1.5 rounded-lg transition">
+                    <i class="fa-solid fa-rotate-left"></i> Reset ke Contoh Gambar
+                </button>
+            </div>
+
+            <!-- Input Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3.5">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Luas Atap (M²)</label>
+                    <input type="number" id="inputLuasAtap" value="136.22" step="0.01" oninput="calculateEstimates()" 
+                        class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none bg-slate-50 focus:bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nok (M')</label>
+                    <input type="number" id="inputNok" value="13.10" step="0.01" oninput="calculateEstimates()" 
+                        class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none bg-slate-50 focus:bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Jurai Luar (M')</label>
+                    <input type="number" id="inputJuraiLuar" value="35.98" step="0.01" oninput="calculateEstimates()" 
+                        class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none bg-slate-50 focus:bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Jurai Dalam (M')</label>
+                    <input type="number" id="inputJuraiDalam" value="3.76" step="0.01" oninput="calculateEstimates()" 
+                        class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none bg-slate-50 focus:bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Starter / Lisplang (M')</label>
+                    <input type="number" id="inputStarter" value="71.32" step="0.01" oninput="calculateEstimates()" 
+                        class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none bg-slate-50 focus:bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Waste / Cadangan (%)</label>
+                    <input type="number" id="inputWaste" value="10" step="0.5" oninput="calculateEstimates()" 
+                        class="w-full px-3 py-2 border border-slate-300 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-red-500 focus:outline-none bg-slate-50 focus:bg-white">
+                </div>
+            </div>
+
+            <!-- Calculation Summary Bar -->
+            <div class="mt-4 p-3.5 bg-slate-900 text-white rounded-xl flex flex-wrap justify-between items-center gap-3 text-xs md:text-sm">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-chart-pie text-red-400"></i>
+                    <span>Estimasi Luas Total + Waste: <strong id="summaryLuasTotal" class="text-red-300">176.39 M²</strong></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span>Kebutuhan Genteng Utama: <strong id="summaryTotalPcs" class="text-amber-300">2,029 Pcs</strong></span>
+                </div>
+                <button onclick="syncCalculatedToTable()" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center gap-1 shadow-sm">
+                    <i class="fa-solid fa-arrows-rotate"></i> Terapkan ke Tabel Penawaran
+                </button>
+            </div>
+        </div>
+
+        <!-- Printable Parameter Table (Visible only on PDF/Print) -->
+        <div class="hidden print-only mb-6">
+            <h3 class="font-bold text-sm text-slate-800 mb-2">Ringkasan Parameter Pengukuran Atap:</h3>
+            <table class="w-full text-xs border border-slate-300 text-left">
+                <thead class="bg-slate-100">
+                    <tr>
+                        <th class="p-2 border">Parameter</th>
+                        <th class="p-2 border">Pemakaian (M')</th>
+                        <th class="p-2 border">Pemakaian (M²)</th>
+                    </tr>
+                </thead>
+                <tbody id="printParamBody">
+                    <!-- Populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section 2: Editable Dynamic Quotation Table -->
+        <div id="quotationArea" class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-4 md:p-6 border-b border-slate-100 flex flex-wrap justify-between items-center gap-3">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-list-check text-red-600 text-lg"></i>
+                    <div>
+                        <h2 class="font-bold text-slate-800 text-base md:text-lg">Tabel Item Penawaran Harga KFF Onyx Black</h2>
+                        <p class="text-xs text-slate-500">Edit kuantitas, harga, atau tambah item sesuai kebutuhan proyek.</p>
+                    </div>
+                </div>
+                <button onclick="addNewRow()" class="no-print bg-slate-800 hover:bg-slate-900 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 shadow-sm">
+                    <i class="fa-solid fa-plus text-red-400"></i> Tambah Item Baru
+                </button>
+            </div>
+
+            <!-- Responsive Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs md:text-sm border-collapse" id="quotationTable">
+                    <thead>
+                        <tr class="bg-slate-100/80 text-slate-700 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200">
+                            <th class="py-3 px-3 md:px-4 text-center w-12">No</th>
+                            <th class="py-3 px-3 md:px-4 min-w-[200px]">Nama Barang / Aksesoris</th>
+                            <th class="py-3 px-3 md:px-4 text-center w-24">Satuan</th>
+                            <th class="py-3 px-3 md:px-4 text-center w-28">Jumlah (Qty)</th>
+                            <th class="py-3 px-3 md:px-4 text-right w-36">Harga Price List (Rp)</th>
+                            <th class="py-3 px-3 md:px-4 text-center w-24">Disc (%)</th>
+                            <th class="py-3 px-3 md:px-4 text-right w-36">Harga Jual (Rp)</th>
+                            <th class="py-3 px-3 md:px-4 text-right w-40">Subtotal (Rp)</th>
+                            <th class="py-3 px-2 text-center w-12 no-print">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="quotationTbody" class="divide-y divide-slate-100">
+                        <!-- Dynamic Rows -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Calculation Summary Footer -->
+            <div class="p-4 md:p-6 bg-slate-50/80 border-t border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Customer & Notes Input -->
+                <div class="space-y-3 no-print">
+                    <h3 class="font-bold text-xs uppercase tracking-wider text-slate-500">Catatan Penawaran & Pelanggan</h3>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Nama Proyek / Pelanggan:</label>
+                        <input type="text" id="customerName" value="Bpk. Hendra - Proyek Perumahan Minimalis" 
+                            class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-red-500 focus:outline-none bg-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Syarat & Ketentuan Tambahan:</label>
+                        <textarea id="quotationNotes" rows="2" 
+                            class="w-full px-3 py-2 border border-slate-300 rounded-xl text-xs focus:ring-2 focus:ring-red-500 focus:outline-none bg-white">Harga Loco Pabrik. Pengiriman Jabodetabek disesuaikan dengan volume pemesanan.</textarea>
+                    </div>
+                </div>
+
+                <!-- Financial Summary Box -->
+                <div class="space-y-2.5 bg-white p-4 rounded-xl border border-slate-200 shadow-sm ml-auto w-full md:max-w-md">
+                    <div class="flex justify-between items-center text-xs text-slate-600">
+                        <span>Total Kuantitas Genteng Utama:</span>
+                        <span id="grandTotalMainQty" class="font-bold text-slate-800">0 Pcs</span>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-slate-600">
+                        <span>Subtotal Item Penawaran:</span>
+                        <span id="summarySubtotal" class="font-semibold text-slate-800">Rp 0</span>
+                    </div>
+                    
+                    <div class="flex justify-between items-center text-xs text-slate-600 gap-2">
+                        <span>Diskon Khusus Proyek (Rp):</span>
+                        <input type="number" id="extraDiscount" value="0" oninput="calculateTotals()" 
+                            class="w-32 px-2 py-1 text-right border border-slate-300 rounded-lg text-xs font-semibold focus:ring-2 focus:ring-red-500 focus:outline-none no-print">
+                        <span id="extraDiscountPrint" class="hidden print-only font-semibold text-slate-800">Rp 0</span>
+                    </div>
+
+                    <div class="flex justify-between items-center text-xs text-slate-600 pt-1 border-t border-slate-100">
+                        <label class="flex items-center gap-2 cursor-pointer no-print">
+                            <input type="checkbox" id="taxCheckbox" onchange="calculateTotals()" checked class="rounded text-red-600 focus:ring-red-500 h-4 w-4">
+                            <span class="font-medium">Termasuk PPN 11%</span>
+                        </label>
+                        <span id="taxLabelPrint" class="hidden print-only">PPN 11%:</span>
+                        <span id="summaryTax" class="font-semibold text-slate-800">Rp 0</span>
+                    </div>
+
+                    <div class="flex justify-between items-center pt-2 border-t-2 border-slate-800 text-sm md:text-base font-bold text-slate-900">
+                        <span>TOTAL PENAWARAN:</span>
+                        <span id="summaryGrandTotal" class="text-red-600 text-base md:text-lg">Rp 0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-slate-400 py-4 text-center text-xs border-t border-slate-800 no-print">
+        <p>© 2026 Calculator Kanmuri Full Flat Onyx Black (KFF) — Standard Price List & Estimation System</p>
+    </footer>
+
+    <!-- Application Script -->
+    <script>
+        // Preset Master Database for Kanmuri KFF Onyx Black
+        const kffDatabase = [
+            { code: "KFF1", name: "Genteng Utama Full Flat (Onyx Black)", unit: "Pcs", price: 23500, disc: 10, coverage: 11.5, type: "main" },
+            { code: "KFF2", name: "Nok Full Flat (Onyx Black / Medi)", unit: "Pcs", price: 49000, disc: 10, coverage: 3.3, type: "nok" },
+            { code: "KFF3/4", name: "Lisplang / Starter Kiri-Kanan KFF", unit: "Pcs", price: 54000, disc: 10, coverage: 3.3, type: "starter" },
+            { code: "KFF6", name: "Ujung Jurai Full Flat", unit: "Pcs", price: 168000, disc: 10, coverage: 1, type: "jurai_end" },
+            { code: "KFF7A/B", name: "Ujung Nok Kanan / Kiri KFF", unit: "Pcs", price: 168000, disc: 10, coverage: 1, type: "nok_end" },
+            { code: "KFF8", name: "Nok 3 Arah Full Flat", unit: "Pcs", price: 207000, disc: 10, coverage: 1, type: "nok_3way" },
+            { code: "KFF11", name: "Nok 4 Arah Full Flat", unit: "Pcs", price: 525000, disc: 10, coverage: 1, type: "nok_4way" }
+        ];
+
+        // Default Quotation Items State
+        let quotationItems = [];
+
+        // On Page Ready
+        document.addEventListener('DOMContentLoaded', () => {
+            const today = new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' });
+            document.getElementById('printDate').innerText = 'Tanggal: ' + today;
+            
+            // Initial calculations
+            calculateEstimates();
+            initDefaultQuotationItems();
+        });
+
+        // Calculate Roof Estimates based on diagram rules
+        function calculateEstimates() {
+            const luasAtap = parseFloat(document.getElementById('inputLuasAtap').value) || 0;
+            const nokM = parseFloat(document.getElementById('inputNok').value) || 0;
+            const juraiLuarM = parseFloat(document.getElementById('inputJuraiLuar').value) || 0;
+            const juraiDalamM = parseFloat(document.getElementById('inputJuraiDalam').value) || 0;
+            const starterM = parseFloat(document.getElementById('inputStarter').value) || 0;
+            const wastePercent = parseFloat(document.getElementById('inputWaste').value) || 0;
+
+            // Equivalent M2 calculations as per diagram logic
+            const nokM2 = nokM / 3;
+            const juraiLuarM2 = juraiLuarM / 3;
+            const juraiDalamM2 = juraiDalamM;
+            const starterM2 = starterM / 7;
+            
+            const subtotalM2 = luasAtap + nokM2 + juraiLuarM2 + juraiDalamM2 + starterM2;
+            const wasteM2 = subtotalM2 * (wastePercent / 100);
+            const totalM2WithWaste = subtotalM2 + wasteM2;
+
+            // Kanmuri KFF coverage: 11.5 pcs/m²
+            const totalPcsMainTile = Math.ceil(totalM2WithWaste * 11.5);
+
+            // Update UI Summary Bar
+            document.getElementById('summaryLuasTotal').innerText = totalM2WithWaste.toFixed(2) + " M²";
+            document.getElementById('summaryTotalPcs').innerText = totalPcsMainTile.toLocaleString('id-ID') + " Pcs";
+
+            // Update Print Parameter Table
+            const printTbody = document.getElementById('printParamBody');
+            printTbody.innerHTML = `
+                <tr><td class="p-1.5 border">Luas Atap Utama</td><td class="p-1.5 border">-</td><td class="p-1.5 border">${luasAtap.toFixed(2)} M²</td></tr>
+                <tr><td class="p-1.5 border">Nok / Ridge</td><td class="p-1.5 border">${nokM.toFixed(2)} M'</td><td class="p-1.5 border">${nokM2.toFixed(2)} M²</td></tr>
+                <tr><td class="p-1.5 border">Jurai Luar</td><td class="p-1.5 border">${juraiLuarM.toFixed(2)} M'</td><td class="p-1.5 border">${juraiLuarM2.toFixed(2)} M²</td></tr>
+                <tr><td class="p-1.5 border">Jurai Dalam</td><td class="p-1.5 border">${juraiDalamM.toFixed(2)} M'</td><td class="p-1.5 border">${juraiDalamM2.toFixed(2)} M²</td></tr>
+                <tr><td class="p-1.5 border">Starter / Lisplang</td><td class="p-1.5 border">${starterM.toFixed(2)} M'</td><td class="p-1.5 border">${starterM2.toFixed(2)} M²</td></tr>
+                <tr><td class="p-1.5 border">Cadangan / Waste (${wastePercent}%)</td><td class="p-1.5 border">-</td><td class="p-1.5 border">${wasteM2.toFixed(2)} M²</td></tr>
+                <tr class="font-bold bg-slate-50"><td class="p-1.5 border">Total Kebutuhan Luas M²</td><td class="p-1.5 border">-</td><td class="p-1.5 border">${totalM2WithWaste.toFixed(2)} M²</td></tr>
+            `;
+        }
+
+        // Initialize Quotation Items from calculations
+        function initDefaultQuotationItems() {
+            const nokM = parseFloat(document.getElementById('inputNok').value) || 0;
+            const starterM = parseFloat(document.getElementById('inputStarter').value) || 0;
+            const wastePercent = parseFloat(document.getElementById('inputWaste').value) || 0;
+            const luasAtap = parseFloat(document.getElementById('inputLuasAtap').value) || 0;
+
+            const nokM2 = nokM / 3;
+            const juraiLuarM = parseFloat(document.getElementById('inputJuraiLuar').value) || 0;
+            const juraiLuarM2 = juraiLuarM / 3;
+            const juraiDalamM = parseFloat(document.getElementById('inputJuraiDalam').value) || 0;
+            const starterM2 = starterM / 7;
+
+            const totalM2 = (luasAtap + nokM2 + juraiLuarM2 + juraiDalamM + starterM2) * (1 + wastePercent/100);
+            const mainPcs = Math.ceil(totalM2 * 11.5);
+            const nokPcs = Math.ceil(nokM * 3.3);
+            const starterPcs = Math.ceil(starterM * 3.3);
+
+            quotationItems = [
+                { name: kffDatabase[0].name, unit: "Pcs", qty: mainPcs, price: kffDatabase[0].price, disc: 10 },
+                { name: kffDatabase[1].name, unit: "Pcs", qty: nokPcs, price: kffDatabase[1].price, disc: 10 },
+                { name: kffDatabase[2].name, unit: "Pcs", qty: starterPcs, price: kffDatabase[2].price, disc: 10 },
+                { name: kffDatabase[3].name, unit: "Pcs", qty: 2, price: kffDatabase[3].price, disc: 10 },
+                { name: kffDatabase[4].name, unit: "Pcs", qty: 2, price: kffDatabase[4].price, disc: 10 }
+            ];
+
+            renderQuotationTable();
+        }
+
+        function syncCalculatedToTable() {
+            calculateEstimates();
+            initDefaultQuotationItems();
+        }
+
+        function resetToSample() {
+            document.getElementById('inputLuasAtap').value = 136.22;
+            document.getElementById('inputNok').value = 13.10;
+            document.getElementById('inputJuraiLuar').value = 35.98;
+            document.getElementById('inputJuraiDalam').value = 3.76;
+            document.getElementById('inputStarter').value = 71.32;
+            document.getElementById('inputWaste').value = 10;
+            calculateEstimates();
+            initDefaultQuotationItems();
+        }
+
+        function loadSampleData() {
+            resetToSample();
+        }
+
+        // Render Editable Quotation Table
+        function renderQuotationTable() {
+            const tbody = document.getElementById('quotationTbody');
+            tbody.innerHTML = '';
+
+            quotationItems.forEach((item, index) => {
+                const sellPrice = Math.round(item.price * (1 - (item.disc / 100)));
+                const subtotal = sellPrice * item.qty;
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition";
+                tr.innerHTML = `
+                    <td class="py-2.5 px-3 text-center font-bold text-slate-500">${index + 1}</td>
+                    <td class="py-2.5 px-3">
+                        <input type="text" value="${item.name}" onchange="updateItem(${index}, 'name', this.value)"
+                            class="w-full px-2 py-1 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:ring-1 focus:ring-red-500 focus:outline-none">
+                    </td>
+                    <td class="py-2.5 px-3 text-center">
+                        <input type="text" value="${item.unit}" onchange="updateItem(${index}, 'unit', this.value)"
+                            class="w-16 px-1.5 py-1 text-center border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-red-500 focus:outline-none">
+                    </td>
+                    <td class="py-2.5 px-3 text-center">
+                        <input type="number" value="${item.qty}" min="1" onchange="updateItem(${index}, 'qty', parseFloat(this.value) || 0)"
+                            class="w-20 px-2 py-1 text-center font-bold border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-red-500 focus:outline-none">
+                    </td>
+                    <td class="py-2.5 px-3 text-right">
+                        <input type="number" value="${item.price}" onchange="updateItem(${index}, 'price', parseFloat(this.value) || 0)"
+                            class="w-28 px-2 py-1 text-right border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-red-500 focus:outline-none">
+                    </td>
+                    <td class="py-2.5 px-3 text-center">
+                        <input type="number" value="${item.disc}" min="0" max="100" onchange="updateItem(${index}, 'disc', parseFloat(this.value) || 0)"
+                            class="w-16 px-1 py-1 text-center border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-red-500 focus:outline-none">
+                    </td>
+                    <td class="py-2.5 px-3 text-right font-medium text-slate-700">
+                        Rp ${sellPrice.toLocaleString('id-ID')}
+                    </td>
+                    <td class="py-2.5 px-3 text-right font-bold text-slate-900">
+                        Rp ${subtotal.toLocaleString('id-ID')}
+                    </td>
+                    <td class="py-2.5 px-2 text-center no-print">
+                        <button onclick="removeItem(${index})" class="text-slate-400 hover:text-red-600 transition p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            calculateTotals();
+        }
+
+        // Item Updates
+        function updateItem(index, key, value) {
+            quotationItems[index][key] = value;
+            renderQuotationTable();
+        }
+
+        function removeItem(index) {
+            quotationItems.splice(index, 1);
+            renderQuotationTable();
+        }
+
+        function addNewRow() {
+            quotationItems.push({
+                name: "Aksesoris Genteng Tambahan",
+                unit: "Pcs",
+                qty: 1,
+                price: 50000,
+                disc: 10
+            });
+            renderQuotationTable();
+        }
+
+        // Calculate Totals & Grand Totals
+        function calculateTotals() {
+            let subtotalAll = 0;
+            let mainTileQty = 0;
+
+            quotationItems.forEach(item => {
+                const sellPrice = Math.round(item.price * (1 - (item.disc / 100)));
+                subtotalAll += sellPrice * item.qty;
+                if (item.name.toLowerCase().includes('utama') || item.name.toLowerCase().includes('kff1')) {
+                    mainTileQty += item.qty;
+                }
+            });
+
+            const extraDisc = parseFloat(document.getElementById('extraDiscount').value) || 0;
+            document.getElementById('extraDiscountPrint').innerText = 'Rp ' + extraDisc.toLocaleString('id-ID');
+
+            const afterExtraDisc = Math.max(0, subtotalAll - extraDisc);
+            const isTax = document.getElementById('taxCheckbox').checked;
+            const taxAmount = isTax ? Math.round(afterExtraDisc * 0.11) : 0;
+            const grandTotal = afterExtraDisc + taxAmount;
+
+            document.getElementById('grandTotalMainQty').innerText = mainTileQty.toLocaleString('id-ID') + " Pcs";
+            document.getElementById('summarySubtotal').innerText = "Rp " + subtotalAll.toLocaleString('id-ID');
+            document.getElementById('summaryTax').innerText = "Rp " + taxAmount.toLocaleString('id-ID');
+            document.getElementById('summaryGrandTotal').innerText = "Rp " + grandTotal.toLocaleString('id-ID');
+        }
+
+        // Export to Excel (SheetJS)
+        function exportToExcel() {
+            const customer = document.getElementById('customerName').value;
+            const notes = document.getElementById('quotationNotes').value;
+
+            const exportData = quotationItems.map((item, idx) => {
+                const sellPrice = Math.round(item.price * (1 - (item.disc / 100)));
+                return {
+                    "No": idx + 1,
+                    "Nama Item": item.name,
+                    "Satuan": item.unit,
+                    "Qty": item.qty,
+                    "Price List (Rp)": item.price,
+                    "Diskon (%)": item.disc,
+                    "Harga Jual (Rp)": sellPrice,
+                    "Subtotal (Rp)": sellPrice * item.qty
+                };
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Penawaran Kanmuri KFF");
+
+            XLSX.writeFile(workbook, `Penawaran_Kanmuri_KFF_${customer.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`);
+        }
+
+        // Export to PDF
+        function exportToPDF() {
+            window.print();
+        }
+    </script>
+</body>
+</html>
