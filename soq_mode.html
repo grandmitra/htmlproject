@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOQ Dashboard 2026</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8f8f8; } 
+        .sortable-header { cursor: pointer; user-select: none; }
+        .pagination-btn { transition: background-color 0.1s; }
+        #dtable th, #dtable td { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #dtable thead { position: sticky; top: 0; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .modal-overlay { background-color: rgba(0,0,0,0.6); backdrop-filter: blur(4px); }
+        #sidebar { transition: transform 0.3s ease-in-out, margin-left 0.3s ease-in-out; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col" onload="loadData()">
+
+    <!-- HEADER / TOPBAR -->
+    <header class="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-30 shadow-sm flex flex-wrap justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <button onclick="toggleSidebar()" class="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 focus:outline-none border border-gray-300">
+                <svg id="sidebar-icon-hide" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <div>
+                <h1 class="text-lg font-bold text-gray-800 leading-tight">Suggested Order Quantity Dashboard 2026</h1>
+                <p class="text-xs text-gray-500">Manajemen Kuantitas Pemesanan</p>
+            </div>
+        </div>
+
+        <div class="flex items-center space-x-3 mt-2 sm:mt-0">
+            <button onclick="forceRefreshData()" title="Muat ulang data dari server CSV" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1.5 rounded border border-gray-300 flex items-center">
+                <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Sync CSV
+            </button>
+            <div class="flex items-center space-x-2 bg-gray-50 p-1.5 rounded-lg border border-gray-300">
+                <label for="app-mode" class="text-xs font-bold text-gray-700">Mode Akses:</label>
+                <select id="app-mode" onchange="handleModeChange()" class="text-xs border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500 p-1 bg-white font-semibold text-blue-700">
+                    <option value="sales">Sales Mode (Supplier Blur)</option>
+                    <option value="admin">Admin Mode (Data Tampil)</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden">
+        
+        <!-- SIDEBAR FILTER & ACTION (LEFT NAVBAR) -->
+        <aside id="sidebar" class="w-72 bg-white border-r border-gray-200 flex-shrink-0 flex flex-col h-[calc(100vh-57px)] overflow-y-auto">
+            <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+                <h2 class="font-bold text-sm text-gray-700 uppercase tracking-wider">Navigasi & Filter</h2>
+                <span id="cache-badge" class="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium">Cache Active</span>
+            </div>
+            
+            <div class="p-4 space-y-4 flex-1">
+                <!-- PANEL TOMBOL EKSPOR & AKSI -->
+                <div class="space-y-2 border-b border-gray-200 pb-4">
+                    <p class="text-xs font-bold text-gray-500 uppercase">Ekspor & Aksi</p>
+                    <button onclick="exportToExcel()" class="w-full flex items-center justify-start px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Export XLSX
+                    </button>
+                    <button onclick="exportToCSV()" class="w-full flex items-center justify-start px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Export CSV
+                    </button>
+                    <button onclick="exportToPDF()" class="w-full flex items-center justify-start px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        Export PDF
+                    </button>
+                    <button onclick="exportToPOTemplate()" class="w-full flex items-center justify-start px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-xs font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
+                        Export PO Template
+                    </button>
+                    <button onclick="renderScorecards()" class="w-full flex items-center justify-start px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded text-xs font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        Hitung Scorecard
+                    </button>
+                    <button onclick="resetFilters()" class="w-full flex items-center justify-start px-3 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded text-xs font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        Reset Filter
+                    </button>
+                </div>
+
+                <!-- FILTER SELECTION -->
+                <div class="space-y-3">
+                    <p class="text-xs font-bold text-gray-500 uppercase">Filter Data</p>
+                    
+                    <div><label class="block text-xs font-semibold text-gray-700 mb-1">Buyer</label><select id="filter-buyer" onchange="onFilterChange('buyer')" class="w-full rounded-md border-gray-300 shadow-sm text-xs p-1.5 border"><option value="">Semua Buyer</option></select></div>
+                    <div><label class="block text-xs font-semibold text-gray-700 mb-1">Dept</label><select id="filter-dept" onchange="onFilterChange('dept')" class="w-full rounded-md border-gray-300 shadow-sm text-xs p-1.5 border"><option value="">Semua Dept</option></select></div>
+                    <div><label class="block text-xs font-semibold text-gray-700 mb-1">Supplier</label><select id="filter-supplier" onchange="onFilterChange('supplier')" class="w-full rounded-md border-gray-300 shadow-sm text-xs p-1.5 border"><option value="">Semua Supplier</option></select></div>
+                    <div><label class="block text-xs font-semibold text-gray-700 mb-1">Brand</label><select id="filter-brand" onchange="onFilterChange('brand')" class="w-full rounded-md border-gray-300 shadow-sm text-xs p-1.5 border"><option value="">Semua Brand</option></select></div>
+                    <div><label class="block text-xs font-semibold text-gray-700 mb-1">Kategori</label><select id="filter-category" onchange="onFilterChange('category')" class="w-full rounded-md border-gray-300 shadow-sm text-xs p-1.5 border"><option value="">Semua Kategori</option></select></div>
+                    <div><label class="block text-xs font-semibold text-gray-700 mb-1">PO Terakhir</label><select id="filter-po" onchange="applyFilters()" class="w-full rounded-md border-gray-300 shadow-sm text-xs p-1.5 border"><option value="">Semua Status PO</option><option value="SOQ">Ada PO</option><option value="NaN">Tidak Ada PO</option></select></div>
+                    <div><label class="block text-xs font-semibold text-gray-700 mb-1">SOQ</label><select id="filter-soq" onchange="applyFilters()" class="w-full rounded-md border-gray-300 shadow-sm text-xs p-1.5 border"><option value="">Semua SOQ</option><option value="positive">SOQ &gt; 0</option><option value="zero">SOQ = 0</option><option value="negative">SOQ &lt; 0</option></select></div>
+                    
+                    <!-- FILTER RANGE STOK (MIN - MAX) -->
+                    <div class="border-t pt-2">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Rentang Stok (Qty)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" id="filter-stok-min" oninput="applyFilters()" placeholder="Min Stok" class="w-full rounded-md border-gray-300 text-xs p-1.5 border">
+                            <input type="number" id="filter-stok-max" oninput="applyFilters()" placeholder="Max Stok" class="w-full rounded-md border-gray-300 text-xs p-1.5 border">
+                        </div>
+                    </div>
+
+                    <!-- FILTER RANGE VALUE SOQ (MIN - MAX) -->
+                    <div class="border-t pt-2">
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Rentang Value SOQ (Rp)</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="number" id="filter-valsoq-min" oninput="applyFilters()" placeholder="Min Rp" class="w-full rounded-md border-gray-300 text-xs p-1.5 border">
+                            <input type="number" id="filter-valsoq-max" oninput="applyFilters()" placeholder="Max Rp" class="w-full rounded-md border-gray-300 text-xs p-1.5 border">
+                        </div>
+                    </div>
+
+                    <div><label class="block text-xs font-semibold text-gray-700 mb-1">Komp</label><select id="filter-komp" onchange="onFilterChange('komp')" class="w-full rounded-md border-gray-300 shadow-sm text-xs p-1.5 border"><option value="">Semua Komp</option></select></div>
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-700 mb-1">Keterangan (Stok)</label>
+                        <select id="filter-ah" onchange="applyFilters(true)" class="w-full rounded-md border-gray-300 shadow-sm text-xs p-1.5 border">
+                            <option value="">Semua Keterangan</option>
+                            <option value="GM13">GM13</option>
+                            <option value="CEK">CEK</option>
+                            <option value="Blm Rcvd">Blm Rcvd</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col">
+            
+            <!-- STATUS LOADING / ERROR -->
+            <div class="mb-4">
+                <p id="loading-indicator" class="text-blue-600 font-semibold text-xs flex items-center bg-blue-50 p-3 rounded border border-blue-200">
+                    <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Memuat data CSV, harap tunggu sebentar...
+                </p>
+                <div id="error-message" class="hidden bg-red-100 border-l-4 border-red-500 p-3 rounded-md text-red-700">
+                    <p class="font-bold text-sm">Gagal memuat data!</p>
+                    <span class="block text-xs mt-1" id="error-text">Periksa koneksi atau URL Google Sheets Anda.</span>
+                </div>
+            </div>
+
+            <!-- SCORECARD SECTION (DI ATAS SEPERTI SEMULA) -->
+            <div id="scorecard-section" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 mb-6">
+                <div class="bg-white p-3 rounded-lg shadow-sm border border-blue-200"><p class="text-[10px] font-medium text-gray-500 uppercase">Total Stok (Qty)</p><p id="sc-total-stok" class="text-lg font-bold text-gray-800 mt-0.5">0</p></div>
+                <div class="bg-white p-3 rounded-lg shadow-sm border border-blue-200"><p class="text-[10px] font-medium text-gray-500 uppercase">Total SOQ (Qty)</p><p id="sc-total-soq" class="text-lg font-bold text-blue-600 mt-0.5">0</p></div>
+                <div class="bg-white p-3 rounded-lg shadow-sm border border-blue-200"><p class="text-[10px] font-medium text-gray-500 uppercase">Total Value SOQ</p><p id="sc-total-value-soq" class="text-lg font-bold text-green-600 mt-0.5">Rp 0</p></div>
+                <div class="bg-white p-3 rounded-lg shadow-sm border border-blue-200"><p class="text-[10px] font-medium text-gray-500 uppercase">Total GT Sls (Qty)</p><p id="sc-total-gtsls" class="text-lg font-bold text-purple-600 mt-0.5">0</p></div>
+                <div class="bg-white p-3 rounded-lg shadow-sm border border-blue-200"><p class="text-[10px] font-medium text-gray-500 uppercase">Rata-Rata Penjualan</p><p id="sc-avg-sls" class="text-lg font-bold text-gray-800 mt-0.5">0</p></div>
+                <div class="bg-white p-3 rounded-lg shadow-sm border border-blue-200"><p class="text-[10px] font-medium text-gray-500 uppercase">SSR (Stok/Avg Sls)</p><p id="sc-ssr" class="text-lg font-bold text-red-600 mt-0.5">0.00</p></div>
+                <div class="bg-white p-3 rounded-lg shadow-sm border border-blue-200"><p class="text-[10px] font-medium text-gray-500 uppercase">Jumlah Item</p><p id="sc-count-item" class="text-lg font-bold text-gray-800 mt-0.5">0</p></div>
+            </div>
+
+            <!-- SEARCH & PAGING BAR -->
+            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-col sm:flex-row justify-between items-center gap-4">
+                <div class="w-full sm:w-80">
+                    <input type="text" id="search-term" oninput="applyFilters()" placeholder="Cari Kode / Nama Item..." class="w-full rounded-md border-gray-300 shadow-sm text-sm border p-2 focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-end">
+                    <div class="flex items-center space-x-2">
+                        <label class="text-xs font-medium text-gray-700">Tampilkan:</label>
+                        <select id="perPage" onchange="applyFilters()" class="text-xs border-gray-300 rounded shadow-sm border p-1">
+                            <option value="5">5</option>
+                            <option value="10" selected>10</option>
+                            <option value="20">20</option>
+                            <option value="all">Semua</option>
+                        </select>
+                    </div>
+                    <span id="record-info" class="text-xs text-gray-600 font-medium"></span>
+                </div>
+            </div>
+
+            <!-- PAGINATION -->
+            <div class="flex justify-between items-center mb-3">
+                <div id="pagination-controls" class="flex space-x-1"></div>
+            </div>
+
+            <!-- DATA TABLE -->
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
+                <table id="dtable" class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-100 text-gray-700">
+                        <tr>
+                            <th class="px-3 py-3 text-left text-xs font-bold">Kode</th>
+                            <th class="px-3 py-3 text-left text-xs font-bold">Nama Item</th>
+                            <th class="px-3 py-3 text-left text-xs font-bold">UOM</th> 
+                            <th class="px-3 py-3 text-left text-xs font-bold">Supplier</th>
+                            <th class="px-3 py-3 text-left text-xs font-bold">BRAND</th>
+                            <th class="px-3 py-3 text-right text-xs font-bold">Stok</th>
+                            <th class="px-3 py-3 text-left text-xs font-bold">NO PO LAST JUN</th>
+                            <th class="px-3 py-3 text-right text-xs font-bold">QTY PO</th>
+                            <th onclick="sortBy('SOQ')" class="px-3 py-3 text-right text-xs font-bold sortable-header bg-gray-200 hover:bg-gray-300">SOQ<span id="sort-SOQ" class="sort-icon"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="bg-white divide-y divide-gray-200 text-xs">
+                        <tr><td colspan="9" class="text-center py-6 text-gray-500">Silakan tunggu, memuat data...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL DETAIL ITEM -->
+    <div id="item-detail-modal" class="modal fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none p-4 transition-opacity duration-200">
+        <div class="modal-overlay fixed inset-0" onclick="closeItemDetail()"></div>
+        <div class="modal-content bg-white rounded-xl shadow-2xl max-w-5xl w-full relative transform scale-95 transition-transform duration-300 overflow-hidden z-10">
+            <button onclick="closeItemDetail()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100">
+                <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            <div class="flex flex-col md:flex-row h-full">
+                <div class="md:w-5/12 p-6 md:p-8 border-b md:border-b-0 md:border-r overflow-y-auto max-h-[85vh]">
+                    <h2 class="text-2xl font-extrabold text-blue-600 mb-2"><span id="detail-kode"></span></h2>
+                    <p class="text-sm font-semibold text-gray-800 mb-6" id="detail-nama"></p>
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">Informasi Kuantitas</h3>
+                    <div class="space-y-3">
+                        <div class="bg-blue-50 p-3 rounded-lg flex justify-between"><p class="font-bold text-blue-800">SOQ:</p><p class="text-xl font-extrabold text-blue-600" id="detail-soq"></p></div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-3 rounded-lg"><p class="font-medium text-gray-600 text-xs">SOH:</p><p class="text-base font-semibold" id="detail-stok"></p></div>
+                            <div class="bg-gray-50 p-3 rounded-lg"><p class="font-medium text-gray-600 text-xs">MS Median:</p><p class="text-base font-semibold" id="detail-avgsales"></p></div>
+                        </div>
+                        <div class="bg-red-50 p-3 rounded-lg flex justify-between"><p class="font-bold text-red-800">SSR:</p><p class="text-xl font-extrabold text-red-600" id="detail-ssr">0.00</p></div>
+                        <div class="pt-3 border-t"><p class="font-medium text-gray-600 text-sm">Grand Total Sales (QTY):</p><p class="text-2xl font-extrabold text-green-600" id="detail-gtsls"></p></div>
+                    </div>
+                    <div class="mt-6 pt-4 border-t text-xs space-y-2">
+                        <p class="font-semibold text-gray-700">Detail Administrasi:</p>
+                        <div class="grid grid-cols-2 gap-x-4 gap-y-1">
+                            <p class="font-medium text-gray-600">UOM:</p><p id="detail-uom" class="font-bold text-gray-800"></p>
+                            <p class="font-medium text-gray-600">Buyer:</p><p id="detail-buyer"></p>
+                            <p class="font-medium text-gray-600">Dept:</p><p id="detail-dept"></p>
+                            <p class="font-medium text-gray-600">ONYR:</p><p id="detail-nopolast"></p>
+                            <p class="font-medium text-gray-600">QTY ONYR:</p><p id="detail-qtypo"></p>
+                            <p class="font-medium text-gray-600">Kategori:</p><p id="detail-category"></p>
+                            <p class="font-medium text-gray-600">Supplier:</p><p id="detail-supplier"></p>
+                            <p class="font-medium text-gray-600">BRAND:</p><p id="detail-brand"></p>
+                            <p class="font-medium text-gray-600">Aging:</p><p id="detail-komp"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:w-7/12 p-6 md:p-8 bg-gray-50 flex flex-col justify-center">
+                    <h3 class="text-lg font-bold text-gray-700 mb-4">Grafik Penjualan Bulanan</h3>
+                    <div class="relative h-64 md:h-96"><canvas id="monthlySalesChart"></canvas></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<script>
+let ALL_DATA = [];
+let FILTERED_DATA = [];
+let CURRENT_PAGE = 1;
+let SORT_COLUMN = 'SOQ';
+let SORT_DIRECTION = 'desc';
+let monthlySalesChartInstance = null;
+let isUpdatingDropdowns = false;
+let keyAH = 'count';
+let currentMode = 'sales';
+let sidebarVisible = true;
+
+const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRRlqRhknRPUEV01mUYHeTIjDNzblnkodAjIs_fWUaBoe1QKYPEmp9w3DxPuLyOx9gLVDMONrXNtdbj/pub?gid=1242857649&single=true&output=csv';
+const LOCAL_STORAGE_KEY = 'SOQ_DASHBOARD_DATA_CACHE_V3';
+
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebarVisible = !sidebarVisible;
+    if (sidebarVisible) {
+        sidebar.style.marginLeft = '0px';
+    } else {
+        sidebar.style.marginLeft = '-288px';
+    }
+}
+
+function parseNumber(val) {
+    if (val === null || val === undefined || val === '') return 0;
+    if (typeof val === 'number') return val;
+    let cleanVal = String(val).trim().replace(/Rp/gi, '').replace(/\./g, '').replace(/,/g, '.');
+    let num = parseFloat(cleanVal);
+    return isNaN(num) ? 0 : num;
+}
+
+function formatNumber(num) { 
+    let n = parseNumber(num);
+    let sign = n < 0 ? '-' : ''; 
+    return sign + Math.abs(n).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, "."); 
+}
+
+function formatRatio(num) { 
+    let n = parseNumber(num);
+    if (!isFinite(n)) return '0.00'; 
+    let sign = n < 0 ? '-' : ''; 
+    return sign + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, "."); 
+}
+
+function handleModeChange() {
+    let modeSelect = document.getElementById('app-mode');
+    let selectedMode = modeSelect.value;
+    
+    if (selectedMode === 'admin') {
+        let pwd = prompt("Masukkan Password Admin:");
+        if (pwd === "gmb123") {
+            currentMode = 'admin';
+            alert("Akses Admin Diberikan.");
+        } else {
+            alert("Password Salah! Kembali ke Sales Mode.");
+            modeSelect.value = 'sales';
+            currentMode = 'sales';
+        }
+    } else {
+        currentMode = 'sales';
+    }
+    
+    applyModeUI();
+    applyFilters(true);
+}
+
+function applyModeUI() {
+    let supplierFilter = document.getElementById('filter-supplier');
+    if (currentMode === 'sales') {
+        supplierFilter.value = "";
+        supplierFilter.disabled = true;
+        supplierFilter.classList.add('bg-gray-100', 'cursor-not-allowed', 'text-gray-400');
+    } else {
+        supplierFilter.disabled = false;
+        supplierFilter.classList.remove('bg-gray-100', 'cursor-not-allowed', 'text-gray-400');
+    }
+}
+
+function updateSortIcons() { 
+    document.querySelectorAll('.sort-icon').forEach(icon=>{ icon.innerHTML=''; }); 
+    let cur=document.getElementById(`sort-${SORT_COLUMN}`); 
+    if(cur) cur.innerHTML = SORT_DIRECTION==='asc'?'▲':'▼'; 
+}
+
+function sortBy(column) { 
+    if(SORT_COLUMN===column) SORT_DIRECTION = SORT_DIRECTION==='asc'?'desc':'asc'; 
+    else { SORT_COLUMN=column; SORT_DIRECTION='desc'; } 
+    applyFilters(); 
+}
+
+function loadData() {
+    const cachedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (cachedData) {
+        try {
+            const parsedData = JSON.parse(cachedData);
+            document.getElementById('cache-badge').innerText = 'Cached';
+            initializeDashboard(parsedData);
+            fetchCSVDataSilently();
+            return;
+        } catch (e) {
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+        }
+    }
+    fetchCSVData();
+}
+
+function forceRefreshData() {
+    document.getElementById('loading-indicator').classList.remove('hidden');
+    document.getElementById('loading-indicator').innerHTML = `
+        <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+        Menyelaraskan data CSV terbaru...
+    `;
+    fetchCSVData();
+}
+
+function fetchCSVDataSilently() {
+    fetch(CSV_URL)
+        .then(response => response.text())
+        .then(csvText => {
+            const parsedData = parseCSV(csvText);
+            if(parsedData && parsedData.length > 0) {
+                try {
+                    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsedData));
+                } catch(e) {
+                    localStorage.clear();
+                }
+            }
+        }).catch(err => console.log('Silent update failed', err));
+}
+
+function fetchCSVData() {
+    document.getElementById('loading-indicator').classList.remove('hidden');
+    fetch(CSV_URL)
+        .then(response => {
+            if(!response.ok) throw new Error("Jaringan bermasalah atau URL CSV tidak valid.");
+            return response.text();
+        })
+        .then(csvText => {
+            const parsedData = parseCSV(csvText);
+            try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsedData));
+            } catch (e) {
+                localStorage.clear();
+                try {
+                    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(parsedData));
+                } catch (err) {
+                    console.warn('Data too large for localStorage.');
+                }
+            }
+            document.getElementById('cache-badge').innerText = 'Updated';
+            initializeDashboard(parsedData);
+        })
+        .catch(error => showError(error));
+}
+
+function parseCSV(csvText) {
+    let lines = csvText.split(/\r\n|\n/);
+    if (lines.length < 2) return [];
+    
+    let headers = parseCSVRow(lines[0]);
+    let result = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+        if (!lines[i].trim()) continue;
+        let row = parseCSVRow(lines[i]);
+        let obj = {};
+        headers.forEach((header, index) => {
+            let val = row[index] !== undefined ? row[index].trim() : '';
+            // Konversi otomatis string angka ke float murni dengan parseNumber
+            if (val !== '' && header !== 'Kode' && header !== 'NO PO LAST JUN' && header !== 'Nama Item' && header !== 'Supplier' && header !== 'BRAND' && header !== 'Kategori' && header !== 'Dept' && header !== 'BUYER' && header !== 'UOM' && header !== 'Sat' && header !== 'ITEM_UNIT' && header !== 'Komp') {
+                let parsedNum = parseNumber(val);
+                // Jika mengandung angka, simpan sebagai number, selain itu biarkan string
+                obj[header] = !isNaN(val) || /^-?\d{1,3}(\.\d{3})*(,\d+)?$/.test(val) || /^-?\d+([.,]\d+)?$/.test(val) ? parsedNum : val;
+            } else {
+                obj[header] = val;
+            }
+        });
+        result.push(obj);
+    }
+    return result;
+}
+
+function parseCSVRow(rowStr) {
+    let result = [];
+    let insideQuote = false;
+    let entry = '';
+    
+    for (let i = 0; i < rowStr.length; i++) {
+        let char = rowStr[i];
+        if (char === '"' || char === "'") {
+            insideQuote = !insideQuote;
+        } else if (char === ',' && !insideQuote) {
+            result.push(entry);
+            entry = '';
+        } else {
+            entry += char;
+        }
+    }
+    result.push(entry);
+    return result;
+}
+
+function showError(error) {
+    document.getElementById('loading-indicator').classList.add('hidden');
+    document.getElementById('error-message').classList.remove('hidden');
+    document.getElementById('error-text').textContent = error.message || String(error);
+    document.getElementById('table-body').innerHTML = '<tr><td colspan="9" class="text-center py-4 text-red-500">Gagal memuat data.</td></tr>';
+}
+
+function initializeDashboard(data) {
+    document.getElementById('loading-indicator').classList.add('hidden');
+    if(!data || data.length === 0) return showError("Data kosong atau format tidak valid.");
+    ALL_DATA = data;
+    
+    if (ALL_DATA.length > 0) {
+        let sampleKeys = Object.keys(ALL_DATA[0]);
+        if (sampleKeys.length >= 33) {
+            keyAH = sampleKeys[32];
+        }
+        if (!sampleKeys.includes(keyAH)) {
+            keyAH = 'count';
+        }
+    }
+    
+    applyModeUI();
+    updateAllFilterOptions();
+    applyFilters(true);
+    renderScorecards();
+}
+
+function updateAllFilterOptions() {
+    if(isUpdatingDropdowns) return;
+    isUpdatingDropdowns = true;
+    
+    const curBuyer = document.getElementById('filter-buyer').value;
+    const curDept = document.getElementById('filter-dept').value;
+    const curSupplier = document.getElementById('filter-supplier').value;
+    const curBrand = document.getElementById('filter-brand').value;
+    const curCategory = document.getElementById('filter-category').value;
+    const curKomp = document.getElementById('filter-komp').value;
+    const curAH = document.getElementById('filter-ah').value;
+    
+    let baseFiltered = ALL_DATA;
+    const getOptions = (filterFn, key) => [...new Set(baseFiltered.filter(filterFn).map(i => i[key]).filter(v => v !== null && v !== undefined && v !== ''))].sort();
+
+    let buyers = getOptions(i=> (!curDept || i['Dept']===curDept) && (!curSupplier || i['Supplier']===curSupplier) && (!curBrand || i['BRAND']===curBrand) && (!curCategory || i['Kategori']===curCategory) && (!curKomp || i['Komp']===curKomp) && (!curAH || String(i[keyAH] || i['count'] || '').toUpperCase().includes(curAH.toUpperCase())), 'BUYER');
+    let buyerSel = document.getElementById('filter-buyer');
+    buyerSel.innerHTML = '<option value="">Semua Buyer</option>';
+    buyers.forEach(b=> buyerSel.innerHTML += `<option value="${b}">${b}</option>`);
+    buyerSel.value = buyers.includes(curBuyer) ? curBuyer : "";
+
+    let depts = getOptions(i=> (!curBuyer || i['BUYER']===curBuyer) && (!curSupplier || i['Supplier']===curSupplier) && (!curBrand || i['BRAND']===curBrand) && (!curCategory || i['Kategori']===curCategory) && (!curKomp || i['Komp']===curKomp) && (!curAH || String(i[keyAH] || i['count'] || '').toUpperCase().includes(curAH.toUpperCase())), 'Dept');
+    let deptSel = document.getElementById('filter-dept');
+    deptSel.innerHTML = '<option value="">Semua Dept</option>';
+    depts.forEach(d=> deptSel.innerHTML += `<option value="${d}">${d}</option>`);
+    deptSel.value = depts.includes(curDept) ? curDept : "";
+
+    let suppliers = getOptions(i=> (!curBuyer || i['BUYER']===curBuyer) && (!curDept || i['Dept']===curDept) && (!curBrand || i['BRAND']===curBrand) && (!curCategory || i['Kategori']===curCategory) && (!curKomp || i['Komp']===curKomp) && (!curAH || String(i[keyAH] || i['count'] || '').toUpperCase().includes(curAH.toUpperCase())), 'Supplier');
+    let supSel = document.getElementById('filter-supplier');
+    supSel.innerHTML = '<option value="">Semua Supplier</option>';
+    suppliers.forEach(s=> supSel.innerHTML += `<option value="${s}">${s}</option>`);
+    supSel.value = suppliers.includes(curSupplier) ? curSupplier : "";
+
+    let brands = getOptions(i=> (!curBuyer || i['BUYER']===curBuyer) && (!curDept || i['Dept']===curDept) && (!curSupplier || i['Supplier']===curSupplier) && (!curCategory || i['Kategori']===curCategory) && (!curKomp || i['Komp']===curKomp) && (!curAH || String(i[keyAH] || i['count'] || '').toUpperCase().includes(curAH.toUpperCase())), 'BRAND');
+    let brandSel = document.getElementById('filter-brand');
+    brandSel.innerHTML = '<option value="">Semua Brand</option>';
+    brands.forEach(b=> brandSel.innerHTML += `<option value="${b}">${b}</option>`);
+    brandSel.value = brands.includes(curBrand) ? curBrand : "";
+
+    let cats = getOptions(i=> (!curBuyer || i['BUYER']===curBuyer) && (!curDept || i['Dept']===curDept) && (!curSupplier || i['Supplier']===curSupplier) && (!curBrand || i['BRAND']===curBrand) && (!curKomp || i['Komp']===curKomp) && (!curAH || String(i[keyAH] || i['count'] || '').toUpperCase().includes(curAH.toUpperCase())), 'Kategori');
+    let catSel = document.getElementById('filter-category');
+    catSel.innerHTML = '<option value="">Semua Kategori</option>';
+    cats.forEach(c=> catSel.innerHTML += `<option value="${c}">${c}</option>`);
+    catSel.value = cats.includes(curCategory) ? curCategory : "";
+
+    let komps = getOptions(i=> (!curBuyer || i['BUYER']===curBuyer) && (!curDept || i['Dept']===curDept) && (!curSupplier || i['Supplier']===curSupplier) && (!curBrand || i['BRAND']===curBrand) && (!curCategory || i['Kategori']===curCategory) && (!curAH || String(i[keyAH] || i['count'] || '').toUpperCase().includes(curAH.toUpperCase())), 'Komp');
+    let kompSel = document.getElementById('filter-komp');
+    kompSel.innerHTML = '<option value="">Semua Komp</option>';
+    komps.forEach(k=> kompSel.innerHTML += `<option value="${k}">${k}</option>`);
+    kompSel.value = komps.includes(curKomp) ? curKomp : "";
+
+    isUpdatingDropdowns = false;
+}
+
+function onFilterChange(changedFilter) { if(isUpdatingDropdowns) return; updateAllFilterOptions(); applyFilters(true); renderScorecards(); }
+
+function applyFilters(resetPage=true) {
+    let buyer = document.getElementById('filter-buyer').value;
+    let dept = document.getElementById('filter-dept').value;
+    let supplier = (currentMode === 'admin') ? document.getElementById('filter-supplier').value : "";
+    let brand = document.getElementById('filter-brand').value;
+    let category = document.getElementById('filter-category').value;
+    let komp = document.getElementById('filter-komp').value;
+    
+    let ahValue = document.getElementById('filter-ah').value; 
+    let searchTerm = document.getElementById('search-term').value.toLowerCase();
+    let poStatus = document.getElementById('filter-po').value;
+    let soqFilter = document.getElementById('filter-soq').value;
+
+    let stokMin = document.getElementById('filter-stok-min').value;
+    let stokMax = document.getElementById('filter-stok-max').value;
+    let valSoqMin = document.getElementById('filter-valsoq-min').value;
+    let valSoqMax = document.getElementById('filter-valsoq-max').value;
+    
+    let filtered = ALL_DATA.filter(item=>{
+        if(buyer && item['BUYER']!==buyer) return false;
+        if(dept && item['Dept']!==dept) return false;
+        if(currentMode === 'admin' && supplier && item['Supplier']!==supplier) return false;
+        if(brand && item['BRAND']!==brand) return false;
+        if(category && item['Kategori']!==category) return false;
+        if(komp && item['Komp']!==komp) return false;
+        
+        let stok = parseNumber(item['Stok']);
+        if(stokMin !== '' && stok < parseFloat(stokMin)) return false;
+        if(stokMax !== '' && stok > parseFloat(stokMax)) return false;
+
+        let valSoq = parseNumber(item['Value SOQ']);
+        if(valSoqMin !== '' && valSoq < parseFloat(valSoqMin)) return false;
+        if(valSoqMax !== '' && valSoq > parseFloat(valSoqMax)) return false;
+
+        if(ahValue) {
+            let rowValAH = String(item[keyAH] !== undefined ? item[keyAH] : (item['count'] || '')).trim();
+            if(!rowValAH.toUpperCase().includes(ahValue.toUpperCase())) return false;
+        }
+        
+        if(poStatus) { 
+            let po = String(item['NO PO LAST JUN'] || '').toUpperCase().trim(); 
+            if(poStatus==='SOQ' && po!=='SOQ') return false; 
+            if(poStatus==='NaN' && (po==='SOQ' || po==='')) return false; 
+        }
+        let soq = parseNumber(item['SOQ']);
+        if(soqFilter==='positive' && soq<=0) return false;
+        if(soqFilter==='zero' && soq!==0) return false;
+        if(soqFilter==='negative' && soq>=0) return false;
+        
+        if(searchTerm) { 
+            let code = String(item['Kode']||'').toLowerCase(), name = String(item['Nama Item']||'').toLowerCase(); 
+            if(!code.includes(searchTerm) && !name.includes(searchTerm)) return false; 
+        }
+        return true;
+    });
+    
+    filtered.sort((a,b)=>{
+        let av = parseNumber(a[SORT_COLUMN]), bv = parseNumber(b[SORT_COLUMN]);
+        if(!isNaN(av) && !isNaN(bv) && String(a[SORT_COLUMN]).trim() !== '' && String(b[SORT_COLUMN]).trim() !== '') { 
+            return SORT_DIRECTION==='desc'? bv - av : av - bv; 
+        }
+        let avStr = String(a[SORT_COLUMN]||''), bvStr = String(b[SORT_COLUMN]||'');
+        return SORT_DIRECTION==='desc'? bvStr.localeCompare(avStr) : avStr.localeCompare(bvStr);
+    });
+    
+    FILTERED_DATA = filtered;
+    if(resetPage) CURRENT_PAGE=1;
+    renderTable();
+    renderScorecards();
+}
+
+function resetFilters() {
+    document.getElementById('filter-buyer').value='';
+    document.getElementById('filter-dept').value='';
+    if(currentMode === 'admin') {
+        document.getElementById('filter-supplier').value='';
+    }
+    document.getElementById('filter-brand').value='';
+    document.getElementById('filter-category').value='';
+    document.getElementById('filter-komp').value='';
+    document.getElementById('filter-ah').value='';
+    document.getElementById('filter-po').value='';
+    document.getElementById('filter-soq').value='';
+    document.getElementById('filter-stok-min').value='';
+    document.getElementById('filter-stok-max').value='';
+    document.getElementById('filter-valsoq-min').value='';
+    document.getElementById('filter-valsoq-max').value='';
+    document.getElementById('search-term').value='';
+    document.getElementById('perPage').value='10';
+    SORT_COLUMN='SOQ'; SORT_DIRECTION='desc';
+    updateAllFilterOptions();
+    applyFilters(true);
+}
+
+function renderScorecards() {
+    let totalStok = 0, totalSOQ = 0, totalValue = 0, totalAvg = 0, totalGT = 0, cnt = FILTERED_DATA.length;
+    
+    FILTERED_DATA.forEach(i => {
+        totalStok += parseNumber(i['Stok']);
+        totalSOQ += parseNumber(i['SOQ']);
+        totalValue += parseNumber(i['Value SOQ']);
+        totalAvg += parseNumber(i['AVG sls'] || i['AVG Sls'] || i['MS Median']);
+        totalGT += parseNumber(i['GT Sls']);
+    });
+    
+    let avgSls = cnt ? totalAvg / cnt : 0;
+    let ssr = totalAvg ? totalStok / totalAvg : 0;
+    
+    document.getElementById('sc-total-stok').textContent = formatNumber(totalStok);
+    document.getElementById('sc-total-soq').textContent = formatNumber(totalSOQ);
+    document.getElementById('sc-total-value-soq').textContent = `Rp ${formatNumber(totalValue)}`;
+    document.getElementById('sc-total-gtsls').textContent = formatNumber(totalGT);
+    document.getElementById('sc-avg-sls').textContent = formatNumber(avgSls);
+    document.getElementById('sc-ssr').textContent = formatRatio(ssr);
+    document.getElementById('sc-count-item').textContent = formatNumber(cnt);
+}
+
+function renderTable() {
+    let tbody = document.getElementById('table-body');
+    tbody.innerHTML = '';
+    
+    if(FILTERED_DATA.length===0) {
+        tbody.innerHTML='<tr><td colspan="9" class="text-center py-4 text-gray-500">Tidak ada data yang cocok dengan kriteria filter.</td></tr>';
+        document.getElementById('record-info').textContent='0 Data';
+        document.getElementById('pagination-controls').innerHTML='';
+        updateSortIcons();
+        return;
+    }
+    
+    let perPage = document.getElementById('perPage').value;
+    let itemsPerPage = perPage==='all' ? FILTERED_DATA.length : parseInt(perPage);
+    let totalPages = Math.ceil(FILTERED_DATA.length/itemsPerPage);
+    if(CURRENT_PAGE>totalPages) CURRENT_PAGE=totalPages;
+    
+    let start = (CURRENT_PAGE-1)*itemsPerPage, end = Math.min(start+itemsPerPage, FILTERED_DATA.length);
+    let currentItems = FILTERED_DATA.slice(start, end);
+    
+    currentItems.forEach(item=>{
+        let soq = parseNumber(item['SOQ']), soqClass = soq<0 ? 'text-red-500 font-bold' : 'text-blue-500 font-bold';
+        let uom = item['UOM'] || item['Sat'] || item['ITEM_UNIT'] || '-'; 
+        
+        let rawSupplier = item['Supplier'] || '-';
+        let displaySupplier = (currentMode === 'sales') 
+            ? '<span class="filter blur-sm select-none text-gray-400" title="Disembunyikan di Sales Mode">██████████</span>' 
+            : rawSupplier;
+
+        let row = `
+            <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-3 py-2 text-xs font-medium text-blue-600 cursor-pointer hover:underline" onclick="showItemDetail('${item['Kode']}')">${item['Kode'] || '-'}</td>
+                <td class="px-3 py-2 text-xs text-gray-700 max-w-xs truncate" title="${item['Nama Item']}">${item['Nama Item'] || '-'}</td>
+                <td class="px-3 py-2 text-xs text-gray-600 font-semibold">${uom}</td>
+                <td class="px-3 py-2 text-xs text-gray-500 truncate max-w-[150px]">${displaySupplier}</td>
+                <td class="px-3 py-2 text-xs text-gray-500 max-w-[120px] truncate" title="${item['BRAND']}">${item['BRAND'] || '-'}</td>
+                <td class="px-3 py-2 text-xs text-right text-gray-700">${formatNumber(item['Stok'])}</td>
+                <td class="px-3 py-2 text-xs text-gray-500">${item['NO PO LAST JUN'] || '-'}</td>
+                <td class="px-3 py-2 text-xs text-right text-gray-700">${formatNumber(item['QTY PO'])}</td>
+                <td class="px-3 py-2 text-xs text-right bg-blue-50 ${soqClass}">${formatNumber(soq)}</td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+    
+    document.getElementById('record-info').textContent = `${start+1}-${end} dari ${FILTERED_DATA.length} Data`;
+    renderPagination(totalPages);
+    updateSortIcons();
+}
+
+function renderPagination(totalPages) {
+    let container = document.getElementById('pagination-controls');
+    container.innerHTML = '';
+    if(totalPages <= 1) return;
+    
+    const btnClass = "px-2.5 py-1 text-xs border rounded bg-white hover:bg-gray-100 font-medium pagination-btn shadow-sm";
+    const activeClass = "px-2.5 py-1 text-xs border rounded bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-sm";
+    
+    if(CURRENT_PAGE > 1) container.innerHTML += `<button onclick="changePage(1)" class="${btnClass}">&lt;&lt;</button><button onclick="changePage(${CURRENT_PAGE-1})" class="${btnClass}">&lt;</button>`;
+    
+    let startPage = Math.max(1, CURRENT_PAGE - 2), endPage = Math.min(totalPages, startPage + 4);
+    if(endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+    
+    for(let i=startPage; i<=endPage; i++) {
+        container.innerHTML += `<button onclick="changePage(${i})" class="${i===CURRENT_PAGE ? activeClass : btnClass}">${i}</button>`;
+    }
+    
+    if(CURRENT_PAGE < totalPages) container.innerHTML += `<button onclick="changePage(${CURRENT_PAGE+1})" class="${btnClass}">&gt;</button><button onclick="changePage(${totalPages})" class="${btnClass}">&gt;&gt;</button>`;
+}
+
+function changePage(p) { CURRENT_PAGE = p; renderTable(); }
+
+function showItemDetail(kode) {
+    let item = ALL_DATA.find(i=>String(i['Kode'])===String(kode));
+    if(!item) return;
+    
+    document.getElementById('detail-kode').textContent = item['Kode'] || '-';
+    document.getElementById('detail-nama').textContent = item['Nama Item'] || '-';
+    document.getElementById('detail-uom').textContent = item['UOM'] || item['Sat'] || item['ITEM_UNIT'] || '-';
+    document.getElementById('detail-soq').textContent = formatNumber(item['SOQ']);
+    document.getElementById('detail-stok').textContent = formatNumber(item['Stok']);
+    document.getElementById('detail-avgsales').textContent = formatNumber(item['AVG sls'] || item['AVG Sls'] || item['MS Median']);
+    document.getElementById('detail-gtsls').textContent = formatNumber(item['GT Sls']);
+    
+    let avg = parseNumber(item['AVG sls'] || item['AVG Sls'] || item['MS Median']), stok = parseNumber(item['Stok']);
+    document.getElementById('detail-ssr').textContent = formatRatio(avg ? stok / avg : 0);
+    
+    document.getElementById('detail-buyer').textContent = item['BUYER'] || '-';
+    document.getElementById('detail-dept').textContent = item['Dept'] || '-';
+    document.getElementById('detail-nopolast').textContent = item['NO PO LAST JUN'] || '-';
+    document.getElementById('detail-qtypo').textContent = formatNumber(item['QTY PO']);
+    document.getElementById('detail-category').textContent = item['Kategori'] || '-';
+    
+    let rawSupplier = item['Supplier'] || '-';
+    if (currentMode === 'sales') {
+        document.getElementById('detail-supplier').innerHTML = '<span class="filter blur-sm select-none text-gray-400">██████████</span>';
+    } else {
+        document.getElementById('detail-supplier').textContent = rawSupplier;
+    }
+
+    document.getElementById('detail-brand').textContent = item['BRAND'] || '-';
+    document.getElementById('detail-komp').textContent = item['Komp'] || '-';
+    
+    let modal = document.getElementById('item-detail-modal');
+    modal.classList.remove('opacity-0', 'pointer-events-none');
+    
+    renderMonthlyChart(item);
+}
+
+function closeItemDetail() {
+    let modal = document.getElementById('item-detail-modal');
+    modal.classList.add('opacity-0', 'pointer-events-none');
+}
+
+function renderMonthlyChart(item) {
+    let ctx = document.getElementById('monthlySalesChart').getContext('2d');
+    if(monthlySalesChartInstance) monthlySalesChartInstance.destroy();
+    
+    const months = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sept', 'Okt', 'Nov', 'Dec'];
+    let dataValues = months.map(m => {
+        let val = item[m];
+        if (val === undefined && m === 'Mrt') val = item['Mar'];
+        if (val === undefined && m === 'Dec') val = item['Des'] || item['Dec'];
+        return parseNumber(val);
+    });
+    
+    monthlySalesChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: months,
+            datasets: [{
+                label: 'QTY Terjual',
+                data: dataValues,
+                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true, ticks: { callback: value => formatNumber(value) } } },
+            plugins: { legend: { display: false } }
+        }
+    });
+}
+
+function exportToExcel() {
+    let ws = XLSX.utils.json_to_sheet(FILTERED_DATA);
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "SOQ_Data");
+    XLSX.writeFile(wb, "SOQ_Dashboard_Export.xlsx");
+}
+
+function exportToCSV() {
+    let ws = XLSX.utils.json_to_sheet(FILTERED_DATA);
+    let csv = XLSX.utils.sheet_to_csv(ws);
+    let blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
+    let link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.setAttribute("download", "SOQ_Dashboard_Export.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function exportToPDF() { window.print(); }
+
+function exportToPOTemplate() {
+    if (!FILTERED_DATA.length) {
+        alert("Tidak ada data untuk diekspor. Periksa filter Anda.");
+        return;
+    }
+    
+    const selectedSupplier = document.getElementById('filter-supplier').value;
+    const supplierValue = selectedSupplier || "ALL SUPPLIERS";
+    
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('id-ID', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    
+    const headers = ["No", "Kode", "Nama Item", "UOM", "SOQ", "Value SOQ", "Disc Rp", "Disc% 1", "Disc% 2", "Disc% 3", "Disc% 4", "Disc% 5", "Disc Rp Total"];
+    
+    let dataRows = [];
+    FILTERED_DATA.forEach((item, idx) => {
+        let row = [
+            idx + 1,                               
+            item['Kode'] || '',                    
+            item['Nama Item'] || '',               
+            item['UOM'] || '-',                    
+            parseNumber(item['SOQ']),             
+            parseNumber(item['Value SOQ']),       
+            0,                                   
+            0, 0, 0, 0, 0,               
+            0                                    
+        ];
+        dataRows.push(row);
+    });
+    
+    const sheetData = [
+        ["Tanggal", dateStr, "", "", "", "", "", "", "", "", "", "", ""],
+        ["Supplier", supplierValue, "", "", "", "", "", "", "", "", "", "", ""],
+        headers,
+        ...dataRows
+    ];
+    
+    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+    ws['!cols'] = [{wch:5},{wch:15},{wch:30},{wch:8},{wch:10},{wch:15},{wch:10},{wch:8},{wch:8},{wch:8},{wch:8},{wch:8},{wch:12}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "PO_Template");
+    
+    XLSX.writeFile(wb, `PO_Import_${dateStr.replace(/\//g, '-')}.xlsx`);
+}
+</script>
+</body>
+</html>
