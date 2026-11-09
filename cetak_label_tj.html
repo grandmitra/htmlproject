@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cetak Label Tom & Jerry - Price Tag Generator</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Screen Preview Styles */
+        .preview-paper {
+            background-color: white;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            margin: 0 auto;
+            transition: all 0.2s ease;
+        }
+
+        .label-grid {
+            display: grid;
+            box-sizing: border-box;
+        }
+
+        .label-item {
+            box-sizing: border-box;
+            border: 1px dashed #cbd5e1;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            background: #fff;
+        }
+
+        /* Print CSS Rules */
+        @media print {
+            @page {
+                size: auto;
+                margin: 0mm; /* Browser default print margin zeroed */
+            }
+            body {
+                background: white !important;
+                color: black !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .print-area {
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+            }
+            .preview-paper {
+                box-shadow: none !important;
+                margin: 0 !important;
+                border: none !important;
+            }
+            .label-item {
+                border: none !important; /* Hide outline when printing */
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col">
+
+    <!-- Top Navigation / Header (No Print) -->
+    <header class="no-print bg-slate-900 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-red-600 text-white p-2 rounded-lg font-black text-xl tracking-wider">
+                    TnJ
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">Cetak Label Harga Tom & Jerry</h1>
+                    <p class="text-xs text-slate-400">Generator Price Tag & Sticker Label Promo Retail</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="window.print()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg font-semibold flex items-center space-x-2 transition shadow-sm hover:shadow">
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                    <span>Cetak Label</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Form Control Panel (No Print) -->
+        <section class="no-print lg:col-span-5 xl:col-span-4 space-y-5">
+            
+            <!-- Preset & Layout Settings -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
+                <h2 class="font-bold text-slate-800 text-base flex items-center space-x-2 border-b pb-3">
+                    <i data-lucide="layers" class="w-5 h-5 text-indigo-600"></i>
+                    <span>1. Pilih Ukuran Label TnJ</span>
+                </h2>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tipe / Ukuran Label</label>
+                    <select id="labelPreset" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-medium">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 text-xs bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    <div>
+                        <span class="text-slate-500 block">Ukuran Stiker:</span>
+                        <span id="infoSize" class="font-bold text-slate-700">-</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block">Format Grid:</span>
+                        <span id="infoGrid" class="font-bold text-slate-700">-</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block">Isi per Lembar:</span>
+                        <span id="infoTotal" class="font-bold text-indigo-600">-</span>
+                    </div>
+                    <div>
+                        <span class="text-slate-500 block">Kertas:</span>
+                        <span id="infoPaper" class="font-bold text-slate-700">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Data Input Form -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
+                <h2 class="font-bold text-slate-800 text-base flex items-center space-x-2 border-b pb-3">
+                    <i data-lucide="tag" class="w-5 h-5 text-indigo-600"></i>
+                    <span>2. Informasi Data Barang</span>
+                </h2>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Kode Barang / SKU</label>
+                        <input type="text" id="inputSKU" placeholder="Contoh: BRG-00123" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Deskripsi / Nama Barang</label>
+                        <textarea id="inputDesc" rows="2" placeholder="Contoh: Minyak Goreng Sawit Refill 2L Premium" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Harga Reguler (Rp)</label>
+                            <input type="text" id="inputRegPrice" placeholder="10.000" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Harga Promo (Rp)</label>
+                            <input type="text" id="inputPromoPrice" placeholder="7.500" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Satuan</label>
+                        <input type="text" id="inputUnit" placeholder="Contoh: / Pcs, / Dus, / Meter" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Badge Promo (Opsional)</label>
+                        <input type="text" id="inputBadge" placeholder="Contoh: SPECIAL OFFER, PROMO, HEMAT" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quantity & Actions -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
+                <h2 class="font-bold text-slate-800 text-base flex items-center space-x-2 border-b pb-3">
+                    <i data-lucide="sliders" class="w-5 h-5 text-indigo-600"></i>
+                    <span>3. Pengaturan Cetak</span>
+                </h2>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Mode Pengisian Label</label>
+                        <select id="fillMode" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+                            <option value="all">Duplikasi ke Semua Slot Label</option>
+                            <option value="custom">Jumlah Slot Tertentu</option>
+                        </select>
+                    </div>
+
+                    <div id="countContainer" class="hidden">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Jumlah Stiker yang Diisi</label>
+                        <input type="number" id="labelCount" min="1" value="1" class="w-full bg-slate-50 border border-slate-300 text-slate-800 text-sm rounded-lg p-2.5 focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button onclick="window.print()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-4 rounded-xl shadow transition flex items-center justify-center space-x-2">
+                        <i data-lucide="printer" class="w-5 h-5"></i>
+                        <span>Cetak Sekarang</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Preview Panel -->
+        <section class="lg:col-span-7 xl:col-span-8 flex flex-col items-center">
+            
+            <div class="no-print w-full flex justify-between items-center mb-3">
+                <div class="flex items-center space-x-2">
+                    <span class="font-bold text-slate-700 text-sm">Pratinjau Cetak</span>
+                    <span class="text-xs text-slate-500">(Tampilan mendekati hasil asli di lembar stiker)</span>
+                </div>
+                <div class="text-xs text-slate-500">
+                    Tip: Matikan "Headers & Footers" saat di dialog Print.
+                </div>
+            </div>
+
+            <!-- Paper Container (Print Area) -->
+            <div class="print-area w-full flex justify-center overflow-auto p-4 bg-slate-200/60 rounded-2xl border border-slate-300">
+                
+                <div id="paperSheet" class="preview-paper relative box-border">
+                    <!-- Grid container generated dynamically -->
+                    <div id="labelGrid" class="label-grid h-full w-full">
+                        <!-- Label Items Populated via JS -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer (No Print) -->
+    <footer class="no-print bg-white border-t border-slate-200 mt-auto py-4">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+            Cetak Label Tom & Jerry &copy; Price Tag Generator - Format standar No. 98 s/d 129 & L.02 s/d L.05
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Standard Tom & Jerry Label Database Specifications
+        // Dimensions in millimeters (mm)
+        const TNJ_DATABASE = {
+            "98":  { labelW: 46, labelH: 15, cols: 4, rows: 8, marginT: 8, marginL: 6, gapX: 2, gapY: 2, paperW: 200, paperH: 140 },
+            "99":  { labelW: 35, labelH: 7,  cols: 5, rows: 15, marginT: 10, marginL: 8, gapX: 2, gapY: 2, paperW: 195, paperH: 145 },
+            "100": { labelW: 38, labelH: 38, cols: 5, rows: 3, marginT: 10, marginL: 5, gapX: 2, gapY: 2, paperW: 205, paperH: 130 },
+            "101": { labelW: 50, labelH: 15, cols: 3, rows: 8, marginT: 8, marginL: 7, gapX: 3, gapY: 2, paperW: 170, paperH: 145 },
+            "102": { labelW: 48, labelH: 50, cols: 3, rows: 2, marginT: 15, marginL: 10, gapX: 3, gapY: 3, paperW: 165, paperH: 135 },
+            "103": { labelW: 64, labelH: 32, cols: 3, rows: 4, marginT: 7, marginL: 7, gapX: 2, gapY: 2, paperW: 205, paperH: 145 },
+            "104": { labelW: 74, labelH: 24, cols: 2, rows: 5, marginT: 8, marginL: 10, gapX: 3, gapY: 2, paperW: 165, paperH: 140 },
+            "105": { labelW: 37, labelH: 24, cols: 5, rows: 5, marginT: 8, marginL: 6, gapX: 2, gapY: 2, paperW: 200, paperH: 140 },
+            "106": { labelW: 25, labelH: 25, cols: 7, rows: 5, marginT: 8, marginL: 6, gapX: 2, gapY: 2, paperW: 195, paperH: 145 },
+            "107": { labelW: 18, labelH: 50, cols: 9, rows: 2, marginT: 15, marginL: 8, gapX: 2, gapY: 3, paperW: 190, paperH: 135 },
+            "108": { labelW: 18, labelH: 38, cols: 9, rows: 3, marginT: 10, marginL: 8, gapX: 2, gapY: 2, paperW: 190, paperH: 135 },
+            "109": { labelW: 13, labelH: 38, cols: 12, rows: 3, marginT: 10, marginL: 8, gapX: 2, gapY: 2, paperW: 190, paperH: 135 },
+            "110": { labelW: 16, labelH: 22, cols: 10, rows: 5, marginT: 10, marginL: 8, gapX: 2, gapY: 2, paperW: 190, paperH: 135 },
+            "111": { labelW: 18, labelH: 14, cols: 9, rows: 8, marginT: 10, marginL: 8, gapX: 2, gapY: 2, paperW: 190, paperH: 140 },
+            "112": { labelW: 8,  labelH: 20, cols: 16, rows: 6, marginT: 8, marginL: 8, gapX: 2, gapY: 2, paperW: 170, paperH: 140 },
+            "113": { labelW: 11, labelH: 11, cols: 13, rows: 10, marginT: 8, marginL: 8, gapX: 2, gapY: 2, paperW: 175, paperH: 140 },
+            "114": { labelW: 46, labelH: 70, cols: 4, rows: 2, marginT: 8, marginL: 6, gapX: 2, gapY: 3, paperW: 200, paperH: 155 },
+            "115": { labelW: 30, labelH: 60, cols: 6, rows: 2, marginT: 10, marginL: 6, gapX: 2, gapY: 3, paperW: 195, paperH: 145 },
+            "116": { labelW: 26, labelH: 60, cols: 7, rows: 2, marginT: 10, marginL: 6, gapX: 2, gapY: 3, paperW: 200, paperH: 145 },
+            "117": { labelW: 22, labelH: 60, cols: 8, rows: 2, marginT: 10, marginL: 6, gapX: 2, gapY: 3, paperW: 200, paperH: 145 },
+            "118": { labelW: 20, labelH: 60, cols: 9, rows: 2, marginT: 10, marginL: 6, gapX: 2, gapY: 3, paperW: 205, paperH: 145 },
+            "119": { labelW: 10, labelH: 30, cols: 14, rows: 4, marginT: 8, marginL: 8, gapX: 2, gapY: 2, paperW: 180, paperH: 140 },
+            "120": { labelW: 79, labelH: 46, cols: 2, rows: 3, marginT: 6, marginL: 8, gapX: 3, gapY: 3, paperW: 175, paperH: 155 },
+            "121": { labelW: 38, labelH: 75, cols: 5, rows: 2, marginT: 6, marginL: 6, gapX: 2, gapY: 3, paperW: 205, paperH: 165 },
+            "122": { labelW: 17, labelH: 85, cols: 9, rows: 1, marginT: 15, marginL: 8, gapX: 2, gapY: 0, paperW: 180, paperH: 120 },
+            "123": { labelW: 12, labelH: 30, cols: 12, rows: 4, marginT: 8, marginL: 8, gapX: 2, gapY: 2, paperW: 180, paperH: 140 },
+            "124": { labelW: 40, labelH: 55, cols: 4, rows: 2, marginT: 10, marginL: 8, gapX: 2, gapY: 3, paperW: 180, paperH: 130 },
+            "125": { labelW: 31, labelH: 55, cols: 5, rows: 2, marginT: 10, marginL: 8, gapX: 2, gapY: 3, paperW: 175, paperH: 130 },
+            "126": { labelW: 10, labelH: 42, cols: 14, rows: 3, marginT: 10, marginL: 8, gapX: 2, gapY: 2, paperW: 180, paperH: 140 },
+            "127": { labelW: 35, labelH: 15, cols: 5, rows: 8, marginT: 8, marginL: 6, gapX: 2, gapY: 2, paperW: 195, paperH: 140 },
+            "128": { labelW: 42, labelH: 14, cols: 4, rows: 8, marginT: 8, marginL: 6, gapX: 2, gapY: 2, paperW: 185, paperH: 140 },
+            "129": { labelW: 17, labelH: 58, cols: 9, rows: 2, marginT: 10, marginL: 8, gapX: 2, gapY: 3, paperW: 180, paperH: 135 },
+            "L.02": { labelW: 100, labelH: 140, cols: 1, rows: 1, marginT: 5, marginL: 5, gapX: 0, gapY: 0, paperW: 110, paperH: 150 },
+            "L.03": { labelW: 68,  labelH: 120, cols: 2, rows: 1, marginT: 10, marginL: 6, gapX: 3, gapY: 0, paperW: 155, paperH: 140 },
+            "L.04": { labelW: 70,  labelH: 95,  cols: 2, rows: 1, marginT: 15, marginL: 6, gapX: 3, gapY: 0, paperW: 155, paperH: 130 },
+            "L.05": { labelW: 55,  labelH: 95,  cols: 3, rows: 1, marginT: 15, marginL: 6, gapX: 2, gapY: 0, paperW: 180, paperH: 130 }
+        };
+
+        // DOM Element Handles
+        const labelPresetSelect = document.getElementById('labelPreset');
+        const inputSKU = document.getElementById('inputSKU');
+        const inputDesc = document.getElementById('inputDesc');
+        const inputRegPrice = document.getElementById('inputRegPrice');
+        const inputPromoPrice = document.getElementById('inputPromoPrice');
+        const inputUnit = document.getElementById('inputUnit');
+        const inputBadge = document.getElementById('inputBadge');
+        const fillModeSelect = document.getElementById('fillMode');
+        const countContainer = document.getElementById('countContainer');
+        const labelCountInput = document.getElementById('labelCount');
+
+        const infoSize = document.getElementById('infoSize');
+        const infoGrid = document.getElementById('infoGrid');
+        const infoTotal = document.getElementById('infoTotal');
+        const infoPaper = document.getElementById('infoPaper');
+
+        const paperSheet = document.getElementById('paperSheet');
+        const labelGrid = document.getElementById('labelGrid');
+
+        // Populate Label Presets
+        function initPresets() {
+            labelPresetSelect.innerHTML = '';
+            Object.keys(TNJ_DATABASE).forEach(key => {
+                const spec = TNJ_DATABASE[key];
+                const option = document.createElement('option');
+                option.value = key;
+                option.textContent = `TnJ No. ${key} (${spec.labelW}x${spec.labelH} mm - ${spec.cols * spec.rows} pcs)`;
+                labelPresetSelect.appendChild(option);
+            });
+            
+            // Set Default Preset
+            labelPresetSelect.value = "103"; // Popular size for price tags
+            
+            // Fill initial mock data
+            inputSKU.value = "SKU-88219";
+            inputDesc.value = "Minyak Goreng Sawit Pouch 2 Liter";
+            inputRegPrice.value = "38.500";
+            inputPromoPrice.value = "32.900";
+            inputUnit.value = "/ Pouch";
+            inputBadge.value = "PROMO SPECIAL";
+        }
+
+        // Format Number Helpers
+        function formatRupiah(val) {
+            if (!val) return '';
+            let cleaned = val.toString().replace(/[^0-9]/g, '');
+            if (!cleaned) return '';
+            return new Intl.NumberFormat('id-ID').format(cleaned);
+        }
+
+        // Update Information UI
+        function updatePresetInfo(spec) {
+            infoSize.textContent = `${spec.labelW} × ${spec.labelH} mm`;
+            infoGrid.textContent = `${spec.cols} Kolom × ${spec.rows} Baris`;
+            infoTotal.textContent = `${spec.cols * spec.rows} Stiker`;
+            infoPaper.textContent = `${spec.paperW} × ${spec.paperH} mm`;
+        }
+
+        // Render Labels Grid dynamically based on specification
+        function renderLabels() {
+            const presetKey = labelPresetSelect.value;
+            const spec = TNJ_DATABASE[presetKey];
+
+            if (!spec) return;
+
+            updatePresetInfo(spec);
+
+            const totalSlots = spec.cols * spec.rows;
+            let activeCount = totalSlots;
+
+            if (fillModeSelect.value === 'custom') {
+                const customVal = parseInt(labelCountInput.value, 10);
+                if (!isNaN(customVal) && customVal > 0) {
+                    activeCount = Math.min(customVal, totalSlots);
+                }
+            }
+
+            // Set Paper dimensions
+            paperSheet.style.width = `${spec.paperW}mm`;
+            paperSheet.style.height = `${spec.paperH}mm`;
+            paperSheet.style.paddingTop = `${spec.marginT}mm`;
+            paperSheet.style.paddingLeft = `${spec.marginL}mm`;
+
+            // Set Grid Layout
+            labelGrid.style.gridTemplateColumns = `repeat(${spec.cols}, ${spec.labelW}mm)`;
+            labelGrid.style.gridTemplateRows = `repeat(${spec.rows}, ${spec.labelH}mm)`;
+            labelGrid.style.columnGap = `${spec.gapX}mm`;
+            labelGrid.style.rowGap = `${spec.gapY}mm`;
+
+            // Clear previous grid items
+            labelGrid.innerHTML = '';
+
+            // Get Input Values
+            const sku = inputSKU.value.trim();
+            const desc = inputDesc.value.trim();
+            const regPrice = formatRupiah(inputRegPrice.value);
+            const promoPrice = formatRupiah(inputPromoPrice.value);
+            const unit = inputUnit.value.trim();
+            const badge = inputBadge.value.trim();
+
+            // Calculate scale font dynamic based on label dimensions
+            const isSmall = spec.labelH < 20 || spec.labelW < 30;
+            const isVerySmall = spec.labelH <= 15 || spec.labelW <= 20;
+
+            for (let i = 0; i < totalSlots; i++) {
+                const item = document.createElement('div');
+                item.className = 'label-item rounded-xs flex flex-col justify-between overflow-hidden p-1.5 select-none bg-white';
+                
+                // Style adjustment for small stickers
+                if (isVerySmall) {
+                    item.style.padding = '1px';
+                }
+
+                if (i < activeCount) {
+                    // Populate Content to match exact right-side layout
+                    item.innerHTML = `
+                        <!-- Top Header Row: Badge & SKU -->
+                        <div class="flex items-center justify-between border-b border-slate-300 pb-1 w-full leading-none shrink-0">
+                            ${badge ? `<span class="bg-red-600 text-white font-black uppercase rounded-full px-1.5 py-0.5 tracking-tight ${isVerySmall ? 'text-[5px]' : isSmall ? 'text-[7px]' : 'text-[9px]'}">${badge}</span>` : '<div></div>'}
+                            ${sku ? `<span class="font-mono text-slate-500 font-bold ${isVerySmall ? 'text-[5px]' : isSmall ? 'text-[7px]' : 'text-[9px]'} tracking-tight">${sku}</span>` : ''}
+                        </div>
+
+                        <!-- Product Description Row -->
+                        <div class="text-center my-0.5 px-0.5 leading-tight shrink-0">
+                            <p class="font-extrabold text-slate-900 uppercase tracking-tight line-clamp-2 ${isVerySmall ? 'text-[6px]' : isSmall ? 'text-[8px]' : 'text-[11px]'}">
+                                ${desc || 'MINYAK GORENG SAWIT POUCH 2 LITER'}
+                            </p>
+                        </div>
+
+                        <!-- Dominant Promo Price Area (Centered & Massive like right image) -->
+                        <div class="flex-1 flex flex-col justify-center items-center my-auto w-full relative">
+                            <!-- Regular Price (Strikethrough) positioned at top left of price area -->
+                            ${regPrice ? `
+                                <div class="w-full text-left pl-1 -mb-1">
+                                    <span class="line-through text-slate-400 font-bold ${isVerySmall ? 'text-[5px]' : isSmall ? 'text-[7px]' : 'text-[9px]'}">Rp${regPrice}</span>
+                                </div>
+                            ` : ''}
+                            
+                            <!-- Huge Promo Price -->
+                            <div class="flex items-baseline justify-center text-red-600 font-black tracking-tight leading-none w-full">
+                                <span class="font-extrabold mr-0.5 ${isVerySmall ? 'text-[7px]' : isSmall ? 'text-[11px]' : 'text-[16px]'}">Rp</span>
+                                <span class="${isVerySmall ? 'text-[10px]' : isSmall ? 'text-[18px]' : 'text-[28px]'} font-black leading-none drop-shadow-xs">${promoPrice || '32.900'}</span>
+                            </div>
+                        </div>
+
+                        <!-- Bottom Unit Row -->
+                        <div class="flex justify-end items-end w-full leading-none shrink-0 pt-0.5">
+                            ${unit ? `<span class="text-slate-700 font-extrabold ${isVerySmall ? 'text-[5px]' : isSmall ? 'text-[8px]' : 'text-[10px]'}">${unit}</span>` : ''}
+                        </div>
+                    `;
+                } else {
+                    // Empty slot placeholder for printed sheet spacing
+                    item.innerHTML = `<div class="w-full h-full opacity-20 bg-slate-50"></div>`;
+                }
+
+                labelGrid.appendChild(item);
+            }
+        }
+
+        // Dynamic Dynamic Event Listeners
+        function setupEventListeners() {
+            // Dropdown & Form Inputs
+            labelPresetSelect.addEventListener('change', renderLabels);
+            
+            [inputSKU, inputDesc, inputUnit, inputBadge].forEach(element => {
+                element.addEventListener('input', renderLabels);
+            });
+
+            // Format price on keyup / change
+            inputRegPrice.addEventListener('input', (e) => {
+                e.target.value = formatRupiah(e.target.value);
+                renderLabels();
+            });
+
+            inputPromoPrice.addEventListener('input', (e) => {
+                e.target.value = formatRupiah(e.target.value);
+                renderLabels();
+            });
+
+            // Fill Mode Listener
+            fillModeSelect.addEventListener('change', (e) => {
+                if (e.target.value === 'custom') {
+                    countContainer.classList.remove('hidden');
+                } else {
+                    countContainer.classList.add('hidden');
+                }
+                renderLabels();
+            });
+
+            labelCountInput.addEventListener('input', renderLabels);
+        }
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            initPresets();
+            setupEventListeners();
+            renderLabels();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+</html>
