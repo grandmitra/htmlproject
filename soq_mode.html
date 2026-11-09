@@ -62,9 +62,15 @@
                 <!-- PANEL TOMBOL EKSPOR & AKSI -->
                 <div class="space-y-2 border-b border-gray-200 pb-4">
                     <p class="text-xs font-bold text-gray-500 uppercase">Ekspor & Aksi</p>
+                    
+                    <button id="btn-export-sales-xlsx" onclick="exportSalesToExcel()" class="w-full flex items-center justify-start px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-medium">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Export Excel (Sales Mode)
+                    </button>
+
                     <button id="btn-export-xlsx" onclick="exportToExcel()" class="w-full flex items-center justify-start px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                        Export XLSX
+                        Export XLSX (Admin)
                     </button>
                     <button id="btn-export-csv" onclick="exportToCSV()" class="w-full flex items-center justify-start px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -192,7 +198,7 @@
                             <th class="px-3 py-3 text-left text-xs font-bold">UOM</th> 
                             <th class="px-3 py-3 text-left text-xs font-bold">Supplier</th>
                             <th class="px-3 py-3 text-left text-xs font-bold">BRAND</th>
-                            <th class="px-3 py-3 text-right text-xs font-bold">Stok</th>
+                            <th onclick="sortBy('Stok')" class="px-3 py-3 text-right text-xs font-bold sortable-header hover:bg-gray-200">Stok<span id="sort-Stok" class="sort-icon"></span></th>
                             <th class="px-3 py-3 text-left text-xs font-bold">NO PO LAST JUN</th>
                             <th class="px-3 py-3 text-right text-xs font-bold">QTY PO</th>
                             <th onclick="sortBy('SOQ')" class="px-3 py-3 text-right text-xs font-bold sortable-header bg-gray-200 hover:bg-gray-300">SOQ<span id="sort-SOQ" class="sort-icon"></span></th>
@@ -212,7 +218,7 @@
         <div class="modal-overlay fixed inset-0" onclick="cancelAdminPassword()"></div>
         <div class="modal-content bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 relative transform scale-95 transition-transform duration-300 z-10">
             <h3 class="text-base font-bold text-gray-800 mb-1">Akses Admin Mode</h3>
-            <p class="text-xs text-gray-500 mb-4">Silakan masukkan password admin untuk menampilkan data supplier & mengaktifkan tombol ekspor.</p>
+            <p class="text-xs text-gray-500 mb-4">Silakan masukkan password admin untuk menampilkan data supplier & mengaktifkan tombol ekspor admin.</p>
             
             <input type="password" id="admin-password-input" onkeyup="if(event.key==='Enter') submitAdminPassword()" placeholder="Masukkan Password..." class="w-full rounded-md border-gray-300 border p-2 text-sm mb-2 focus:ring-blue-500 focus:border-blue-500">
             <p id="admin-pass-error" class="text-xs text-red-500 hidden mb-3 font-semibold">Password salah, silakan coba lagi.</p>
@@ -279,9 +285,10 @@ let isUpdatingDropdowns = false;
 let keyAH = 'count';
 let currentMode = 'sales';
 let sidebarVisible = true;
+let STOK_KEY = 'Stok'; // Variabel dinamis untuk key kolom Stok
 
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRRlqRhknRPUEV01mUYHeTIjDNzblnkodAjIs_fWUaBoe1QKYPEmp9w3DxPuLyOx9gLVDMONrXNtdbj/pub?gid=1242857649&single=true&output=csv';
-const LOCAL_STORAGE_KEY = 'SOQ_DASHBOARD_DATA_CACHE_V3';
+const LOCAL_STORAGE_KEY = 'SOQ_DASHBOARD_DATA_CACHE_V5';
 
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
@@ -295,9 +302,23 @@ function toggleSidebar() {
 
 function parseNumber(val) {
     if (val === null || val === undefined || val === '') return 0;
-    if (typeof val === 'number') return val;
-    let cleanVal = String(val).trim().replace(/Rp/gi, '').replace(/\./g, '').replace(/,/g, '.');
-    let num = parseFloat(cleanVal);
+    if (typeof val === 'number') return isNaN(val) ? 0 : val;
+    
+    let str = String(val).trim().replace(/Rp/gi, '').replace(/\s+/g, '');
+    if (!str) return 0;
+
+    if (str.includes('.') && str.includes(',')) {
+        str = str.replace(/\./g, '').replace(',', '.');
+    } else if (str.includes('.')) {
+        const parts = str.split('.');
+        if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+            str = str.replace(/\./g, '');
+        }
+    } else if (str.includes(',')) {
+        str = str.replace(',', '.');
+    }
+
+    let num = parseFloat(str);
     return isNaN(num) ? 0 : num;
 }
 
@@ -314,7 +335,6 @@ function formatRatio(num) {
     return sign + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, "."); 
 }
 
-/* FUNGSI HANDLING MODE ADMIN & PENGATURAN STATUS TOMBOL EKSPOR */
 function handleModeChange() {
     let modeSelect = document.getElementById('app-mode');
     let selectedMode = modeSelect.value;
@@ -362,19 +382,23 @@ function submitAdminPassword() {
 function applyModeUI() {
     let supplierFilter = document.getElementById('filter-supplier');
     
-    // Ambil referensi tombol-tombol ekspor
+    let btnSalesXlsx = document.getElementById('btn-export-sales-xlsx');
     let btnXlsx = document.getElementById('btn-export-xlsx');
     let btnCsv = document.getElementById('btn-export-csv');
     let btnPdf = document.getElementById('btn-export-pdf');
     let btnPo = document.getElementById('btn-export-po');
 
     if (currentMode === 'sales') {
-        // Nonaktifkan Filter Supplier
         supplierFilter.value = "";
         supplierFilter.disabled = true;
         supplierFilter.classList.add('bg-gray-100', 'cursor-not-allowed', 'text-gray-400');
 
-        // Nonaktifkan Tombol Ekspor & Ubah Tampilan Menjadi Abu-abu (Disabled)
+        if (btnSalesXlsx) {
+            btnSalesXlsx.disabled = false;
+            btnSalesXlsx.classList.remove('bg-gray-300', 'cursor-not-allowed', 'opacity-60');
+            btnSalesXlsx.classList.add('hover:bg-emerald-700');
+        }
+
         [btnXlsx, btnCsv, btnPdf, btnPo].forEach(btn => {
             if (btn) {
                 btn.disabled = true;
@@ -383,11 +407,15 @@ function applyModeUI() {
             }
         });
     } else {
-        // Aktifkan Filter Supplier
         supplierFilter.disabled = false;
         supplierFilter.classList.remove('bg-gray-100', 'cursor-not-allowed', 'text-gray-400');
 
-        // Aktifkan Kembali Tombol Ekspor Sesuai Warna Aslinya
+        if (btnSalesXlsx) {
+            btnSalesXlsx.disabled = true;
+            btnSalesXlsx.classList.remove('hover:bg-emerald-700');
+            btnSalesXlsx.classList.add('bg-gray-300', 'cursor-not-allowed', 'opacity-60');
+        }
+
         if (btnXlsx) {
             btnXlsx.disabled = false;
             btnXlsx.classList.remove('bg-gray-300', 'cursor-not-allowed', 'opacity-60');
@@ -418,8 +446,9 @@ function updateSortIcons() {
 }
 
 function sortBy(column) { 
-    if(SORT_COLUMN===column) SORT_DIRECTION = SORT_DIRECTION==='asc'?'desc':'asc'; 
-    else { SORT_COLUMN=column; SORT_DIRECTION='desc'; } 
+    let actualCol = (column === 'Stok') ? STOK_KEY : column;
+    if(SORT_COLUMN===actualCol) SORT_DIRECTION = SORT_DIRECTION==='asc'?'desc':'asc'; 
+    else { SORT_COLUMN=actualCol; SORT_DIRECTION='desc'; } 
     applyFilters(); 
 }
 
@@ -493,17 +522,21 @@ function parseCSV(csvText) {
     if (lines.length < 2) return [];
     
     let headers = parseCSVRow(lines[0]);
-    let result = [];
     
+    // Deteksi otomatis key kolom stok jika tidak persis bernama "Stok"
+    STOK_KEY = headers.find(h => h && (h.toLowerCase() === 'stok' || h.toLowerCase() === 'soh' || h.toLowerCase().includes('stok'))) || 'Stok';
+
+    let result = [];
+    const textColumns = ['Kode', 'NO PO LAST JUN', 'Nama Item', 'Supplier', 'BRAND', 'Kategori', 'Dept', 'BUYER', 'UOM', 'Sat', 'ITEM_UNIT', 'Komp'];
+
     for (let i = 1; i < lines.length; i++) {
         if (!lines[i].trim()) continue;
         let row = parseCSVRow(lines[i]);
         let obj = {};
         headers.forEach((header, index) => {
             let val = row[index] !== undefined ? row[index].trim() : '';
-            if (val !== '' && header !== 'Kode' && header !== 'NO PO LAST JUN' && header !== 'Nama Item' && header !== 'Supplier' && header !== 'BRAND' && header !== 'Kategori' && header !== 'Dept' && header !== 'BUYER' && header !== 'UOM' && header !== 'Sat' && header !== 'ITEM_UNIT' && header !== 'Komp') {
-                let parsedNum = parseNumber(val);
-                obj[header] = !isNaN(val) || /^-?\d{1,3}(\.\d{3})*(,\d+)?$/.test(val) || /^-?\d+([.,]\d+)?$/.test(val) ? parsedNum : val;
+            if (header && !textColumns.includes(header)) {
+                obj[header] = parseNumber(val);
             } else {
                 obj[header] = val;
             }
@@ -643,7 +676,7 @@ function applyFilters(resetPage=true) {
         if(category && item['Kategori']!==category) return false;
         if(komp && item['Komp']!==komp) return false;
         
-        let stok = parseNumber(item['Stok']);
+        let stok = parseNumber(item[STOK_KEY]);
         if(stokMin !== '' && stok < parseFloat(stokMin)) return false;
         if(stokMax !== '' && stok > parseFloat(stokMax)) return false;
 
@@ -715,7 +748,7 @@ function renderScorecards() {
     let totalStok = 0, totalSOQ = 0, totalValue = 0, totalAvg = 0, totalGT = 0, cnt = FILTERED_DATA.length;
     
     FILTERED_DATA.forEach(i => {
-        totalStok += parseNumber(i['Stok']);
+        totalStok += parseNumber(i[STOK_KEY]);
         totalSOQ += parseNumber(i['SOQ']);
         totalValue += parseNumber(i['Value SOQ']);
         totalAvg += parseNumber(i['AVG sls'] || i['AVG Sls'] || i['MS Median']);
@@ -770,7 +803,7 @@ function renderTable() {
                 <td class="px-3 py-2 text-xs text-gray-600 font-semibold">${uom}</td>
                 <td class="px-3 py-2 text-xs text-gray-500 truncate max-w-[150px]">${displaySupplier}</td>
                 <td class="px-3 py-2 text-xs text-gray-500 max-w-[120px] truncate" title="${item['BRAND']}">${item['BRAND'] || '-'}</td>
-                <td class="px-3 py-2 text-xs text-right text-gray-700">${formatNumber(item['Stok'])}</td>
+                <td class="px-3 py-2 text-xs text-right text-gray-700 font-semibold">${formatNumber(item[STOK_KEY])}</td>
                 <td class="px-3 py-2 text-xs text-gray-500">${item['NO PO LAST JUN'] || '-'}</td>
                 <td class="px-3 py-2 text-xs text-right text-gray-700">${formatNumber(item['QTY PO'])}</td>
                 <td class="px-3 py-2 text-xs text-right bg-blue-50 ${soqClass}">${formatNumber(soq)}</td>
@@ -814,11 +847,11 @@ function showItemDetail(kode) {
     document.getElementById('detail-nama').textContent = item['Nama Item'] || '-';
     document.getElementById('detail-uom').textContent = item['UOM'] || item['Sat'] || item['ITEM_UNIT'] || '-';
     document.getElementById('detail-soq').textContent = formatNumber(item['SOQ']);
-    document.getElementById('detail-stok').textContent = formatNumber(item['Stok']);
+    document.getElementById('detail-stok').textContent = formatNumber(item[STOK_KEY]);
     document.getElementById('detail-avgsales').textContent = formatNumber(item['AVG sls'] || item['AVG Sls'] || item['MS Median']);
     document.getElementById('detail-gtsls').textContent = formatNumber(item['GT Sls']);
     
-    let avg = parseNumber(item['AVG sls'] || item['AVG Sls'] || item['MS Median']), stok = parseNumber(item['Stok']);
+    let avg = parseNumber(item['AVG sls'] || item['AVG Sls'] || item['MS Median']), stok = parseNumber(item[STOK_KEY]);
     document.getElementById('detail-ssr').textContent = formatRatio(avg ? stok / avg : 0);
     
     document.getElementById('detail-buyer').textContent = item['BUYER'] || '-';
@@ -882,16 +915,56 @@ function renderMonthlyChart(item) {
     });
 }
 
+function exportSalesToExcel() {
+    if (!FILTERED_DATA.length) {
+        alert("Tidak ada data untuk diekspor.");
+        return;
+    }
+
+    let salesDataFormatted = FILTERED_DATA.map(item => {
+        let obj = {
+            "Kode": item['Kode'] || '',
+            "BRAND": item['BRAND'] || '',
+            "Nama Item": item['Nama Item'] || '',
+            "UOM": item['UOM'] || item['Sat'] || item['ITEM_UNIT'] || ''
+        };
+        obj[STOK_KEY] = parseNumber(item[STOK_KEY]);
+        obj["SOQ"] = parseNumber(item['SOQ']);
+        obj["NO PO LAST JUN"] = item['NO PO LAST JUN'] || '';
+        obj["QTY PO"] = parseNumber(item['QTY PO']);
+        obj["Jan"] = parseNumber(item['Jan']);
+        obj["Feb"] = parseNumber(item['Feb']);
+        obj["Mrt"] = parseNumber(item['Mrt'] !== undefined ? item['Mrt'] : item['Mar']);
+        obj["Apr"] = parseNumber(item['Apr']);
+        obj["Mei"] = parseNumber(item['Mei']);
+        obj["Jun"] = parseNumber(item['Jun']);
+        obj["Jul"] = parseNumber(item['Jul']);
+        obj["Aug"] = parseNumber(item['Aug']);
+        obj["Sept"] = parseNumber(item['Sept']);
+        obj["Okt"] = parseNumber(item['Okt']);
+        obj["Nov"] = parseNumber(item['Nov']);
+        obj["Dec"] = parseNumber(item['Dec'] !== undefined ? item['Dec'] : (item['Des'] || item['Dec']));
+        obj["GT Sls"] = parseNumber(item['GT Sls']);
+        obj["AVG sls"] = parseNumber(item['AVG sls'] || item['AVG Sls']);
+        obj["MED Sls"] = parseNumber(item['MED Sls'] || item['MS Median']);
+        obj["Kategori"] = item['Kategori'] || '';
+        return obj;
+    });
+
+    let ws = XLSX.utils.json_to_sheet(salesDataFormatted);
+    let wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "SOQ_Data");
+    XLSX.writeFile(wb, "SOQ_Dashboard_Export_sales.xlsx");
+}
+
 function exportToExcel() {
-    if (currentMode === 'sales') return; // Validasi pengaman tambahan
     let ws = XLSX.utils.json_to_sheet(FILTERED_DATA);
     let wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "SOQ_Data");
-    XLSX.writeFile(wb, "SOQ_Dashboard_Export.xlsx");
+    XLSX.writeFile(wb, "SOQ_Dashboard_Export_Admin.xlsx");
 }
 
 function exportToCSV() {
-    if (currentMode === 'sales') return; // Validasi pengaman tambahan
     let ws = XLSX.utils.json_to_sheet(FILTERED_DATA);
     let csv = XLSX.utils.sheet_to_csv(ws);
     let blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
@@ -904,12 +977,10 @@ function exportToCSV() {
 }
 
 function exportToPDF() { 
-    if (currentMode === 'sales') return; // Validasi pengaman tambahan
     window.print(); 
 }
 
 function exportToPOTemplate() {
-    if (currentMode === 'sales') return; // Validasi pengaman tambahan
     if (!FILTERED_DATA.length) {
         alert("Tidak ada data untuk diekspor. Periksa filter Anda.");
         return;
