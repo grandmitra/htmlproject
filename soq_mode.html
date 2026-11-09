@@ -62,19 +62,19 @@
                 <!-- PANEL TOMBOL EKSPOR & AKSI -->
                 <div class="space-y-2 border-b border-gray-200 pb-4">
                     <p class="text-xs font-bold text-gray-500 uppercase">Ekspor & Aksi</p>
-                    <button onclick="exportToExcel()" class="w-full flex items-center justify-start px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium">
+                    <button id="btn-export-xlsx" onclick="exportToExcel()" class="w-full flex items-center justify-start px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-medium">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         Export XLSX
                     </button>
-                    <button onclick="exportToCSV()" class="w-full flex items-center justify-start px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium">
+                    <button id="btn-export-csv" onclick="exportToCSV()" class="w-full flex items-center justify-start px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-medium">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                         Export CSV
                     </button>
-                    <button onclick="exportToPDF()" class="w-full flex items-center justify-start px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium">
+                    <button id="btn-export-pdf" onclick="exportToPDF()" class="w-full flex items-center justify-start px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-medium">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                         Export PDF
                     </button>
-                    <button onclick="exportToPOTemplate()" class="w-full flex items-center justify-start px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-xs font-medium">
+                    <button id="btn-export-po" onclick="exportToPOTemplate()" class="w-full flex items-center justify-start px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded text-xs font-medium">
                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
                         Export PO Template
                     </button>
@@ -147,7 +147,7 @@
                 </div>
             </div>
 
-            <!-- SCORECARD SECTION (DI ATAS SEPERTI SEMULA) -->
+            <!-- SCORECARD SECTION -->
             <div id="scorecard-section" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3 mb-6">
                 <div class="bg-white p-3 rounded-lg shadow-sm border border-blue-200"><p class="text-[10px] font-medium text-gray-500 uppercase">Total Stok (Qty)</p><p id="sc-total-stok" class="text-lg font-bold text-gray-800 mt-0.5">0</p></div>
                 <div class="bg-white p-3 rounded-lg shadow-sm border border-blue-200"><p class="text-[10px] font-medium text-gray-500 uppercase">Total SOQ (Qty)</p><p id="sc-total-soq" class="text-lg font-bold text-blue-600 mt-0.5">0</p></div>
@@ -207,12 +207,12 @@
         </main>
     </div>
 
-    <!-- MODAL CUSTOM PASSWORD ADMIN (AMAT AMAN UTK GOOGLE SITES IFRAME) -->
+    <!-- MODAL CUSTOM PASSWORD ADMIN -->
     <div id="admin-pass-modal" class="modal fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none p-4 transition-opacity duration-200">
         <div class="modal-overlay fixed inset-0" onclick="cancelAdminPassword()"></div>
         <div class="modal-content bg-white rounded-xl shadow-2xl max-w-sm w-full p-6 relative transform scale-95 transition-transform duration-300 z-10">
             <h3 class="text-base font-bold text-gray-800 mb-1">Akses Admin Mode</h3>
-            <p class="text-xs text-gray-500 mb-4">Silakan masukkan password admin untuk menampilkan data supplier.</p>
+            <p class="text-xs text-gray-500 mb-4">Silakan masukkan password admin untuk menampilkan data supplier & mengaktifkan tombol ekspor.</p>
             
             <input type="password" id="admin-password-input" onkeyup="if(event.key==='Enter') submitAdminPassword()" placeholder="Masukkan Password..." class="w-full rounded-md border-gray-300 border p-2 text-sm mb-2 focus:ring-blue-500 focus:border-blue-500">
             <p id="admin-pass-error" class="text-xs text-red-500 hidden mb-3 font-semibold">Password salah, silakan coba lagi.</p>
@@ -314,7 +314,7 @@ function formatRatio(num) {
     return sign + Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, "."); 
 }
 
-/* FUNGSI HANDLING MODE ADMIN BARU DENGAN MODAL HTML (Dukungan iframe Google Sites) */
+/* FUNGSI HANDLING MODE ADMIN & PENGATURAN STATUS TOMBOL EKSPOR */
 function handleModeChange() {
     let modeSelect = document.getElementById('app-mode');
     let selectedMode = modeSelect.value;
@@ -361,13 +361,53 @@ function submitAdminPassword() {
 
 function applyModeUI() {
     let supplierFilter = document.getElementById('filter-supplier');
+    
+    // Ambil referensi tombol-tombol ekspor
+    let btnXlsx = document.getElementById('btn-export-xlsx');
+    let btnCsv = document.getElementById('btn-export-csv');
+    let btnPdf = document.getElementById('btn-export-pdf');
+    let btnPo = document.getElementById('btn-export-po');
+
     if (currentMode === 'sales') {
+        // Nonaktifkan Filter Supplier
         supplierFilter.value = "";
         supplierFilter.disabled = true;
         supplierFilter.classList.add('bg-gray-100', 'cursor-not-allowed', 'text-gray-400');
+
+        // Nonaktifkan Tombol Ekspor & Ubah Tampilan Menjadi Abu-abu (Disabled)
+        [btnXlsx, btnCsv, btnPdf, btnPo].forEach(btn => {
+            if (btn) {
+                btn.disabled = true;
+                btn.classList.remove('hover:bg-green-700', 'hover:bg-blue-700', 'hover:bg-red-700', 'hover:bg-yellow-700');
+                btn.classList.add('bg-gray-300', 'cursor-not-allowed', 'opacity-60');
+            }
+        });
     } else {
+        // Aktifkan Filter Supplier
         supplierFilter.disabled = false;
         supplierFilter.classList.remove('bg-gray-100', 'cursor-not-allowed', 'text-gray-400');
+
+        // Aktifkan Kembali Tombol Ekspor Sesuai Warna Aslinya
+        if (btnXlsx) {
+            btnXlsx.disabled = false;
+            btnXlsx.classList.remove('bg-gray-300', 'cursor-not-allowed', 'opacity-60');
+            btnXlsx.classList.add('hover:bg-green-700');
+        }
+        if (btnCsv) {
+            btnCsv.disabled = false;
+            btnCsv.classList.remove('bg-gray-300', 'cursor-not-allowed', 'opacity-60');
+            btnCsv.classList.add('hover:bg-blue-700');
+        }
+        if (btnPdf) {
+            btnPdf.disabled = false;
+            btnPdf.classList.remove('bg-gray-300', 'cursor-not-allowed', 'opacity-60');
+            btnPdf.classList.add('hover:bg-red-700');
+        }
+        if (btnPo) {
+            btnPo.disabled = false;
+            btnPo.classList.remove('bg-gray-300', 'cursor-not-allowed', 'opacity-60');
+            btnPo.classList.add('hover:bg-yellow-700');
+        }
     }
 }
 
@@ -843,6 +883,7 @@ function renderMonthlyChart(item) {
 }
 
 function exportToExcel() {
+    if (currentMode === 'sales') return; // Validasi pengaman tambahan
     let ws = XLSX.utils.json_to_sheet(FILTERED_DATA);
     let wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "SOQ_Data");
@@ -850,6 +891,7 @@ function exportToExcel() {
 }
 
 function exportToCSV() {
+    if (currentMode === 'sales') return; // Validasi pengaman tambahan
     let ws = XLSX.utils.json_to_sheet(FILTERED_DATA);
     let csv = XLSX.utils.sheet_to_csv(ws);
     let blob = new Blob([csv], {type: "text/csv;charset=utf-8;"});
@@ -861,9 +903,13 @@ function exportToCSV() {
     document.body.removeChild(link);
 }
 
-function exportToPDF() { window.print(); }
+function exportToPDF() { 
+    if (currentMode === 'sales') return; // Validasi pengaman tambahan
+    window.print(); 
+}
 
 function exportToPOTemplate() {
+    if (currentMode === 'sales') return; // Validasi pengaman tambahan
     if (!FILTERED_DATA.length) {
         alert("Tidak ada data untuk diekspor. Periksa filter Anda.");
         return;
