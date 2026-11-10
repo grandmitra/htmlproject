@@ -97,128 +97,144 @@
                 <span class="flex items-center gap-2"><i class="fa-solid fa-sliders"></i> Pengaturan & Data Barang</span>
             </h2>
 
-            <!-- Pilih Ukuran Label -->
-            <div>
-                <label for="labelSelect" class="block text-sm font-semibold text-gray-700 mb-1">
-                    Tipe / Ukuran Label Tom & Jerry (No. 95 - 130)
-                </label>
-                <select id="labelSelect" class="w-full border-gray-300 rounded-lg shadow-sm border p-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 text-sm">
-                </select>
-                <p id="labelDetailInfo" class="text-xs text-blue-600 font-medium mt-1"></p>
-            </div>
-
-            <!-- Pengaturan Orientasi Kertas (Portrait / Landscape) -->
-            <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg space-y-2">
-                <label class="block text-xs font-bold text-amber-800 uppercase">
-                    <i class="fa-solid fa-compass"></i> Orientasi Halaman Cetak
-                </label>
-                <div class="grid grid-cols-2 gap-2">
-                    <label class="flex items-center gap-2 bg-white p-2 rounded border border-amber-200 cursor-pointer text-xs font-semibold">
-                        <input type="radio" name="orientation" value="portrait" checked class="text-amber-600"> Portrait (Tegak)
-                    </label>
-                    <label class="flex items-center gap-2 bg-white p-2 rounded border border-amber-200 cursor-pointer text-xs font-semibold">
-                        <input type="radio" name="orientation" value="landscape" class="text-amber-600"> Landscape (Mendatar)
-                    </label>
-                </div>
-            </div>
-
-            <!-- Pengaturan Margin Atas & Gap Vertikal -->
-            <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-3">
-                <label class="block text-xs font-bold text-blue-800 uppercase">
-                    <i class="fa-solid fa-ruler-combined"></i> Presisi Tata Letak (Margin & Gap)
-                </label>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-[11px] font-semibold text-blue-900">Margin Atas</label>
-                            <span id="marginTValue" class="text-xs font-bold text-blue-600 bg-white px-1.5 py-0.5 rounded border border-blue-200">5 mm</span>
-                        </div>
-                        <input type="range" id="marginTRange" min="0" max="30" step="1" value="5" class="w-full accent-blue-600 cursor-pointer">
-                    </div>
-                    <div>
-                        <div class="flex justify-between items-center mb-1">
-                            <label class="text-[11px] font-semibold text-blue-900">Gap Vertikal</label>
-                            <span id="gapYValue" class="text-xs font-bold text-blue-600 bg-white px-1.5 py-0.5 rounded border border-blue-200">5 mm</span>
-                        </div>
-                        <input type="range" id="gapYRange" min="0" max="20" step="1" value="5" class="w-full accent-blue-600 cursor-pointer">
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pengaturan Tipografi & Ukuran Font -->
-            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
-                <label class="block text-xs font-bold text-gray-700 uppercase">
-                    <i class="fa-solid fa-font"></i> Tipografi & Desain POP Marketing
-                </label>
-                
-                <div>
-                    <label class="block text-[10px] text-gray-600 mb-1">Pilihan Jenis Font (Font Family)</label>
-                    <select id="fontFamilySelect" class="w-full border rounded p-1.5 text-xs bg-white font-semibold">
-                        <option value="'Oswald', sans-serif">Oswald (Rekomendasi POP / Harga Tebal)</option>
-                        <option value="'Montserrat', sans-serif">Montserrat (Modern & Clean)</option>
-                        <option value="'Poppins', sans-serif">Poppins (Bulat & Nyaman Dibaca)</option>
-                        <option value="'Inter', sans-serif">Inter (Standar Perusahaan)</option>
-                        <option value="Arial, sans-serif">Arial Bold (Klasik)</option>
-                    </select>
-                </div>
-
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-[10px] text-gray-600">Font SKU/Nama</label>
-                        <select id="generalFontDesc" class="w-full border rounded p-1 text-xs bg-white">
-                            <option value="xs">Kecil</option>
-                            <option value="sm" selected>Normal</option>
-                            <option value="md">Besar</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-[10px] text-gray-600">Font Reguler & Satuan</label>
-                        <select id="generalFontReg" class="w-full border rounded p-1 text-xs bg-white">
-                            <option value="xs">Kecil</option>
-                            <option value="sm" selected>Normal</option>
-                            <option value="md">Besar</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Custom Range Font Promo (0.5em - 7.0em) -->
-                <div class="bg-white p-2 rounded border border-gray-200 space-y-1">
-                    <div class="flex justify-between items-center">
-                        <label class="text-[10px] font-bold text-gray-700 uppercase">Ukuran Font Harga Promo</label>
-                        <span id="promoFontSizeValue" class="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">2.0em</span>
-                    </div>
-                    <input type="range" id="fontPromoRange" min="0.5" max="7.0" step="0.1" value="2.0" class="w-full accent-red-600 cursor-pointer">
-                    <div class="flex justify-between text-[9px] text-gray-400">
-                        <span>0.5em (Kecil)</span>
-                        <span>3.5em (Sedang)</span>
-                        <span>7.0em (Maksimal)</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Fitur Template & Upload Excel / CSV -->
-            <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-3">
-                <div class="flex justify-between items-center">
-                    <label class="block text-xs font-bold text-blue-800 uppercase">
-                        <i class="fa-solid fa-file-excel"></i> Data Massal (Excel / CSV)
-                    </label>
-                    <button type="button" id="btnDownloadTemplate" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] px-2.5 py-1 rounded font-semibold flex items-center gap-1 shadow-sm">
-                        <i class="fa-solid fa-download"></i> Template Excel
-                    </button>
-                </div>
-                <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
-            </div>
-
-            <!-- Container Daftar Produk Dinamis -->
-            <div class="flex justify-between items-center">
-                <h3 class="text-sm font-bold text-gray-700">Daftar Barang Manual</h3>
-                <button type="button" id="btnAddItem" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded font-semibold flex items-center gap-1">
-                    <i class="fa-solid fa-plus"></i> Tambah Barang
+            <!-- Bagian 1: Pengaturan Label (Hide/Unhide) -->
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <button type="button" onclick="toggleSection('settingsSection', 'toggleIcon1')" class="w-full bg-gray-50 hover:bg-gray-100 p-3 flex justify-between items-center text-xs font-bold text-gray-700">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-gear"></i> Panel Pengaturan Label & Tata Letak</span>
+                    <i id="toggleIcon1" class="fa-solid fa-chevron-down transition-transform duration-200"></i>
                 </button>
+                <div id="settingsSection" class="p-3 space-y-4 border-t border-gray-200 bg-white">
+                    <!-- Pilih Ukuran Label -->
+                    <div>
+                        <label for="labelSelect" class="block text-sm font-semibold text-gray-700 mb-1">
+                            Tipe / Ukuran Label Tom & Jerry (No. 95 - 130)
+                        </label>
+                        <select id="labelSelect" class="w-full border-gray-300 rounded-lg shadow-sm border p-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 text-sm">
+                        </select>
+                        <p id="labelDetailInfo" class="text-xs text-blue-600 font-medium mt-1"></p>
+                    </div>
+
+                    <!-- Pengaturan Orientasi Kertas (Portrait / Landscape) -->
+                    <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg space-y-2">
+                        <label class="block text-xs font-bold text-amber-800 uppercase">
+                            <i class="fa-solid fa-compass"></i> Orientasi Halaman Cetak
+                        </label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-center gap-2 bg-white p-2 rounded border border-amber-200 cursor-pointer text-xs font-semibold">
+                                <input type="radio" name="orientation" value="portrait" checked class="text-amber-600"> Portrait (Tegak)
+                            </label>
+                            <label class="flex items-center gap-2 bg-white p-2 rounded border border-amber-200 cursor-pointer text-xs font-semibold">
+                                <input type="radio" name="orientation" value="landscape" class="text-amber-600"> Landscape (Mendatar)
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Pengaturan Margin Atas & Gap Vertikal -->
+                    <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-3">
+                        <label class="block text-xs font-bold text-blue-800 uppercase">
+                            <i class="fa-solid fa-ruler-combined"></i> Presisi Tata Letak (Margin & Gap)
+                        </label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-[11px] font-semibold text-blue-900">Margin Atas</label>
+                                    <span id="marginTValue" class="text-xs font-bold text-blue-600 bg-white px-1.5 py-0.5 rounded border border-blue-200">5 mm</span>
+                                </div>
+                                <input type="range" id="marginTRange" min="0" max="30" step="1" value="5" class="w-full accent-blue-600 cursor-pointer">
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-[11px] font-semibold text-blue-900">Gap Vertikal</label>
+                                    <span id="gapYValue" class="text-xs font-bold text-blue-600 bg-white px-1.5 py-0.5 rounded border border-blue-200">5 mm</span>
+                                </div>
+                                <input type="range" id="gapYRange" min="0" max="20" step="1" value="5" class="w-full accent-blue-600 cursor-pointer">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Pengaturan Tipografi & Ukuran Font (Slider untuk SKU/Nama & Reguler) -->
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
+                        <label class="block text-xs font-bold text-gray-700 uppercase">
+                            <i class="fa-solid fa-font"></i> Tipografi & Desain POP Marketing
+                        </label>
+                        
+                        <div>
+                            <label class="block text-[10px] text-gray-600 mb-1">Pilihan Jenis Font (Font Family)</label>
+                            <select id="fontFamilySelect" class="w-full border rounded p-1.5 text-xs bg-white font-semibold">
+                                <option value="'Oswald', sans-serif">Oswald (Rekomendasi POP / Harga Tebal)</option>
+                                <option value="'Montserrat', sans-serif">Montserrat (Modern & Clean)</option>
+                                <option value="'Poppins', sans-serif">Poppins (Bulat & Nyaman Dibaca)</option>
+                                <option value="'Inter', sans-serif">Inter (Standar Perusahaan)</option>
+                                <option value="Arial, sans-serif">Arial Bold (Klasik)</option>
+                            </select>
+                        </div>
+
+                        <!-- Slider Ukuran Font SKU / Nama Barang -->
+                        <div class="bg-white p-2 rounded border border-gray-200 space-y-1">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[10px] font-bold text-gray-700 uppercase">Ukuran Font SKU / Nama Barang</label>
+                                <span id="fontDescSizeValue" class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">0.65em</span>
+                            </div>
+                            <input type="range" id="fontDescRange" min="0.3" max="1.5" step="0.05" value="0.65" class="w-full accent-blue-600 cursor-pointer">
+                        </div>
+
+                        <!-- Slider Ukuran Font Reguler & Satuan -->
+                        <div class="bg-white p-2 rounded border border-gray-200 space-y-1">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[10px] font-bold text-gray-700 uppercase">Ukuran Font Reguler & Satuan</label>
+                                <span id="fontRegSizeValue" class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">0.6em</span>
+                            </div>
+                            <input type="range" id="fontRegRange" min="0.3" max="1.5" step="0.05" value="0.6" class="w-full accent-blue-600 cursor-pointer">
+                        </div>
+
+                        <!-- Custom Range Font Promo (0.5em - 7.0em) -->
+                        <div class="bg-white p-2 rounded border border-gray-200 space-y-1">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[10px] font-bold text-gray-700 uppercase">Ukuran Font Harga Promo</label>
+                                <span id="promoFontSizeValue" class="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">2.0em</span>
+                            </div>
+                            <input type="range" id="fontPromoRange" min="0.5" max="7.0" step="0.1" value="2.0" class="w-full accent-red-600 cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- Fitur Template & Upload Excel / CSV -->
+                    <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-3">
+                        <div class="flex justify-between items-center">
+                            <label class="block text-xs font-bold text-blue-800 uppercase">
+                                <i class="fa-solid fa-file-excel"></i> Data Massal (Excel / CSV)
+                            </label>
+                            <button type="button" id="btnDownloadTemplate" class="bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] px-2.5 py-1 rounded font-semibold flex items-center gap-1 shadow-sm">
+                                <i class="fa-solid fa-download"></i> Template Excel
+                            </button>
+                        </div>
+                        <input type="file" id="excelFile" accept=".xlsx, .xls, .csv" class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700 cursor-pointer">
+                    </div>
+                </div>
             </div>
 
-            <div id="productItemsContainer" class="space-y-4 max-h-[250px] overflow-y-auto pr-1">
-                <!-- Form item di-render secara dinamis via JS -->
+            <!-- Bagian 2: Daftar Barang Manual (Hide/Unhide) -->
+            <div class="border border-gray-200 rounded-lg overflow-hidden">
+                <button type="button" onclick="toggleSection('dataSection', 'toggleIcon2')" class="w-full bg-gray-50 hover:bg-gray-100 p-3 flex justify-between items-center text-xs font-bold text-gray-700">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-boxes-stacked"></i> Panel Daftar Barang Manual</span>
+                    <i id="toggleIcon2" class="fa-solid fa-chevron-down transition-transform duration-200"></i>
+                </button>
+                <div id="dataSection" class="p-3 space-y-3 border-t border-gray-200 bg-white">
+                    <div class="flex justify-between items-center">
+                        <h3 class="text-xs font-bold text-gray-700 uppercase">Daftar Barang</h3>
+                        <div class="flex gap-1">
+                            <button type="button" id="btnAddItem" class="bg-blue-600 hover:bg-blue-700 text-white text-[11px] px-2.5 py-1 rounded font-semibold flex items-center gap-1">
+                                <i class="fa-solid fa-plus"></i> Tambah
+                            </button>
+                            <button type="button" id="btnResetAll" class="bg-red-500 hover:bg-red-600 text-white text-[11px] px-2.5 py-1 rounded font-semibold flex items-center gap-1">
+                                <i class="fa-solid fa-trash-can"></i> Reset All
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="productItemsContainer" class="space-y-4 max-h-[300px] overflow-y-auto pr-1">
+                        <!-- Form item di-render secara dinamis via JS -->
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -238,7 +254,7 @@
     </main>
 
     <script>
-        // DATABASE LENGKAP TOM & JERRY (No. 95 - 130) DENGAN GAP VERTIKAL DEFAULT 5MM
+        // DATABASE LENGKAP TOM & JERRY (No. 95 - 130)
         const LABEL_SIZES = [
             { id: "103", name: "TnJ No. 103", width: 64, height: 32, cols: 3, rows: 4, marginT: 5, marginL: 5, marginR: 7, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
             { id: "95",  name: "TnJ No. 95",  width: 12, height: 30, cols: 11,rows: 5, marginT: 5, marginL: 8, marginR: 8, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
@@ -275,15 +291,24 @@
             }
         ];
 
-        const FONT_MAP_DESC = { 'xs': 'text-[0.5em]', 'sm': 'text-[0.62em]', 'md': 'text-[0.75em]' };
-        const FONT_MAP_REG  = { 'xs': 'text-[0.5em]', 'sm': 'text-[0.6em]', 'md': 'text-[0.7em]' };
-
         document.addEventListener('DOMContentLoaded', () => {
             initLabelOptions();
             renderProductForm();
             setupEventListeners();
             renderPreview();
         });
+
+        function toggleSection(sectionId, iconId) {
+            const section = document.getElementById(sectionId);
+            const icon = document.getElementById(iconId);
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                section.style.display = 'none';
+                icon.style.transform = 'rotate(-90deg)';
+            }
+        }
 
         function initLabelOptions() {
             const select = document.getElementById('labelSelect');
@@ -317,13 +342,18 @@
             const container = document.getElementById('productItemsContainer');
             container.innerHTML = '';
 
+            if (productList.length === 0) {
+                container.innerHTML = `<p class="text-xs text-center text-gray-400 py-4">Belum ada daftar barang. Klik tombol Tambah.</p>`;
+                return;
+            }
+
             productList.forEach((item, index) => {
                 const card = document.createElement('div');
                 card.className = 'bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-2 relative';
                 card.innerHTML = `
                     <div class="flex justify-between items-center border-b pb-1">
                         <span class="text-xs font-bold text-blue-600">Barang #${index + 1}</span>
-                        ${productList.length > 1 ? `<button type="button" onclick="removeProduct(${index})" class="text-red-500 hover:text-red-700 text-xs font-bold"><i class="fa-solid fa-trash"></i> Hapus</button>` : ''}
+                        <button type="button" onclick="removeProduct(${index})" class="text-red-500 hover:text-red-700 text-xs font-bold"><i class="fa-solid fa-trash"></i> Hapus</button>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -428,10 +458,32 @@
 
             document.getElementById('btnAddItem').addEventListener('click', addProduct);
             
-            ['generalFontDesc', 'generalFontReg', 'fontFamilySelect'].forEach(id => {
-                document.getElementById(id).addEventListener('change', renderPreview);
+            // Tombol Reset All Daftar Barang
+            document.getElementById('btnResetAll').addEventListener('click', () => {
+                if (confirm('Apakah Anda yakin ingin menghapus seluruh daftar barang?')) {
+                    productList = [];
+                    renderProductForm();
+                    renderPreview();
+                }
             });
 
+            document.getElementById('fontFamilySelect').addEventListener('change', renderPreview);
+
+            // Slider Font SKU/Nama
+            const fontDescRange = document.getElementById('fontDescRange');
+            fontDescRange.addEventListener('input', (e) => {
+                document.getElementById('fontDescSizeValue').textContent = `${e.target.value}em`;
+                renderPreview();
+            });
+
+            // Slider Font Reguler & Satuan
+            const fontRegRange = document.getElementById('fontRegRange');
+            fontRegRange.addEventListener('input', (e) => {
+                document.getElementById('fontRegSizeValue').textContent = `${e.target.value}em`;
+                renderPreview();
+            });
+
+            // Slider Font Promo
             const rangeInput = document.getElementById('fontPromoRange');
             rangeInput.addEventListener('input', (e) => {
                 document.getElementById('promoFontSizeValue').textContent = `${e.target.value}em`;
@@ -488,6 +540,8 @@
             const sheet = document.getElementById('paperSheet');
             const orientation = document.querySelector('input[name="orientation"]:checked').value;
             const fontFamily = document.getElementById('fontFamilySelect').value;
+            const customDescSize = parseFloat(document.getElementById('fontDescRange').value);
+            const customRegSize = parseFloat(document.getElementById('fontRegRange').value);
             const customPromoSize = parseFloat(document.getElementById('fontPromoRange').value);
             const marginTVal = parseInt(document.getElementById('marginTRange').value);
             const gapYVal = parseInt(document.getElementById('gapYRange').value);
@@ -522,9 +576,6 @@
                 }
             });
 
-            const fDesc = FONT_MAP_DESC[document.getElementById('generalFontDesc').value];
-            const fReg = FONT_MAP_REG[document.getElementById('generalFontReg').value];
-
             for (let i = 0; i < totalSlots; i++) {
                 const card = document.createElement('div');
                 card.className = 'label-card p-1 text-gray-800 leading-none flex flex-col justify-between';
@@ -543,7 +594,7 @@
                         ? `<span class="text-[0.4em] text-gray-500 font-semibold">${p.startDate || ''}-${p.endDate || ''}</span>` 
                         : '';
 
-                    // 2. Satuan di Tengah (Center) Sejajar dengan Harga Reguler
+                    // 2. Satuan di Tengah Sejajar dengan Harga Reguler
                     const unitText = p.unit ? `/ ${p.unit}` : '';
 
                     card.innerHTML = `
@@ -559,14 +610,14 @@
                             </div>
                         </div>
 
-                        <!-- Nama / Deskripsi Barang -->
-                        <div class="text-center font-extrabold leading-tight uppercase my-0.5 tracking-tight text-gray-900 line-clamp-2 ${fDesc}">
+                        <!-- Nama / Deskripsi Barang dengan Slider Custom -->
+                        <div class="text-center font-extrabold leading-tight uppercase my-0.5 tracking-tight text-gray-900 line-clamp-2" style="font-size: ${customDescSize}em;">
                             ${p.desc}
                         </div>
 
-                        <!-- Area Harga: Harga Reguler (Kiri, Hitam, Coret) & Satuan (Tengah, Hitam, Bold) Sejajar dalam Grid 3 Kolom -->
+                        <!-- Area Harga & Satuan dengan Slider Custom -->
                         <div class="relative flex-1 flex flex-col justify-between min-h-0 pt-0.5">
-                            <div class="grid grid-cols-3 items-center text-black font-bold whitespace-nowrap ${fReg}">
+                            <div class="grid grid-cols-3 items-center text-black font-bold whitespace-nowrap" style="font-size: ${customRegSize}em;">
                                 <div class="text-left line-through">Rp${p.regPrice}</div>
                                 <div class="text-center">${unitText}</div>
                                 <div></div>
