@@ -3,27 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cetak Label Tom & Jerry - Custom Font Promo 0.5em - 7.0em</title>
+    <title>Cetak Label Tom & Jerry - Precision POP Retail</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts untuk pilihan Font POP Marketing -->
+    <!-- Google Fonts untuk POP Marketing -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Montserrat:wght@400;700;900&family=Oswald:wght@500;700&family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
-    <!-- SheetJS (xlsx) untuk membaca & membuat file Excel -->
+    <!-- SheetJS (xlsx) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     
     <style>
-        /* CSS Cetak Dinamis Sesuai Pilihan Orientasi */
+        /* CSS Cetak Presisi Sesuai Orientasi Kertas */
         @media print {
             @page {
                 size: var(--page-orientation, portrait);
                 margin: 0 !important;
             }
-            body {
+            html, body {
                 background: white !important;
                 padding: 0 !important;
                 margin: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
             }
             .no-print {
                 display: none !important;
@@ -33,12 +37,14 @@
                 margin: 0 !important;
                 box-shadow: none !important;
                 background: transparent !important;
+                width: 100% !important;
             }
             .sheet-page {
                 margin: 0 !important;
                 box-shadow: none !important;
                 border: none !important;
                 page-break-after: always;
+                page-break-inside: avoid;
             }
             .label-card {
                 border: 1px dashed transparent !important;
@@ -54,6 +60,7 @@
             box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
             border: 1px solid #e5e7eb;
             display: grid;
+            align-content: start;
         }
 
         .label-card {
@@ -112,6 +119,29 @@
                     <label class="flex items-center gap-2 bg-white p-2 rounded border border-amber-200 cursor-pointer text-xs font-semibold">
                         <input type="radio" name="orientation" value="landscape" class="text-amber-600"> Landscape (Mendatar)
                     </label>
+                </div>
+            </div>
+
+            <!-- Pengaturan Margin Atas & Gap Vertikal (5mm) -->
+            <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-3">
+                <label class="block text-xs font-bold text-blue-800 uppercase">
+                    <i class="fa-solid fa-ruler-combined"></i> Presisi Tata Letak (Margin & Gap)
+                </label>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-[11px] font-semibold text-blue-900">Margin Atas</label>
+                            <span id="marginTValue" class="text-xs font-bold text-blue-600 bg-white px-1.5 py-0.5 rounded border border-blue-200">5 mm</span>
+                        </div>
+                        <input type="range" id="marginTRange" min="0" max="30" step="1" value="5" class="w-full accent-blue-600 cursor-pointer">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-[11px] font-semibold text-blue-900">Gap Vertikal</label>
+                            <span id="gapYValue" class="text-xs font-bold text-blue-600 bg-white px-1.5 py-0.5 rounded border border-blue-200">5 mm</span>
+                        </div>
+                        <input type="range" id="gapYRange" min="0" max="20" step="1" value="5" class="w-full accent-blue-600 cursor-pointer">
+                    </div>
                 </div>
             </div>
 
@@ -208,40 +238,40 @@
     </main>
 
     <script>
-        // DATABASE LENGKAP TOM & JERRY (No. 95 - 130)
+        // DATABASE LENGKAP TOM & JERRY (No. 95 - 130) DENGAN GAP VERTIKAL DEFAULT 5MM
         const LABEL_SIZES = [
-            { id: "103", name: "TnJ No. 103", width: 64, height: 32, cols: 3, rows: 4, marginT: 10, marginL: 5, marginR: 7, gapX: 2, gapY: 3, pageW: 210, pageH: 165 },
-            { id: "95",  name: "TnJ No. 95",  width: 12, height: 30, cols: 11,rows: 5, marginT: 8,  marginL: 8, marginR: 8, gapX: 2, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "96",  name: "TnJ No. 96",  width: 12, height: 42, cols: 11,rows: 3, marginT: 10, marginL: 8, marginR: 8, gapX: 2, gapY: 3, pageW: 210, pageH: 165 },
-            { id: "97",  name: "TnJ No. 97",  width: 19, height: 50, cols: 7, rows: 3, marginT: 8,  marginL: 8, marginR: 8, gapX: 3, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "98",  name: "TnJ No. 98",  width: 38, height: 16, cols: 5, rows: 8, marginT: 14, marginL: 8, marginR: 8, gapX: 3, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "99",  name: "TnJ No. 99",  width: 38, height: 23, cols: 5, rows: 6, marginT: 12, marginL: 8, marginR: 8, gapX: 3, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "100", name: "TnJ No. 100", width: 38, height: 38, cols: 5, rows: 4, marginT: 6,  marginL: 8, marginR: 8, gapX: 3, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "101", name: "TnJ No. 101", width: 50, height: 16, cols: 4, rows: 8, marginT: 14, marginL: 4, marginR: 4, gapX: 3, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "102", name: "TnJ No. 102", width: 50, height: 23, cols: 4, rows: 6, marginT: 12, marginL: 4, marginR: 4, gapX: 3, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "104", name: "TnJ No. 104", width: 74, height: 24, cols: 2, rows: 6, marginT: 8,  marginL: 6, marginR: 6, gapX: 3, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "105", name: "TnJ No. 105", width: 37, height: 24, cols: 5, rows: 6, marginT: 8,  marginL: 6, marginR: 6, gapX: 2, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "106", name: "TnJ No. 106", width: 50, height: 25, cols: 4, rows: 6, marginT: 7,  marginL: 12,marginR: 12,gapX: 3, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "107", name: "TnJ No. 107", width: 50, height: 18, cols: 4, rows: 8, marginT: 7,  marginL: 8, marginR: 8, gapX: 2, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "108", name: "TnJ No. 108", width: 38, height: 18, cols: 5, rows: 8, marginT: 6,  marginL: 8, marginR: 8, gapX: 2, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "109", name: "TnJ No. 109", width: 38, height: 13, cols: 5, rows: 11,marginT: 6,  marginL: 10,marginR: 10,gapX: 2, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "110", name: "TnJ No. 110", width: 23, height: 14, cols: 8, rows: 10,marginT: 12, marginL: 10,marginR: 10,gapX: 2, gapY: 2, pageW: 210, pageH: 165 },
-            { id: "116", name: "TnJ No. 116", width: 100,height: 60, cols: 2, rows: 2, marginT: 20, marginL: 5, marginR: 5, gapX: 4, gapY: 4, pageW: 210, pageH: 165 },
-            { id: "121", name: "TnJ No. 121", width: 75, height: 38, cols: 2, rows: 4, marginT: 7,  marginL: 25,marginR: 25,gapX: 6, gapY: 3, pageW: 210, pageH: 165 },
-            { id: "130", name: "TnJ No. 130", width: 85, height: 30, cols: 2, rows: 5, marginT: 10, marginL: 15,marginR: 15,gapX: 5, gapY: 2, pageW: 210, pageH: 165 }
+            { id: "103", name: "TnJ No. 103", width: 64, height: 32, cols: 3, rows: 4, marginT: 5, marginL: 5, marginR: 7, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "95",  name: "TnJ No. 95",  width: 12, height: 30, cols: 11,rows: 5, marginT: 5, marginL: 8, marginR: 8, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "96",  name: "TnJ No. 96",  width: 12, height: 42, cols: 11,rows: 3, marginT: 5, marginL: 8, marginR: 8, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "97",  name: "TnJ No. 97",  width: 19, height: 50, cols: 7, rows: 3, marginT: 5, marginL: 8, marginR: 8, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "98",  name: "TnJ No. 98",  width: 38, height: 16, cols: 5, rows: 8, marginT: 5, marginL: 8, marginR: 8, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "99",  name: "TnJ No. 99",  width: 38, height: 23, cols: 5, rows: 6, marginT: 5, marginL: 8, marginR: 8, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "100", name: "TnJ No. 100", width: 38, height: 38, cols: 5, rows: 4, marginT: 5, marginL: 8, marginR: 8, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "101", name: "TnJ No. 101", width: 50, height: 16, cols: 4, rows: 8, marginT: 5, marginL: 4, marginR: 4, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "102", name: "TnJ No. 102", width: 50, height: 23, cols: 4, rows: 6, marginT: 5, marginL: 4, marginR: 4, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "104", name: "TnJ No. 104", width: 74, height: 24, cols: 2, rows: 6, marginT: 5, marginL: 6, marginR: 6, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "105", name: "TnJ No. 105", width: 37, height: 24, cols: 5, rows: 6, marginT: 5, marginL: 6, marginR: 6, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "106", name: "TnJ No. 106", width: 50, height: 25, cols: 4, rows: 6, marginT: 5, marginL: 12,marginR: 12,gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "107", name: "TnJ No. 107", width: 50, height: 18, cols: 4, rows: 8, marginT: 5, marginL: 8, marginR: 8, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "108", name: "TnJ No. 108", width: 38, height: 18, cols: 5, rows: 8, marginT: 5, marginL: 8, marginR: 8, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "109", name: "TnJ No. 109", width: 38, height: 13, cols: 5, rows: 11,marginT: 5, marginL: 10,marginR: 10,gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "110", name: "TnJ No. 110", width: 23, height: 14, cols: 8, rows: 10,marginT: 5, marginL: 10,marginR: 10,gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "116", name: "TnJ No. 116", width: 100,height: 60, cols: 2, rows: 2, marginT: 5, marginL: 5, marginR: 5, gapX: 4, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "121", name: "TnJ No. 121", width: 75, height: 38, cols: 2, rows: 4, marginT: 5, marginL: 25,marginR: 25,gapX: 6, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "130", name: "TnJ No. 130", width: 85, height: 30, cols: 2, rows: 5, marginT: 5, marginL: 15,marginR: 15,gapX: 5, gapY: 5, pageW: 210, pageH: 165 }
         ];
 
         let productList = [
             {
-                badge: "PROMO",
-                sku: "SALV-60X60",
-                desc: "SALVADORE CREAM 60X60 @1,44 M2 POLISHED",
-                regPrice: "140.500",
-                promoPrice: "125.284",
-                unit: "dus",
+                badge: "DISC 30%",
+                sku: "I026339",
+                desc: "VALENTINO GRESS BLACKROCK GRESS AMBER NOIR 120X240 @2,88 M2 POLISHED",
+                regPrice: "1.060.000",
+                promoPrice: "742.000",
+                unit: "METER",
                 startDate: "01/11",
                 endDate: "30/11",
-                qty: 6
+                qty: 12
             }
         ];
 
@@ -272,7 +302,9 @@
             const current = getCurrentLabel();
             const info = document.getElementById('labelDetailInfo');
             if(current) {
-                info.textContent = `Margin (T: ${current.marginT}mm, L: ${current.marginL}mm) | Sheet: ${current.pageW}x${current.pageH} mm`;
+                const marginT = document.getElementById('marginTRange') ? document.getElementById('marginTRange').value : current.marginT;
+                const gapY = document.getElementById('gapYRange') ? document.getElementById('gapYRange').value : current.gapY;
+                info.textContent = `Margin Atas: ${marginT}mm | Gap Vertikal: ${gapY}mm | Sheet: ${current.pageW}x${current.pageH} mm`;
             }
         }
 
@@ -295,7 +327,7 @@
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block text-[10px] font-semibold text-gray-600 uppercase">Badge</label>
+                            <label class="block text-[10px] font-semibold text-gray-600 uppercase">Badge Promo</label>
                             <input type="text" data-index="${index}" data-field="badge" value="${item.badge || ''}" class="product-input w-full border rounded p-1.5 text-xs border-gray-300">
                         </div>
                         <div>
@@ -304,16 +336,16 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-[10px] font-semibold text-gray-600 uppercase">Deskripsi</label>
+                        <label class="block text-[10px] font-semibold text-gray-600 uppercase">Deskripsi Barang</label>
                         <input type="text" data-index="${index}" data-field="desc" value="${item.desc || ''}" class="product-input w-full border rounded p-1.5 text-xs border-gray-300">
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <div>
-                            <label class="block text-[10px] font-semibold text-gray-600 uppercase">Reguler</label>
+                            <label class="block text-[10px] font-semibold text-gray-600 uppercase">Harga Reguler</label>
                             <input type="text" data-index="${index}" data-field="regPrice" value="${item.regPrice || ''}" class="product-input w-full border rounded p-1.5 text-xs border-gray-300">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-semibold text-gray-600 uppercase">Promo</label>
+                            <label class="block text-[10px] font-semibold text-gray-600 uppercase">Harga Promo</label>
                             <input type="text" data-index="${index}" data-field="promoPrice" value="${item.promoPrice || ''}" class="product-input w-full border rounded p-1.5 text-xs text-red-600 font-bold border-gray-300">
                         </div>
                         <div>
@@ -323,15 +355,15 @@
                     </div>
                     <div class="grid grid-cols-3 gap-2">
                         <div>
-                            <label class="block text-[10px] font-semibold text-gray-600 uppercase">Start</label>
+                            <label class="block text-[10px] font-semibold text-gray-600 uppercase">Start Date</label>
                             <input type="text" data-index="${index}" data-field="startDate" value="${item.startDate || ''}" class="product-input w-full border rounded p-1.5 text-xs border-gray-300">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-semibold text-gray-600 uppercase">End</label>
+                            <label class="block text-[10px] font-semibold text-gray-600 uppercase">End Date</label>
                             <input type="text" data-index="${index}" data-field="endDate" value="${item.endDate || ''}" class="product-input w-full border rounded p-1.5 text-xs border-gray-300">
                         </div>
                         <div>
-                            <label class="block text-[10px] font-semibold text-gray-600 uppercase">Qty</label>
+                            <label class="block text-[10px] font-semibold text-gray-600 uppercase">Qty Label</label>
                             <input type="number" min="1" data-index="${index}" data-field="qty" value="${item.qty || 1}" class="product-input w-full border rounded p-1.5 text-xs border-gray-300">
                         </div>
                     </div>
@@ -351,14 +383,14 @@
 
         function addProduct() {
             productList.push({
-                badge: "PROMO",
+                badge: "DISC 30%",
                 sku: "SKU-BARU",
-                desc: "NAMA BARANG",
-                regPrice: "50.000",
-                promoPrice: "45.000",
-                unit: "pcs",
-                startDate: "",
-                endDate: "",
+                desc: "NAMA BARANG POP RETAIL",
+                regPrice: "100.000",
+                promoPrice: "70.000",
+                unit: "METER",
+                startDate: "01/11",
+                endDate: "30/11",
                 qty: 1
             });
             renderProductForm();
@@ -373,16 +405,33 @@
 
         function setupEventListeners() {
             document.getElementById('labelSelect').addEventListener('change', () => {
+                const label = getCurrentLabel();
+                document.getElementById('marginTRange').value = label.marginT;
+                document.getElementById('marginTValue').textContent = `${label.marginT} mm`;
+                document.getElementById('gapYRange').value = label.gapY || 5;
+                document.getElementById('gapYValue').textContent = `${label.gapY || 5} mm`;
                 updateDetailInfo();
                 renderPreview();
             });
+
+            document.getElementById('marginTRange').addEventListener('input', (e) => {
+                document.getElementById('marginTValue').textContent = `${e.target.value} mm`;
+                updateDetailInfo();
+                renderPreview();
+            });
+
+            document.getElementById('gapYRange').addEventListener('input', (e) => {
+                document.getElementById('gapYValue').textContent = `${e.target.value} mm`;
+                updateDetailInfo();
+                renderPreview();
+            });
+
             document.getElementById('btnAddItem').addEventListener('click', addProduct);
             
             ['generalFontDesc', 'generalFontReg', 'fontFamilySelect'].forEach(id => {
                 document.getElementById(id).addEventListener('change', renderPreview);
             });
 
-            // Event listener untuk Slider Font Promo Range (0.5em - 7.0em)
             const rangeInput = document.getElementById('fontPromoRange');
             rangeInput.addEventListener('input', (e) => {
                 document.getElementById('promoFontSizeValue').textContent = `${e.target.value}em`;
@@ -395,9 +444,9 @@
 
             document.getElementById('btnDownloadTemplate').addEventListener('click', () => {
                 const templateData = [{
-                    badge: "PROMO", sku: "SKU-001", desc: "CONTOH NAMA BARANG RETAIL",
-                    regPrice: "100.000", promoPrice: "85.000", unit: "pcs",
-                    startDate: "01/11", endDate: "30/11", qty: 6
+                    badge: "DISC 30%", sku: "I026339", desc: "VALENTINO GRESS BLACKROCK AMBER NOIR 120X240",
+                    regPrice: "1.060.000", promoPrice: "742.000", unit: "METER",
+                    startDate: "01/11", endDate: "30/11", qty: 12
                 }];
                 const worksheet = XLSX.utils.json_to_sheet(templateData);
                 const workbook = XLSX.utils.book_new();
@@ -439,7 +488,9 @@
             const sheet = document.getElementById('paperSheet');
             const orientation = document.querySelector('input[name="orientation"]:checked').value;
             const fontFamily = document.getElementById('fontFamilySelect').value;
-            const customPromoSize = document.getElementById('fontPromoRange').value;
+            const customPromoSize = parseFloat(document.getElementById('fontPromoRange').value);
+            const marginTVal = parseInt(document.getElementById('marginTRange').value);
+            const gapYVal = parseInt(document.getElementById('gapYRange').value);
 
             document.documentElement.style.setProperty('--page-orientation', orientation);
             document.getElementById('previewOrientationLabel').textContent = `Mode: ${orientation === 'landscape' ? 'Landscape (Mendatar)' : 'Portrait (Tegak)'}`;
@@ -453,13 +504,13 @@
 
             sheet.style.width = `${pWidth}mm`;
             sheet.style.height = `${pHeight}mm`;
-            sheet.style.paddingTop = `${label.marginT}mm`;
+            sheet.style.paddingTop = `${marginTVal}mm`;
             sheet.style.paddingLeft = `${label.marginL}mm`;
             sheet.style.paddingRight = `${label.marginR || 0}mm`;
             sheet.style.gridTemplateColumns = `repeat(${label.cols}, ${label.width}mm)`;
             sheet.style.gridTemplateRows = `repeat(${label.rows}, ${label.height}mm)`;
             sheet.style.columnGap = `${label.gapX}mm`;
-            sheet.style.rowGap = `${label.gapY}mm`;
+            sheet.style.rowGap = `${gapYVal}mm`;
             sheet.style.fontFamily = fontFamily;
             sheet.innerHTML = '';
 
@@ -482,36 +533,51 @@
 
                 if (i < renderQueue.length) {
                     const p = renderQueue[i];
+
+                    // 1. Badge Promo Posisi Tengah
                     const badgeHtml = p.badge 
-                        ? `<span class="bg-red-600 text-white font-black rounded-full px-1.5 py-0.5 text-[0.45em] tracking-tighter uppercase whitespace-nowrap">${p.badge}</span>`
+                        ? `<span class="bg-red-600 text-white font-black rounded-full px-2 py-0.5 text-[0.45em] tracking-tight uppercase whitespace-nowrap">${p.badge}</span>`
                         : `<span></span>`;
 
                     const dateHtml = (p.startDate || p.endDate) 
                         ? `<span class="text-[0.4em] text-gray-500 font-semibold">${p.startDate || ''}-${p.endDate || ''}</span>` 
                         : '';
 
+                    // 2. Satuan Fleksibel di bawah angka promo
+                    const unitHtml = p.unit 
+                        ? `<div class="text-right text-blue-900 font-bold tracking-normal border-t border-gray-200 pt-0.5" style="font-size: ${Math.max(0.25, customPromoSize * 0.22)}em;">/ ${p.unit}</div>`
+                        : '';
+
                     card.innerHTML = `
-                        <div class="flex justify-between items-center border-b border-gray-300 pb-0.5 gap-1">
-                            ${badgeHtml}
-                            <div class="flex items-center gap-1">
+                        <!-- Header 3 Kolom: Centered Badge -->
+                        <div class="grid grid-cols-3 items-center border-b border-gray-300 pb-0.5">
+                            <div></div>
+                            <div class="text-center flex justify-center">
+                                ${badgeHtml}
+                            </div>
+                            <div class="flex items-center justify-end gap-1 text-right">
                                 ${dateHtml}
                                 <span class="font-mono text-[0.48em] text-gray-600 font-bold whitespace-nowrap">${p.sku}</span>
                             </div>
                         </div>
+
+                        <!-- Nama / Deskripsi Barang -->
                         <div class="text-center font-extrabold leading-tight uppercase my-0.5 tracking-tight text-gray-900 line-clamp-2 ${fDesc}">
                             ${p.desc}
                         </div>
-                        <div class="relative flex-1 flex items-center justify-center min-h-0">
-                            <div class="absolute top-0 left-0 text-gray-400 line-through font-semibold whitespace-nowrap ${fReg}">
+
+                        <!-- Area Harga: Harga Reguler WARNA HITAM (text-black) & Harga Promo -->
+                        <div class="relative flex-1 flex flex-col justify-between min-h-0 pt-0.5">
+                            <div class="text-black line-through font-bold whitespace-nowrap ${fReg}">
                                 Rp${p.regPrice}
                             </div>
-                            <div class="text-red-600 font-black tracking-tighter flex items-baseline justify-center" style="font-size: ${customPromoSize}em;">
+
+                            <div class="text-red-600 font-black tracking-tighter flex items-baseline justify-center my-auto" style="font-size: ${customPromoSize}em;">
                                 <span class="text-[0.3em] mr-0.5 font-bold">Rp</span>
                                 <span>${p.promoPrice}</span>
                             </div>
-                        </div>
-                        <div class="text-right border-t border-gray-200 pt-0.5">
-                            <span class="text-blue-900 font-bold text-[0.55em]">/ ${p.unit}</span>
+
+                            ${unitHtml}
                         </div>
                     `;
                 } else {
