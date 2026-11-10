@@ -122,7 +122,7 @@
                 </div>
             </div>
 
-            <!-- Pengaturan Margin Atas & Gap Vertikal (5mm) -->
+            <!-- Pengaturan Margin Atas & Gap Vertikal -->
             <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-3">
                 <label class="block text-xs font-bold text-blue-800 uppercase">
                     <i class="fa-solid fa-ruler-combined"></i> Presisi Tata Letak (Margin & Gap)
@@ -172,7 +172,7 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-[10px] text-gray-600">Font Reguler</label>
+                        <label class="block text-[10px] text-gray-600">Font Reguler & Satuan</label>
                         <select id="generalFontReg" class="w-full border rounded p-1 text-xs bg-white">
                             <option value="xs">Kecil</option>
                             <option value="sm" selected>Normal</option>
@@ -534,7 +534,6 @@
                 if (i < renderQueue.length) {
                     const p = renderQueue[i];
 
-                    // 1. Badge Promo Posisi Tengah
                     const badgeHtml = p.badge 
                         ? `<span class="bg-red-600 text-white font-black rounded-full px-2 py-0.5 text-[0.45em] tracking-tight uppercase whitespace-nowrap">${p.badge}</span>`
                         : `<span></span>`;
@@ -543,10 +542,7 @@
                         ? `<span class="text-[0.4em] text-gray-500 font-semibold">${p.startDate || ''}-${p.endDate || ''}</span>` 
                         : '';
 
-                    // 2. Satuan Fleksibel di bawah angka promo
-                    const unitHtml = p.unit 
-                        ? `<div class="text-right text-blue-900 font-bold tracking-normal border-t border-gray-200 pt-0.5" style="font-size: ${Math.max(0.25, customPromoSize * 0.22)}em;">/ ${p.unit}</div>`
-                        : '';
+                    const unitText = p.unit ? `/ ${p.unit}` : '';
 
                     card.innerHTML = `
                         <!-- Header 3 Kolom: Centered Badge -->
@@ -566,18 +562,17 @@
                             ${p.desc}
                         </div>
 
-                        <!-- Area Harga: Harga Reguler WARNA HITAM (text-black) & Harga Promo -->
+                        <!-- Area Harga: Harga Reguler (Kiri, Hitam, Coret) & Satuan (Kanan, Hitam, Bold) Sejajar -->
                         <div class="relative flex-1 flex flex-col justify-between min-h-0 pt-0.5">
-                            <div class="text-black line-through font-bold whitespace-nowrap ${fReg}">
-                                Rp${p.regPrice}
+                            <div class="flex justify-between items-center text-black font-bold whitespace-nowrap ${fReg}">
+                                <span class="line-through">Rp${p.regPrice}</span>
+                                <span>${unitText}</span>
                             </div>
 
                             <div class="text-red-600 font-black tracking-tighter flex items-baseline justify-center my-auto" style="font-size: ${customPromoSize}em;">
                                 <span class="text-[0.3em] mr-0.5 font-bold">Rp</span>
                                 <span>${p.promoPrice}</span>
                             </div>
-
-                            ${unitHtml}
                         </div>
                     `;
                 } else {
