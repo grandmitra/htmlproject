@@ -73,6 +73,14 @@
             flex-direction: column;
             justify-content: space-between;
         }
+
+        /* Styling Superscript Ribuan */
+        .price-sup {
+            font-size: 0.45em;
+            vertical-align: super;
+            margin-left: 1px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
@@ -369,11 +377,11 @@
                 <div class="grid grid-cols-3 gap-2">
                     <div>
                         <label class="block font-semibold text-gray-700 mb-1">Harga Reguler</label>
-                        <input type="text" id="formRegPrice" placeholder="1.000.000" class="w-full border border-gray-300 rounded p-2">
+                        <input type="text" id="formRegPrice" placeholder="1060000" class="w-full border border-gray-300 rounded p-2">
                     </div>
                     <div>
                         <label class="block font-semibold text-gray-700 mb-1">Harga Promo *</label>
-                        <input type="text" id="formPromoPrice" required placeholder="700.000" class="w-full border border-gray-300 rounded p-2 font-bold text-red-600">
+                        <input type="text" id="formPromoPrice" required placeholder="742000" class="w-full border border-gray-300 rounded p-2 font-bold text-red-600">
                     </div>
                     <div>
                         <label class="block font-semibold text-gray-700 mb-1">Satuan</label>
@@ -405,11 +413,8 @@
     </div>
 
     <script>
-        // Link CSV Google Sheets
         const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS75B0WPzyPAm-C5wBp0Q2JgIcqbwzglxHP9GeBbPMaeVtk6cohIhY8PFUHTyO_YswBPCw6HmIINMH5/pub?gid=0&single=true&output=csv"; 
-        
-        // Opsional: URL Google Apps Script WebApp untuk Sync CRUD langsung ke Google Sheets 
-        const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxl1oMIY7i8FVUe0jpAA8G9oZZHYYizYjcARc3tqueGzCzHYxiEce6nJwvqA-MnD9oV/exec"; 
+        const APPS_SCRIPT_WEBAPP_URL = ""; 
 
         // DATABASE LENGKAP UKURAN LABEL TOM & JERRY (No. 95 - 130)
         const LABEL_SIZES = [
@@ -434,7 +439,6 @@
             { id: "130", name: "TnJ No. 130", width: 85, height: 30, cols: 2, rows: 5, marginT: 5, marginL: 15,marginR: 15,gapX: 5, gapY: 5, pageW: 210, pageH: 165 }
         ];
 
-        // State Aplikasi
         let productList = [];
         let filteredProducts = [];
         let tableCurrentPage = 1;
@@ -477,14 +481,42 @@
             return LABEL_SIZES.find(l => l.id === val) || LABEL_SIZES[0];
         }
 
+        // Fungsi Pemformatan Angka Ribuan dengan Superscript .000
+        function formatPriceWithSuperscript(rawPrice) {
+            if (!rawPrice) return "0";
+            // Bersihkan string dari karakter non-digit
+            let cleanStr = String(rawPrice).replace(/[^\d]/g, '');
+            if (cleanStr === '') return "0";
+
+            let num = parseInt(cleanStr, 10);
+            let formattedFull = num.toLocaleString('id-ID'); // Contoh: 1.060.000 atau 742.000
+
+            // Cek apakah angka berformat ribuan (panjang digit cukup untuk ada .000)
+            if (num >= 1000) {
+                let parts = formattedFull.split('.');
+                if (parts.length > 1) {
+                    let lastPart = parts.pop(); // Bagian ratusan paling belakang misal "000"
+                    let mainPart = parts.join('.'); // Bagian depan misal "1.060" atau "742"
+                    return `${mainPart}<span class="price-sup">.${lastPart}</span>`;
+                }
+            }
+            return formattedFull;
+        }
+
+        function formatStandardNumber(rawPrice) {
+            if (!rawPrice) return "0";
+            let cleanStr = String(rawPrice).replace(/[^\d]/g, '');
+            if (cleanStr === '') return "0";
+            return parseInt(cleanStr, 10).toLocaleString('id-ID');
+        }
+
         // Fetch Data CSV Google Sheets
         async function fetchDataFromCSV() {
             const statusInfo = document.getElementById('dataStatusInfo');
             statusInfo.textContent = "Mengambil data dari Google Sheets CSV...";
             
             try {
-                const fetchUrl = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS75B0WPzyPAm-C5wBp0Q2JgIcqbwzglxHP9GeBbPMaeVtk6cohIhY8PFUHTyO_YswBPCw6HmIINMH5/pub?gid=0&single=true&output=csv";
-                const response = await fetch(fetchUrl);
+                const response = await fetch(CSV_URL);
                 if (!response.ok) throw new Error("Gagal mengunduh CSV");
                 
                 const csvText = await response.text();
@@ -498,8 +530,8 @@
                         badge: row.badge || row.Badge || "DISC 30%",
                         sku: row.sku || row.SKU || `SKU-${idx + 1}`,
                         desc: row.desc || row.Deskripsi || row.nama || row.Nama || "DESKRIPSI BARANG",
-                        regPrice: row.regPrice || row.HargaReguler || row.reguler || "0",
-                        promoPrice: row.promoPrice || row.HargaPromo || row.promo || "0",
+                        regPrice: String(row.regPrice || row.HargaReguler || row.reguler || "0"),
+                        promoPrice: String(row.promoPrice || row.HargaPromo || row.promo || "0"),
                         unit: row.unit || row.Satuan || "METER",
                         startDate: row.startDate || row.Start || "01/11",
                         endDate: row.endDate || row.End || "30/11",
@@ -522,7 +554,7 @@
         function fallbackDefaultData() {
             if(productList.length === 0) {
                 productList = [
-                    { id: 1, selected: true, badge: "DISC 30%", sku: "I026339", desc: "VALENTINO GRESS BLACKROCK AMBER NOIR 120X240", regPrice: "1.060.000", promoPrice: "742.000", unit: "METER", startDate: "01/11", endDate: "30/11", qty: 1 }
+                    { id: 1, selected: true, badge: "DISC 30%", sku: "I026339", desc: "VALENTINO GRESS BLACKROCK AMBER NOIR 120X240", regPrice: "1060000", promoPrice: "742000", unit: "METER", startDate: "01/11", endDate: "30/11", qty: 1 }
                 ];
             }
         }
@@ -548,7 +580,7 @@
             renderPreview();
         }
 
-        // Render Data Table dengan Action CRUD
+        // Render Data Table dengan Action CRUD & Format Titik Ribuan
         function renderDataTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
@@ -586,7 +618,7 @@
                     </td>
                     <td class="p-2 font-mono font-bold text-gray-700">${item.sku}</td>
                     <td class="p-2 text-gray-800 max-w-[150px] truncate" title="${item.desc}">${item.desc}</td>
-                    <td class="p-2 text-right font-bold text-red-600">Rp${item.promoPrice}</td>
+                    <td class="p-2 text-right font-bold text-red-600">Rp${formatStandardNumber(item.promoPrice)}</td>
                     <td class="p-2 text-center">
                         <input type="number" min="1" value="${item.qty}" data-id="${item.id}" class="item-qty w-12 border rounded text-center text-xs p-0.5">
                     </td>
@@ -602,7 +634,6 @@
             document.getElementById('btnPrevTablePage').disabled = tableCurrentPage <= 1;
             document.getElementById('btnNextTablePage').disabled = tableCurrentPage >= totalPages || tablePageSize === 'all';
 
-            // Event Checkbox Row
             document.querySelectorAll('.item-check').forEach(chk => {
                 chk.addEventListener('change', (e) => {
                     const id = parseInt(e.target.getAttribute('data-id'));
@@ -614,7 +645,6 @@
                 });
             });
 
-            // Event Qty Row
             document.querySelectorAll('.item-qty').forEach(input => {
                 input.addEventListener('change', (e) => {
                     const id = parseInt(e.target.getAttribute('data-id'));
@@ -676,14 +706,12 @@
             };
 
             if (editId) {
-                // UPDATE
                 const idx = productList.findIndex(p => p.id === parseInt(editId));
                 if (idx !== -1) {
                     productList[idx] = { ...productList[idx], ...itemData };
                     syncToGoogleSheets('UPDATE', productList[idx]);
                 }
             } else {
-                // CREATE
                 itemData.id = Date.now();
                 productList.unshift(itemData);
                 syncToGoogleSheets('CREATE', itemData);
@@ -704,7 +732,6 @@
             }
         }
 
-        // Sync ke Google Apps Script (Opsional jika API URL diisi)
         async function syncToGoogleSheets(action, itemData) {
             if (!APPS_SCRIPT_WEBAPP_URL) return;
             try {
@@ -714,13 +741,11 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action, ...itemData })
                 });
-                console.log(`Sync ${action} ke Google Sheets sukses.`);
             } catch (err) {
                 console.error(`Sync ${action} gagal:`, err);
             }
         }
 
-        // Setup Event Listeners
         function setupEventListeners() {
             document.getElementById('labelSelect').addEventListener('change', () => {
                 const label = getCurrentLabel();
@@ -827,7 +852,7 @@
             }
         }
 
-        // Render Pratinjau Lembar Stiker
+        // Render Pratinjau Lembar Stiker dengan Superscript Ribuan
         function renderPreview() {
             const label = getCurrentLabel();
             const container = document.getElementById('printSheetsContainer');
@@ -910,6 +935,8 @@
                         : '';
 
                     const unitText = (showUnit && p.unit) ? `/ ${p.unit}` : '';
+                    const regPriceFormatted = formatPriceWithSuperscript(p.regPrice);
+                    const promoPriceFormatted = formatPriceWithSuperscript(p.promoPrice);
 
                     card.innerHTML = `
                         <div class="grid grid-cols-3 items-center border-b border-gray-300 pb-0.5">
@@ -929,7 +956,7 @@
 
                         <div class="relative flex-1 flex flex-col justify-between min-h-0 pt-0.5">
                             <div class="grid grid-cols-3 items-center text-black font-bold whitespace-nowrap" style="font-size: ${customRegSize}em;">
-                                <div class="text-left line-through">${showReg ? `Rp${p.regPrice}` : ''}</div>
+                                <div class="text-left line-through">${showReg ? `Rp${regPriceFormatted}` : ''}</div>
                                 <div class="text-center">${unitText}</div>
                                 <div></div>
                             </div>
@@ -937,7 +964,7 @@
                             ${showPromo ? `
                                 <div class="text-red-600 font-black tracking-tighter flex items-baseline justify-center my-auto" style="font-size: ${customPromoSize}em;">
                                     <span class="text-[0.3em] mr-0.5 font-bold">Rp</span>
-                                    <span>${p.promoPrice}</span>
+                                    <span>${promoPriceFormatted}</span>
                                 </div>
                             ` : '<div></div>'}
                         </div>
@@ -1029,6 +1056,8 @@
                             : '';
 
                         const unitText = (showUnit && p.unit) ? `/ ${p.unit}` : '';
+                        const regPriceFormatted = formatPriceWithSuperscript(p.regPrice);
+                        const promoPriceFormatted = formatPriceWithSuperscript(p.promoPrice);
 
                         card.innerHTML = `
                             <div class="grid grid-cols-3 items-center border-b border-gray-300 pb-0.5">
@@ -1048,7 +1077,7 @@
 
                             <div class="relative flex-1 flex flex-col justify-between min-h-0 pt-0.5">
                                 <div class="grid grid-cols-3 items-center text-black font-bold whitespace-nowrap" style="font-size: ${customRegSize}em;">
-                                    <div class="text-left line-through">${showReg ? `Rp${p.regPrice}` : ''}</div>
+                                    <div class="text-left line-through">${showReg ? `Rp${regPriceFormatted}` : ''}</div>
                                     <div class="text-center">${unitText}</div>
                                     <div></div>
                                 </div>
@@ -1056,7 +1085,7 @@
                                 ${showPromo ? `
                                     <div class="text-red-600 font-black tracking-tighter flex items-baseline justify-center my-auto" style="font-size: ${customPromoSize}em;">
                                         <span class="text-[0.3em] mr-0.5 font-bold">Rp</span>
-                                        <span>${p.promoPrice}</span>
+                                        <span>${promoPriceFormatted}</span>
                                     </div>
                                 ` : '<div></div>'}
                             </div>
@@ -1097,11 +1126,11 @@
                 showPromo: document.getElementById('showColPromo').checked,
                 productList: productList
             };
-            localStorage.setItem('tnj_label_crud_config', JSON.stringify(config));
+            localStorage.setItem('tnj_label_sup_config', JSON.stringify(config));
         }
 
         function loadLocalStorageSettings() {
-            const saved = localStorage.getItem('tnj_label_crud_config');
+            const saved = localStorage.getItem('tnj_label_sup_config');
             if (!saved) return;
             try {
                 const config = JSON.parse(saved);
