@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GMB Tracking</title>
+    <title>Aplikasi Tracking Pengiriman Barang</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -37,6 +37,7 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .step-active { background-color: #f39c12; color: white; border-color: #f39c12; }
         .step-completed { background-color: #0284c7; color: white; border-color: #0284c7; }
+        .step-finished { background-color: #10b981; color: white; border-color: #10b981; }
         .step-pending { background-color: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; }
     </style>
 </head>
@@ -60,7 +61,7 @@
                 <button id="btnRoleDriver" onclick="switchRole('driver')" class="px-3 py-1.5 rounded-lg transition-all text-slate-600">
                     <i class="fa-solid fa-id-card mr-1"></i> Driver
                 </button>
-                <button id="btnRoleAdmin" onclick="switchRole('admin')" class="px-3 py-1.5 rounded-lg transition-all text-slate-600">
+                <button id="btnRoleAdmin" onclick="checkAdminPassword()" class="px-3 py-1.5 rounded-lg transition-all text-slate-600">
                     <i class="fa-solid fa-user-gear mr-1"></i> Admin
                 </button>
             </div>
@@ -78,42 +79,59 @@
     <!-- Main Container -->
     <main class="flex-1 max-w-xl w-full mx-auto p-3 sm:p-4 mb-12">
 
-        <!-- ==================== CONFIG / APPS SCRIPT URL BANNER ==================== -->
-        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4 text-xs space-y-2">
-            <div class="flex items-center justify-between">
+        <!-- ==================== CONFIG / APPS SCRIPT URL BANNER (GBR 1: HIDE BY DEFAULT, PASSWORD PROTECTED) ==================== -->
+        <div class="mb-4">
+            <div id="dbLockedHeader" class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between text-xs">
                 <span class="font-bold text-slate-700 flex items-center gap-1.5">
                     <i class="fa-solid fa-database text-blue-600"></i> Integrasi Google Sheets
                 </span>
-                <span id="syncBadge" class="text-amber-600 font-semibold flex items-center bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                    <i class="fa-solid fa-circle-notch fa-spin text-[9px] mr-1"></i> Memuat Data
-                </span>
-            </div>
-            
-            <div class="space-y-1">
-                <label class="block text-[11px] font-semibold text-slate-500">Google Apps Script Web App URL:</label>
-                <div class="flex gap-2">
-                    <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 p-2 bg-slate-50 rounded-xl border border-slate-300 font-mono text-[11px] focus:outline-none focus:ring-2 focus:ring-blue-600">
-                    <button onclick="saveScriptUrl()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-3 py-1.5 rounded-xl transition">
-                        Simpan
+                <div class="flex items-center gap-2">
+                    <span id="syncBadge" class="text-amber-600 font-semibold flex items-center bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                        <i class="fa-solid fa-circle-notch fa-spin text-[9px] mr-1"></i> Memuat Data
+                    </span>
+                    <button onclick="unlockGoogleSheetConfig()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg border font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-lock text-slate-500"></i> Buka Pengaturan
                     </button>
                 </div>
             </div>
-            
-            <div class="text-[10px] text-slate-400 flex items-center justify-between pt-1">
-                <span>Spreadsheet ID: <code class="font-mono bg-slate-100 px-1 py-0.5 rounded">14BND0HXHlEsB6jcr1EIb7irSrKl7rPL0kqeTT1R0cP4</code></span>
-                <button onclick="showAppsScriptGuide()" class="text-blue-600 font-bold underline">Petunjuk Setup Script</button>
+
+            <div id="dbConfigPanel" class="bg-white p-4 rounded-2xl shadow-sm border border-blue-200 text-xs space-y-2 hidden mt-2">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-blue-900 flex items-center gap-1.5">
+                        <i class="fa-solid fa-gear text-blue-600"></i> Konfigurasi Google Sheets (Admin)
+                    </span>
+                    <button onclick="lockGoogleSheetConfig()" class="text-slate-400 hover:text-slate-600 font-bold">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-slate-500">Google Apps Script Web App URL:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 p-2 bg-slate-50 rounded-xl border border-slate-300 font-mono text-[11px] focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <button onclick="saveScriptUrl()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-3 py-1.5 rounded-xl transition">
+                            Simpan
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-[10px] text-slate-400 flex items-center justify-between pt-1">
+                    <span>Spreadsheet ID: <code class="font-mono bg-slate-100 px-1 py-0.5 rounded">14BND0HXHlEsB6jcr1EIb7irSrKl7rPL0kqeTT1R0cP4</code></span>
+                    <button onclick="showAppsScriptGuide()" class="text-blue-600 font-bold underline">Petunjuk Setup Script</button>
+                </div>
             </div>
         </div>
 
-        <!-- ==================== ADMIN VIEW ==================== -->
+        <!-- ==================== ADMIN VIEW (GBR 2) ==================== -->
         <div id="adminView" class="hidden space-y-4">
 
-            <!-- Form Input SJ Baru -->
+            <!-- Form Input / Edit SJ Baru -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center">
+                <h2 id="adminFormTitle" class="text-base font-bold text-slate-800 mb-4 flex items-center">
                     <i class="fa-solid fa-file-circle-plus text-blue-600 mr-2"></i> Input Surat Jalan Baru (Admin)
                 </h2>
-                <form id="formInputSJ" onsubmit="handleCreateSJ(event)" class="space-y-3 text-xs">
+                <form id="formInputSJ" onsubmit="handleFormSubmit(event)" class="space-y-3 text-xs">
+                    <input type="hidden" id="editSJOriginalNo" value="">
                     <div>
                         <label class="block font-semibold text-slate-600 mb-1">Nomor Pengiriman / SJ *</label>
                         <input type="text" id="inputNoSJ" required placeholder="Contoh: 261092257" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono">
@@ -150,15 +168,21 @@
                         <label class="block font-semibold text-slate-600 mb-1">Tanggal Kirim *</label>
                         <input type="date" id="inputTanggal" required class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
                     </div>
-                    <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
-                        <i class="fa-solid fa-paper-plane"></i> Kirim Ke Google Sheets & Terbitkan SJ
-                    </button>
+
+                    <div class="flex gap-2 pt-1">
+                        <button type="submit" id="btnSubmitAdmin" class="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> Simpan Surat Jalan
+                        </button>
+                        <button type="button" id="btnCancelEdit" onclick="resetAdminForm()" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 rounded-xl transition">
+                            Batal
+                        </button>
+                    </div>
                 </form>
             </div>
 
-            <!-- Daftar Surat Jalan -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                <div class="flex items-center justify-between mb-3">
+            <!-- Daftar Surat Jalan Admin (GBR 2: Pencarian, Filter, Update, Delete & Paging) -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+                <div class="flex items-center justify-between">
                     <h2 class="text-base font-bold text-slate-800">Daftar Pengiriman Active</h2>
                     <div class="flex items-center gap-2">
                         <button onclick="fetchDataFromSheet()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1 rounded-lg border font-semibold">
@@ -167,25 +191,88 @@
                         <span id="totalSJCount" class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full">0 SJ</span>
                     </div>
                 </div>
-                <div id="adminSJList" class="space-y-3">
+
+                <!-- BAR PENCARIAN & FILTER ADMIN -->
+                <div class="space-y-2 pt-1 text-xs">
+                    <!-- Search Bar with Clear Text Button -->
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
+                        <input type="text" id="adminSearchInput" oninput="applyAdminFilters()" placeholder="Cari No SJ, Penerima, Toko, Driver, Tujuan..." class="w-full pl-9 pr-9 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 font-medium">
+                        <button id="adminSearchClear" onclick="clearAdminSearch()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 hidden">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    </div>
+
+                    <!-- Filters: Tanggal & Status -->
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Filter Tanggal:</label>
+                            <input type="date" id="adminFilterDate" onchange="applyAdminFilters()" class="w-full p-1.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Filter Status:</label>
+                            <select id="adminFilterStatus" onchange="applyAdminFilters()" class="w-full p-1.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none">
+                                <option value="ALL">Semua Status</option>
+                                <option value="1">1. Terdaftar</option>
+                                <option value="2">2. Driver Siap</option>
+                                <option value="3">3. Dimuat</option>
+                                <option value="4">4. Dikirim</option>
+                                <option value="5">5. Selesai</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin List Container -->
+                <div id="adminSJList" class="space-y-3 pt-2">
                     <!-- Dynamic List -->
+                </div>
+
+                <!-- Paging / Pagination Control -->
+                <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
+                    <span id="adminPageInfo" class="text-slate-500 font-medium">Halaman 1 dari 1</span>
+                    <div class="flex gap-1.5">
+                        <button id="btnPrevPage" onclick="changeAdminPage(-1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-slate-700 font-bold disabled:opacity-50">
+                            <i class="fa-solid fa-chevron-left mr-1"></i> Prev
+                        </button>
+                        <button id="btnNextPage" onclick="changeAdminPage(1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-slate-700 font-bold disabled:opacity-50">
+                            Next <i class="fa-solid fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
 
-        <!-- ==================== DRIVER VIEW ==================== -->
+        <!-- ==================== DRIVER VIEW (GBR 3, 4, 5) ==================== -->
         <div id="driverView" class="space-y-4">
 
-            <!-- SJ Switcher / Selector for Driver -->
-            <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between text-xs">
-                <span class="font-bold text-slate-600"><i class="fa-solid fa-list-check text-blue-600 mr-1"></i> Pilih Surat Jalan:</span>
-                <select id="selectDriverSJ" onchange="loadDriverData(this.value)" class="p-2 rounded-xl border border-slate-300 bg-slate-50 font-mono font-bold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 max-w-[220px]">
+            <!-- GBR 5: SJ Selector untuk Driver dengan Kolom Pencarian & Filter Tanggal -->
+            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 space-y-2 text-xs">
+                <div class="flex items-center justify-between font-bold text-slate-700">
+                    <span><i class="fa-solid fa-list-check text-blue-600 mr-1"></i> Pilih Surat Jalan Driver:</span>
+                    <button onclick="resetDriverSearch()" class="text-[10px] text-blue-600 hover:underline">Reset Filter</button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400"></i>
+                        <input type="text" id="driverSearchInput" oninput="filterDriverDropdown()" placeholder="Cari SJ / Penerima..." class="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-600">
+                        <button id="driverSearchClear" onclick="clearDriverSearch()" class="absolute right-2 top-2 text-slate-400 hover:text-slate-600 hidden">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                    <div>
+                        <input type="date" id="driverFilterDate" onchange="filterDriverDropdown()" class="w-full p-1.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none">
+                    </div>
+                </div>
+
+                <select id="selectDriverSJ" onchange="loadDriverData(this.value)" class="w-full p-2 rounded-xl border border-blue-200 bg-blue-50/50 font-mono font-bold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600">
                     <!-- Dynamic Options -->
                 </select>
             </div>
 
-            <!-- CARD UTAMA DASHBOARD DRIVER (DESAIN MATURE) -->
+            <!-- CARD UTAMA DASHBOARD DRIVER -->
             <div id="driverCardContent" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
                 
                 <!-- TOP HEADER CONTAINER -->
@@ -222,7 +309,7 @@
                     </div>
                 </div>
 
-                <!-- PROGRESS PENGIRIMAN SECTION -->
+                <!-- PROGRESS PENGIRIMAN SECTION (GBR 3: CEKLIS & INDIKATOR SELESAI AKTIF) -->
                 <div class="p-4 sm:p-5">
                     <div class="text-xs font-bold text-slate-400 tracking-wider uppercase mb-5">Progress Pengiriman</div>
 
@@ -239,7 +326,7 @@
                                 <div id="stepCircle1" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-completed">
                                     <i class="fa-solid fa-check text-xs"></i>
                                 </div>
-                                <div class="mt-2 text-[10px] sm:text-xs font-bold text-sky-700 leading-tight">
+                                <div id="stepLabel1" class="mt-2 text-[10px] sm:text-xs font-bold text-sky-700 leading-tight">
                                     <i class="fa-regular fa-clipboard block text-slate-400 text-xs mb-0.5"></i>
                                     Terdaftar
                                 </div>
@@ -250,7 +337,7 @@
                                 <div id="stepCircle2" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-completed">
                                     <i class="fa-solid fa-check text-xs"></i>
                                 </div>
-                                <div class="mt-2 text-[10px] sm:text-xs font-bold text-sky-700 leading-tight">
+                                <div id="stepLabel2" class="mt-2 text-[10px] sm:text-xs font-bold text-sky-700 leading-tight">
                                     <i class="fa-solid fa-truck-front block text-slate-400 text-xs mb-0.5"></i>
                                     Driver Siap
                                 </div>
@@ -261,7 +348,7 @@
                                 <div id="stepCircle3" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-completed">
                                     <i class="fa-solid fa-check text-xs"></i>
                                 </div>
-                                <div class="mt-2 text-[10px] sm:text-xs font-bold text-sky-700 leading-tight">
+                                <div id="stepLabel3" class="mt-2 text-[10px] sm:text-xs font-bold text-sky-700 leading-tight">
                                     <i class="fa-solid fa-box block text-slate-400 text-xs mb-0.5"></i>
                                     Dimuat
                                 </div>
@@ -272,7 +359,7 @@
                                 <div id="stepCircle4" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-active">
                                     4
                                 </div>
-                                <div class="mt-2 text-[10px] sm:text-xs font-bold text-amber-600 leading-tight">
+                                <div id="stepLabel4" class="mt-2 text-[10px] sm:text-xs font-bold text-amber-600 leading-tight">
                                     <i class="fa-solid fa-truck-fast block text-amber-600 text-xs mb-0.5"></i>
                                     Dikirim
                                 </div>
@@ -283,8 +370,8 @@
                                 <div id="stepCircle5" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-pending">
                                     5
                                 </div>
-                                <div class="mt-2 text-[10px] sm:text-xs font-bold text-slate-400 leading-tight">
-                                    <i class="fa-solid fa-square-check block text-slate-300 text-xs mb-0.5"></i>
+                                <div id="stepLabel5" class="mt-2 text-[10px] sm:text-xs font-bold text-slate-400 leading-tight">
+                                    <i id="stepIcon5" class="fa-solid fa-square-check block text-slate-300 text-xs mb-0.5"></i>
                                     Selesai
                                 </div>
                             </div>
@@ -352,20 +439,20 @@
 
                 </div>
 
-                <!-- ACTION BUTTONS UNTUK UPDATE STATUS DRIVER -->
+                <!-- ACTION BUTTONS UNTUK UPDATE STATUS DRIVER (GBR 4: DISABLED APABILA SUDAH DIKLIK, MODAL UNTUK TOMBOL 4) -->
                 <div class="p-4 bg-slate-50 border-t border-slate-200/80 space-y-2">
                     <div class="text-xs font-bold text-slate-600 mb-2"><i class="fa-solid fa-pen-to-square text-blue-600 mr-1"></i> Update Status Pengiriman Oleh Driver:</div>
                     <div class="grid grid-cols-2 gap-2">
-                        <button onclick="updateDriverStatus('Muat Barang', 'Mulai memuat barang ke armada')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
+                        <button id="btnDriverStep1" onclick="updateDriverStatus('Muat Barang', 'Mulai memuat barang ke armada')" class="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:text-slate-500 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-box"></i> 1. Mulai Muat
                         </button>
-                        <button onclick="updateDriverStatus('Selesai Muat', 'Semua barang selesai dimuat')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
+                        <button id="btnDriverStep2" onclick="updateDriverStatus('Selesai Muat', 'Semua barang selesai dimuat')" class="bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:text-slate-500 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-boxes-packing"></i> 2. Selesai Muat
                         </button>
-                        <button onclick="updateDriverStatus('Berangkat', 'Kendaraan berangkat dari gudang')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
+                        <button id="btnDriverStep3" onclick="updateDriverStatus('Berangkat', 'Kendaraan berangkat dari gudang')" class="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:text-slate-500 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-truck-arrow-right"></i> 3. Berangkat Kirim
                         </button>
-                        <button onclick="updateDriverStatus('Selesai', 'Barang diterima dengan baik oleh pelanggan')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
+                        <button id="btnDriverStep4" onclick="openFinishModal()" class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:text-slate-500 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-circle-check"></i> 4. Sampai & Selesai
                         </button>
                     </div>
@@ -375,6 +462,55 @@
         </div>
 
     </main>
+
+    <!-- Modal Form Terima Barang / Selesai Pengiriman (Tombol 4) -->
+    <div id="finishModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 text-left shadow-2xl border border-slate-100">
+            <div class="flex items-center justify-between mb-3 border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5 text-emerald-700">
+                    <i class="fa-solid fa-circle-check"></i> Konfirmasi Selesai Kirim
+                </h3>
+                <button onclick="closeFinishModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            </div>
+            <form onsubmit="handleFinishSubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nama Penerima Di Lokasi *</label>
+                    <input type="text" id="finishPenerimaLokasi" required placeholder="Contoh: Bpk. Hendra (Gudang)" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Catatan Tambahan (Opsional)</label>
+                    <textarea id="finishCatatan" rows="2" placeholder="Barang diterima lengkap dan kondisi baik." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"></textarea>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeFinishModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl transition">
+                        Batal
+                    </button>
+                    <button type="submit" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl transition shadow">
+                        Selesaikan Pengiriman
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Admin / Config Password Check -->
+    <div id="passwordModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-5 text-center shadow-2xl border border-slate-100">
+            <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-base mb-1">Akses Dilindungi</h3>
+            <p id="passwordModalSub" class="text-xs text-slate-500 mb-3">Masukkan password untuk melanjutkan.</p>
+            
+            <form onsubmit="handlePasswordSubmit(event)" class="space-y-3 text-xs">
+                <input type="password" id="inputAuthPassword" required placeholder="Password..." class="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-300 text-center font-bold tracking-widest text-base focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                <div class="flex gap-2">
+                    <button type="button" onclick="closePasswordModal()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2 rounded-xl">Batal</button>
+                    <button type="submit" class="flex-1 bg-blue-700 text-white font-bold py-2 rounded-xl shadow">Masuk</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- Modal Instructions Apps Script -->
     <div id="scriptGuideModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
@@ -388,13 +524,12 @@
                 <p>2. Klik menu <b>Extensions (Ekstensi) > Apps Script</b>.</p>
                 <p>3. Hapus semua kode default, paste kode backend di bawah ini:</p>
                 
-                <textarea readonly class="w-full h-36 bg-slate-800 text-emerald-400 font-mono text-[10px] p-2 rounded-xl focus:outline-none">
+                <textarea readonly class="w-full h-44 bg-slate-800 text-emerald-400 font-mono text-[10px] p-2 rounded-xl focus:outline-none">
 function doGet(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var data = sheet.getDataRange().getValues();
   var result = [];
   if (data.length > 1) {
-    var headers = data[0];
     for (var i = 1; i < data.length; i++) {
       var row = data[i];
       if (row[0]) {
@@ -409,7 +544,8 @@ function doGet(e) {
           plat: row[7],
           stepProgress: Number(row[8]) || 1,
           statusCard: row[9] ? JSON.parse(row[9]) : {title: "Terdaftar", time: "-", note: "-"},
-          timeline: row[10] ? JSON.parse(row[10]) : []
+          timeline: row[10] ? JSON.parse(row[10]) : [],
+          rawTimestamp: row[11] || 0
         });
       }
     }
@@ -426,16 +562,27 @@ function doPost(e) {
     var item = body.data;
     sheet.appendRow([
       item.noSJ, item.penerima, item.toko, item.tanggal, item.tujuan, item.jumlahDus,
-      item.driver, item.plat, item.stepProgress, JSON.stringify(item.statusCard), JSON.stringify(item.timeline)
+      item.driver, item.plat, item.stepProgress, JSON.stringify(item.statusCard), JSON.stringify(item.timeline),
+      item.rawTimestamp || new Date().getTime()
     ]);
   } else if (action === "update") {
     var item = body.data;
     var data = sheet.getDataRange().getValues();
     for (var i = 1; i < data.length; i++) {
-      if (String(data[i][0]) === String(item.noSJ)) {
-        sheet.getRange(i + 1, 9).setValue(item.stepProgress);
-        sheet.getRange(i + 1, 10).setValue(JSON.stringify(item.statusCard));
-        sheet.getRange(i + 1, 11).setValue(JSON.stringify(item.timeline));
+      if (String(data[i][0]) === String(item.originalNoSJ || item.noSJ)) {
+        sheet.getRange(i + 1, 1, 1, 11).setValues([[
+          item.noSJ, item.penerima, item.toko, item.tanggal, item.tujuan, item.jumlahDus,
+          item.driver, item.plat, item.stepProgress, JSON.stringify(item.statusCard), JSON.stringify(item.timeline)
+        ]]);
+        break;
+      }
+    }
+  } else if (action === "delete") {
+    var noSJ = body.noSJ;
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(noSJ)) {
+        sheet.deleteRow(i + 1);
         break;
       }
     }
@@ -446,7 +593,7 @@ function doPost(e) {
 
                 <p>4. Klik tombol <b>Deploy > New Deployment</b>.</p>
                 <p>5. Pilih jenis <b>Web app</b>, ganti akses ke <b>Anyone (Siapa Saja)</b>, lalu klik <b>Deploy</b>.</p>
-                <p>6. Copy <b>Web App URL</b> dan paste pada kolom input "Google Apps Script Web App URL" di atas aplikasi ini.</p>
+                <p>6. Copy <b>Web App URL</b> dan paste pada modul konfigurasi aplikasi ini.</p>
             </div>
             <button onclick="closeScriptGuide()" class="w-full bg-slate-800 text-white font-bold py-2 rounded-xl text-xs mt-4">Tutup</button>
         </div>
@@ -480,6 +627,7 @@ function doPost(e) {
                 driver: "SUTIYO",
                 plat: "KPS04",
                 stepProgress: 4,
+                rawTimestamp: 1731310000000,
                 statusCard: {
                     title: "🚚 Kendaraan Dalam Perjalanan",
                     time: "11/11 09:38",
@@ -491,29 +639,72 @@ function doPost(e) {
                     { title: "Semua barang selesai dimuat", time: "11/11 09:38 WIB", icon: "fa-solid fa-boxes-packing", active: true },
                     { title: "Kendaraan berangkat dari gudang", time: "11/11 09:38 WIB", icon: "fa-solid fa-truck", active: true }
                 ]
+            },
+            {
+                noSJ: "123",
+                penerima: "JAKA",
+                toko: "TOKO MAJU JAYA",
+                tanggal: "11 Nov 2026",
+                tujuan: "PIK2",
+                jumlahDus: 230,
+                driver: "BUDI",
+                plat: "B123XXX",
+                stepProgress: 2,
+                rawTimestamp: 1731300000000,
+                statusCard: {
+                    title: "📋 Driver Siap Memuat",
+                    time: "11/11 08:00",
+                    note: "Driver dalam persediaan di gudang"
+                },
+                timeline: [
+                    { title: "Terdaftar — jadwal kirim 11 Nov 2026", time: "11/11 08:00 WIB", icon: "fa-regular fa-clipboard", active: true }
+                ]
+            },
+            {
+                noSJ: "123-B",
+                penerima: "JAKA",
+                toko: "TOKO SEJAHTERA",
+                tanggal: "11 Nov 2026",
+                tujuan: "PIK2",
+                jumlahDus: 230,
+                driver: "FUJI",
+                plat: "B123XX",
+                stepProgress: 5,
+                rawTimestamp: 1731290000000,
+                statusCard: {
+                    title: "✅ Pengiriman Selesai",
+                    time: "11/11 14:00",
+                    note: "Diterima di lokasi oleh Bpk. Jaka"
+                },
+                timeline: [
+                    { title: "Terdaftar — jadwal kirim 11 Nov 2026", time: "11/11 07:00 WIB", icon: "fa-regular fa-clipboard", active: false },
+                    { title: "Pengiriman selesai dan diterima oleh pelanggan", time: "11/11 14:00 WIB", icon: "fa-solid fa-circle-check", active: true }
+                ]
             }
         ];
 
-        // Global State Manager
+        // Global State
         let currentRole = 'driver';
         let sjDatabase = [];
+        let filteredAdminData = [];
         let activeSJIndex = 0;
         let appsScriptUrl = localStorage.getItem('logistik_apps_script_url') || '';
+        let pendingAuthPurpose = ''; // 'admin' or 'config'
+
+        // Admin Pagination State
+        let adminCurrentPage = 1;
+        const adminPageSize = 3;
 
         window.onload = function() {
-            // Restore script URL if saved
             if (appsScriptUrl) {
                 document.getElementById('scriptUrlInput').value = appsScriptUrl;
             }
 
-            // Set default date picker
             const today = new Date().toISOString().split('T')[0];
             const inputDate = document.getElementById('inputTanggal');
             if (inputDate) inputDate.value = today;
 
-            // Fetch Data from Google Sheets or local fallback
             fetchDataFromSheet();
-
             renderRoleUI();
         };
 
@@ -526,12 +717,52 @@ function doPost(e) {
             document.getElementById('loadingOverlay').classList.add('hidden');
         }
 
+        // PASSWORD AUTHENTICATION (gmb123)
+        function checkAdminPassword() {
+            pendingAuthPurpose = 'admin';
+            document.getElementById('passwordModalSub').textContent = "Masukkan password Admin untuk mengakses modul ini.";
+            document.getElementById('inputAuthPassword').value = '';
+            document.getElementById('passwordModal').classList.remove('hidden');
+        }
+
+        function unlockGoogleSheetConfig() {
+            pendingAuthPurpose = 'config';
+            document.getElementById('passwordModalSub').textContent = "Masukkan password untuk membuka Integrasi Google Sheets.";
+            document.getElementById('inputAuthPassword').value = '';
+            document.getElementById('passwordModal').classList.remove('hidden');
+        }
+
+        function closePasswordModal() {
+            document.getElementById('passwordModal').classList.add('hidden');
+        }
+
+        function handlePasswordSubmit(e) {
+            e.preventDefault();
+            const pwd = document.getElementById('inputAuthPassword').value;
+            if (pwd === 'gmb123') {
+                closePasswordModal();
+                if (pendingAuthPurpose === 'admin') {
+                    switchRole('admin');
+                } else if (pendingAuthPurpose === 'config') {
+                    document.getElementById('dbConfigPanel').classList.remove('hidden');
+                    document.getElementById('dbLockedHeader').classList.add('hidden');
+                }
+            } else {
+                showModal("Password Salah", "Password yang Anda masukkan salah. Coba lagi.");
+            }
+        }
+
+        function lockGoogleSheetConfig() {
+            document.getElementById('dbConfigPanel').classList.add('hidden');
+            document.getElementById('dbLockedHeader').classList.remove('hidden');
+        }
+
         function saveScriptUrl() {
             const url = document.getElementById('scriptUrlInput').value.trim();
             if (url) {
                 appsScriptUrl = url;
                 localStorage.setItem('logistik_apps_script_url', url);
-                showModal("URL Tersimpan", "Google Apps Script Web App URL berhasil disimpan. Mengambil data dari Google Sheets...");
+                showModal("URL Tersimpan", "Google Apps Script Web App URL berhasil disimpan. Mengambil data...");
                 fetchDataFromSheet();
             } else {
                 showModal("Perhatian", "Silakan masukkan URL Web App Apps Script yang valid.");
@@ -544,12 +775,11 @@ function doPost(e) {
             
             if (!appsScriptUrl) {
                 badge.className = "text-amber-600 font-semibold flex items-center bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200";
-                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Data Lokal (Mode Demo)`;
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Data Lokal`;
                 
-                // Fallback to local storage or initial dataset
                 const saved = localStorage.getItem('logistik_sj_data');
                 sjDatabase = saved ? JSON.parse(saved) : INITIAL_DATA;
-                updateAppViews();
+                sortAndRefreshData();
                 return;
             }
 
@@ -567,7 +797,6 @@ function doPost(e) {
                     badge.className = "text-emerald-600 font-semibold flex items-center bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200";
                     badge.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i> Terhubung Sheet`;
                 } else {
-                    // Fallback if sheet is empty
                     const saved = localStorage.getItem('logistik_sj_data');
                     sjDatabase = saved ? JSON.parse(saved) : INITIAL_DATA;
                     badge.className = "text-amber-600 font-semibold flex items-center bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200";
@@ -578,11 +807,17 @@ function doPost(e) {
                 const saved = localStorage.getItem('logistik_sj_data');
                 sjDatabase = saved ? JSON.parse(saved) : INITIAL_DATA;
                 badge.className = "text-rose-600 font-semibold flex items-center bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200";
-                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Off-line (Gagal Sync)`;
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Offline`;
             } finally {
                 hideLoading();
-                updateAppViews();
+                sortAndRefreshData();
             }
+        }
+
+        // SORT DATA: TERAKHIR INPUT ADA DI PALING ATAS
+        function sortAndRefreshData() {
+            sjDatabase.sort((a, b) => (b.rawTimestamp || 0) - (a.rawTimestamp || 0));
+            updateAppViews();
         }
 
         // SAVE / UPDATE TO GOOGLE SHEETS
@@ -594,11 +829,16 @@ function doPost(e) {
 
             showLoading("Menyimpan ke Google Sheets...");
             try {
+                let reqBody = { action: action, data: payload };
+                if (action === "delete") {
+                    reqBody = { action: action, noSJ: payload };
+                }
+
                 await fetch(appsScriptUrl, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: action, data: payload })
+                    body: JSON.stringify(reqBody)
                 });
                 localStorage.setItem('logistik_sj_data', JSON.stringify(sjDatabase));
             } catch (e) {
@@ -609,9 +849,9 @@ function doPost(e) {
         }
 
         function updateAppViews() {
-            updateSJDropdown();
+            filterDriverDropdown();
             renderDriverView();
-            renderAdminView();
+            applyAdminFilters();
         }
 
         function switchRole(role) {
@@ -638,26 +878,74 @@ function doPost(e) {
             }
         }
 
-        function updateSJDropdown() {
+        // GBR 5: DRIVER DROPDOWN WITH SEARCH & DATE FILTER
+        function filterDriverDropdown() {
+            const search = document.getElementById('driverSearchInput').value.toLowerCase();
+            const dateVal = document.getElementById('driverFilterDate').value;
+            const clearBtn = document.getElementById('driverSearchClear');
             const select = document.getElementById('selectDriverSJ');
+
+            if (search) clearBtn.classList.remove('hidden');
+            else clearBtn.classList.add('hidden');
+
             select.innerHTML = '';
 
-            sjDatabase.forEach((sj, idx) => {
-                const opt = document.createElement('option');
-                opt.value = idx;
-                opt.textContent = `SJ: ${sj.noSJ} - ${sj.penerima}`;
-                if (idx === activeSJIndex) opt.selected = true;
-                select.appendChild(opt);
+            let matches = 0;
+            sjDatabase.forEach((sj, originalIdx) => {
+                const matchSearch = !search || 
+                    sj.noSJ.toLowerCase().includes(search) || 
+                    sj.penerima.toLowerCase().includes(search) || 
+                    (sj.toko && sj.toko.toLowerCase().includes(search));
+
+                let matchDate = true;
+                if (dateVal) {
+                    const d = new Date(dateVal);
+                    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+                    const formattedFilterDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+                    matchDate = sj.tanggal.includes(formattedFilterDate);
+                }
+
+                if (matchSearch && matchDate) {
+                    const opt = document.createElement('option');
+                    opt.value = originalIdx;
+                    opt.textContent = `SJ: ${sj.noSJ} - ${sj.penerima}`;
+                    if (originalIdx === activeSJIndex) opt.selected = true;
+                    select.appendChild(opt);
+                    matches++;
+                }
             });
+
+            if (matches === 0) {
+                const opt = document.createElement('option');
+                opt.value = "";
+                opt.textContent = "-- Tidak Ada SJ Ditemukan --";
+                select.appendChild(opt);
+            } else if (select.value !== "") {
+                activeSJIndex = parseInt(select.value);
+                renderDriverView();
+            }
+        }
+
+        function clearDriverSearch() {
+            document.getElementById('driverSearchInput').value = '';
+            filterDriverDropdown();
+        }
+
+        function resetDriverSearch() {
+            document.getElementById('driverSearchInput').value = '';
+            document.getElementById('driverFilterDate').value = '';
+            filterDriverDropdown();
         }
 
         function loadDriverData(index) {
+            if (index === "") return;
             activeSJIndex = parseInt(index);
             renderDriverView();
         }
 
+        // RENDER DRIVER VIEW (GBR 3 & GBR 4)
         function renderDriverView() {
-            if (sjDatabase.length === 0) return;
+            if (sjDatabase.length === 0 || activeSJIndex >= sjDatabase.length) return;
             const data = sjDatabase[activeSJIndex];
 
             document.getElementById('displayNoSJ').textContent = data.noSJ;
@@ -671,7 +959,9 @@ function doPost(e) {
             document.getElementById('textPlat').textContent = data.plat;
             document.getElementById('driverAvatar').textContent = data.driver ? data.driver.charAt(0).toUpperCase() : 'D';
 
+            // GBR 3 & GBR 4 Logic Updates
             updateStepper(data.stepProgress);
+            updateDriverButtonsState(data.stepProgress);
 
             document.getElementById('statusCardTitle').innerHTML = data.statusCard.title;
             document.getElementById('statusCardTime').textContent = data.statusCard.time;
@@ -680,6 +970,7 @@ function doPost(e) {
             renderTimeline(data.timeline);
         }
 
+        // GBR 3: STEPPER CEKLIS & GAMBAR SELESAI
         function updateStepper(activeStep) {
             const progressLine = document.getElementById('progressLine');
             const percentMap = { 1: '0%', 2: '25%', 3: '50%', 4: '75%', 5: '100%' };
@@ -687,17 +978,45 @@ function doPost(e) {
 
             for (let i = 1; i <= 5; i++) {
                 const circle = document.getElementById(`stepCircle${i}`);
+                const label = document.getElementById(`stepLabel${i}`);
+
                 if (i < activeStep) {
                     circle.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-completed";
                     circle.innerHTML = '<i class="fa-solid fa-check text-xs"></i>';
+                    if (label) label.className = "mt-2 text-[10px] sm:text-xs font-bold text-sky-700 leading-tight";
                 } else if (i === activeStep) {
-                    circle.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-active";
-                    circle.textContent = i;
+                    if (i === 5) {
+                        // GBR 3: Step 5 Selesai Ceklis & Gambar Selesai Aktif
+                        circle.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-finished";
+                        circle.innerHTML = '<i class="fa-solid fa-check text-xs"></i>';
+                        if (label) {
+                            label.className = "mt-2 text-[10px] sm:text-xs font-bold text-emerald-600 leading-tight";
+                            document.getElementById('stepIcon5').className = "fa-solid fa-square-check block text-emerald-600 text-xs mb-0.5";
+                        }
+                    } else {
+                        circle.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-active";
+                        circle.textContent = i;
+                        if (label) label.className = "mt-2 text-[10px] sm:text-xs font-bold text-amber-600 leading-tight";
+                    }
                 } else {
                     circle.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-pending";
                     circle.textContent = i;
+                    if (label) label.className = "mt-2 text-[10px] sm:text-xs font-bold text-slate-400 leading-tight";
                 }
             }
+        }
+
+        // GBR 4: DISABLE DRIVER BUTTONS APABILA TAHAP SUDAH DIKLIK / DILEWATI
+        function updateDriverButtonsState(currentStep) {
+            const btn1 = document.getElementById('btnDriverStep1');
+            const btn2 = document.getElementById('btnDriverStep2');
+            const btn3 = document.getElementById('btnDriverStep3');
+            const btn4 = document.getElementById('btnDriverStep4');
+
+            btn1.disabled = currentStep >= 3;
+            btn2.disabled = currentStep >= 3;
+            btn3.disabled = currentStep >= 4;
+            btn4.disabled = currentStep >= 5;
         }
 
         function renderTimeline(timelineItems) {
@@ -725,7 +1044,29 @@ function doPost(e) {
             });
         }
 
-        async function updateDriverStatus(actionType, noteText) {
+        // GBR 4: MODAL UNTUK TOMBOL 4 (SAMPAI & SELESAI)
+        function openFinishModal() {
+            document.getElementById('finishPenerimaLokasi').value = '';
+            document.getElementById('finishCatatan').value = '';
+            document.getElementById('finishModal').classList.remove('hidden');
+        }
+
+        function closeFinishModal() {
+            document.getElementById('finishModal').classList.add('hidden');
+        }
+
+        async function handleFinishSubmit(e) {
+            e.preventDefault();
+            const penerimaLokasi = document.getElementById('finishPenerimaLokasi').value.trim();
+            const catatan = document.getElementById('finishCatatan').value.trim();
+
+            closeFinishModal();
+
+            const noteFull = `Diterima di lokasi oleh: ${penerimaLokasi}. ${catatan ? '(' + catatan + ')' : ''}`;
+            await updateDriverStatus('Selesai', noteFull, penerimaLokasi);
+        }
+
+        async function updateDriverStatus(actionType, noteText, recipientName = '') {
             if (sjDatabase.length === 0) return;
             const data = sjDatabase[activeSJIndex];
 
@@ -735,7 +1076,7 @@ function doPost(e) {
 
             if (actionType === 'Muat Barang') {
                 data.stepProgress = 3;
-                data.statusCard = { title: "📦 Process Dimuat Ke Kendaraan", time: timeStr, note: noteText };
+                data.statusCard = { title: "📦 Proses Dimuat Ke Kendaraan", time: timeStr, note: noteText };
                 data.timeline.push({ title: "Mulai muat barang", time: timeWib, icon: "fa-solid fa-box", active: true });
             } else if (actionType === 'Selesai Muat') {
                 data.stepProgress = 3;
@@ -747,77 +1088,86 @@ function doPost(e) {
                 data.timeline.push({ title: "Kendaraan berangkat dari gudang", time: timeWib, icon: "fa-solid fa-truck", active: true });
             } else if (actionType === 'Selesai') {
                 data.stepProgress = 5;
-                data.statusCard = { title: "✅ Pengiriman Selesai", time: timeStr, note: "Barang telah diterima oleh pihak toko/penerima." };
-                data.timeline.push({ title: "Pengiriman selesai dan diterima oleh pelanggan", time: timeWib, icon: "fa-solid fa-circle-check", active: true });
+                data.statusCard = { title: "✅ Pengiriman Selesai", time: timeStr, note: noteText };
+                data.timeline.push({ title: `Pengiriman selesai — Diterima oleh: ${recipientName}`, time: timeWib, icon: "fa-solid fa-circle-check", active: true });
             }
 
             renderDriverView();
-            renderAdminView();
+            applyAdminFilters();
             
             await sendToGoogleSheet("update", data);
-            showModal("Status Diperbarui", `Status pengiriman untuk SJ ${data.noSJ} berhasil di-update ke Google Sheets.`);
+            showModal("Status Diperbarui", `Status pengiriman untuk SJ ${data.noSJ} berhasil diperbarui.`);
         }
 
-        async function handleCreateSJ(e) {
-            e.preventDefault();
+        // ==================== ADMIN CRUD & FILTER LOGIC (GBR 2) ====================
+        function applyAdminFilters() {
+            const search = document.getElementById('adminSearchInput').value.toLowerCase();
+            const dateVal = document.getElementById('adminFilterDate').value;
+            const statusVal = document.getElementById('adminFilterStatus').value;
+            const clearBtn = document.getElementById('adminSearchClear');
 
-            const noSJ = document.getElementById('inputNoSJ').value.trim();
-            const penerima = document.getElementById('inputPenerima').value.trim();
-            const toko = document.getElementById('inputToko').value.trim();
-            const tujuan = document.getElementById('inputTujuan').value.trim();
-            const jumlahDus = parseInt(document.getElementById('inputJumlahDus').value);
-            const driver = document.getElementById('inputDriver').value.trim();
-            const plat = document.getElementById('inputPlat').value.trim();
-            const rawDate = document.getElementById('inputTanggal').value;
+            if (search) clearBtn.classList.remove('hidden');
+            else clearBtn.classList.add('hidden');
 
-            const d = new Date(rawDate);
-            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
-            const formattedDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+            filteredAdminData = sjDatabase.filter(item => {
+                const matchSearch = !search || 
+                    item.noSJ.toLowerCase().includes(search) || 
+                    item.penerima.toLowerCase().includes(search) || 
+                    (item.toko && item.toko.toLowerCase().includes(search)) || 
+                    item.driver.toLowerCase().includes(search) || 
+                    item.tujuan.toLowerCase().includes(search);
 
-            const now = new Date();
-            const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+                let matchDate = true;
+                if (dateVal) {
+                    const d = new Date(dateVal);
+                    const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+                    const formattedFilterDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+                    matchDate = item.tanggal.includes(formattedFilterDate);
+                }
 
-            const newSJ = {
-                noSJ: noSJ,
-                penerima: penerima,
-                toko: toko || '-',
-                tanggal: formattedDate,
-                tujuan: tujuan,
-                jumlahDus: jumlahDus,
-                driver: driver,
-                plat: plat,
-                stepProgress: 2,
-                statusCard: {
-                    title: "📋 Surat Jalan Terdaftar & Driver Siap",
-                    time: timeStr,
-                    note: "Menunggu proses pemuatan barang di gudang"
-                },
-                timeline: [
-                    { title: `Terdaftar — jadwal kirim ${formattedDate}`, time: `${timeStr} WIB`, icon: "fa-regular fa-clipboard", active: false }
-                ]
-            };
+                let matchStatus = true;
+                if (statusVal !== 'ALL') {
+                    matchStatus = String(item.stepProgress) === String(statusVal);
+                }
 
-            sjDatabase.unshift(newSJ);
-            activeSJIndex = 0;
+                return matchSearch && matchDate && matchStatus;
+            });
 
-            document.getElementById('formInputSJ').reset();
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('inputTanggal').value = today;
+            adminCurrentPage = 1;
+            renderAdminView();
+        }
 
-            updateAppViews();
-
-            await sendToGoogleSheet("create", newSJ);
-            showModal("Surat Jalan Diterbitkan", `Nomor SJ ${noSJ} berhasil disimpan ke Spreadsheet dan ditugaskan ke Driver ${driver}.`);
+        function clearAdminSearch() {
+            document.getElementById('adminSearchInput').value = '';
+            applyAdminFilters();
         }
 
         function renderAdminView() {
             const container = document.getElementById('adminSJList');
             const countLabel = document.getElementById('totalSJCount');
-            countLabel.textContent = `${sjDatabase.length} SJ`;
+            countLabel.textContent = `${filteredAdminData.length} SJ`;
 
             container.innerHTML = '';
 
-            sjDatabase.forEach((item, idx) => {
+            if (filteredAdminData.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-slate-400 font-medium text-xs bg-slate-50 rounded-2xl border border-dashed">Tidak ada data Surat Jalan yang sesuai filter.</div>`;
+                document.getElementById('adminPageInfo').textContent = "Halaman 0 dari 0";
+                document.getElementById('btnPrevPage').disabled = true;
+                document.getElementById('btnNextPage').disabled = true;
+                return;
+            }
+
+            // Pagination calculation
+            const totalPages = Math.ceil(filteredAdminData.length / adminPageSize);
+            if (adminCurrentPage > totalPages) adminCurrentPage = totalPages;
+            
+            const startIdx = (adminCurrentPage - 1) * adminPageSize;
+            const pageItems = filteredAdminData.slice(startIdx, startIdx + adminPageSize);
+
+            pageItems.forEach((item) => {
+                // Find index in original database
+                const originalIndex = sjDatabase.findIndex(x => x.noSJ === item.noSJ);
+
                 const card = document.createElement('div');
                 card.className = "p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs space-y-2 hover:border-blue-300 transition";
                 
@@ -841,14 +1191,146 @@ function doPost(e) {
                         <div><b>Jumlah:</b> ${item.jumlahDus} dus</div>
                     </div>
                     <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between">
-                        <span class="text-[10px] text-slate-400"><i class="fa-regular fa-clock mr-1"></i> Tgl: ${item.tanggal}</span>
-                        <button onclick="selectAndSwitchToDriver(${idx})" class="text-blue-700 hover:text-blue-900 font-bold text-xs flex items-center gap-1">
-                            Lihat Tracker Driver <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        <div class="flex gap-2">
+                            <button onclick="editSJ('${item.noSJ}')" class="bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold px-2.5 py-1 rounded-lg transition text-[11px]">
+                                <i class="fa-solid fa-pen-to-square mr-1"></i> Update
+                            </button>
+                            <button onclick="deleteSJ('${item.noSJ}')" class="bg-rose-100 hover:bg-rose-200 text-rose-800 font-bold px-2.5 py-1 rounded-lg transition text-[11px]">
+                                <i class="fa-solid fa-trash mr-1"></i> Hapus
+                            </button>
+                        </div>
+                        <button onclick="selectAndSwitchToDriver(${originalIndex})" class="text-blue-700 hover:text-blue-900 font-bold text-xs flex items-center gap-1">
+                            Tracker Driver <i class="fa-solid fa-arrow-right text-[10px]"></i>
                         </button>
                     </div>
                 `;
                 container.appendChild(card);
             });
+
+            // Update Paging UI
+            document.getElementById('adminPageInfo').textContent = `Halaman ${adminCurrentPage} dari ${totalPages}`;
+            document.getElementById('btnPrevPage').disabled = adminCurrentPage === 1;
+            document.getElementById('btnNextPage').disabled = adminCurrentPage === totalPages;
+        }
+
+        function changeAdminPage(direction) {
+            adminCurrentPage += direction;
+            renderAdminView();
+        }
+
+        // EDIT / UPDATE SJ
+        function editSJ(noSJ) {
+            const item = sjDatabase.find(x => x.noSJ === noSJ);
+            if (!item) return;
+
+            document.getElementById('adminFormTitle').innerHTML = `<i class="fa-solid fa-pen-to-square text-amber-600 mr-2"></i> Update Surat Jalan (#${item.noSJ})`;
+            document.getElementById('editSJOriginalNo').value = item.noSJ;
+            document.getElementById('inputNoSJ').value = item.noSJ;
+            document.getElementById('inputPenerima').value = item.penerima;
+            document.getElementById('inputToko').value = item.toko || '';
+            document.getElementById('inputTujuan').value = item.tujuan;
+            document.getElementById('inputJumlahDus').value = item.jumlahDus;
+            document.getElementById('inputDriver').value = item.driver;
+            document.getElementById('inputPlat').value = item.plat;
+
+            document.getElementById('btnSubmitAdmin').className = "flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2";
+            document.getElementById('btnSubmitAdmin').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Simpan Perubahan`;
+            document.getElementById('btnCancelEdit').classList.remove('hidden');
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetAdminForm() {
+            document.getElementById('adminFormTitle').innerHTML = `<i class="fa-solid fa-file-circle-plus text-blue-600 mr-2"></i> Input Surat Jalan Baru (Admin)`;
+            document.getElementById('editSJOriginalNo').value = '';
+            document.getElementById('formInputSJ').reset();
+            
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inputTanggal').value = today;
+
+            document.getElementById('btnSubmitAdmin').className = "flex-1 bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2";
+            document.getElementById('btnSubmitAdmin').innerHTML = `<i class="fa-solid fa-paper-plane"></i> Simpan Surat Jalan`;
+            document.getElementById('btnCancelEdit').classList.add('hidden');
+        }
+
+        // DELETE SJ
+        async function deleteSJ(noSJ) {
+            if (!confirm(`Apakah Anda yakin ingin menghapus Surat Jalan #${noSJ}?`)) return;
+
+            sjDatabase = sjDatabase.filter(x => x.noSJ !== noSJ);
+            sortAndRefreshData();
+            
+            await sendToGoogleSheet("delete", noSJ);
+            showModal("Berhasil Dihapus", `Surat Jalan #${noSJ} berhasil dihapus.`);
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const originalNo = document.getElementById('editSJOriginalNo').value;
+            const noSJ = document.getElementById('inputNoSJ').value.trim();
+            const penerima = document.getElementById('inputPenerima').value.trim();
+            const toko = document.getElementById('inputToko').value.trim();
+            const tujuan = document.getElementById('inputTujuan').value.trim();
+            const jumlahDus = parseInt(document.getElementById('inputJumlahDus').value);
+            const driver = document.getElementById('inputDriver').value.trim();
+            const plat = document.getElementById('inputPlat').value.trim();
+            const rawDate = document.getElementById('inputTanggal').value;
+
+            const d = new Date(rawDate);
+            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+            const formattedDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+
+            const now = new Date();
+            const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            if (originalNo) {
+                // Update Existing Data
+                const item = sjDatabase.find(x => x.noSJ === originalNo);
+                if (item) {
+                    item.originalNoSJ = originalNo;
+                    item.noSJ = noSJ;
+                    item.penerima = penerima;
+                    item.toko = toko || '-';
+                    item.tanggal = formattedDate;
+                    item.tujuan = tujuan;
+                    item.jumlahDus = jumlahDus;
+                    item.driver = driver;
+                    item.plat = plat;
+
+                    await sendToGoogleSheet("update", item);
+                    showModal("Berhasil Update", `Surat Jalan #${noSJ} berhasil diperbarui.`);
+                }
+            } else {
+                // Create New SJ
+                const newSJ = {
+                    noSJ: noSJ,
+                    penerima: penerima,
+                    toko: toko || '-',
+                    tanggal: formattedDate,
+                    tujuan: tujuan,
+                    jumlahDus: jumlahDus,
+                    driver: driver,
+                    plat: plat,
+                    stepProgress: 2,
+                    rawTimestamp: new Date().getTime(),
+                    statusCard: {
+                        title: "📋 Surat Jalan Terdaftar & Driver Siap",
+                        time: timeStr,
+                        note: "Menunggu proses pemuatan barang di gudang"
+                    },
+                    timeline: [
+                        { title: `Terdaftar — jadwal kirim ${formattedDate}`, time: `${timeStr} WIB`, icon: "fa-regular fa-clipboard", active: false }
+                    ]
+                };
+
+                sjDatabase.unshift(newSJ);
+                await sendToGoogleSheet("create", newSJ);
+                showModal("Surat Jalan Diterbitkan", `Nomor SJ ${noSJ} berhasil disimpan ke Spreadsheet.`);
+            }
+
+            resetAdminForm();
+            sortAndRefreshData();
         }
 
         function selectAndSwitchToDriver(index) {
