@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GMB Tracking</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            blue: '#02528a',
+                            lightBlue: '#e8f2f8',
+                            orange: '#e67e22',
+                            amber: '#f39c12',
+                            green: '#27ae60',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .step-active { background-color: #f39c12; color: white; border-color: #f39c12; }
+        .step-completed { background-color: #0284c7; color: white; border-color: #0284c7; }
+        .step-pending { background-color: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans text-slate-800 flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-800 text-white p-2 rounded-lg font-bold text-lg flex items-center justify-center w-10 h-10 shadow-sm">
+                    <i class="fa-solid fa-truck-fast"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-900 text-base leading-tight">Logistik Express</h1>
+                    <p class="text-xs text-slate-500">Sistem Tracking Surat Jalan Real-Time</p>
+                </div>
+            </div>
+
+            <!-- Role Selector -->
+            <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
+                <button id="btnRoleDriver" onclick="switchRole('driver')" class="px-3 py-1.5 rounded-lg transition-all text-slate-600">
+                    <i class="fa-solid fa-id-card mr-1"></i> Driver
+                </button>
+                <button id="btnRoleAdmin" onclick="switchRole('admin')" class="px-3 py-1.5 rounded-lg transition-all text-slate-600">
+                    <i class="fa-solid fa-user-gear mr-1"></i> Admin
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/30 backdrop-blur-xs z-50 flex flex-col items-center justify-center hidden">
+        <div class="bg-white p-5 rounded-2xl shadow-xl flex flex-col items-center space-y-3">
+            <i class="fa-solid fa-circle-notch fa-spin text-blue-700 text-3xl"></i>
+            <span class="text-xs font-semibold text-slate-700" id="loadingText">Menghubungkan ke Google Sheets...</span>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-xl w-full mx-auto p-3 sm:p-4 mb-12">
+
+        <!-- ==================== CONFIG / APPS SCRIPT URL BANNER ==================== -->
+        <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 mb-4 text-xs space-y-2">
+            <div class="flex items-center justify-between">
+                <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-database text-blue-600"></i> Integrasi Google Sheets
+                </span>
+                <span id="syncBadge" class="text-amber-600 font-semibold flex items-center bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                    <i class="fa-solid fa-circle-notch fa-spin text-[9px] mr-1"></i> Memuat Data
+                </span>
+            </div>
+            
+            <div class="space-y-1">
+                <label class="block text-[11px] font-semibold text-slate-500">Google Apps Script Web App URL:</label>
+                <div class="flex gap-2">
+                    <input type="text" id="scriptUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="flex-1 p-2 bg-slate-50 rounded-xl border border-slate-300 font-mono text-[11px] focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    <button onclick="saveScriptUrl()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-3 py-1.5 rounded-xl transition">
+                        Simpan
+                    </button>
+                </div>
+            </div>
+            
+            <div class="text-[10px] text-slate-400 flex items-center justify-between pt-1">
+                <span>Spreadsheet ID: <code class="font-mono bg-slate-100 px-1 py-0.5 rounded">14BND0HXHlEsB6jcr1EIb7irSrKl7rPL0kqeTT1R0cP4</code></span>
+                <button onclick="showAppsScriptGuide()" class="text-blue-600 font-bold underline">Petunjuk Setup Script</button>
+            </div>
+        </div>
+
+        <!-- ==================== ADMIN VIEW ==================== -->
+        <div id="adminView" class="hidden space-y-4">
+
+            <!-- Form Input SJ Baru -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center">
+                    <i class="fa-solid fa-file-circle-plus text-blue-600 mr-2"></i> Input Surat Jalan Baru (Admin)
+                </h2>
+                <form id="formInputSJ" onsubmit="handleCreateSJ(event)" class="space-y-3 text-xs">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Nomor Pengiriman / SJ *</label>
+                        <input type="text" id="inputNoSJ" required placeholder="Contoh: 261092257" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Nama Penerima *</label>
+                        <input type="text" id="inputPenerima" required placeholder="Contoh: JEFFRY KAMADINATA" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Nama Toko / Perusahaan</label>
+                        <input type="text" id="inputToko" placeholder="Contoh: GRAND M*** B*** P***" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Lokasi Tujuan *</label>
+                            <input type="text" id="inputTujuan" required placeholder="Contoh: CIKUDA" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Jumlah Barang (Dus) *</label>
+                            <input type="number" id="inputJumlahDus" required placeholder="230" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Driver Ditugaskan *</label>
+                            <input type="text" id="inputDriver" required placeholder="Contoh: SUTIYO" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Plat Kendaraan *</label>
+                            <input type="text" id="inputPlat" required placeholder="Contoh: KPS04" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Tanggal Kirim *</label>
+                        <input type="date" id="inputTanggal" required class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2 mt-2">
+                        <i class="fa-solid fa-paper-plane"></i> Kirim Ke Google Sheets & Terbitkan SJ
+                    </button>
+                </form>
+            </div>
+
+            <!-- Daftar Surat Jalan -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-base font-bold text-slate-800">Daftar Pengiriman Active</h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="fetchDataFromSheet()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1 rounded-lg border font-semibold">
+                            <i class="fa-solid fa-rotate mr-1"></i> Refresh
+                        </button>
+                        <span id="totalSJCount" class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full">0 SJ</span>
+                    </div>
+                </div>
+                <div id="adminSJList" class="space-y-3">
+                    <!-- Dynamic List -->
+                </div>
+            </div>
+        </div>
+
+
+        <!-- ==================== DRIVER VIEW ==================== -->
+        <div id="driverView" class="space-y-4">
+
+            <!-- SJ Switcher / Selector for Driver -->
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-600"><i class="fa-solid fa-list-check text-blue-600 mr-1"></i> Pilih Surat Jalan:</span>
+                <select id="selectDriverSJ" onchange="loadDriverData(this.value)" class="p-2 rounded-xl border border-slate-300 bg-slate-50 font-mono font-bold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600 max-w-[220px]">
+                    <!-- Dynamic Options -->
+                </select>
+            </div>
+
+            <!-- CARD UTAMA DASHBOARD DRIVER (DESAIN MATURE) -->
+            <div id="driverCardContent" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                
+                <!-- TOP HEADER CONTAINER -->
+                <div class="p-4 sm:p-5 bg-gradient-to-b from-blue-50/50 to-white border-b border-slate-100">
+                    
+                    <!-- Row 1: Nomor Pengiriman + Nama Penerima -->
+                    <div class="text-xs text-slate-400 font-semibold tracking-wider uppercase mb-1">Nomor Pengiriman</div>
+                    <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+                        <h2 id="displayNoSJ" class="text-2xl font-bold text-blue-950 font-mono tracking-tight">261092257</h2>
+                        <span id="displayPenerima" class="inline-flex items-center bg-blue-100/80 text-blue-800 text-xs font-bold px-3 py-1 rounded-full border border-blue-200/50 truncate max-w-[200px]">
+                            <i class="fa-solid fa-user text-[10px] mr-1.5"></i> <span id="textPenerima">JEFFRY KAMADINATA</span>
+                        </span>
+                    </div>
+
+                    <!-- Row 2: Nama Toko -->
+                    <div id="displayToko" class="text-base font-bold text-slate-800 tracking-wide mb-3">
+                        GRAND M*** B*** P***
+                    </div>
+
+                    <!-- Row 3: Badges Info (Tanggal, Tujuan, Dus) -->
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <div class="flex items-center bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl border border-slate-200/60 font-medium">
+                            <i class="fa-regular fa-calendar-days text-slate-500 mr-2"></i>
+                            <span id="displayTanggal">11 Nov 2026</span>
+                        </div>
+                        <div class="flex items-center bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl border border-slate-200/60 font-semibold">
+                            <i class="fa-solid fa-city text-slate-500 mr-2"></i>
+                            <span id="displayTujuan">CIKUDA</span>
+                        </div>
+                        <div class="flex items-center bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl border border-slate-200/60 font-medium">
+                            <i class="fa-solid fa-box text-amber-600 mr-2"></i>
+                            <span id="displayJumlahDus">230 dus</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PROGRESS PENGIRIMAN SECTION -->
+                <div class="p-4 sm:p-5">
+                    <div class="text-xs font-bold text-slate-400 tracking-wider uppercase mb-5">Progress Pengiriman</div>
+
+                    <!-- STEPPER TRACKER (5 TAHAP) -->
+                    <div class="relative mb-6">
+                        <!-- Connecting Line Background -->
+                        <div class="absolute top-4 left-[10%] right-[10%] h-[3px] bg-slate-200 -z-0"></div>
+                        <!-- Dynamic Progress Line -->
+                        <div id="progressLine" class="absolute top-4 left-[10%] h-[3px] bg-sky-600 transition-all duration-300 -z-0" style="width: 75%;"></div>
+
+                        <div class="grid grid-cols-5 text-center relative z-10">
+                            <!-- Step 1: Terdaftar -->
+                            <div class="flex flex-col items-center">
+                                <div id="stepCircle1" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-completed">
+                                    <i class="fa-solid fa-check text-xs"></i>
+                                </div>
+                                <div class="mt-2 text-[10px] sm:text-xs font-bold text-sky-700 leading-tight">
+                                    <i class="fa-regular fa-clipboard block text-slate-400 text-xs mb-0.5"></i>
+                                    Terdaftar
+                                </div>
+                            </div>
+
+                            <!-- Step 2: Driver Siap -->
+                            <div class="flex flex-col items-center">
+                                <div id="stepCircle2" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-completed">
+                                    <i class="fa-solid fa-check text-xs"></i>
+                                </div>
+                                <div class="mt-2 text-[10px] sm:text-xs font-bold text-sky-700 leading-tight">
+                                    <i class="fa-solid fa-truck-front block text-slate-400 text-xs mb-0.5"></i>
+                                    Driver Siap
+                                </div>
+                            </div>
+
+                            <!-- Step 3: Dimuat -->
+                            <div class="flex flex-col items-center">
+                                <div id="stepCircle3" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-completed">
+                                    <i class="fa-solid fa-check text-xs"></i>
+                                </div>
+                                <div class="mt-2 text-[10px] sm:text-xs font-bold text-sky-700 leading-tight">
+                                    <i class="fa-solid fa-box block text-slate-400 text-xs mb-0.5"></i>
+                                    Dimuat
+                                </div>
+                            </div>
+
+                            <!-- Step 4: Dikirim -->
+                            <div class="flex flex-col items-center">
+                                <div id="stepCircle4" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-active">
+                                    4
+                                </div>
+                                <div class="mt-2 text-[10px] sm:text-xs font-bold text-amber-600 leading-tight">
+                                    <i class="fa-solid fa-truck-fast block text-amber-600 text-xs mb-0.5"></i>
+                                    Dikirim
+                                </div>
+                            </div>
+
+                            <!-- Step 5: Selesai -->
+                            <div class="flex flex-col items-center">
+                                <div id="stepCircle5" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-pending">
+                                    5
+                                </div>
+                                <div class="mt-2 text-[10px] sm:text-xs font-bold text-slate-400 leading-tight">
+                                    <i class="fa-solid fa-square-check block text-slate-300 text-xs mb-0.5"></i>
+                                    Selesai
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- CARD STATUS TAHAP SAAT INI -->
+                    <div id="statusCard" class="bg-amber-50/80 border-l-4 border-amber-500 rounded-2xl p-4 mb-4 text-xs space-y-2">
+                        <div class="font-bold text-slate-800 text-sm flex items-center">
+                            <span id="statusCardTitle" class="flex items-center">🚚 Kendaraan Dalam Perjalanan</span>
+                        </div>
+                        <div class="grid grid-cols-1 gap-1 text-slate-600">
+                            <div class="flex justify-between sm:justify-start sm:gap-8">
+                                <span class="w-20 text-slate-500">Berangkat</span>
+                                <span id="statusCardTime" class="font-bold text-slate-800">11/11 09:38</span>
+                            </div>
+                            <div class="flex justify-between sm:justify-start sm:gap-8">
+                                <span class="w-20 text-slate-500">Catatan</span>
+                                <span id="statusCardNote" class="text-slate-700 font-medium">Pastikan ada penerima di lokasi</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Accordion Info Arti Status -->
+                    <div class="mb-5">
+                        <button onclick="toggleAccordion('artiStatusAcc')" class="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-2xl p-3 flex items-center justify-between text-xs font-semibold text-slate-700 transition">
+                            <span class="flex items-center">
+                                <i class="fa-solid fa-circle-info text-sky-600 text-sm mr-2"></i> Arti Status Pengiriman
+                            </span>
+                            <i id="artiStatusAccIcon" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform"></i>
+                        </button>
+                        <div id="artiStatusAcc" class="hidden mt-2 p-3 bg-slate-50 rounded-2xl border border-slate-200/60 text-xs text-slate-600 space-y-1.5">
+                            <p><b>1. Terdaftar:</b> Surat jalan resmi telah dibuat oleh pihak admin.</p>
+                            <p><b>2. Driver Siap:</b> Pengemudi telah ditugaskan dan siap memuat barang.</p>
+                            <p><b>3. Dimuat:</b> Barang sedang/selesai dimasukkan ke dalam armada.</p>
+                            <p><b>4. Dikirim:</b> Kendaraan dalam perjalanan menuju alamat tujuan.</p>
+                            <p><b>5. Selesai:</b> Barang telah terkirim dan diterima di lokasi.</p>
+                        </div>
+                    </div>
+
+                    <!-- CARD PENGEMUDI / DRIVER -->
+                    <div class="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/70 flex items-center space-x-3.5 mb-6">
+                        <div id="driverAvatar" class="w-12 h-12 rounded-full bg-slate-800 text-white font-bold text-lg flex items-center justify-center shrink-0">
+                            S
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">PENGEMUDI</div>
+                            <div id="driverName" class="font-bold text-slate-900 text-base truncate">SUTIYO</div>
+                            <div id="driverPlat" class="text-xs text-slate-600 font-semibold flex items-center mt-0.5">
+                                🚚 <span class="ml-1 bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-[11px]" id="textPlat">KPS04</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIWAYAT PENGIRIMAN TIMELINE -->
+                    <div>
+                        <div class="text-xs font-bold text-slate-400 tracking-wider uppercase mb-4 flex items-center">
+                            <i class="fa-solid fa-location-dot text-red-500 mr-2 text-sm"></i> RIWAYAT PENGIRIMAN
+                        </div>
+
+                        <div id="timelineContainer" class="relative pl-6 space-y-5 border-l-2 border-slate-200 ml-2 text-xs">
+                            <!-- Timeline Items Dynamic -->
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ACTION BUTTONS UNTUK UPDATE STATUS DRIVER -->
+                <div class="p-4 bg-slate-50 border-t border-slate-200/80 space-y-2">
+                    <div class="text-xs font-bold text-slate-600 mb-2"><i class="fa-solid fa-pen-to-square text-blue-600 mr-1"></i> Update Status Pengiriman Oleh Driver:</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="updateDriverStatus('Muat Barang', 'Mulai memuat barang ke armada')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-box"></i> 1. Mulai Muat
+                        </button>
+                        <button onclick="updateDriverStatus('Selesai Muat', 'Semua barang selesai dimuat')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-boxes-packing"></i> 2. Selesai Muat
+                        </button>
+                        <button onclick="updateDriverStatus('Berangkat', 'Kendaraan berangkat dari gudang')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-truck-arrow-right"></i> 3. Berangkat Kirim
+                        </button>
+                        <button onclick="updateDriverStatus('Selesai', 'Barang diterima dengan baik oleh pelanggan')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-circle-check"></i> 4. Sampai & Selesai
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modal Instructions Apps Script -->
+    <div id="scriptGuideModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-5 text-left shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3 border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm">Panduan Koneksi Google Apps Script</h3>
+                <button onclick="closeScriptGuide()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            </div>
+            <div class="space-y-3 text-xs text-slate-600">
+                <p>1. Buka Google Spreadsheet Anda (<a href="https://docs.google.com/spreadsheets/d/14BND0HXHlEsB6jcr1EIb7irSrKl7rPL0kqeTT1R0cP4/edit" target="_blank" class="text-blue-600 underline">Link Spreadsheet</a>).</p>
+                <p>2. Klik menu <b>Extensions (Ekstensi) > Apps Script</b>.</p>
+                <p>3. Hapus semua kode default, paste kode backend di bawah ini:</p>
+                
+                <textarea readonly class="w-full h-36 bg-slate-800 text-emerald-400 font-mono text-[10px] p-2 rounded-xl focus:outline-none">
+function doGet(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = sheet.getDataRange().getValues();
+  var result = [];
+  if (data.length > 1) {
+    var headers = data[0];
+    for (var i = 1; i < data.length; i++) {
+      var row = data[i];
+      if (row[0]) {
+        result.push({
+          noSJ: String(row[0]),
+          penerima: row[1],
+          toko: row[2],
+          tanggal: row[3],
+          tujuan: row[4],
+          jumlahDus: row[5],
+          driver: row[6],
+          plat: row[7],
+          stepProgress: Number(row[8]) || 1,
+          statusCard: row[9] ? JSON.parse(row[9]) : {title: "Terdaftar", time: "-", note: "-"},
+          timeline: row[10] ? JSON.parse(row[10]) : []
+        });
+      }
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var body = JSON.parse(e.postData.contents);
+  var action = body.action;
+  
+  if (action === "create") {
+    var item = body.data;
+    sheet.appendRow([
+      item.noSJ, item.penerima, item.toko, item.tanggal, item.tujuan, item.jumlahDus,
+      item.driver, item.plat, item.stepProgress, JSON.stringify(item.statusCard), JSON.stringify(item.timeline)
+    ]);
+  } else if (action === "update") {
+    var item = body.data;
+    var data = sheet.getDataRange().getValues();
+    for (var i = 1; i < data.length; i++) {
+      if (String(data[i][0]) === String(item.noSJ)) {
+        sheet.getRange(i + 1, 9).setValue(item.stepProgress);
+        sheet.getRange(i + 1, 10).setValue(JSON.stringify(item.statusCard));
+        sheet.getRange(i + 1, 11).setValue(JSON.stringify(item.timeline));
+        break;
+      }
+    }
+  }
+  return ContentService.createTextOutput(JSON.stringify({status: "success"})).setMimeType(ContentService.MimeType.JSON);
+}
+                </textarea>
+
+                <p>4. Klik tombol <b>Deploy > New Deployment</b>.</p>
+                <p>5. Pilih jenis <b>Web app</b>, ganti akses ke <b>Anyone (Siapa Saja)</b>, lalu klik <b>Deploy</b>.</p>
+                <p>6. Copy <b>Web App URL</b> dan paste pada kolom input "Google Apps Script Web App URL" di atas aplikasi ini.</p>
+            </div>
+            <button onclick="closeScriptGuide()" class="w-full bg-slate-800 text-white font-bold py-2 rounded-xl text-xs mt-4">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Modal Notification -->
+    <div id="modalOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-5 text-center shadow-2xl border border-slate-100">
+            <div id="modalIcon" class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 id="modalTitle" class="font-bold text-slate-800 text-base mb-1">Berhasil</h3>
+            <p id="modalMessage" class="text-xs text-slate-500 mb-4">Status pengiriman berhasil diperbarui.</p>
+            <button onclick="closeModal()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl text-xs transition">
+                Tutup
+            </button>
+        </div>
+    </div>
+
+    <!-- Application Script Logic -->
+    <script>
+        // Sample Initial Data Fallback
+        const INITIAL_DATA = [
+            {
+                noSJ: "261092257",
+                penerima: "JEFFRY KAMADINATA",
+                toko: "GRAND M*** B*** P***",
+                tanggal: "11 Nov 2026",
+                tujuan: "CIKUDA",
+                jumlahDus: 230,
+                driver: "SUTIYO",
+                plat: "KPS04",
+                stepProgress: 4,
+                statusCard: {
+                    title: "🚚 Kendaraan Dalam Perjalanan",
+                    time: "11/11 09:38",
+                    note: "Pastikan ada penerima di lokasi"
+                },
+                timeline: [
+                    { title: "Terdaftar — jadwal kirim 11 Nov 2026", time: "11/11 08:03 WIB", icon: "fa-regular fa-clipboard", active: false },
+                    { title: "Mulai muat barang", time: "11/11 09:38 WIB", icon: "fa-solid fa-box", active: true },
+                    { title: "Semua barang selesai dimuat", time: "11/11 09:38 WIB", icon: "fa-solid fa-boxes-packing", active: true },
+                    { title: "Kendaraan berangkat dari gudang", time: "11/11 09:38 WIB", icon: "fa-solid fa-truck", active: true }
+                ]
+            }
+        ];
+
+        // Global State Manager
+        let currentRole = 'driver';
+        let sjDatabase = [];
+        let activeSJIndex = 0;
+        let appsScriptUrl = localStorage.getItem('logistik_apps_script_url') || '';
+
+        window.onload = function() {
+            // Restore script URL if saved
+            if (appsScriptUrl) {
+                document.getElementById('scriptUrlInput').value = appsScriptUrl;
+            }
+
+            // Set default date picker
+            const today = new Date().toISOString().split('T')[0];
+            const inputDate = document.getElementById('inputTanggal');
+            if (inputDate) inputDate.value = today;
+
+            // Fetch Data from Google Sheets or local fallback
+            fetchDataFromSheet();
+
+            renderRoleUI();
+        };
+
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text || "Memproses Data...";
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        function saveScriptUrl() {
+            const url = document.getElementById('scriptUrlInput').value.trim();
+            if (url) {
+                appsScriptUrl = url;
+                localStorage.setItem('logistik_apps_script_url', url);
+                showModal("URL Tersimpan", "Google Apps Script Web App URL berhasil disimpan. Mengambil data dari Google Sheets...");
+                fetchDataFromSheet();
+            } else {
+                showModal("Perhatian", "Silakan masukkan URL Web App Apps Script yang valid.");
+            }
+        }
+
+        // FETCH DATA FROM GOOGLE SHEETS
+        async function fetchDataFromSheet() {
+            const badge = document.getElementById('syncBadge');
+            
+            if (!appsScriptUrl) {
+                badge.className = "text-amber-600 font-semibold flex items-center bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200";
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Data Lokal (Mode Demo)`;
+                
+                // Fallback to local storage or initial dataset
+                const saved = localStorage.getItem('logistik_sj_data');
+                sjDatabase = saved ? JSON.parse(saved) : INITIAL_DATA;
+                updateAppViews();
+                return;
+            }
+
+            showLoading("Mengambil Data Dari Google Sheets...");
+            badge.className = "text-blue-600 font-semibold flex items-center bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200";
+            badge.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin mr-1"></i> Sinkronisasi...`;
+
+            try {
+                const response = await fetch(appsScriptUrl);
+                const data = await response.json();
+                
+                if (Array.isArray(data) && data.length > 0) {
+                    sjDatabase = data;
+                    localStorage.setItem('logistik_sj_data', JSON.stringify(sjDatabase));
+                    badge.className = "text-emerald-600 font-semibold flex items-center bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200";
+                    badge.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i> Terhubung Sheet`;
+                } else {
+                    // Fallback if sheet is empty
+                    const saved = localStorage.getItem('logistik_sj_data');
+                    sjDatabase = saved ? JSON.parse(saved) : INITIAL_DATA;
+                    badge.className = "text-amber-600 font-semibold flex items-center bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200";
+                    badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Sheet Kosong`;
+                }
+            } catch (err) {
+                console.error("Gagal koneksi ke Sheet:", err);
+                const saved = localStorage.getItem('logistik_sj_data');
+                sjDatabase = saved ? JSON.parse(saved) : INITIAL_DATA;
+                badge.className = "text-rose-600 font-semibold flex items-center bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200";
+                badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1"></i> Off-line (Gagal Sync)`;
+            } finally {
+                hideLoading();
+                updateAppViews();
+            }
+        }
+
+        // SAVE / UPDATE TO GOOGLE SHEETS
+        async function sendToGoogleSheet(action, payload) {
+            if (!appsScriptUrl) {
+                localStorage.setItem('logistik_sj_data', JSON.stringify(sjDatabase));
+                return;
+            }
+
+            showLoading("Menyimpan ke Google Sheets...");
+            try {
+                await fetch(appsScriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action, data: payload })
+                });
+                localStorage.setItem('logistik_sj_data', JSON.stringify(sjDatabase));
+            } catch (e) {
+                console.error("Error posting data:", e);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function updateAppViews() {
+            updateSJDropdown();
+            renderDriverView();
+            renderAdminView();
+        }
+
+        function switchRole(role) {
+            currentRole = role;
+            renderRoleUI();
+        }
+
+        function renderRoleUI() {
+            const btnDriver = document.getElementById('btnRoleDriver');
+            const btnAdmin = document.getElementById('btnRoleAdmin');
+            const driverView = document.getElementById('driverView');
+            const adminView = document.getElementById('adminView');
+
+            if (currentRole === 'driver') {
+                btnDriver.className = "px-3 py-1.5 rounded-lg transition-all bg-blue-700 text-white font-bold shadow-sm";
+                btnAdmin.className = "px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900";
+                driverView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+            } else {
+                btnAdmin.className = "px-3 py-1.5 rounded-lg transition-all bg-blue-700 text-white font-bold shadow-sm";
+                btnDriver.className = "px-3 py-1.5 rounded-lg transition-all text-slate-600 hover:text-slate-900";
+                adminView.classList.remove('hidden');
+                driverView.classList.add('hidden');
+            }
+        }
+
+        function updateSJDropdown() {
+            const select = document.getElementById('selectDriverSJ');
+            select.innerHTML = '';
+
+            sjDatabase.forEach((sj, idx) => {
+                const opt = document.createElement('option');
+                opt.value = idx;
+                opt.textContent = `SJ: ${sj.noSJ} - ${sj.penerima}`;
+                if (idx === activeSJIndex) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        function loadDriverData(index) {
+            activeSJIndex = parseInt(index);
+            renderDriverView();
+        }
+
+        function renderDriverView() {
+            if (sjDatabase.length === 0) return;
+            const data = sjDatabase[activeSJIndex];
+
+            document.getElementById('displayNoSJ').textContent = data.noSJ;
+            document.getElementById('textPenerima').textContent = data.penerima;
+            document.getElementById('displayToko').textContent = data.toko || '-';
+            document.getElementById('displayTanggal').textContent = data.tanggal;
+            document.getElementById('displayTujuan').textContent = data.tujuan;
+            document.getElementById('displayJumlahDus').textContent = `${data.jumlahDus} dus`;
+
+            document.getElementById('driverName').textContent = data.driver;
+            document.getElementById('textPlat').textContent = data.plat;
+            document.getElementById('driverAvatar').textContent = data.driver ? data.driver.charAt(0).toUpperCase() : 'D';
+
+            updateStepper(data.stepProgress);
+
+            document.getElementById('statusCardTitle').innerHTML = data.statusCard.title;
+            document.getElementById('statusCardTime').textContent = data.statusCard.time;
+            document.getElementById('statusCardNote').textContent = data.statusCard.note;
+
+            renderTimeline(data.timeline);
+        }
+
+        function updateStepper(activeStep) {
+            const progressLine = document.getElementById('progressLine');
+            const percentMap = { 1: '0%', 2: '25%', 3: '50%', 4: '75%', 5: '100%' };
+            progressLine.style.width = percentMap[activeStep] || '75%';
+
+            for (let i = 1; i <= 5; i++) {
+                const circle = document.getElementById(`stepCircle${i}`);
+                if (i < activeStep) {
+                    circle.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-completed";
+                    circle.innerHTML = '<i class="fa-solid fa-check text-xs"></i>';
+                } else if (i === activeStep) {
+                    circle.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-active";
+                    circle.textContent = i;
+                } else {
+                    circle.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-pending";
+                    circle.textContent = i;
+                }
+            }
+        }
+
+        function renderTimeline(timelineItems) {
+            const container = document.getElementById('timelineContainer');
+            container.innerHTML = '';
+
+            if (!timelineItems || timelineItems.length === 0) return;
+
+            timelineItems.forEach((item) => {
+                const div = document.createElement('div');
+                div.className = "relative group";
+
+                const dotColor = item.active ? 'bg-amber-500 text-white' : 'bg-slate-300 text-slate-500';
+                
+                div.innerHTML = `
+                    <div class="absolute -left-[31px] top-0.5 w-5 h-5 rounded-full ${dotColor} flex items-center justify-center text-[9px] shadow-sm">
+                        <i class="${item.icon || 'fa-solid fa-box'}"></i>
+                    </div>
+                    <div>
+                        <div class="font-bold text-slate-800 text-xs">${item.title}</div>
+                        <div class="text-[11px] text-slate-400 font-medium">${item.time}</div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function updateDriverStatus(actionType, noteText) {
+            if (sjDatabase.length === 0) return;
+            const data = sjDatabase[activeSJIndex];
+
+            const now = new Date();
+            const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const timeWib = `${timeStr} WIB`;
+
+            if (actionType === 'Muat Barang') {
+                data.stepProgress = 3;
+                data.statusCard = { title: "📦 Process Dimuat Ke Kendaraan", time: timeStr, note: noteText };
+                data.timeline.push({ title: "Mulai muat barang", time: timeWib, icon: "fa-solid fa-box", active: true });
+            } else if (actionType === 'Selesai Muat') {
+                data.stepProgress = 3;
+                data.statusCard = { title: "📦 Barang Selesai Dimuat", time: timeStr, note: noteText };
+                data.timeline.push({ title: "Semua barang selesai dimuat", time: timeWib, icon: "fa-solid fa-boxes-packing", active: true });
+            } else if (actionType === 'Berangkat') {
+                data.stepProgress = 4;
+                data.statusCard = { title: "🚚 Kendaraan Dalam Perjalanan", time: timeStr, note: noteText };
+                data.timeline.push({ title: "Kendaraan berangkat dari gudang", time: timeWib, icon: "fa-solid fa-truck", active: true });
+            } else if (actionType === 'Selesai') {
+                data.stepProgress = 5;
+                data.statusCard = { title: "✅ Pengiriman Selesai", time: timeStr, note: "Barang telah diterima oleh pihak toko/penerima." };
+                data.timeline.push({ title: "Pengiriman selesai dan diterima oleh pelanggan", time: timeWib, icon: "fa-solid fa-circle-check", active: true });
+            }
+
+            renderDriverView();
+            renderAdminView();
+            
+            await sendToGoogleSheet("update", data);
+            showModal("Status Diperbarui", `Status pengiriman untuk SJ ${data.noSJ} berhasil di-update ke Google Sheets.`);
+        }
+
+        async function handleCreateSJ(e) {
+            e.preventDefault();
+
+            const noSJ = document.getElementById('inputNoSJ').value.trim();
+            const penerima = document.getElementById('inputPenerima').value.trim();
+            const toko = document.getElementById('inputToko').value.trim();
+            const tujuan = document.getElementById('inputTujuan').value.trim();
+            const jumlahDus = parseInt(document.getElementById('inputJumlahDus').value);
+            const driver = document.getElementById('inputDriver').value.trim();
+            const plat = document.getElementById('inputPlat').value.trim();
+            const rawDate = document.getElementById('inputTanggal').value;
+
+            const d = new Date(rawDate);
+            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+            const formattedDate = `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+
+            const now = new Date();
+            const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+
+            const newSJ = {
+                noSJ: noSJ,
+                penerima: penerima,
+                toko: toko || '-',
+                tanggal: formattedDate,
+                tujuan: tujuan,
+                jumlahDus: jumlahDus,
+                driver: driver,
+                plat: plat,
+                stepProgress: 2,
+                statusCard: {
+                    title: "📋 Surat Jalan Terdaftar & Driver Siap",
+                    time: timeStr,
+                    note: "Menunggu proses pemuatan barang di gudang"
+                },
+                timeline: [
+                    { title: `Terdaftar — jadwal kirim ${formattedDate}`, time: `${timeStr} WIB`, icon: "fa-regular fa-clipboard", active: false }
+                ]
+            };
+
+            sjDatabase.unshift(newSJ);
+            activeSJIndex = 0;
+
+            document.getElementById('formInputSJ').reset();
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inputTanggal').value = today;
+
+            updateAppViews();
+
+            await sendToGoogleSheet("create", newSJ);
+            showModal("Surat Jalan Diterbitkan", `Nomor SJ ${noSJ} berhasil disimpan ke Spreadsheet dan ditugaskan ke Driver ${driver}.`);
+        }
+
+        function renderAdminView() {
+            const container = document.getElementById('adminSJList');
+            const countLabel = document.getElementById('totalSJCount');
+            countLabel.textContent = `${sjDatabase.length} SJ`;
+
+            container.innerHTML = '';
+
+            sjDatabase.forEach((item, idx) => {
+                const card = document.createElement('div');
+                card.className = "p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs space-y-2 hover:border-blue-300 transition";
+                
+                const statusBadgeMap = {
+                    1: '<span class="bg-slate-200 text-slate-700 px-2 py-0.5 rounded font-bold">Terdaftar</span>',
+                    2: '<span class="bg-sky-100 text-sky-800 px-2 py-0.5 rounded font-bold">Driver Siap</span>',
+                    3: '<span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-bold">Dimuat</span>',
+                    4: '<span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-bold">Dikirim</span>',
+                    5: '<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Selesai</span>'
+                };
+
+                card.innerHTML = `
+                    <div class="flex items-center justify-between">
+                        <span class="font-bold text-slate-900 font-mono text-sm">#${item.noSJ}</span>
+                        ${statusBadgeMap[item.stepProgress] || statusBadgeMap[1]}
+                    </div>
+                    <div class="grid grid-cols-2 gap-1 text-slate-600">
+                        <div><b>Penerima:</b> ${item.penerima}</div>
+                        <div><b>Tujuan:</b> ${item.tujuan}</div>
+                        <div><b>Driver:</b> ${item.driver} (${item.plat})</div>
+                        <div><b>Jumlah:</b> ${item.jumlahDus} dus</div>
+                    </div>
+                    <div class="pt-2 border-t border-slate-200/60 flex items-center justify-between">
+                        <span class="text-[10px] text-slate-400"><i class="fa-regular fa-clock mr-1"></i> Tgl: ${item.tanggal}</span>
+                        <button onclick="selectAndSwitchToDriver(${idx})" class="text-blue-700 hover:text-blue-900 font-bold text-xs flex items-center gap-1">
+                            Lihat Tracker Driver <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function selectAndSwitchToDriver(index) {
+            activeSJIndex = index;
+            document.getElementById('selectDriverSJ').value = index;
+            renderDriverView();
+            switchRole('driver');
+        }
+
+        function toggleAccordion(id) {
+            const acc = document.getElementById(id);
+            const icon = document.getElementById(id + 'Icon');
+            if (acc.classList.contains('hidden')) {
+                acc.classList.remove('hidden');
+                if (icon) icon.style.transform = 'rotate(180deg)';
+            } else {
+                acc.classList.add('hidden');
+                if (icon) icon.style.transform = 'rotate(0deg)';
+            }
+        }
+
+        function showAppsScriptGuide() {
+            document.getElementById('scriptGuideModal').classList.remove('hidden');
+        }
+
+        function closeScriptGuide() {
+            document.getElementById('scriptGuideModal').classList.add('hidden');
+        }
+
+        function showModal(title, msg) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = msg;
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>
