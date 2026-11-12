@@ -14,6 +14,8 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- PapaParse for CSV parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- SheetJS (xlsx) for Excel Export -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -64,9 +66,15 @@
                 </div>
 
                 <div class="flex items-center gap-3">
+                    <!-- Tombol Export Excel -->
+                    <button onclick="exportToExcel()" class="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all active:scale-95 shadow-xs">
+                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
+                        <span class="hidden sm:inline">Export Excel</span>
+                    </button>
+                    <!-- Tombol Refresh -->
                     <button id="refreshBtn" onclick="fetchCSVData()" class="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all active:scale-95">
                         <i data-lucide="refresh-cw" id="refreshIcon" class="w-4 h-4"></i>
-                        <span class="hidden sm:inline">Muat Ulang Data</span>
+                        <span class="hidden sm:inline">Muat Ulang</span>
                     </button>
                     <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -155,9 +163,9 @@
         <!-- Section Filters & Search -->
         <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
             
-            <!-- Baris Atas: Search & Date Range Filter -->
+            <!-- Baris 1: Search & Filter Tanggal -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
-                <!-- Search Box (Span 6) -->
+                <!-- Search Box -->
                 <div class="relative lg:col-span-6">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="search" class="w-4 h-4"></i>
@@ -168,7 +176,7 @@
                     </button>
                 </div>
 
-                <!-- Date Range Filter (Span 6) -->
+                <!-- Date Range Filter -->
                 <div class="lg:col-span-6 flex items-center gap-2">
                     <div class="flex-1 flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
                         <span class="text-[11px] font-bold text-slate-400 uppercase">Dari:</span>
@@ -184,7 +192,26 @@
                 </div>
             </div>
 
-            <!-- Baris Bawah: Status Filter Pills -->
+            <!-- Baris 2: Filter Tambahan (Dropdown Driver & Toko) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
+                <!-- Dropdown Filter Driver -->
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                    <i data-lucide="user-check" class="w-4 h-4 text-slate-400"></i>
+                    <select id="driverFilterSelect" onchange="applyFilters()" class="w-full bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer">
+                        <option value="ALL">Semua Driver (Pengemudi)</option>
+                    </select>
+                </div>
+
+                <!-- Dropdown Filter Toko / Perusahaan -->
+                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                    <i data-lucide="store" class="w-4 h-4 text-slate-400"></i>
+                    <select id="storeFilterSelect" onchange="applyFilters()" class="w-full bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer">
+                        <option value="ALL">Semua Toko / Perusahaan</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Baris 3: Status Filter Pills -->
             <div class="flex items-center justify-between pt-2 border-t border-slate-100 overflow-x-auto pb-1 md:pb-0 no-scrollbar">
                 <div class="flex items-center gap-1.5">
                     <button onclick="setFilterStatus('ALL')" data-status="ALL" class="filter-btn active-filter px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-800 text-white shadow-sm">
@@ -236,7 +263,7 @@
                     <i data-lucide="inbox" class="w-8 h-8"></i>
                 </div>
                 <p class="text-slate-600 font-semibold text-base">Tidak ada data ditemukan</p>
-                <p class="text-slate-400 text-xs">Coba sesuaikan rentang tanggal, katakunci, atau filter status Anda.</p>
+                <p class="text-slate-400 text-xs">Coba sesuaikan filter driver, toko, rentang tanggal, atau pencarian Anda.</p>
             </div>
 
             <div id="tableContainer" class="hidden overflow-x-auto">
@@ -403,23 +430,16 @@
             }
         }
 
-        // Helper: Standardisasi format tanggal string dari spreadsheet ke objek Date (YYYY-MM-DD)
         function parseSheetDate(dateStr) {
             if (!dateStr) return null;
-            
-            // Jika formatnya sudah standar YYYY-MM-DD
             if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
                 return new Date(dateStr);
             }
-            
-            // Coba parsing standar JS Date
             let parsed = new Date(dateStr);
             if (!isNaN(parsed.getTime())) return parsed;
 
-            // Jika format DD/MM/YYYY atau DD-MM-YYYY
             const parts = dateStr.split(/[\/\-]/);
             if (parts.length === 3) {
-                // Asumsi DD/MM/YYYY
                 let d = parseInt(parts[0], 10);
                 let m = parseInt(parts[1], 10) - 1;
                 let y = parseInt(parts[2], 10);
@@ -427,7 +447,6 @@
                 let customDate = new Date(y, m, d);
                 if (!isNaN(customDate.getTime())) return customDate;
             }
-
             return null;
         }
 
@@ -488,6 +507,7 @@
                         const headers = results.meta && results.meta.fields ? results.meta.fields : Object.keys(results.data[0]);
                         const colKHeader = headers[10];
 
+                        // Mapping data & balik urutan agar data inputan paling akhir/baru ada di paling atas
                         rawData = results.data.map((item, idx) => {
                             const getVal = (possibleKeys) => {
                                 for (let k of possibleKeys) {
@@ -533,8 +553,9 @@
                                 historySteps,
                                 rawItem: item
                             };
-                        });
+                        }).reverse(); // Baris baru/inputan terakhir diposisikan di paling atas
 
+                        populateFilterDropdowns();
                         applyFilters();
                     } else {
                         showEmpty();
@@ -548,18 +569,46 @@
             });
         }
 
-        // Apply Search, Date Range, Filter Pills & Outstanding Checkbox
+        // Mengisi opsi pilihan Dropdown Driver & Toko secara dinamis
+        function populateFilterDropdowns() {
+            const driverSet = new Set();
+            const storeSet = new Set();
+
+            rawData.forEach(item => {
+                if (item.driver && item.driver !== '-') driverSet.add(item.driver);
+                if (item.nama_toko && item.nama_toko !== '-') storeSet.add(item.nama_toko);
+            });
+
+            const driverSelect = document.getElementById('driverFilterSelect');
+            const storeSelect = document.getElementById('storeFilterSelect');
+
+            let driverHtml = '<option value="ALL">Semua Driver (Pengemudi)</option>';
+            Array.from(driverSet).sort().forEach(d => {
+                driverHtml += `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`;
+            });
+            driverSelect.innerHTML = driverHtml;
+
+            let storeHtml = '<option value="ALL">Semua Toko / Perusahaan</option>';
+            Array.from(storeSet).sort().forEach(s => {
+                storeHtml += `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`;
+            });
+            storeSelect.innerHTML = storeHtml;
+        }
+
+        // Apply All Filters (Search, Date Range, Driver, Store, Status Pills, Outstanding)
         function applyFilters() {
             const searchValue = document.getElementById('searchInput').value.toLowerCase().trim();
             const startDateVal = document.getElementById('startDate').value;
             const endDateVal = document.getElementById('endDate').value;
+            const selectedDriver = document.getElementById('driverFilterSelect').value;
+            const selectedStore = document.getElementById('storeFilterSelect').value;
 
             const startDate = startDateVal ? new Date(startDateVal) : null;
             const endDate = endDateVal ? new Date(endDateVal) : null;
-            if (endDate) endDate.setHours(23, 59, 59, 999); // Set ke akhir hari
+            if (endDate) endDate.setHours(23, 59, 59, 999);
 
             filteredData = rawData.filter(item => {
-                // 1. Filter Pencarian Teks
+                // 1. Search text
                 const matchSearch = 
                     item.no_sj.toLowerCase().includes(searchValue) ||
                     item.nama_penerima.toLowerCase().includes(searchValue) ||
@@ -569,23 +618,28 @@
                     item.nopol.toLowerCase().includes(searchValue) ||
                     item.status.toLowerCase().includes(searchValue);
 
-                // 2. Filter Tanggal Kirim (Start - End)
+                // 2. Date Range
                 let matchDate = true;
                 if (item.parsedDate) {
                     if (startDate && item.parsedDate < startDate) matchDate = false;
                     if (endDate && item.parsedDate > endDate) matchDate = false;
                 } else if ((startDate || endDate) && item.tanggal_kirim) {
-                    // Jika tanggal di sheet teks manual dan tidak ter-parse
                     matchDate = false; 
                 }
 
-                // 3. Filter Status Pills
+                // 3. Driver Filter
+                const matchDriver = (selectedDriver === 'ALL') ? true : item.driver === selectedDriver;
+
+                // 4. Store Filter
+                const matchStore = (selectedStore === 'ALL') ? true : item.nama_toko === selectedStore;
+
+                // 5. Status Pills Filter
                 const matchStatus = (activeStatusFilter === 'ALL') ? true : item.status.toLowerCase() === activeStatusFilter.toLowerCase();
 
-                // 4. Filter Outstanding Checkbox
+                // 6. Outstanding Checkbox Filter
                 const matchOutstanding = isOutstandingOnly ? item.isOutstanding : true;
 
-                return matchSearch && matchDate && matchStatus && matchOutstanding;
+                return matchSearch && matchDate && matchDriver && matchStore && matchStatus && matchOutstanding;
             });
 
             currentPage = 1;
@@ -597,7 +651,44 @@
         function resetDateFilter() {
             document.getElementById('startDate').value = '';
             document.getElementById('endDate').value = '';
+            document.getElementById('driverFilterSelect').value = 'ALL';
+            document.getElementById('storeFilterSelect').value = 'ALL';
             applyFilters();
+        }
+
+        // Fitur Export ke Excel (.xlsx) menggunakan SheetJS
+        function exportToExcel() {
+            if (!filteredData || filteredData.length === 0) {
+                alert("Tidak ada data yang dapat diexport berdasarkan filter saat ini.");
+                return;
+            }
+
+            // Siapkan data array untuk excel
+            const exportRows = filteredData.map((item, index) => ({
+                "No": index + 1,
+                "Nomor Pengiriman / SJ": item.no_sj,
+                "Nama Penerima": item.nama_penerima,
+                "Nama Toko / Perusahaan": item.nama_toko,
+                "Tanggal Kirim": item.tanggal_kirim,
+                "Lokasi Tujuan": item.lokasi_tujuan,
+                "Jumlah Barang (Dus)": item.jumlah_barang,
+                "Driver Ditugaskan": item.driver,
+                "Plat Kendaraan": item.nopol,
+                "Status": item.status,
+                "Outstanding": item.isOutstanding ? "Ya (Outstanding)" : "Tidak"
+            }));
+
+            // Buat worksheet dan workbook
+            const worksheet = XLSX.utils.json_to_sheet(exportRows);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Data Tracking Pengiriman");
+
+            // Format nama file dengan tanggal hari ini
+            const dateStr = new Date().toISOString().slice(0, 10);
+            const fileName = `Laporan_Tracking_Pengiriman_${dateStr}.xlsx`;
+
+            // Download file excel
+            XLSX.writeFile(workbook, fileName);
         }
 
         function updateDashboardMetrics() {
