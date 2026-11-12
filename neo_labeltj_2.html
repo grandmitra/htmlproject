@@ -1,0 +1,1562 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cetak Label Tom & Jerry - Precision POP Retail & CRUD Management</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Montserrat:wght@400;700;900&family=Oswald:wght@500;700&family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- SheetJS (xlsx/csv) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- html2pdf.js untuk Export PDF Presisi Sesuai Ukuran Kertas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <!-- Dynamic @page style container -->
+    <style id="dynamicPageStyle">
+        @page {
+            size: 210mm 165mm;
+            margin: 0 !important;
+        }
+    </style>
+
+    <style>
+        /* CSS Cetak Presisi */
+        @media print {
+            html, body {
+                background: white !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                width: 100% !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            main {
+                display: block !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                max-width: none !important;
+            }
+            .print-area {
+                padding: 0 !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                background: transparent !important;
+                width: 100% !important;
+                display: block !important;
+            }
+            #printSheetsContainer {
+                gap: 0 !important;
+                display: block !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .sheet-page {
+                margin: 0 auto !important;
+                box-shadow: none !important;
+                border: none !important;
+                page-break-after: always;
+                break-after: page;
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+            .sheet-page:last-child {
+                page-break-after: auto;
+                break-after: auto;
+            }
+            .label-card {
+                border: 1px dashed transparent !important;
+            }
+            .empty-slot {
+                background: transparent !important;
+                border-color: transparent !important;
+            }
+        }
+
+        /* Styling Sheet Stiker */
+        .sheet-page {
+            background-color: white;
+            box-sizing: border-box;
+            position: relative;
+            margin: 0 auto;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            border: 1px solid #e5e7eb;
+            display: grid;
+            align-content: start;
+        }
+
+        .label-card {
+            box-sizing: border-box;
+            border: 1px dashed #d1d5db;
+            position: relative;
+            overflow: hidden;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .desc-clamp {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans min-h-screen">
+
+    <!-- Header Navigation -->
+    <header class="bg-blue-600 text-white p-4 shadow-md no-print">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <i class="fa-solid fa-print"></i> Cetak Label Tom & Jerry (POP Retail Marketing)
+            </h1>
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Dropdown / Pilihan PDF -->
+                <div class="relative inline-block text-left">
+                    <button id="btnExportPDF" type="button" onclick="togglePdfDropdown()" class="bg-red-600 hover:bg-red-700 text-white px-3.5 py-2 rounded-lg font-bold flex items-center gap-2 shadow transition text-sm cursor-pointer">
+                        <i class="fa-solid fa-file-pdf"></i> Simpan PDF <i class="fa-solid fa-caret-down text-xs"></i>
+                    </button>
+                    <div id="pdfDropdownMenu" class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50 text-gray-800 text-xs font-semibold py-1">
+                        <button type="button" onclick="exportToPDF('current')" class="w-full text-left px-4 py-2.5 hover:bg-red-50 hover:text-red-700 flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-file-arrow-down text-red-600"></i> PDF Halaman Ini Saja
+                        </button>
+                        <button type="button" onclick="exportToPDF('all')" class="w-full text-left px-4 py-2.5 hover:bg-red-50 hover:text-red-700 flex items-center gap-2 border-t border-gray-100 cursor-pointer">
+                            <i class="fa-solid fa-copy text-red-600"></i> PDF Seluruh Halaman
+                        </button>
+                    </div>
+                </div>
+
+                <button type="button" onclick="printCurrentPage()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow transition text-sm cursor-pointer">
+                    <i class="fa-solid fa-print"></i> Cetak Halaman Ini
+                </button>
+                <button type="button" onclick="printAllPages()" class="bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 shadow transition text-sm cursor-pointer">
+                    <i class="fa-solid fa-copy"></i> Cetak Semua Halaman
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Panel Form & Pengaturan Input -->
+        <section class="lg:col-span-5 space-y-4 no-print">
+
+            <!-- Panel Pengaturan Layout & Font (Hide/Unhide) -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <button type="button" onclick="toggleSection('settingsSection', 'toggleIcon1')" class="w-full bg-gray-50 hover:bg-gray-100 p-3.5 flex justify-between items-center text-sm font-bold text-gray-700 cursor-pointer">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-sliders text-blue-600"></i> Pengaturan Label & Tata Letak</span>
+                    <i id="toggleIcon1" class="fa-solid fa-chevron-down transition-transform duration-200"></i>
+                </button>
+                <div id="settingsSection" class="p-4 space-y-4 border-t border-gray-200">
+                    <!-- Pilih Ukuran Label -->
+                    <div>
+                        <label for="labelSelect" class="block text-xs font-semibold text-gray-700 mb-1">
+                            Tipe / Ukuran Label Tom & Jerry (No. 95 - 130)
+                        </label>
+                        <select id="labelSelect" class="w-full border-gray-300 rounded-lg shadow-sm border p-2 bg-gray-50 focus:bg-white focus:ring-2 focus:ring-blue-500 text-xs">
+                        </select>
+                        <p id="labelDetailInfo" class="text-[11px] text-blue-600 font-medium mt-1"></p>
+                    </div>
+
+                    <!-- Orientasi Kertas -->
+                    <div class="bg-amber-50 border border-amber-200 p-3 rounded-lg space-y-2">
+                        <label class="block text-xs font-bold text-amber-800 uppercase">
+                            <i class="fa-solid fa-compass"></i> Orientasi & Ukuran Kertas Cetak
+                        </label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <label class="flex items-center gap-2 bg-white p-2 rounded border border-amber-200 cursor-pointer text-xs font-semibold">
+                                <input type="radio" name="orientation" value="portrait" checked class="text-amber-600"> Portrait (Tegak)
+                            </label>
+                            <label class="flex items-center gap-2 bg-white p-2 rounded border border-amber-200 cursor-pointer text-xs font-semibold">
+                                <input type="radio" name="orientation" value="landscape" class="text-amber-600"> Landscape (Mendatar)
+                            </label>
+                        </div>
+                        <p id="paperDimensionsNote" class="text-[11px] text-amber-900 font-medium">
+                            Ukuran Kertas PDF & Printer: 210 mm × 165 mm
+                        </p>
+                    </div>
+
+                    <!-- Format Angka Ribuan (Superscript / Subscript / Normal) -->
+                    <div class="bg-red-50 border border-red-200 p-3 rounded-lg space-y-2.5">
+                        <label class="block text-xs font-bold text-red-800 uppercase">
+                            <i class="fa-solid fa-superscript"></i> Format Angka Ribuan Harga Promo
+                        </label>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <label class="flex flex-col items-center justify-center bg-white p-2 rounded border border-red-200 cursor-pointer text-[11px] font-bold text-center hover:bg-red-100/50">
+                                <input type="radio" name="thousandStyle" value="normal" checked class="mb-1 accent-red-600">
+                                <span>Normal</span>
+                                <span class="text-red-600 font-black text-xs mt-0.5">742.050</span>
+                            </label>
+                            <label class="flex flex-col items-center justify-center bg-white p-2 rounded border border-red-200 cursor-pointer text-[11px] font-bold text-center hover:bg-red-100/50">
+                                <input type="radio" name="thousandStyle" value="superscript" class="mb-1 accent-red-600">
+                                <span>Atas (Sup)</span>
+                                <span class="text-red-600 font-black text-xs mt-0.5 inline-flex items-start">742<span class="text-[8px] leading-none">.050</span></span>
+                            </label>
+                            <label class="flex flex-col items-center justify-center bg-white p-2 rounded border border-red-200 cursor-pointer text-[11px] font-bold text-center hover:bg-red-100/50">
+                                <input type="radio" name="thousandStyle" value="subscript" class="mb-1 accent-red-600">
+                                <span>Bawah (Sub)</span>
+                                <span class="text-red-600 font-black text-xs mt-0.5 inline-flex items-baseline">742<span class="text-[8px] leading-none">.050</span></span>
+                            </label>
+                        </div>
+
+                        <div id="thousandDetailControls" class="grid grid-cols-2 gap-2 pt-1 opacity-50 pointer-events-none">
+                            <div class="bg-white p-2 rounded border border-red-200">
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-[10px] font-bold text-gray-700">Skala Teks Ribuan</label>
+                                    <span id="thousandScaleValue" class="text-[10px] font-bold text-red-600">45%</span>
+                                </div>
+                                <input type="range" id="thousandScaleRange" min="25" max="75" step="5" value="45" class="w-full accent-red-600 cursor-pointer">
+                            </div>
+                            <label class="flex items-center gap-2 bg-white p-2 rounded border border-red-200 cursor-pointer text-[11px] font-semibold text-gray-700">
+                                <input type="checkbox" id="showThousandDot" checked class="accent-red-600">
+                                <span>Pakai Titik (<strong>.</strong>050)</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Margin & Gap -->
+                    <div class="bg-blue-50 border border-blue-200 p-3 rounded-lg space-y-3">
+                        <label class="block text-xs font-bold text-blue-800 uppercase">
+                            <i class="fa-solid fa-ruler-combined"></i> Presisi Margin & Jeda Kanan (+0.5mm)
+                        </label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-[10px] font-semibold text-blue-900">Margin Atas</label>
+                                    <span id="marginTValue" class="text-[10px] font-bold text-blue-600 bg-white px-1 py-0.5 rounded border border-blue-200">5 mm</span>
+                                </div>
+                                <input type="range" id="marginTRange" min="0" max="30" step="1" value="5" class="w-full accent-blue-600 cursor-pointer">
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-[10px] font-semibold text-blue-900">Margin Kiri</label>
+                                    <span id="marginLValue" class="text-[10px] font-bold text-blue-600 bg-white px-1 py-0.5 rounded border border-blue-200">5 mm</span>
+                                </div>
+                                <input type="range" id="marginLRange" min="0" max="30" step="1" value="5" class="w-full accent-blue-600 cursor-pointer">
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-1" title="Ditambah jeda aman anti mepet kanan">
+                                    <label class="text-[10px] font-semibold text-blue-900">Margin Kanan</label>
+                                    <span id="marginRValue" class="text-[10px] font-bold text-blue-600 bg-white px-1 py-0.5 rounded border border-blue-200">7.5 mm</span>
+                                </div>
+                                <input type="range" id="marginRRange" min="0" max="30" step="0.5" value="7.5" class="w-full accent-blue-600 cursor-pointer">
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <label class="text-[11px] font-semibold text-blue-900">Gap Vertikal Antar Label</label>
+                                <span id="gapYValue" class="text-xs font-bold text-blue-600 bg-white px-1.5 py-0.5 rounded border border-blue-200">5 mm</span>
+                            </div>
+                            <input type="range" id="gapYRange" min="0" max="20" step="1" value="5" class="w-full accent-blue-600 cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- Tipografi & Slider Ukuran Font -->
+                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 space-y-3">
+                        <label class="block text-xs font-bold text-gray-700 uppercase">
+                            <i class="fa-solid fa-font"></i> Tipografi & Ukuran Font
+                        </label>
+                        
+                        <div>
+                            <label class="block text-[10px] text-gray-600 mb-1">Jenis Font (Font Family)</label>
+                            <select id="fontFamilySelect" class="w-full border rounded p-1.5 text-xs bg-white font-semibold">
+                                <option value="'Oswald', sans-serif">Oswald (Rekomendasi POP / Harga Tebal)</option>
+                                <option value="'Montserrat', sans-serif">Montserrat (Modern & Clean)</option>
+                                <option value="'Poppins', sans-serif">Poppins (Bulat & Nyaman Dibaca)</option>
+                                <option value="'Inter', sans-serif">Inter (Standar Perusahaan)</option>
+                                <option value="Arial, sans-serif">Arial Bold (Klasik)</option>
+                            </select>
+                        </div>
+
+                        <!-- Slider Font SKU / Nama -->
+                        <div class="bg-white p-2 rounded border border-gray-200 space-y-1">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[10px] font-bold text-gray-700 uppercase">Font SKU / Deskripsi</label>
+                                <span id="fontDescSizeValue" class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">0.65em</span>
+                            </div>
+                            <input type="range" id="fontDescRange" min="0.3" max="1.5" step="0.05" value="0.65" class="w-full accent-blue-600 cursor-pointer">
+                        </div>
+
+                        <!-- Slider Font Reguler -->
+                        <div class="bg-white p-2 rounded border border-gray-200 space-y-1">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[10px] font-bold text-gray-700 uppercase">Font Reguler & Satuan</label>
+                                <span id="fontRegSizeValue" class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">0.6em</span>
+                            </div>
+                            <input type="range" id="fontRegRange" min="0.3" max="1.5" step="0.05" value="0.6" class="w-full accent-blue-600 cursor-pointer">
+                        </div>
+
+                        <!-- Slider Font Promo -->
+                        <div class="bg-white p-2 rounded border border-gray-200 space-y-1">
+                            <div class="flex justify-between items-center">
+                                <label class="text-[10px] font-bold text-gray-700 uppercase">Font Harga Promo</label>
+                                <span id="promoFontSizeValue" class="text-xs font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded">2.0em</span>
+                            </div>
+                            <input type="range" id="fontPromoRange" min="0.5" max="7.0" step="0.1" value="2.0" class="w-full accent-red-600 cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- Pilihan Kolom Yang Ditampilkan di Label Cetak -->
+                    <div class="bg-purple-50 border border-purple-200 p-3 rounded-lg space-y-2">
+                        <label class="block text-xs font-bold text-purple-800 uppercase">
+                            <i class="fa-solid fa-eye"></i> Opsi Kolom Tampil pada Label
+                        </label>
+                        <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
+                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColBadge" checked class="col-toggle"> Badge Promo</label>
+                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColSKU" checked class="col-toggle"> SKU Barang</label>
+                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColDate" checked class="col-toggle"> Tanggal Promo</label>
+                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColDesc" checked class="col-toggle"> Deskripsi / Nama</label>
+                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColReg" checked class="col-toggle"> Harga Reguler</label>
+                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColUnit" checked class="col-toggle"> Satuan</label>
+                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColPromo" checked class="col-toggle"> Harga Promo</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel Data Table Barang (Hide/Unhide) -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <button type="button" onclick="toggleSection('dataSection', 'toggleIcon2')" class="w-full bg-gray-50 hover:bg-gray-100 p-3.5 flex justify-between items-center text-sm font-bold text-gray-700 cursor-pointer">
+                    <span class="flex items-center gap-2"><i class="fa-solid fa-table text-blue-600"></i> Kelola Data Barang (CRUD Google Sheets)</span>
+                    <i id="toggleIcon2" class="fa-solid fa-chevron-down transition-transform duration-200"></i>
+                </button>
+                
+                <div id="dataSection" class="p-4 space-y-3 border-t border-gray-200">
+                    <!-- Top Control Toolbar -->
+                    <div class="flex flex-wrap justify-between items-center gap-2">
+                        <!-- Paging By -->
+                        <div class="flex items-center gap-2 text-xs">
+                            <span class="font-semibold text-gray-600">Tampilkan:</span>
+                            <select id="pageSizeSelect" class="border rounded px-2 py-1 text-xs bg-white font-bold">
+                                <option value="5">5</option>
+                                <option value="10" selected>10</option>
+                                <option value="25">25</option>
+                                <option value="50">50</option>
+                                <option value="all">Semua</option>
+                            </select>
+                        </div>
+
+                        <!-- Action CRUD Buttons -->
+                        <div class="flex items-center gap-1">
+                            <button type="button" id="btnFetchCSV" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-2.5 py-1.5 rounded font-semibold flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-rotate"></i> Reload CSV
+                            </button>
+                            <button type="button" id="btnOpenAddModal" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2.5 py-1.5 rounded font-semibold flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-plus"></i> Tambah Data
+                            </button>
+                            <button type="button" id="btnResetAll" class="bg-red-500 hover:bg-red-600 text-white text-xs px-2.5 py-1.5 rounded font-semibold flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-trash-can"></i> Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Search Box dengan Clear Text -->
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-gray-400 text-xs"></i>
+                        <input type="text" id="searchInput" placeholder="Cari SKU, Nama Barang, atau Harga..." class="w-full border rounded-lg pl-8 pr-8 py-1.5 text-xs focus:ring-2 focus:ring-blue-500 border-gray-300">
+                        <button type="button" id="btnClearSearch" class="hidden absolute right-2.5 top-2 text-gray-400 hover:text-gray-600 text-xs cursor-pointer">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    </div>
+
+                    <!-- Status Data Loading / Stats -->
+                    <div class="flex justify-between items-center text-[11px] text-gray-500 font-medium">
+                        <span id="dataStatusInfo">Memuat data...</span>
+                        <span id="selectedCountInfo" class="text-blue-600 font-bold">0 dipilih</span>
+                    </div>
+
+                    <!-- Container Tabel Data -->
+                    <div class="overflow-x-auto border border-gray-200 rounded-lg max-h-[350px] overflow-y-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-gray-100 text-gray-700 sticky top-0 z-10 border-b">
+                                <tr>
+                                    <th class="p-2 text-center w-8">
+                                        <input type="checkbox" id="checkAllItems" checked class="cursor-pointer">
+                                    </th>
+                                    <th class="p-2 font-bold">SKU</th>
+                                    <th class="p-2 font-bold">Deskripsi Barang</th>
+                                    <th class="p-2 font-bold text-right">Harga Promo</th>
+                                    <th class="p-2 font-bold text-center">Qty</th>
+                                    <th class="p-2 text-center">Aksi (CRUD)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody" class="divide-y divide-gray-200">
+                                <!-- Render baris via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Paging Navigation Table -->
+                    <div class="flex justify-between items-center text-xs pt-1">
+                        <span id="pageInfoText" class="text-gray-500">Halaman 1 dari 1</span>
+                        <div class="flex gap-1">
+                            <button type="button" id="btnPrevTablePage" class="px-2.5 py-1 bg-gray-200 hover:bg-gray-300 rounded font-semibold text-gray-700 disabled:opacity-50 cursor-pointer">Prev</button>
+                            <button type="button" id="btnNextTablePage" class="px-2.5 py-1 bg-gray-200 hover:bg-gray-300 rounded font-semibold text-gray-700 disabled:opacity-50 cursor-pointer">Next</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Area Preview Cetak Stiker -->
+        <section class="lg:col-span-7 print-area flex flex-col items-center">
+            
+            <!-- Toolbar Mail Merge Navigation (Prev / Next Page Sheet) -->
+            <div class="w-full bg-white p-3.5 rounded-xl shadow-sm border border-gray-200 mb-4 no-print flex flex-wrap justify-between items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-gray-700 text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-eye text-blue-600"></i> Pratinjau Cetak
+                    </span>
+                    <span id="previewOrientationLabel" class="text-[11px] font-semibold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">Portrait</span>
+                    <span id="previewPaperBadge" class="text-[11px] font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">210×165mm</span>
+                </div>
+
+                <!-- Mail Merge Navigation -->
+                <div class="flex items-center gap-2">
+                    <button type="button" id="btnPrevSheet" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 border border-blue-200 disabled:opacity-40 cursor-pointer">
+                        <i class="fa-solid fa-chevron-left"></i> Prev Sheet
+                    </button>
+                    <span id="sheetPageIndicator" class="text-xs font-bold text-gray-700 bg-gray-100 px-3 py-1 rounded border">
+                        Halaman 1 / 1
+                    </span>
+                    <button type="button" id="btnNextSheet" class="bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1.5 rounded-lg font-bold text-xs flex items-center gap-1 border border-blue-200 disabled:opacity-40 cursor-pointer">
+                        Next Sheet <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kontainer Lembar Cetak Stiker (Dinamis Render) -->
+            <div id="printSheetsContainer" class="w-full flex flex-col items-center gap-6 overflow-x-auto pb-4">
+                <div id="paperSheet" class="sheet-page"></div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- MODAL FORM CRUD (TAMBAH / EDIT BARANG) -->
+    <div id="crudModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 no-print">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden">
+            <div class="bg-blue-600 text-white p-4 flex justify-between items-center">
+                <h3 id="modalTitle" class="font-bold text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square"></i> Tambah / Edit Data Barang
+                </h3>
+                <button type="button" onclick="closeCrudModal()" class="text-white hover:text-gray-200 text-sm font-bold cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="crudForm" class="p-4 space-y-3 text-xs">
+                <input type="hidden" id="editItemIndex">
+                
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">SKU Barang *</label>
+                        <input type="text" id="formSKU" required class="w-full border border-gray-300 rounded p-2 focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Badge Promo</label>
+                        <input type="text" id="formBadge" placeholder="DISC 30%" class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Deskripsi / Nama Barang *</label>
+                    <textarea id="formDesc" required rows="2" class="w-full border border-gray-300 rounded p-2"></textarea>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Harga Reguler</label>
+                        <input type="text" id="formRegPrice" placeholder="1.000.000" class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Harga Promo *</label>
+                        <input type="text" id="formPromoPrice" required placeholder="700.000" class="w-full border border-gray-300 rounded p-2 font-bold text-red-600">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Satuan</label>
+                        <input type="text" id="formUnit" placeholder="METER" class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-3 gap-2">
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Start Date</label>
+                        <input type="text" id="formStartDate" placeholder="01/11" class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">End Date</label>
+                        <input type="text" id="formEndDate" placeholder="30/11" class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-gray-700 mb-1">Qty Cetak</label>
+                        <input type="number" id="formQty" min="1" value="1" class="w-full border border-gray-300 rounded p-2">
+                    </div>
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2 border-t">
+                    <button type="button" onclick="closeCrudModal()" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded font-bold cursor-pointer">Batal</button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-bold cursor-pointer">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Link CSV Google Sheets
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vS75B0WPzyPAm-C5wBp0Q2JgIcqbwzglxHP9GeBbPMaeVtk6cohIhY8PFUHTyO_YswBPCw6HmIINMH5/pub?gid=0&single=true&output=csv"; 
+        
+        // URL Google Apps Script WebApp untuk Sync CRUD langsung ke Google Sheets 
+        const APPS_SCRIPT_WEBAPP_URL = "https://script.google.com/macros/s/AKfycbxl1oMIY7i8FVUe0jpAA8G9oZZHYYizYjcARc3tqueGzCzHYxiEce6nJwvqA-MnD9oV/exec"; 
+
+        // DATABASE LENGKAP UKURAN LABEL TOM & JERRY (No. 95 - 130)
+        const LABEL_SIZES = [
+            { id: "103", name: "TnJ No. 103", width: 64, height: 32, cols: 3, rows: 4, marginT: 5, marginL: 5, marginR: 7.5, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "95",  name: "TnJ No. 95",  width: 12, height: 30, cols: 11,rows: 5, marginT: 5, marginL: 8, marginR: 8.5, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "96",  name: "TnJ No. 96",  width: 12, height: 42, cols: 11,rows: 3, marginT: 5, marginL: 8, marginR: 8.5, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "97",  name: "TnJ No. 97",  width: 19, height: 50, cols: 7, rows: 3, marginT: 5, marginL: 8, marginR: 8.5, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "98",  name: "TnJ No. 98",  width: 38, height: 16, cols: 5, rows: 8, marginT: 5, marginL: 8, marginR: 8.5, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "99",  name: "TnJ No. 99",  width: 38, height: 23, cols: 5, rows: 6, marginT: 5, marginL: 8, marginR: 8.5, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "100", name: "TnJ No. 100", width: 38, height: 38, cols: 5, rows: 4, marginT: 5, marginL: 8, marginR: 8.5, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "101", name: "TnJ No. 101", width: 50, height: 16, cols: 4, rows: 8, marginT: 5, marginL: 4, marginR: 4.5, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "102", name: "TnJ No. 102", width: 50, height: 23, cols: 4, rows: 6, marginT: 5, marginL: 4, marginR: 4.5, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "104", name: "TnJ No. 104", width: 74, height: 24, cols: 2, rows: 6, marginT: 5, marginL: 6, marginR: 6.5, gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "105", name: "TnJ No. 105", width: 37, height: 24, cols: 5, rows: 6, marginT: 5, marginL: 6, marginR: 6.5, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "106", name: "TnJ No. 106", width: 50, height: 25, cols: 4, rows: 6, marginT: 5, marginL: 12,marginR: 12.5,gapX: 3, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "107", name: "TnJ No. 107", width: 50, height: 18, cols: 4, rows: 8, marginT: 5, marginL: 8, marginR: 8.5, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "108", name: "TnJ No. 108", width: 38, height: 18, cols: 5, rows: 8, marginT: 5, marginL: 8, marginR: 8.5, gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "109", name: "TnJ No. 109", width: 38, height: 13, cols: 5, rows: 11,marginT: 5, marginL: 10,marginR: 10.5,gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "110", name: "TnJ No. 110", width: 23, height: 14, cols: 8, rows: 10,marginT: 5, marginL: 10,marginR: 10.5,gapX: 2, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "116", name: "TnJ No. 116", width: 100,height: 60, cols: 2, rows: 2, marginT: 5, marginL: 5, marginR: 5.5, gapX: 4, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "121", name: "TnJ No. 121", width: 75, height: 38, cols: 2, rows: 4, marginT: 5, marginL: 25,marginR: 25.5,gapX: 6, gapY: 5, pageW: 210, pageH: 165 },
+            { id: "130", name: "TnJ No. 130", width: 85, height: 30, cols: 2, rows: 5, marginT: 5, marginL: 15,marginR: 15.5,gapX: 5, gapY: 5, pageW: 210, pageH: 165 }
+        ];
+
+        // State Aplikasi
+        let productList = [];
+        let filteredProducts = [];
+        let tableCurrentPage = 1;
+        let tablePageSize = 10;
+        let currentSheetPageIndex = 0;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initLabelOptions();
+            const hasSavedData = loadLocalStorageSettings();
+            setupEventListeners();
+            updateDetailInfo();
+
+            if (hasSavedData && productList.length > 0) {
+                document.getElementById('dataStatusInfo').textContent = `Memuat ${productList.length} barang tersimpan (Klik Reload CSV untuk sync).`;
+                applySearchFilter();
+            } else {
+                fetchDataFromCSV();
+            }
+
+            // Tutup dropdown PDF jika klik di luar
+            window.addEventListener('click', (e) => {
+                const menu = document.getElementById('pdfDropdownMenu');
+                const btn = document.getElementById('btnExportPDF');
+                if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+                    menu.classList.add('hidden');
+                }
+            });
+        });
+
+        function togglePdfDropdown() {
+            const menu = document.getElementById('pdfDropdownMenu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        function toggleSection(sectionId, iconId) {
+            const section = document.getElementById(sectionId);
+            const icon = document.getElementById(iconId);
+            if (!section || !icon) return;
+            if (section.style.display === 'none') {
+                section.style.display = 'block';
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                section.style.display = 'none';
+                icon.style.transform = 'rotate(-90deg)';
+            }
+        }
+
+        function initLabelOptions() {
+            const select = document.getElementById('labelSelect');
+            if (!select) return;
+            select.innerHTML = '';
+            LABEL_SIZES.forEach(label => {
+                const opt = document.createElement('option');
+                opt.value = label.id;
+                opt.textContent = `${label.name} (${label.width} x ${label.height} mm - ${label.cols * label.rows} pcs | Kertas ${label.pageW}x${label.pageH}mm)`;
+                select.appendChild(opt);
+            });
+            select.value = "103";
+        }
+
+        function getCurrentLabel() {
+            const select = document.getElementById('labelSelect');
+            const val = select ? select.value : "103";
+            return LABEL_SIZES.find(l => l.id === val) || LABEL_SIZES[0];
+        }
+
+        // Helper: Format Angka Indonesia dengan Titik Ribuan (e.g. 742.050)
+        function formatNumberWithDots(val) {
+            const clean = String(val || '').replace(/\D/g, '');
+            if (!clean) return val;
+            return clean.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+        }
+
+        // Format Angka Harga Promo (Normal / Superscript / Subscript)
+        function formatPromoPriceHTML(priceStr) {
+            const style = document.querySelector('input[name="thousandStyle"]:checked')?.value || 'normal';
+            const scalePct = parseInt(document.getElementById('thousandScaleRange')?.value || 45);
+            const showDot = document.getElementById('showThousandDot')?.checked ?? true;
+            const rawClean = String(priceStr || '0').replace(/\D/g, '');
+
+            if (style === 'normal') {
+                const formattedNormal = formatNumberWithDots(rawClean);
+                return `<span>${formattedNormal}</span>`;
+            }
+
+            if (rawClean.length <= 3) {
+                return `<span>${rawClean}</span>`;
+            }
+
+            const mainDigits = rawClean.slice(0, -3);
+            const thousandDigits = rawClean.slice(-3);
+
+            const formattedMain = mainDigits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+            const thousandText = `${showDot ? '.' : ''}${thousandDigits}`;
+            const scaleEm = (scalePct / 100).toFixed(2);
+
+            if (style === 'superscript') {
+                return `
+                    <span class="inline-flex items-start leading-none">
+                        <span>${formattedMain}</span>
+                        <span style="font-size: ${scaleEm}em; line-height: 0.9; margin-top: 0.08em; margin-left: 1px;" class="font-extrabold">${thousandText}</span>
+                    </span>
+                `;
+            } else {
+                return `
+                    <span class="inline-flex items-baseline leading-none">
+                        <span>${formattedMain}</span>
+                        <span style="font-size: ${scaleEm}em; line-height: 0.9; margin-left: 1px;" class="font-extrabold">${thousandText}</span>
+                    </span>
+                `;
+            }
+        }
+
+        // Parse CSV String menjadi Array Object Produk
+        function parseCSVTextToProducts(csvText) {
+            const workbook = XLSX.read(csvText, { type: 'string' });
+            const jsonRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { defval: "" });
+
+            return jsonRows.map((row, idx) => {
+                // Pencarian key case-insensitive agar fleksibel dengan nama kolom Google Sheets
+                const getVal = (keys, def = "") => {
+                    for (let k of keys) {
+                        const foundKey = Object.keys(row).find(rk => rk.trim().toLowerCase() === k.toLowerCase());
+                        if (foundKey !== undefined && String(row[foundKey]).trim() !== "") {
+                            return String(row[foundKey]).trim();
+                        }
+                    }
+                    return def;
+                };
+
+                return {
+                    id: Date.now() + idx,
+                    selected: true,
+                    badge: getVal(["badge", "promo_badge", "label"], "DISC 30%"),
+                    sku: getVal(["sku", "kode", "kode_barang", "item_code"], `SKU-${idx + 1}`),
+                    desc: getVal(["desc", "deskripsi", "nama", "nama_barang", "deskripsi_barang"], "DESKRIPSI BARANG"),
+                    regPrice: getVal(["regprice", "harga_reguler", "hargareguler", "reguler", "normal"], "0"),
+                    promoPrice: getVal(["promoprice", "harga_promo", "hargapromo", "promo", "harga"], "0"),
+                    unit: getVal(["unit", "satuan", "uom"], "PCS"),
+                    startDate: getVal(["startdate", "start", "mulai", "tgl_mulai"], ""),
+                    endDate: getVal(["enddate", "end", "selesai", "tgl_selesai"], ""),
+                    qty: Math.max(1, parseInt(getVal(["qty", "jumlah", "cetak"], "1")) || 1)
+                };
+            }).filter(item => item.sku !== "" || item.desc !== "DESKRIPSI BARANG");
+        }
+
+        // Fetch Data CSV Google Sheets dengan Multi-Fallback (Direct -> CORS Proxy -> Local)
+        async function fetchDataFromCSV() {
+            const statusInfo = document.getElementById('dataStatusInfo');
+            if (statusInfo) statusInfo.textContent = "Mengambil data dari Google Sheets CSV...";
+            
+            const cacheBuster = `&_t=${Date.now()}`;
+            const targetUrl = CSV_URL + cacheBuster;
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
+
+            let csvText = null;
+
+            // Percobaan 1: Direct Fetch
+            try {
+                const resDirect = await fetch(targetUrl);
+                if (resDirect.ok) {
+                    const txt = await resDirect.text();
+                    if (txt && !txt.trim().startsWith("<!DOCTYPE html>")) {
+                        csvText = txt;
+                    }
+                }
+            } catch (e) {
+                console.warn("Direct fetch gagal (CORS), mencoba jalur proxy...", e);
+            }
+
+            // Percobaan 2: Via CORS Proxy jika Direct Fetch diblokir browser
+            if (!csvText) {
+                try {
+                    const resProxy = await fetch(proxyUrl);
+                    if (resProxy.ok) {
+                        const txt = await resProxy.text();
+                        if (txt && !txt.trim().startsWith("<!DOCTYPE html>")) {
+                            csvText = txt;
+                        }
+                    }
+                } catch (e2) {
+                    console.warn("Proxy fetch juga gagal:", e2);
+                }
+            }
+
+            if (csvText) {
+                const parsed = parseCSVTextToProducts(csvText);
+                if (parsed.length > 0) {
+                    productList = parsed;
+                    if (statusInfo) statusInfo.textContent = `Berhasil memuat ${productList.length} barang dari Google Sheets!`;
+                    applySearchFilter();
+                    saveLocalStorageSettings();
+                    return;
+                }
+            }
+
+            // Percobaan 3: Fallback ke data default jika offline / gagal total
+            if (statusInfo) statusInfo.textContent = "Koneksi CSV terblokir/offline. Memakai data sampel lokal.";
+            fallbackDefaultData();
+            applySearchFilter();
+            saveLocalStorageSettings();
+        }
+
+        function fallbackDefaultData() {
+            if (productList.length === 0) {
+                productList = [
+                    { id: 1, selected: true, badge: "DISC 30%", sku: "I026339", desc: "VALENTINO GRESS BLACKROCK AMBER NOIR 120X240", regPrice: "1.060.000", promoPrice: "742.050", unit: "METER", startDate: "01/11", endDate: "30/11", qty: 1 },
+                    { id: 2, selected: true, badge: "DISC 30%", sku: "I026340", desc: "VALENTINO GRESS BLACKROCK RAGNA TELA 120X240", regPrice: "1.060.000", promoPrice: "742.050", unit: "METER", startDate: "01/11", endDate: "30/11", qty: 1 }
+                ];
+            }
+        }
+
+        function applySearchFilter() {
+            const searchEl = document.getElementById('searchInput');
+            const query = searchEl ? searchEl.value.toLowerCase().trim() : '';
+            const btnClear = document.getElementById('btnClearSearch');
+            
+            if (btnClear) {
+                if (query !== '') {
+                    btnClear.classList.remove('hidden');
+                } else {
+                    btnClear.classList.add('hidden');
+                }
+            }
+
+            filteredProducts = productList.filter(p => 
+                String(p.sku).toLowerCase().includes(query) ||
+                String(p.desc).toLowerCase().includes(query) ||
+                String(p.promoPrice).toLowerCase().includes(query)
+            );
+
+            tableCurrentPage = 1;
+            renderDataTable();
+            renderPreview();
+        }
+
+        // Render Data Table dengan Action CRUD
+        function renderDataTable() {
+            const tbody = document.getElementById('tableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            const selectedCount = productList.filter(p => p.selected).length;
+            const selectedInfo = document.getElementById('selectedCountInfo');
+            if (selectedInfo) selectedInfo.textContent = `${selectedCount} dari ${productList.length} barang dicetak`;
+            
+            const checkAllEl = document.getElementById('checkAllItems');
+            if (checkAllEl) checkAllEl.checked = productList.length > 0 && productList.every(p => p.selected);
+
+            if (filteredProducts.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400">Tidak ada barang yang cocok.</td></tr>`;
+                const pageInfo = document.getElementById('pageInfoText');
+                if (pageInfo) pageInfo.textContent = "Halaman 0 dari 0";
+                return;
+            }
+
+            let totalPages = 1;
+            let startIdx = 0;
+            let endIdx = filteredProducts.length;
+
+            if (tablePageSize !== 'all') {
+                const ps = parseInt(tablePageSize);
+                totalPages = Math.ceil(filteredProducts.length / ps);
+                if (tableCurrentPage > totalPages) tableCurrentPage = totalPages;
+                startIdx = (tableCurrentPage - 1) * ps;
+                endIdx = startIdx + ps;
+            }
+
+            const pageItems = filteredProducts.slice(startIdx, endIdx);
+
+            pageItems.forEach((item) => {
+                const formattedPromo = formatNumberWithDots(item.promoPrice);
+                const tr = document.createElement('tr');
+                tr.className = item.selected ? 'bg-blue-50/40 hover:bg-blue-50' : 'hover:bg-gray-50';
+                tr.innerHTML = `
+                    <td class="p-2 text-center">
+                        <input type="checkbox" class="item-check cursor-pointer" data-id="${item.id}" ${item.selected ? 'checked' : ''}>
+                    </td>
+                    <td class="p-2 font-mono font-bold text-gray-700">${item.sku}</td>
+                    <td class="p-2 text-gray-800 max-w-[150px] truncate" title="${item.desc}">${item.desc}</td>
+                    <td class="p-2 text-right font-bold text-red-600">Rp${formattedPromo}</td>
+                    <td class="p-2 text-center">
+                        <input type="number" min="1" value="${item.qty}" data-id="${item.id}" class="item-qty w-12 border rounded text-center text-xs p-0.5">
+                    </td>
+                    <td class="p-2 text-center space-x-1">
+                        <button type="button" onclick="openEditModal(${item.id})" class="text-blue-600 hover:text-blue-800 font-bold px-1 cursor-pointer" title="Edit Barang"><i class="fa-solid fa-pen"></i></button>
+                        <button type="button" onclick="deleteSingleItem(${item.id})" class="text-red-500 hover:text-red-700 font-bold px-1 cursor-pointer" title="Hapus Barang"><i class="fa-solid fa-trash"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            const pageInfo = document.getElementById('pageInfoText');
+            if (pageInfo) pageInfo.textContent = `Halaman ${tableCurrentPage} dari ${totalPages}`;
+            
+            const btnPrev = document.getElementById('btnPrevTablePage');
+            const btnNext = document.getElementById('btnNextTablePage');
+            if (btnPrev) btnPrev.disabled = tableCurrentPage <= 1;
+            if (btnNext) btnNext.disabled = tableCurrentPage >= totalPages || tablePageSize === 'all';
+
+            // Event Checkbox Row
+            document.querySelectorAll('.item-check').forEach(chk => {
+                chk.addEventListener('change', (e) => {
+                    const id = Number(e.target.getAttribute('data-id'));
+                    const target = productList.find(p => p.id === id);
+                    if (target) target.selected = e.target.checked;
+                    renderDataTable();
+                    renderPreview();
+                    saveLocalStorageSettings();
+                });
+            });
+
+            // Event Qty Row
+            document.querySelectorAll('.item-qty').forEach(input => {
+                input.addEventListener('change', (e) => {
+                    const id = Number(e.target.getAttribute('data-id'));
+                    const target = productList.find(p => p.id === id);
+                    if (target) target.qty = Math.max(1, parseInt(e.target.value) || 1);
+                    renderPreview();
+                    saveLocalStorageSettings();
+                });
+            });
+        }
+
+        // FUNGSI CRUD (CREATE, UPDATE, DELETE)
+        function openAddModal() {
+            document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-plus-circle"></i> Tambah Data Barang Baru`;
+            document.getElementById('editItemIndex').value = '';
+            document.getElementById('crudForm').reset();
+            document.getElementById('formQty').value = 1;
+            document.getElementById('crudModal').classList.remove('hidden');
+        }
+
+        function openEditModal(id) {
+            const item = productList.find(p => p.id === id);
+            if (!item) return;
+
+            document.getElementById('modalTitle').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Edit Data Barang (${item.sku})`;
+            document.getElementById('editItemIndex').value = id;
+            document.getElementById('formSKU').value = item.sku;
+            document.getElementById('formBadge').value = item.badge || '';
+            document.getElementById('formDesc').value = item.desc || '';
+            document.getElementById('formRegPrice').value = item.regPrice || '';
+            document.getElementById('formPromoPrice').value = item.promoPrice || '';
+            document.getElementById('formUnit').value = item.unit || '';
+            document.getElementById('formStartDate').value = item.startDate || '';
+            document.getElementById('formEndDate').value = item.endDate || '';
+            document.getElementById('formQty').value = item.qty || 1;
+
+            document.getElementById('crudModal').classList.remove('hidden');
+        }
+
+        function closeCrudModal() {
+            document.getElementById('crudModal').classList.add('hidden');
+        }
+
+        document.getElementById('crudForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const editId = document.getElementById('editItemIndex').value;
+            
+            const itemData = {
+                sku: document.getElementById('formSKU').value.trim(),
+                badge: document.getElementById('formBadge').value.trim() || 'PROMO',
+                desc: document.getElementById('formDesc').value.trim(),
+                regPrice: document.getElementById('formRegPrice').value.trim() || '0',
+                promoPrice: document.getElementById('formPromoPrice').value.trim() || '0',
+                unit: document.getElementById('formUnit').value.trim() || 'PCS',
+                startDate: document.getElementById('formStartDate').value.trim() || '',
+                endDate: document.getElementById('formEndDate').value.trim() || '',
+                qty: parseInt(document.getElementById('formQty').value) || 1,
+                selected: true
+            };
+
+            if (editId) {
+                const idx = productList.findIndex(p => p.id === Number(editId));
+                if (idx !== -1) {
+                    productList[idx] = { ...productList[idx], ...itemData };
+                    syncToGoogleSheets('UPDATE', productList[idx]);
+                }
+            } else {
+                itemData.id = Date.now();
+                productList.unshift(itemData);
+                syncToGoogleSheets('CREATE', itemData);
+            }
+
+            closeCrudModal();
+            applySearchFilter();
+            saveLocalStorageSettings();
+        });
+
+        function deleteSingleItem(id) {
+            const item = productList.find(p => p.id === id);
+            if (confirm(`Yakin ingin menghapus barang SKU: ${item ? item.sku : ''}?`)) {
+                if (item) syncToGoogleSheets('DELETE', item);
+                productList = productList.filter(p => p.id !== id);
+                applySearchFilter();
+                saveLocalStorageSettings();
+            }
+        }
+
+        async function syncToGoogleSheets(action, itemData) {
+            if (!APPS_SCRIPT_WEBAPP_URL) return;
+            try {
+                await fetch(APPS_SCRIPT_WEBAPP_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, ...itemData })
+                });
+            } catch (err) {
+                console.error(`Sync ${action} gagal:`, err);
+            }
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            document.getElementById('labelSelect')?.addEventListener('change', () => {
+                const label = getCurrentLabel();
+                document.getElementById('marginTRange').value = label.marginT;
+                document.getElementById('marginTValue').textContent = `${label.marginT} mm`;
+                document.getElementById('marginLRange').value = label.marginL;
+                document.getElementById('marginLValue').textContent = `${label.marginL} mm`;
+                document.getElementById('marginRRange').value = label.marginR;
+                document.getElementById('marginRValue').textContent = `${label.marginR} mm`;
+                document.getElementById('gapYRange').value = label.gapY || 5;
+                document.getElementById('gapYValue').textContent = `${label.gapY || 5} mm`;
+                updateDetailInfo();
+                currentSheetPageIndex = 0;
+                renderPreview();
+                saveLocalStorageSettings();
+            });
+
+            document.getElementById('marginTRange')?.addEventListener('input', (e) => {
+                document.getElementById('marginTValue').textContent = `${e.target.value} mm`;
+                updateDetailInfo(); renderPreview(); saveLocalStorageSettings();
+            });
+
+            document.getElementById('marginLRange')?.addEventListener('input', (e) => {
+                document.getElementById('marginLValue').textContent = `${e.target.value} mm`;
+                updateDetailInfo(); renderPreview(); saveLocalStorageSettings();
+            });
+
+            document.getElementById('marginRRange')?.addEventListener('input', (e) => {
+                document.getElementById('marginRValue').textContent = `${e.target.value} mm`;
+                updateDetailInfo(); renderPreview(); saveLocalStorageSettings();
+            });
+
+            document.getElementById('gapYRange')?.addEventListener('input', (e) => {
+                document.getElementById('gapYValue').textContent = `${e.target.value} mm`;
+                updateDetailInfo(); renderPreview(); saveLocalStorageSettings();
+            });
+
+            // Format Ribuan Listeners
+            document.querySelectorAll('input[name="thousandStyle"]').forEach(radio => {
+                radio.addEventListener('change', () => {
+                    updateThousandControlsVisibility();
+                    renderPreview();
+                    saveLocalStorageSettings();
+                });
+            });
+
+            document.getElementById('thousandScaleRange')?.addEventListener('input', (e) => {
+                document.getElementById('thousandScaleValue').textContent = `${e.target.value}%`;
+                renderPreview();
+                saveLocalStorageSettings();
+            });
+
+            document.getElementById('showThousandDot')?.addEventListener('change', () => {
+                renderPreview();
+                saveLocalStorageSettings();
+            });
+
+            document.getElementById('checkAllItems')?.addEventListener('change', (e) => {
+                const isChecked = e.target.checked;
+                filteredProducts.forEach(p => p.selected = isChecked);
+                renderDataTable(); renderPreview(); saveLocalStorageSettings();
+            });
+
+            const searchInput = document.getElementById('searchInput');
+            searchInput?.addEventListener('input', applySearchFilter);
+
+            document.getElementById('btnClearSearch')?.addEventListener('click', () => {
+                if (searchInput) searchInput.value = '';
+                applySearchFilter();
+            });
+
+            document.getElementById('pageSizeSelect')?.addEventListener('change', (e) => {
+                tablePageSize = e.target.value;
+                tableCurrentPage = 1;
+                renderDataTable();
+            });
+
+            document.getElementById('btnPrevTablePage')?.addEventListener('click', () => {
+                if (tableCurrentPage > 1) { tableCurrentPage--; renderDataTable(); }
+            });
+
+            document.getElementById('btnNextTablePage')?.addEventListener('click', () => {
+                tableCurrentPage++; renderDataTable();
+            });
+
+            document.getElementById('btnFetchCSV')?.addEventListener('click', fetchDataFromCSV);
+            document.getElementById('btnOpenAddModal')?.addEventListener('click', openAddModal);
+
+            document.getElementById('btnResetAll')?.addEventListener('click', () => {
+                if (confirm('Apakah Anda yakin ingin menghapus seluruh daftar barang?')) {
+                    productList = [];
+                    applySearchFilter();
+                    saveLocalStorageSettings();
+                }
+            });
+
+            document.getElementById('fontFamilySelect')?.addEventListener('change', () => { renderPreview(); saveLocalStorageSettings(); });
+            
+            document.getElementById('fontDescRange')?.addEventListener('input', (e) => {
+                document.getElementById('fontDescSizeValue').textContent = `${e.target.value}em`;
+                renderPreview(); saveLocalStorageSettings();
+            });
+
+            document.getElementById('fontRegRange')?.addEventListener('input', (e) => {
+                document.getElementById('fontRegSizeValue').textContent = `${e.target.value}em`;
+                renderPreview(); saveLocalStorageSettings();
+            });
+
+            document.getElementById('fontPromoRange')?.addEventListener('input', (e) => {
+                document.getElementById('promoFontSizeValue').textContent = `${e.target.value}em`;
+                renderPreview(); saveLocalStorageSettings();
+            });
+
+            document.querySelectorAll('.col-toggle').forEach(chk => {
+                chk.addEventListener('change', () => { renderPreview(); saveLocalStorageSettings(); });
+            });
+
+            document.querySelectorAll('input[name="orientation"]').forEach(radio => {
+                radio.addEventListener('change', () => {
+                    updateDetailInfo();
+                    renderPreview();
+                    saveLocalStorageSettings();
+                });
+            });
+
+            document.getElementById('btnPrevSheet')?.addEventListener('click', () => {
+                if (currentSheetPageIndex > 0) { currentSheetPageIndex--; renderPreview(); }
+            });
+
+            document.getElementById('btnNextSheet')?.addEventListener('click', () => {
+                currentSheetPageIndex++; renderPreview();
+            });
+        }
+
+        function updateThousandControlsVisibility() {
+            const style = document.querySelector('input[name="thousandStyle"]:checked')?.value || 'normal';
+            const detailBox = document.getElementById('thousandDetailControls');
+            if (!detailBox) return;
+            if (style === 'normal') {
+                detailBox.classList.add('opacity-50', 'pointer-events-none');
+            } else {
+                detailBox.classList.remove('opacity-50', 'pointer-events-none');
+            }
+        }
+
+        function getActivePageDimensions() {
+            const current = getCurrentLabel();
+            const orientation = document.querySelector('input[name="orientation"]:checked')?.value || 'portrait';
+            const pWidth = orientation === 'landscape' ? current.pageH : current.pageW;
+            const pHeight = orientation === 'landscape' ? current.pageW : current.pageH;
+            return { pWidth, pHeight, orientation, label: current };
+        }
+
+        function updateDetailInfo() {
+            const { pWidth, pHeight, label } = getActivePageDimensions();
+            const marginT = document.getElementById('marginTRange')?.value || 5;
+            const marginL = document.getElementById('marginLRange')?.value || 5;
+            const marginR = document.getElementById('marginRRange')?.value || 7.5;
+            const gapY = document.getElementById('gapYRange')?.value || 5;
+
+            const detailEl = document.getElementById('labelDetailInfo');
+            if (detailEl) {
+                detailEl.textContent = `Margin Atas: ${marginT}mm | Kiri: ${marginL}mm | Kanan: ${marginR}mm | Gap: ${gapY}mm`;
+            }
+
+            const noteEl = document.getElementById('paperDimensionsNote');
+            if (noteEl) {
+                noteEl.textContent = `Ukuran Kertas PDF & Printer: ${pWidth} mm × ${pHeight} mm (${label.name})`;
+            }
+
+            const badgeEl = document.getElementById('previewPaperBadge');
+            if (badgeEl) {
+                badgeEl.textContent = `${pWidth}×${pHeight}mm`;
+            }
+
+            const dynamicStyle = document.getElementById('dynamicPageStyle');
+            if (dynamicStyle) {
+                dynamicStyle.textContent = `@page { size: ${pWidth}mm ${pHeight}mm; margin: 0 !important; }`;
+            }
+        }
+
+        function getRenderQueue() {
+            let renderQueue = [];
+            productList.filter(p => p.selected).forEach(prod => {
+                const qty = Math.max(1, parseInt(prod.qty || 1));
+                for (let q = 0; q < qty; q++) {
+                    renderQueue.push(prod);
+                }
+            });
+            return renderQueue;
+        }
+
+        // Pembuat DOM 1 Lembar Kertas Stiker (Reusable untuk Preview, Print, dan PDF)
+        function createSheetElement(renderQueue, pageIdx, forExport = false) {
+            const { pWidth, pHeight, label } = getActivePageDimensions();
+            const fontFamily = document.getElementById('fontFamilySelect')?.value || "'Oswald', sans-serif";
+            const customDescSize = parseFloat(document.getElementById('fontDescRange')?.value || 0.65);
+            const customRegSize = parseFloat(document.getElementById('fontRegRange')?.value || 0.6);
+            const customPromoSize = parseFloat(document.getElementById('fontPromoRange')?.value || 2.0);
+            const marginTVal = parseInt(document.getElementById('marginTRange')?.value || 5);
+            const marginLVal = parseFloat(document.getElementById('marginLRange')?.value || 5);
+            const marginRVal = parseFloat(document.getElementById('marginRRange')?.value || 7.5);
+            const gapYVal = parseInt(document.getElementById('gapYRange')?.value || 5);
+
+            const showBadge = document.getElementById('showColBadge')?.checked ?? true;
+            const showSKU = document.getElementById('showColSKU')?.checked ?? true;
+            const showDate = document.getElementById('showColDate')?.checked ?? true;
+            const showDesc = document.getElementById('showColDesc')?.checked ?? true;
+            const showReg = document.getElementById('showColReg')?.checked ?? true;
+            const showUnit = document.getElementById('showColUnit')?.checked ?? true;
+            const showPromo = document.getElementById('showColPromo')?.checked ?? true;
+
+            const slotsPerPage = label.cols * label.rows;
+            const sheet = document.createElement('div');
+            sheet.className = 'sheet-page';
+            sheet.style.width = `${pWidth}mm`;
+            sheet.style.height = `${pHeight}mm`;
+            sheet.style.paddingTop = `${marginTVal}mm`;
+            sheet.style.paddingLeft = `${marginLVal}mm`;
+            sheet.style.paddingRight = `${marginRVal}mm`;
+            sheet.style.gridTemplateColumns = `repeat(${label.cols}, ${label.width}mm)`;
+            sheet.style.gridTemplateRows = `repeat(${label.rows}, ${label.height}mm)`;
+            sheet.style.columnGap = `${label.gapX}mm`;
+            sheet.style.rowGap = `${gapYVal}mm`;
+            sheet.style.fontFamily = fontFamily;
+
+            if (forExport) {
+                sheet.style.boxShadow = 'none';
+                sheet.style.border = 'none';
+                sheet.style.margin = '0';
+            }
+
+            const startIndex = pageIdx * slotsPerPage;
+            const endIndex = startIndex + slotsPerPage;
+
+            for (let i = startIndex; i < endIndex; i++) {
+                const card = document.createElement('div');
+                card.className = 'label-card p-1 text-gray-800 leading-none flex flex-col justify-between';
+                card.style.width = `${label.width}mm`;
+                card.style.height = `${label.height}mm`;
+
+                if (forExport) {
+                    card.style.border = '1px dashed transparent';
+                }
+
+                if (i < renderQueue.length) {
+                    const p = renderQueue[i];
+
+                    const badgeHtml = (showBadge && p.badge)
+                        ? `<span class="bg-red-600 text-white font-black rounded-full px-2 py-0.5 text-[0.45em] tracking-tight uppercase whitespace-nowrap">${p.badge}</span>`
+                        : `<span></span>`;
+
+                    const dateHtml = (showDate && (p.startDate || p.endDate)) 
+                        ? `<span class="text-[0.4em] text-gray-500 font-semibold">${p.startDate || ''}-${p.endDate || ''}</span>` 
+                        : '';
+
+                    const skuHtml = showSKU 
+                        ? `<span class="font-mono text-[0.48em] text-gray-600 font-bold whitespace-nowrap">${p.sku}</span>` 
+                        : '';
+
+                    const unitText = (showUnit && p.unit) ? `/ ${p.unit}` : '';
+                    const formattedRegPrice = formatNumberWithDots(p.regPrice);
+                    const promoPriceFormatted = formatPromoPriceHTML(p.promoPrice);
+
+                    card.innerHTML = `
+                        <div class="grid grid-cols-3 items-center border-b border-gray-300 pb-0.5">
+                            <div></div>
+                            <div class="text-center flex justify-center">${badgeHtml}</div>
+                            <div class="flex items-center justify-end gap-1 text-right">
+                                ${dateHtml}
+                                ${skuHtml}
+                            </div>
+                        </div>
+
+                        ${showDesc ? `
+                            <div class="text-center font-extrabold leading-tight uppercase my-0.5 tracking-tight text-gray-900 desc-clamp" style="font-size: ${customDescSize}em;">
+                                ${p.desc}
+                            </div>
+                        ` : '<div></div>'}
+
+                        <div class="relative flex-1 flex flex-col justify-between min-h-0 pt-0.5">
+                            <div class="grid grid-cols-3 items-center text-black font-bold whitespace-nowrap" style="font-size: ${customRegSize}em;">
+                                <div class="text-left line-through">${showReg ? `Rp${formattedRegPrice}` : ''}</div>
+                                <div class="text-center">${unitText}</div>
+                                <div></div>
+                            </div>
+
+                            ${showPromo ? `
+                                <div class="text-red-600 font-black tracking-tighter flex items-baseline justify-center my-auto" style="font-size: ${customPromoSize}em;">
+                                    <span class="text-[0.3em] mr-0.5 font-bold">Rp</span>
+                                    ${promoPriceFormatted}
+                                </div>
+                            ` : '<div></div>'}
+                        </div>
+                    `;
+                } else {
+                    card.classList.add('empty-slot');
+                    if (!forExport) {
+                        card.style.border = '1px dashed #e5e7eb';
+                        card.style.background = '#fafafa';
+                    }
+                }
+                sheet.appendChild(card);
+            }
+
+            return sheet;
+        }
+
+        // Render Pratinjau Lembar Stiker
+        function renderPreview() {
+            const { orientation, label } = getActivePageDimensions();
+            const container = document.getElementById('printSheetsContainer');
+            if (!container) return;
+
+            const orientEl = document.getElementById('previewOrientationLabel');
+            if (orientEl) orientEl.textContent = orientation === 'landscape' ? 'Landscape' : 'Portrait';
+
+            const renderQueue = getRenderQueue();
+            const slotsPerPage = label.cols * label.rows;
+            const totalSheetPages = Math.max(1, Math.ceil(renderQueue.length / slotsPerPage));
+
+            if (currentSheetPageIndex >= totalSheetPages) currentSheetPageIndex = totalSheetPages - 1;
+            if (currentSheetPageIndex < 0) currentSheetPageIndex = 0;
+
+            const indicatorEl = document.getElementById('sheetPageIndicator');
+            if (indicatorEl) indicatorEl.textContent = `Halaman ${currentSheetPageIndex + 1} / ${totalSheetPages}`;
+            
+            const btnPrev = document.getElementById('btnPrevSheet');
+            const btnNext = document.getElementById('btnNextSheet');
+            if (btnPrev) btnPrev.disabled = currentSheetPageIndex === 0;
+            if (btnNext) btnNext.disabled = currentSheetPageIndex >= totalSheetPages - 1;
+
+            container.innerHTML = '';
+            const sheet = createSheetElement(renderQueue, currentSheetPageIndex, false);
+            container.appendChild(sheet);
+        }
+
+        // Bypass Iframe Google Sites & Handle Print
+        function triggerPrintWindow(isAllPages = false) {
+            updateDetailInfo();
+            const container = document.getElementById('printSheetsContainer');
+            if (!container) return;
+
+            const renderQueue = getRenderQueue();
+            const { label } = getActivePageDimensions();
+            const slotsPerPage = label.cols * label.rows;
+            const totalSheetPages = Math.max(1, Math.ceil(renderQueue.length / slotsPerPage));
+
+            container.innerHTML = '';
+            if (isAllPages) {
+                for (let pageIdx = 0; pageIdx < totalSheetPages; pageIdx++) {
+                    const sheet = createSheetElement(renderQueue, pageIdx, false);
+                    container.appendChild(sheet);
+                }
+            } else {
+                const sheet = createSheetElement(renderQueue, currentSheetPageIndex, false);
+                container.appendChild(sheet);
+            }
+
+            let isInIframe = false;
+            try {
+                isInIframe = window.self !== window.top;
+            } catch (e) {
+                isInIframe = true;
+            }
+
+            if (isInIframe) {
+                const printWindow = window.open('', '_blank');
+                if (!printWindow) {
+                    alert("Pop-up diblokir oleh browser! Harap izinkan pop-up untuk situs ini agar bisa mencetak.");
+                    renderPreview();
+                    return;
+                }
+
+                const stylesHtml = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]'))
+                    .map(s => s.outerHTML).join('\n');
+
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html lang="id">
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Cetak Label Tom & Jerry</title>
+                        ${stylesHtml}
+                        <style>
+                            body { background: white !important; padding: 0 !important; margin: 0 !important; }
+                            .sheet-page { margin: 0 auto !important; box-shadow: none !important; border: none !important; page-break-after: always; break-after: page; }
+                        </style>
+                    </head>
+                    <body>
+                        <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+                            ${container.innerHTML}
+                        </div>
+                        <script>
+                            window.onload = function() {
+                                setTimeout(() => {
+                                    window.print();
+                                    window.close();
+                                }, 300);
+                            };
+                        <\/script>
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                renderPreview();
+            } else {
+                const restoreAfterPrint = () => {
+                    window.removeEventListener('afterprint', restoreAfterPrint);
+                    renderPreview();
+                };
+                window.addEventListener('afterprint', restoreAfterPrint);
+
+                setTimeout(() => {
+                    window.print();
+                }, 250);
+            }
+        }
+
+        function printCurrentPage() {
+            triggerPrintWindow(false);
+        }
+
+        function printAllPages() {
+            triggerPrintWindow(true);
+        }
+
+        // Export Langsung ke File PDF (Pilihan: 'current' atau 'all')
+        async function exportToPDF(mode = 'all') {
+            const menu = document.getElementById('pdfDropdownMenu');
+            if (menu) menu.classList.add('hidden');
+
+            const btn = document.getElementById('btnExportPDF');
+            const originalHTML = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Proses PDF...`;
+            }
+
+            try {
+                const { pWidth, pHeight, orientation, label } = getActivePageDimensions();
+                const renderQueue = getRenderQueue();
+                const slotsPerPage = label.cols * label.rows;
+                const totalSheetPages = Math.max(1, Math.ceil(renderQueue.length / slotsPerPage));
+
+                const pdfWrapper = document.createElement('div');
+                pdfWrapper.style.width = `${pWidth}mm`;
+                pdfWrapper.style.background = 'white';
+
+                if (mode === 'current') {
+                    const sheet = createSheetElement(renderQueue, currentSheetPageIndex, true);
+                    pdfWrapper.appendChild(sheet);
+                } else {
+                    for (let pageIdx = 0; pageIdx < totalSheetPages; pageIdx++) {
+                        const sheet = createSheetElement(renderQueue, pageIdx, true);
+                        if (pageIdx < totalSheetPages - 1) {
+                            sheet.style.pageBreakAfter = 'always';
+                            sheet.style.breakAfter = 'page';
+                        }
+                        pdfWrapper.appendChild(sheet);
+                    }
+                }
+
+                pdfWrapper.style.position = 'fixed';
+                pdfWrapper.style.left = '-9999px';
+                pdfWrapper.style.top = '0';
+                document.body.appendChild(pdfWrapper);
+
+                const opt = {
+                    margin: 0,
+                    filename: `Label_${label.name.replace(/\s+/g, '_')}_${mode === 'current' ? 'Hal_' + (currentSheetPageIndex + 1) : 'Semua'}_${pWidth}x${pHeight}mm.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2.5,
+                        useCORS: true,
+                        letterRendering: true
+                    },
+                    jsPDF: {
+                        unit: 'mm',
+                        format: [pWidth, pHeight],
+                        orientation: orientation
+                    },
+                    pagebreak: { mode: ['css', 'legacy'] }
+                };
+
+                await html2pdf().set(opt).from(pdfWrapper).save();
+                document.body.removeChild(pdfWrapper);
+            } catch (err) {
+                console.error("Gagal export PDF:", err);
+                alert("Terjadi kesalahan saat membuat PDF.");
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }
+                renderPreview();
+            }
+        }
+
+        // Local Storage Handler
+        function saveLocalStorageSettings() {
+            try {
+                const config = {
+                    labelId: document.getElementById('labelSelect')?.value,
+                    marginT: document.getElementById('marginTRange')?.value,
+                    marginL: document.getElementById('marginLRange')?.value,
+                    marginR: document.getElementById('marginRRange')?.value,
+                    gapY: document.getElementById('gapYRange')?.value,
+                    fontFamily: document.getElementById('fontFamilySelect')?.value,
+                    fontDescSize: document.getElementById('fontDescRange')?.value,
+                    fontRegSize: document.getElementById('fontRegRange')?.value,
+                    fontPromoSize: document.getElementById('fontPromoRange')?.value,
+                    orientation: document.querySelector('input[name="orientation"]:checked')?.value,
+                    thousandStyle: document.querySelector('input[name="thousandStyle"]:checked')?.value,
+                    thousandScale: document.getElementById('thousandScaleRange')?.value,
+                    showThousandDot: document.getElementById('showThousandDot')?.checked,
+                    showBadge: document.getElementById('showColBadge')?.checked,
+                    showSKU: document.getElementById('showColSKU')?.checked,
+                    showDate: document.getElementById('showColDate')?.checked,
+                    showDesc: document.getElementById('showColDesc')?.checked,
+                    showReg: document.getElementById('showColReg')?.checked,
+                    showUnit: document.getElementById('showColUnit')?.checked,
+                    showPromo: document.getElementById('showColPromo')?.checked,
+                    productList: productList
+                };
+                localStorage.setItem('tnj_label_crud_config', JSON.stringify(config));
+            } catch (e) {
+                console.warn("LocalStorage tidak tersedia:", e);
+            }
+        }
+
+        function loadLocalStorageSettings() {
+            try {
+                const saved = localStorage.getItem('tnj_label_crud_config');
+                if (!saved) return false;
+                const config = JSON.parse(saved);
+                if (config.labelId && document.getElementById('labelSelect')) document.getElementById('labelSelect').value = config.labelId;
+                if (config.marginT && document.getElementById('marginTRange')) {
+                    document.getElementById('marginTRange').value = config.marginT;
+                    document.getElementById('marginTValue').textContent = `${config.marginT} mm`;
+                }
+                if (config.marginL && document.getElementById('marginLRange')) {
+                    document.getElementById('marginLRange').value = config.marginL;
+                    document.getElementById('marginLValue').textContent = `${config.marginL} mm`;
+                }
+                if (config.marginR && document.getElementById('marginRRange')) {
+                    document.getElementById('marginRRange').value = config.marginR;
+                    document.getElementById('marginRValue').textContent = `${config.marginR} mm`;
+                }
+                if (config.gapY && document.getElementById('gapYRange')) {
+                    document.getElementById('gapYRange').value = config.gapY;
+                    document.getElementById('gapYValue').textContent = `${config.gapY} mm`;
+                }
+                if (config.fontFamily && document.getElementById('fontFamilySelect')) document.getElementById('fontFamilySelect').value = config.fontFamily;
+                if (config.fontDescSize && document.getElementById('fontDescRange')) {
+                    document.getElementById('fontDescRange').value = config.fontDescSize;
+                    document.getElementById('fontDescSizeValue').textContent = `${config.fontDescSize}em`;
+                }
+                if (config.fontRegSize && document.getElementById('fontRegRange')) {
+                    document.getElementById('fontRegRange').value = config.fontRegSize;
+                    document.getElementById('fontRegSizeValue').textContent = `${config.fontRegSize}em`;
+                }
+                if (config.fontPromoSize && document.getElementById('fontPromoRange')) {
+                    document.getElementById('fontPromoRange').value = config.fontPromoSize;
+                    document.getElementById('promoFontSizeValue').textContent = `${config.fontPromoSize}em`;
+                }
+                if (config.orientation) {
+                    const radio = document.querySelector(`input[name="orientation"][value="${config.orientation}"]`);
+                    if (radio) radio.checked = true;
+                }
+                if (config.thousandStyle) {
+                    const tRadio = document.querySelector(`input[name="thousandStyle"][value="${config.thousandStyle}"]`);
+                    if (tRadio) tRadio.checked = true;
+                }
+                if (config.thousandScale && document.getElementById('thousandScaleRange')) {
+                    document.getElementById('thousandScaleRange').value = config.thousandScale;
+                    document.getElementById('thousandScaleValue').textContent = `${config.thousandScale}%`;
+                }
+                if (config.showThousandDot !== undefined && document.getElementById('showThousandDot')) {
+                    document.getElementById('showThousandDot').checked = config.showThousandDot;
+                }
+                updateThousandControlsVisibility();
+
+                if (config.showBadge !== undefined && document.getElementById('showColBadge')) document.getElementById('showColBadge').checked = config.showBadge;
+                if (config.showSKU !== undefined && document.getElementById('showColSKU')) document.getElementById('showColSKU').checked = config.showSKU;
+                if (config.showDate !== undefined && document.getElementById('showColDate')) document.getElementById('showColDate').checked = config.showDate;
+                if (config.showDesc !== undefined && document.getElementById('showColDesc')) document.getElementById('showColDesc').checked = config.showDesc;
+                if (config.showReg !== undefined && document.getElementById('showColReg')) document.getElementById('showColReg').checked = config.showReg;
+                if (config.showUnit !== undefined && document.getElementById('showColUnit')) document.getElementById('showColUnit').checked = config.showUnit;
+                if (config.showPromo !== undefined && document.getElementById('showColPromo')) document.getElementById('showColPromo').checked = config.showPromo;
+                
+                if (Array.isArray(config.productList) && config.productList.length > 0) {
+                    productList = config.productList;
+                    return true;
+                }
+                return false;
+            } catch (err) {
+                console.error("Gagal membaca LocalStorage:", err);
+                return false;
+            }
+        }
+    </script>
+</body>
+</html>
