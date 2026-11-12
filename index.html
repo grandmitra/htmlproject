@@ -12,7 +12,6 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         #sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         
-        /* DIPERBAIKI: Ditambahkan max-height 60vh dan overflow-y-auto agar sub-menu bisa di-scroll jika itemnya banyak */
         .submenu-content { max-height: 0; overflow: hidden; transition: max-height 0.3s cubic-bezier(0, 1, 0, 1); }
         .submenu-content.open { max-height: 60vh; overflow-y: auto; transition: max-height 0.3s ease-in-out; }
         
@@ -22,6 +21,13 @@
         .submenu-content::-webkit-scrollbar { width: 4px; }
         .sidebar-scroll::-webkit-scrollbar-thumb,
         .submenu-content::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+
+        /* Memastikan iframe Heyzine flipbook mengisi penuh layar background login */
+        .heyzine-flipbook iframe {
+            width: 100vw !important;
+            height: 100vh !important;
+            border: none !important;
+        }
     </style>
 </head>
 <body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 antialiased h-screen overflow-hidden transition-colors duration-300">
@@ -43,28 +49,44 @@
         </div>
     </div>
 
-    <!-- MODAL LOGIN -->
-    <div id="login-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-50 flex items-center justify-center p-4">
-        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-2xl">
+    <!-- MODAL LOGIN DENGAN ANIMASI HEYZINE FLIPBOOK -->
+    <div id="login-modal" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4 overflow-hidden">
+        
+        <!-- Background Animasi Heyzine Flipbook -->
+        <div id="flipbook-bg-wrapper" class="absolute inset-0 z-0 overflow-hidden">
+            <div class="heyzine-flipbook" style="width: 100vw; height: 100vh; margin: 0; padding: 0; border: none;">
+                <a href="https://heyzine.com/flip-book/faf330ad88.html">View the flipbook</a>
+            </div>
+        </div>
+
+        <!-- Overlay Tipis agar Flipbook tetap cerah namun teks nyaman dibaca -->
+        <div class="absolute inset-0 bg-slate-950/20 pointer-events-none z-10"></div>
+
+        <!-- Card Form Login (True Glassmorphism Semi-Transparan) -->
+        <div class="relative z-20 bg-white/25 dark:bg-slate-900/35 backdrop-blur-xl border border-white/40 dark:border-white/15 rounded-3xl p-6 sm:p-8 w-full max-w-md shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]">
             <div class="text-center mb-6">
-                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center text-white text-2xl mx-auto mb-3 shadow-lg shadow-blue-500/30">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600/90 to-indigo-500/90 backdrop-blur-md flex items-center justify-center text-white text-2xl mx-auto mb-3 shadow-lg shadow-blue-500/30 border border-white/30">
                     <i class="fa-solid fa-layer-group"></i>
                 </div>
-                <h2 class="text-xl font-bold text-slate-900 dark:text-white">Masuk ke System</h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Masukkan Username dan Password Anda</p>
+                <h2 class="text-xl font-bold text-slate-900 dark:text-white drop-shadow-sm">Masuk ke System</h2>
+                <p class="text-xs font-medium text-slate-800 dark:text-slate-200 mt-1">Masukkan Username dan Password Anda</p>
             </div>
 
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Username</label>
-                    <input type="text" id="login-username" required placeholder="Masukkan username" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-1">Username</label>
+                    <input type="text" id="login-username" required placeholder="Masukkan username" 
+                        class="w-full px-4 py-3 bg-white/40 dark:bg-slate-950/40 backdrop-blur-md border border-white/50 dark:border-white/15 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-600 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white/60 dark:focus:bg-slate-900/60 transition-all">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">Password</label>
-                    <input type="password" id="login-password" required placeholder="••••••••" class="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200 mb-1">Password</label>
+                    <input type="password" id="login-password" required placeholder="••••••••" 
+                        class="w-full px-4 py-3 bg-white/40 dark:bg-slate-950/40 backdrop-blur-md border border-white/50 dark:border-white/15 rounded-xl text-sm text-slate-900 dark:text-white placeholder-slate-600 dark:placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:bg-white/60 dark:focus:bg-slate-900/60 transition-all">
                 </div>
-                <div id="login-error" class="text-xs text-red-500 hidden text-center font-medium">Username atau password salah!</div>
-                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-500/20 transition-all">
+                <div id="login-error" class="text-xs text-red-600 dark:text-red-300 hidden text-center font-semibold bg-red-500/20 backdrop-blur-sm border border-red-500/30 py-1.5 rounded-lg">
+                    Username atau password salah!
+                </div>
+                <button type="submit" id="login-btn" class="w-full py-3 bg-blue-600/90 hover:bg-blue-600 backdrop-blur-md text-white font-semibold rounded-xl text-sm shadow-lg shadow-blue-500/30 border border-white/20 transition-all">
                     Masuk Sekarang
                 </button>
             </form>
@@ -134,11 +156,14 @@
                     <p class="text-sm text-slate-500 dark:text-slate-400 mt-2 max-w-md">Anda tidak memiliki hak akses untuk membuka halaman ini.</p>
                 </div>
                 <div id="canvas-container" class="w-full h-full bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden">
-                    <iframe id="content-canvas" src="" class="w-full h-full border-0" onload="hideLoader()"></iframe>
+                    <iframe id="content-canvas" src="about:blank" class="w-full h-full border-0" onload="hideLoader()"></iframe>
                 </div>
             </main>
         </div>
     </div>
+
+    <!-- Script Heyzine Flipbook Embed -->
+    <script async src="https://heyzine.com/release/embed.min.js"></script>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwz4RxGAD52JC0kfZzRZ06u9A53OcicxTfCs_O5YCNY7gzEmbeTH4GTvuSMGLcPcSpn/exec";
@@ -146,15 +171,34 @@
         let warningCountdownTimer = null;
         let countdownSeconds = 60;
 
+        // Helper aman untuk membaca JSON dari localStorage
+        function safeGetJSON(key, fallback = []) {
+            try {
+                const raw = localStorage.getItem(key);
+                if (!raw || raw === "undefined" || raw === "null") return fallback;
+                return JSON.parse(raw);
+            } catch (e) {
+                return fallback;
+            }
+        }
+
         async function fetchCloudConfig() {
             try {
                 let res = await fetch(SCRIPT_URL + "?action=getConfig");
+                if (!res.ok) throw new Error("Network response error");
                 let data = await res.json();
-                localStorage.setItem('custom_menus', JSON.stringify(data.custom_menus));
-                localStorage.setItem('system_users', JSON.stringify(data.system_users));
-                localStorage.setItem('session_timeout_minutes', data.session_timeout_minutes);
+                
+                if (Array.isArray(data.custom_menus)) {
+                    localStorage.setItem('custom_menus', JSON.stringify(data.custom_menus));
+                }
+                if (Array.isArray(data.system_users)) {
+                    localStorage.setItem('system_users', JSON.stringify(data.system_users));
+                }
+                if (data.session_timeout_minutes) {
+                    localStorage.setItem('session_timeout_minutes', data.session_timeout_minutes);
+                }
             } catch (e) {
-                console.log("Menggunakan cache offline karena gagal terhubung ke Google Sheets.");
+                console.warn("Menggunakan cache offline karena gagal terhubung ke Google Sheets:", e);
             }
         }
 
@@ -164,7 +208,7 @@
         }
 
         function getCurrentUser() {
-            return JSON.parse(localStorage.getItem('active_session')) || null;
+            return safeGetJSON('active_session', null);
         }
 
         async function checkAuth() {
@@ -174,12 +218,13 @@
 
             if (!user) {
                 modal.classList.remove('hidden');
+                document.getElementById('content-canvas').src = "about:blank";
                 stopInactivityTracker();
             } else {
                 modal.classList.add('hidden');
-                document.getElementById('user-display-name').innerText = user.name;
-                document.getElementById('user-display-role').innerText = user.role;
-                document.getElementById('user-avatar').innerText = user.name.substring(0, 2).toUpperCase();
+                document.getElementById('user-display-name').innerText = user.name || 'User';
+                document.getElementById('user-display-role').innerText = user.role || 'Staff';
+                document.getElementById('user-avatar').innerText = (user.name || 'US').substring(0, 2).toUpperCase();
                 loadDynamicMenus();
                 startInactivityTracker();
             }
@@ -191,12 +236,13 @@
             const p = document.getElementById('login-password').value.trim();
             const err = document.getElementById('login-error');
 
-            const users = JSON.parse(localStorage.getItem('system_users')) || [];
+            const users = safeGetJSON('system_users', []);
             const found = users.find(user => user.username === u && user.password === p);
 
             if (found) {
                 err.classList.add('hidden');
                 localStorage.setItem('active_session', JSON.stringify(found));
+                document.getElementById('login-password').value = '';
                 checkAuth();
             } else {
                 err.classList.remove('hidden');
@@ -290,7 +336,7 @@
 
             const isAllowed = currentUser && (
                 currentUser.role === 'admin' || 
-                (currentUser.allowedMenus && (currentUser.allowedMenus.includes(url) || currentUser.allowedMenus.includes('*')))
+                (Array.isArray(currentUser.allowedMenus) && (currentUser.allowedMenus.includes(url) || currentUser.allowedMenus.includes('*')))
             );
 
             if (!isAllowed) {
@@ -324,10 +370,13 @@
             document.getElementById('canvas-loader')?.classList.add('opacity-0', 'pointer-events-none');
         }
 
+        // DIPERBAIKI: Aman untuk URL cross-origin tanpa SecurityError
         function reloadCanvas() {
             const canvas = document.getElementById('content-canvas');
+            if (!canvas || !canvas.src || canvas.src === 'about:blank') return;
             document.getElementById('canvas-loader').classList.remove('opacity-0', 'pointer-events-none');
-            canvas.contentWindow.location.reload();
+            const currentSrc = canvas.src;
+            canvas.src = currentSrc;
         }
 
         function loadDynamicMenus() {
@@ -335,8 +384,8 @@
             if (!currentUser) return;
 
             const navContainer = document.getElementById('sidebar-nav-container');
-            const menus = JSON.parse(localStorage.getItem('custom_menus')) || [];
-            const allowed = currentUser.allowedMenus || [];
+            const menus = safeGetJSON('custom_menus', []);
+            const allowed = Array.isArray(currentUser.allowedMenus) ? currentUser.allowedMenus : [];
             const filteredMenus = currentUser.role === 'admin' ? menus : menus.filter(m => allowed.includes(m.url) || allowed.includes('*'));
 
             let htmlContent = `<div class="px-3 text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Main Navigation</div>`;
@@ -375,7 +424,8 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            if(localStorage.getItem('theme') === 'dark') {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.documentElement.classList.remove('light');
                 document.documentElement.classList.add('dark');
                 document.getElementById('theme-icon-sun').classList.remove('hidden');
                 document.getElementById('theme-icon-moon').classList.add('hidden');
