@@ -8,14 +8,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Font Awesome 6 -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- PapaParse for CSV parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-    <!-- SheetJS (xlsx) for Excel Export -->
-    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- Inter Font -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
@@ -66,15 +62,9 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <!-- Tombol Export Excel -->
-                    <button onclick="exportToExcel()" class="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg transition-all active:scale-95 shadow-xs">
-                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
-                        <span class="hidden sm:inline">Export Excel</span>
-                    </button>
-                    <!-- Tombol Refresh -->
                     <button id="refreshBtn" onclick="fetchCSVData()" class="flex items-center gap-2 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all active:scale-95">
                         <i data-lucide="refresh-cw" id="refreshIcon" class="w-4 h-4"></i>
-                        <span class="hidden sm:inline">Muat Ulang</span>
+                        <span class="hidden sm:inline">Muat Ulang Data</span>
                     </button>
                     <div class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-full">
                         <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -162,94 +152,32 @@
 
         <!-- Section Filters & Search -->
         <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
-            
-            <!-- Baris 1: Search & Tombol Preset Periode Waktu -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
-                <!-- Search Box -->
-                <div class="relative lg:col-span-6">
+            <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
+                <div class="relative flex-1">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="search" class="w-4 h-4"></i>
                     </div>
-                    <input type="text" id="searchInput" oninput="handleSearchInput()" placeholder="Cari No SJ, Penerima, Toko, Driver, No Polisi..." class="w-full pl-9 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all">
+                    <input type="text" id="searchInput" oninput="handleSearchInput()" placeholder="Cari No SJ, Customer, Toko, Driver, No Polisi..." class="w-full pl-9 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all">
                     <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
 
-                <!-- Preset Periode Waktu -->
-                <div class="lg:col-span-6 flex flex-wrap items-center gap-1.5 justify-end">
-                    <button onclick="setDatePreset('bulan_ini')" id="btnPresetBulanIni" class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all bg-brand-600 text-white border-brand-600">Bulan Ini</button>
-                    <button onclick="setDatePreset('3_bulan')" id="btnPreset3Bulan" class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200">3 Bulan Terakhir</button>
-                    <button onclick="setDatePreset('tahun_ini')" id="btnPresetTahunIni" class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200">Tahun Ini</button>
-                    <button onclick="setDatePreset('all')" id="btnPresetAll" class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200">All</button>
-                </div>
-            </div>
-
-            <!-- Baris 2: Custom Date Range & Dropdown Filter Tambahan -->
-            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center pt-2 border-t border-slate-100">
-                <!-- Custom Date Inputs -->
-                <div class="lg:col-span-6 flex items-center gap-2">
-                    <div class="flex-1 flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
-                        <span class="text-[11px] font-bold text-slate-400 uppercase">Dari:</span>
-                        <input type="date" id="startDate" onchange="onCustomDateChange()" class="w-full bg-transparent text-xs text-slate-700 focus:outline-none font-medium">
-                    </div>
-                    <div class="flex-1 flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
-                        <span class="text-[11px] font-bold text-slate-400 uppercase">Sampai:</span>
-                        <input type="date" id="endDate" onchange="onCustomDateChange()" class="w-full bg-transparent text-xs text-slate-700 focus:outline-none font-medium">
-                    </div>
-                </div>
-
-                <!-- Dropdown Filter Driver & Nama Penerima -->
-                <div class="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <!-- Dropdown Filter Driver -->
-                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                        <i data-lucide="user-check" class="w-4 h-4 text-slate-400"></i>
-                        <select id="driverFilterSelect" onchange="applyFilters()" class="w-full bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer">
-                            <option value="ALL">Semua Driver</option>
-                        </select>
-                    </div>
-
-                    <!-- Dropdown Filter Nama Penerima (Menggantikan Toko/Perusahaan) -->
-                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                        <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
-                        <select id="penerimaFilterSelect" onchange="applyFilters()" class="w-full bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer">
-                            <option value="ALL">Semua Nama Penerima</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Baris 3: Status Filter Pills -->
-            <div class="flex items-center justify-between pt-2 border-t border-slate-100 overflow-x-auto pb-1 md:pb-0 no-scrollbar">
-                <div class="flex items-center gap-1.5">
-                    <button onclick="setFilterStatus('ALL')" data-status="ALL" class="filter-btn active-filter px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-800 text-white shadow-sm">
-                        Semua Status
-                    </button>
-                    <button onclick="setFilterStatus('Terdaftar')" data-status="Terdaftar" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200">
-                        Terdaftar
-                    </button>
-                    <button onclick="setFilterStatus('Driver Siap')" data-status="Driver Siap" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200">
-                        Driver Siap
-                    </button>
-                    <button onclick="setFilterStatus('Dimuat')" data-status="Dimuat" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200">
-                        Dimuat
-                    </button>
-                    <button onclick="setFilterStatus('Dikirim')" data-status="Dikirim" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200">
-                        Dikirim
-                    </button>
-                    <button onclick="setFilterStatus('Selesai')" data-status="Selesai" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200">
-                        Selesai
-                    </button>
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 no-scrollbar">
+                    <button onclick="setFilterStatus('ALL')" data-status="ALL" class="filter-btn active-filter px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-800 text-white shadow-sm">Semua Status</button>
+                    <button onclick="setFilterStatus('Terdaftar')" data-status="Terdaftar" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200">Terdaftar</button>
+                    <button onclick="setFilterStatus('Driver Siap')" data-status="Driver Siap" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200">Driver Siap</button>
+                    <button onclick="setFilterStatus('Dimuat')" data-status="Dimuat" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200">Dimuat</button>
+                    <button onclick="setFilterStatus('Dikirim')" data-status="Dikirim" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200">Dikirim</button>
+                    <button onclick="setFilterStatus('Selesai')" data-status="Selesai" class="filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border border-slate-200 bg-slate-100 text-slate-600 hover:bg-slate-200">Selesai</button>
                 </div>
             </div>
             
-            <!-- Outstanding Checkbox Filter & Counter -->
-            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+            <div class="flex items-center justify-between pt-3 border-t border-slate-100">
                 <label class="inline-flex items-center gap-2 cursor-pointer select-none text-xs font-medium text-slate-700">
                     <input type="checkbox" id="outstandingOnlyCheckbox" onchange="toggleOutstandingOnly()" class="w-4 h-4 text-brand-600 rounded border-slate-300 focus:ring-brand-500">
                     <span>Tampilkan Hanya Data <strong>Outstanding</strong> (Belum Selesai)</span>
                 </label>
-
                 <div class="text-xs text-slate-500">
                     Menampilkan <span id="showingCount" class="font-bold text-slate-800">0</span> dari <span id="totalDataCount" class="font-bold text-slate-800">0</span> data
                 </div>
@@ -258,7 +186,6 @@
 
         <!-- Table Data Section -->
         <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
-            
             <div id="loader" class="py-16 text-center space-y-3">
                 <div class="inline-block animate-spin text-brand-600">
                     <i data-lucide="loader-2" class="w-8 h-8"></i>
@@ -271,25 +198,23 @@
                     <i data-lucide="inbox" class="w-8 h-8"></i>
                 </div>
                 <p class="text-slate-600 font-semibold text-base">Tidak ada data ditemukan</p>
-                <p class="text-slate-400 text-xs">Coba sesuaikan filter rentang tanggal, penerima, driver, atau pencarian Anda.</p>
+                <p class="text-slate-400 text-xs">Coba sesuaikan kata kunci pencarian atau filter status Anda.</p>
             </div>
 
             <div id="tableContainer" class="hidden overflow-x-auto">
                 <table class="w-full text-left text-xs sm:text-sm">
                     <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
                         <tr>
-                            <th class="py-3.5 px-4">Nomor SJ</th>
+                            <th class="py-3.5 px-4">Nomor Pengiriman / SJ</th>
                             <th class="py-3.5 px-4">Nama Penerima</th>
-                            <th class="py-3.5 px-4">Toko / Perusahaan</th>
+                            <th class="py-3.5 px-4">Nama Toko / Perusahaan</th>
                             <th class="py-3.5 px-4">Tanggal Kirim</th>
                             <th class="py-3.5 px-4">Lokasi Tujuan</th>
-                            <th class="py-3.5 px-4 text-center">Foto Bukti</th>
-                            <th class="py-3.5 px-4">Lat / Long</th>
-                            <th class="py-3.5 px-4 text-right">Dus</th>
-                            <th class="py-3.5 px-4">Driver</th>
-                            <th class="py-3.5 px-4">Plat</th>
+                            <th class="py-3.5 px-4 text-right">Jumlah Barang (Dus)</th>
+                            <th class="py-3.5 px-4">Driver Ditugaskan</th>
+                            <th class="py-3.5 px-4">Plat Kendaraan</th>
                             <th class="py-3.5 px-4">Status</th>
-                            <th class="py-3.5 px-4 text-center">Outstanding</th>
+                            <th class="py-3.5 px-4 text-center">Outstanding?</th>
                             <th class="py-3.5 px-4 text-center">Detail</th>
                         </tr>
                     </thead>
@@ -308,13 +233,12 @@
                     </select>
                     <span>baris per halaman</span>
                 </div>
-
                 <div class="flex items-center gap-1.5" id="paginationButtons"></div>
             </div>
         </div>
     </main>
 
-    <!-- Modal Detail Status & Stepper Progress Tracking -->
+    <!-- Modal Form Detail Status & Progress Tracking -->
     <div id="detailModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all my-6">
             
@@ -330,72 +254,119 @@
 
             <div class="p-4 sm:p-6 space-y-5 max-h-[80vh] overflow-y-auto text-slate-800">
                 
-                <!-- Section Foto Bukti & Koordinat di Modal -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
-                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Foto Bukti Pengiriman</p>
-                        <div id="modalPhotoContainer" class="w-full h-32 bg-slate-200 rounded-xl overflow-hidden flex items-center justify-center text-slate-400 text-xs">
-                            Tidak ada foto
+                <!-- Foto Bukti & Pendekatan Hybrid Peta (Preview Statis + Tombol Pintasan) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Foto Bukti (Kolom M) -->
+                    <div class="border border-slate-200 bg-slate-50 rounded-2xl p-3 flex flex-col justify-between">
+                        <div class="flex items-center gap-1.5 text-slate-700 font-bold text-xs mb-2">
+                            <i data-lucide="camera" class="w-4 h-4 text-brand-600"></i>
+                            <span>Foto Bukti (Kolom M)</span>
+                        </div>
+                        <div id="modalFotoContainer" class="w-full h-36 bg-slate-200 rounded-xl overflow-hidden flex items-center justify-center text-slate-400 text-xs">
+                            <span>Tidak ada foto bukti</span>
                         </div>
                     </div>
-                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
-                        <div>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Titik Koordinat (Lat/Long)</p>
-                            <p id="modalLatLongText" class="font-mono text-xs font-semibold text-slate-800 break-all">-</p>
+
+                    <!-- Pendekatan Hybrid: Preview Peta Statis + Tombol Pintasan (Kolom N) -->
+                    <div class="border border-slate-200 bg-slate-50 rounded-2xl p-3 flex flex-col justify-between">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center gap-1.5 text-slate-700 font-bold text-xs">
+                                <i data-lucide="map-pin" class="w-4 h-4 text-red-500"></i>
+                                <span>Lokasi (Kolom N)</span>
+                            </div>
+                            <span id="modalLatLongText" class="text-[10px] font-mono text-slate-500">-</span>
                         </div>
-                        <a id="modalMapLink" href="#" target="_blank" class="hidden mt-3 w-full py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl text-center transition-all flex items-center justify-center gap-1.5">
-                            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Buka di Google Maps
-                        </a>
+
+                        <!-- Hybrid Container: Mini Map Embed (Lazy load, ringan) + Tombol Pintasan Maps -->
+                        <div class="space-y-2">
+                            <div id="modalMiniMapContainer" class="w-full h-24 bg-slate-200 rounded-xl overflow-hidden border border-slate-200 flex items-center justify-center">
+                                <span class="text-[11px] text-slate-400 italic">Peta tidak tersedia</span>
+                            </div>
+                            <a id="modalMapLink" href="#" target="_blank" class="hidden w-full py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-sm">
+                                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+                                <span>Buka di Google Maps</span>
+                            </a>
+                        </div>
                     </div>
                 </div>
 
+                <!-- Section 1: Progress Pengiriman Header -->
                 <div>
-                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">PROGRESS PENGIRIMAN</h4>
-                    <div id="horizontalStepperContainer" class="relative"></div>
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5">PROGRESS PENGIRIMAN</h4>
+                    <div class="grid grid-cols-5 gap-1 text-center">
+                        <div class="flex flex-col items-center">
+                            <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm mb-1"><i data-lucide="check" class="w-3.5 h-3.5"></i></div>
+                            <i data-lucide="clipboard" class="w-3.5 h-3.5 text-slate-500 mb-0.5"></i>
+                            <span class="text-[10px] font-bold text-blue-700">Terdaftar</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm mb-1"><i data-lucide="check" class="w-3.5 h-3.5"></i></div>
+                            <i data-lucide="truck" class="w-3.5 h-3.5 text-slate-500 mb-0.5"></i>
+                            <span class="text-[10px] font-bold text-blue-700">Driver Siap</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm mb-1"><i data-lucide="check" class="w-3.5 h-3.5"></i></div>
+                            <i data-lucide="package" class="w-3.5 h-3.5 text-slate-500 mb-0.5"></i>
+                            <span class="text-[10px] font-bold text-blue-700">Dimuat</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-7 h-7 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xs shadow-sm mb-1"><i data-lucide="check" class="w-3.5 h-3.5"></i></div>
+                            <i data-lucide="truck" class="w-3.5 h-3.5 text-amber-600 mb-0.5"></i>
+                            <span class="text-[10px] font-bold text-amber-700">Dikirim</span>
+                        </div>
+                        <div class="flex flex-col items-center">
+                            <div class="w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shadow-sm mb-1"><i data-lucide="check" class="w-3.5 h-3.5"></i></div>
+                            <i data-lucide="check-square" class="w-3.5 h-3.5 text-emerald-600 mb-0.5"></i>
+                            <span class="text-[10px] font-bold text-emerald-700">Selesai</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="modalStatusBanner" class="bg-amber-50/70 border-l-4 border-amber-400 p-4 rounded-xl space-y-2">
-                    <div class="flex items-center gap-2 text-emerald-700 font-bold text-sm" id="modalBannerTitleWrapper">
+                <!-- Section 2: Banner Status Utama -->
+                <div class="bg-amber-50/70 border-l-4 border-amber-400 p-4 rounded-xl space-y-2">
+                    <div class="flex items-center gap-2 text-emerald-700 font-bold text-sm">
                         <i data-lucide="check-square" class="w-4 h-4"></i>
                         <span id="modalCurrentStatusTitle">Pengiriman Selesai</span>
                     </div>
                     <div class="grid grid-cols-3 text-xs gap-2 text-slate-600">
-                        <div class="text-slate-400">Waktu Update</div>
+                        <div class="text-slate-400">Berangkat</div>
                         <div class="col-span-2 font-bold text-slate-800" id="modalBerangkatTime">-</div>
                     </div>
                     <div class="grid grid-cols-3 text-xs gap-2 text-slate-600">
-                        <div class="text-slate-400">Keterangan</div>
+                        <div class="text-slate-400">Catatan</div>
                         <div class="col-span-2 font-medium text-slate-700" id="modalCatatan">-</div>
                     </div>
                 </div>
 
-                <div class="bg-slate-50/80 border border-slate-200/80 rounded-2xl p-4 space-y-4">
-                    <div class="flex items-center justify-between">
-                        <h4 class="text-xs font-bold text-slate-600 uppercase tracking-wider flex items-center gap-1.5">
-                            <i data-lucide="git-commit-vertical" class="w-4 h-4 text-brand-600"></i>
-                            STEPPER RIWAYAT PENGIRIMAN
-                        </h4>
-                        <span id="stepCounterBadge" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-100 text-brand-700">
-                            0 Tahap
-                        </span>
+                <!-- Section 3: Accordion Arti Status Pengiriman -->
+                <div class="border border-slate-200 rounded-2xl overflow-hidden">
+                    <button onclick="toggleAccordion('artiStatusAccordion')" class="w-full px-4 py-3 bg-white flex items-center justify-between text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="info" class="w-4 h-4 text-sky-500"></i>
+                            <span>Arti Status Pengiriman</span>
+                        </div>
+                        <i data-lucide="chevron-down" id="artiStatusAccordionIcon" class="w-4 h-4 text-slate-400 transition-transform"></i>
+                    </button>
+                    <div id="artiStatusAccordion" class="hidden px-4 py-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-600 space-y-2">
+                        <p><strong>Terdaftar:</strong> Surat jalan telah dibuat dan terdaftar di sistem.</p>
+                        <p><strong>Driver Siap:</strong> Pengemudi dan armada telah ditugaskan.</p>
+                        <p><strong>Dimuat:</strong> Barang sedang diproses dan muat ke dalam truk.</p>
+                        <p><strong>Dikirim:</strong> Armada dalam perjalanan menuju alamat tujuan.</p>
+                        <p><strong>Selesai:</strong> Barang telah diterima di lokasi penerima.</p>
                     </div>
-
-                    <div id="timelineContainer" class="space-y-0"></div>
                 </div>
 
+                <!-- Section 4: Profile Pengemudi Card -->
                 <div class="border border-slate-200 rounded-2xl p-4 flex items-center gap-4 bg-white shadow-sm">
                     <div id="modalDriverAvatar" class="w-12 h-12 rounded-full bg-slate-800 text-white font-bold text-lg flex items-center justify-center shrink-0">
                         F
                     </div>
-                    <div class="space-y-1 flex-1 min-w-0">
-                        <p class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">PENGEMUDI & PENERIMA</p>
-                        <p id="modalDriverName" class="font-bold text-slate-900 text-sm truncate">-</p>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <div class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 border border-slate-200 rounded-md text-[11px] text-slate-600 font-mono">
-                                <i data-lucide="truck" class="w-3 h-3 text-amber-600"></i>
-                                <span id="modalNopol">-</span>
-                            </div>
-                            <span id="modalTujuanBadge" class="text-[11px] text-slate-500 truncate"></span>
+                    <div class="space-y-1">
+                        <p class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">PENGEMUDI</p>
+                        <p id="modalDriverName" class="font-bold text-slate-900 text-sm">-</p>
+                        <div class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 border border-slate-200 rounded-md text-[11px] text-slate-600 font-mono">
+                            <i data-lucide="truck" class="w-3 h-3 text-amber-600"></i>
+                            <span id="modalNopol">-</span>
                         </div>
                     </div>
                 </div>
@@ -423,167 +394,11 @@
         let isOutstandingOnly = false;
         let statusChartInstance = null;
         let barChartInstance = null;
-        let activePreset = 'bulan_ini';
 
         window.onload = function () {
             lucide.createIcons();
-            setDefaultBulanIni();
             fetchCSVData();
         };
-
-        // Mengatur default tanggal ke Bulan Ini berjalan
-        function setDefaultBulanIni() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            
-            const firstDay = `${year}-${month}-01`;
-            const lastDayObj = new Date(year, now.getMonth() + 1, 0);
-            const lastDay = `${year}-${month}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
-
-            document.getElementById('startDate').value = firstDay;
-            document.getElementById('endDate').value = lastDay;
-            activePreset = 'bulan_ini';
-            updatePresetUI('bulan_ini');
-        }
-
-        function setDatePreset(preset) {
-            activePreset = preset;
-            updatePresetUI(preset);
-
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = now.getMonth();
-            const day = now.getDate();
-
-            let startStr = '';
-            let endStr = '';
-
-            const formatDate = (d) => {
-                const y = d.getFullYear();
-                const m = String(d.getMonth() + 1).padStart(2, '0');
-                const dt = String(d.getDate()).padStart(2, '0');
-                return `${y}-${m}-${dt}`;
-            };
-
-            if (preset === 'bulan_ini') {
-                const firstDay = new Date(year, month, 1);
-                const lastDay = new Date(year, month + 1, 0);
-                startStr = formatDate(firstDay);
-                endStr = formatDate(lastDay);
-            } else if (preset === '3_bulan') {
-                const startMonth = new Date(year, month - 2, 1);
-                const lastDay = new Date(year, month + 1, 0);
-                startStr = formatDate(startMonth);
-                endStr = formatDate(lastDay);
-            } else if (preset === 'tahun_ini') {
-                startStr = `${year}-01-01`;
-                endStr = `${year}-12-31`;
-            } else if (preset === 'all') {
-                startStr = '';
-                endStr = '';
-            }
-
-            document.getElementById('startDate').value = startStr;
-            document.getElementById('endDate').value = endStr;
-            applyFilters();
-        }
-
-        function updatePresetUI(preset) {
-            const presets = ['bulan_ini', '3_bulan', 'tahun_ini', 'all'];
-            const mapId = {
-                'bulan_ini': 'btnPresetBulanIni',
-                '3_bulan': 'btnPreset3Bulan',
-                'tahun_ini': 'btnPresetTahunIni',
-                'all': 'btnPresetAll'
-            };
-
-            presets.forEach(p => {
-                const btn = document.getElementById(mapId[p]);
-                if (!btn) return;
-                if (p === preset) {
-                    btn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all bg-brand-600 text-white border-brand-600";
-                } else {
-                    btn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200";
-                }
-            });
-        }
-
-        function onCustomDateChange() {
-            activePreset = 'custom';
-            updatePresetUI('');
-            applyFilters();
-        }
-
-        function parseColumnKJSON(rawKolomK) {
-            if (!rawKolomK || typeof rawKolomK !== 'string') return [];
-            const trimmed = rawKolomK.trim();
-            if (!trimmed) return [];
-
-            try {
-                const parsed = JSON.parse(trimmed);
-                return Array.isArray(parsed) ? parsed : [];
-            } catch (e) {
-                return [];
-            }
-        }
-
-        function parseSheetDate(dateStr) {
-            if (!dateStr) return null;
-            if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-                return new Date(dateStr);
-            }
-            let parsed = new Date(dateStr);
-            if (!isNaN(parsed.getTime())) return parsed;
-
-            const parts = dateStr.split(/[\/\-]/);
-            if (parts.length === 3) {
-                let d = parseInt(parts[0], 10);
-                let m = parseInt(parts[1], 10) - 1;
-                let y = parseInt(parts[2], 10);
-                if (y < 100) y += 2000;
-                let customDate = new Date(y, m, d);
-                if (!isNaN(customDate.getTime())) return customDate;
-            }
-            return null;
-        }
-
-        function resolveEffectiveStatus(rawStatus, historySteps) {
-            const st = (rawStatus || '').toLowerCase().trim();
-
-            if (Array.isArray(historySteps) && historySteps.length > 0) {
-                const activeSteps = historySteps.filter(s => s && s.active === true);
-                if (activeSteps.length > 0) {
-                    const lastActive = activeSteps[activeSteps.length - 1];
-                    const titleLower = (lastActive.title || '').toLowerCase();
-                    const iconLower = (lastActive.icon || '').toLowerCase();
-
-                    if (titleLower.includes('selesai') || titleLower.includes('diterima') || iconLower.includes('circle-check') || iconLower.includes('check-circle')) {
-                        return 'Selesai';
-                    }
-                    if (titleLower.includes('berangkat') || titleLower.includes('dikirim') || titleLower.includes('perjalanan') || iconLower.includes('truck')) {
-                        return st.includes('selesai') ? 'Selesai' : 'Dikirim';
-                    }
-                    if (titleLower.includes('muat') || iconLower.includes('boxes-packing') || iconLower.includes('package')) {
-                        if (st.includes('selesai')) return 'Selesai';
-                        if (st.includes('dikirim')) return 'Dikirim';
-                        return 'Dimuat';
-                    }
-                    if (titleLower.includes('driver') || titleLower.includes('siap')) {
-                        if (st.includes('selesai')) return 'Selesai';
-                        if (st.includes('dikirim')) return 'Dikirim';
-                        if (st.includes('dimuat')) return 'Dimuat';
-                        return 'Driver Siap';
-                    }
-                }
-            }
-
-            if (st.includes('selesai') || st.includes('terkirim') || st.includes('done')) return 'Selesai';
-            if (st.includes('dikirim') || st.includes('jalan')) return 'Dikirim';
-            if (st.includes('dimuat') || st.includes('muat')) return 'Dimuat';
-            if (st.includes('driver') || st.includes('siap')) return 'Driver Siap';
-            return 'Terdaftar';
-        }
 
         function fetchCSVData() {
             const refreshIcon = document.getElementById('refreshIcon');
@@ -602,39 +417,32 @@
                     document.getElementById('loader').classList.add('hidden');
 
                     if (results.data && results.data.length > 0) {
-                        const headers = results.meta && results.meta.fields ? results.meta.fields : Object.keys(results.data[0]);
-                        const colKHeader = headers[10];
-
-                        // Mapping data & balik urutan agar data terbaru ada di paling atas
                         rawData = results.data.map((item, idx) => {
+                            const keys = Object.keys(item);
+                            
                             const getVal = (possibleKeys) => {
                                 for (let k of possibleKeys) {
-                                    const match = Object.keys(item).find(key => key.trim().toLowerCase() === k.toLowerCase());
+                                    const match = keys.find(key => key.trim().toLowerCase() === k.toLowerCase());
                                     if (match && item[match] !== undefined) return String(item[match]).trim();
                                 }
                                 return '';
                             };
 
+                            // Tangkap Kolom M (Foto Bukti) dan Kolom N (Titik Koordinat Lat/Long)
+                            const foto_bukti = item[keys[12]] || getVal(['Foto Bukti', 'foto', 'base64']) || '';
+                            const latlong = item[keys[13]] || getVal(['Titik Koordinat (Lat/Long)', 'latlong', 'koordinat', 'lat/long']) || '';
+
                             const no_sj = getVal(['Nomor Pengiriman / SJ', 'no sj', 'nosj', 'no. sj', 'no_sj', 'surat jalan']) || `SJ-${1000 + idx}`;
-                            const nama_penerima = getVal(['Nama Penerima', 'penerima', 'customer']) || '-';
-                            const nama_toko = getVal(['Nama Toko / Perusahaan', 'nama toko', 'perusahaan']) || '-';
+                            const nama_penerima = getVal(['Nama Penerima', 'penerima']);
+                            const nama_toko = getVal(['Nama Toko / Perusahaan', 'nama toko', 'perusahaan', 'customer']);
                             const tanggal_kirim = getVal(['Tanggal Kirim', 'tanggal', 'tgl', 'date']);
                             const lokasi_tujuan = getVal(['Lokasi Tujuan', 'tujuan', 'lokasi']);
-                            const foto_bukti = getVal(['Foto Bukti', 'foto', 'image', 'bukti_foto', 'photo']) || '';
-                            const latlong = getVal(['LatLong', 'koordinat', 'lat/long', 'gps', 'location_latlong', 'lat_long']) || '';
                             const jumlah_barang = getVal(['Jumlah Barang (Dus)', 'jumlah barang', 'dus', 'qty']) || '0';
                             const driver = getVal(['Driver Ditugaskan', 'driver', 'supir', 'pengemudi']) || '-';
                             const nopol = getVal(['Plat Kendaraan', 'nopol', 'no polisi', 'plat']) || '-';
-                            const rawStatus = getVal(['Status', 'stts', 'state']) || 'Terdaftar';
+                            const status = getVal(['Status', 'stts', 'state']) || 'Terdaftar';
 
-                            let rawKolomK = colKHeader && item[colKHeader] !== undefined ? String(item[colKHeader]).trim() : '';
-                            if (!rawKolomK) {
-                                rawKolomK = getVal(['riwayat', 'history', 'log', 'detail', 'progress', 'tracking_json']);
-                            }
-
-                            const historySteps = parseColumnKJSON(rawKolomK);
-                            const effectiveStatus = resolveEffectiveStatus(rawStatus, historySteps);
-                            const isDone = effectiveStatus.toLowerCase() === 'selesai';
+                            const isDone = status.toLowerCase() === 'selesai';
 
                             return {
                                 id: idx + 1,
@@ -642,22 +450,18 @@
                                 nama_penerima,
                                 nama_toko,
                                 tanggal_kirim,
-                                parsedDate: parseSheetDate(tanggal_kirim),
                                 lokasi_tujuan,
-                                foto_bukti,
-                                latlong,
                                 jumlah_barang,
                                 driver,
                                 nopol,
-                                status: effectiveStatus,
-                                rawStatus,
+                                status,
+                                foto_bukti,
+                                latlong,
                                 isOutstanding: !isDone,
-                                historySteps,
                                 rawItem: item
                             };
-                        }).reverse();
+                        });
 
-                        populateFilterDropdowns();
                         applyFilters();
                     } else {
                         showEmpty();
@@ -667,50 +471,15 @@
                     refreshIcon.classList.remove('animate-spin');
                     document.getElementById('loader').classList.add('hidden');
                     alert("Gagal memuat data CSV. Pastikan koneksi internet stabil.");
+                    console.error("CSV Fetch Error:", err);
                 }
             });
         }
 
-        // Mengisi opsi pilihan Dropdown Driver & Nama Penerima secara dinamis
-        function populateFilterDropdowns() {
-            const driverSet = new Set();
-            const penerimaSet = new Set();
-
-            rawData.forEach(item => {
-                if (item.driver && item.driver !== '-') driverSet.add(item.driver);
-                if (item.nama_penerima && item.nama_penerima !== '-') penerimaSet.add(item.nama_penerima);
-            });
-
-            const driverSelect = document.getElementById('driverFilterSelect');
-            const penerimaSelect = document.getElementById('penerimaFilterSelect');
-
-            let driverHtml = '<option value="ALL">Semua Driver</option>';
-            Array.from(driverSet).sort().forEach(d => {
-                driverHtml += `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`;
-            });
-            driverSelect.innerHTML = driverHtml;
-
-            let penerimaHtml = '<option value="ALL">Semua Nama Penerima</option>';
-            Array.from(penerimaSet).sort().forEach(p => {
-                penerimaHtml += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`;
-            });
-            penerimaSelect.innerHTML = penerimaHtml;
-        }
-
-        // Apply All Filters (Search, Date Range, Driver, Nama Penerima, Status Pills, Outstanding)
         function applyFilters() {
             const searchValue = document.getElementById('searchInput').value.toLowerCase().trim();
-            const startDateVal = document.getElementById('startDate').value;
-            const endDateVal = document.getElementById('endDate').value;
-            const selectedDriver = document.getElementById('driverFilterSelect').value;
-            const selectedPenerima = document.getElementById('penerimaFilterSelect').value;
-
-            const startDate = startDateVal ? new Date(startDateVal) : null;
-            const endDate = endDateVal ? new Date(endDateVal) : null;
-            if (endDate) endDate.setHours(23, 59, 59, 999);
 
             filteredData = rawData.filter(item => {
-                // 1. Search text
                 const matchSearch = 
                     item.no_sj.toLowerCase().includes(searchValue) ||
                     item.nama_penerima.toLowerCase().includes(searchValue) ||
@@ -720,28 +489,10 @@
                     item.nopol.toLowerCase().includes(searchValue) ||
                     item.status.toLowerCase().includes(searchValue);
 
-                // 2. Date Range
-                let matchDate = true;
-                if (item.parsedDate) {
-                    if (startDate && item.parsedDate < startDate) matchDate = false;
-                    if (endDate && item.parsedDate > endDate) matchDate = false;
-                } else if ((startDate || endDate) && item.tanggal_kirim) {
-                    matchDate = false; 
-                }
-
-                // 3. Driver Filter
-                const matchDriver = (selectedDriver === 'ALL') ? true : item.driver === selectedDriver;
-
-                // 4. Nama Penerima Filter
-                const matchPenerima = (selectedPenerima === 'ALL') ? true : item.nama_penerima === selectedPenerima;
-
-                // 5. Status Pills Filter
                 const matchStatus = (activeStatusFilter === 'ALL') ? true : item.status.toLowerCase() === activeStatusFilter.toLowerCase();
-
-                // 6. Outstanding Checkbox Filter
                 const matchOutstanding = isOutstandingOnly ? item.isOutstanding : true;
 
-                return matchSearch && matchDate && matchDriver && matchPenerima && matchStatus && matchOutstanding;
+                return matchSearch && matchStatus && matchOutstanding;
             });
 
             currentPage = 1;
@@ -750,42 +501,9 @@
             renderTable();
         }
 
-        // Fitur Export ke Excel (.xlsx) menggunakan SheetJS
-        function exportToExcel() {
-            if (!filteredData || filteredData.length === 0) {
-                alert("Tidak ada data yang dapat diexport berdasarkan filter saat ini.");
-                return;
-            }
-
-            const exportRows = filteredData.map((item, index) => ({
-                "No": index + 1,
-                "Nomor SJ": item.no_sj,
-                "Nama Penerima": item.nama_penerima,
-                "Toko / Perusahaan": item.nama_toko,
-                "Tanggal Kirim": item.tanggal_kirim,
-                "Lokasi Tujuan": item.lokasi_tujuan,
-                "Foto Bukti URL": item.foto_bukti,
-                "Lat / Long": item.latlong,
-                "Jumlah Barang (Dus)": item.jumlah_barang,
-                "Driver": item.driver,
-                "Plat Kendaraan": item.nopol,
-                "Status": item.status,
-                "Outstanding": item.isOutstanding ? "Ya" : "Tidak"
-            }));
-
-            const worksheet = XLSX.utils.json_to_sheet(exportRows);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Data Tracking Pengiriman");
-
-            const dateStr = new Date().toISOString().slice(0, 10);
-            const fileName = `Laporan_Tracking_Pengiriman_${dateStr}.xlsx`;
-            XLSX.writeFile(workbook, fileName);
-        }
-
         function updateDashboardMetrics() {
-            // Nilai scorecard & persentase mengikuti data yang terfilter
-            const total = filteredData.length;
-            const completed = filteredData.filter(d => !d.isOutstanding).length;
+            const total = rawData.length;
+            const completed = rawData.filter(d => !d.isOutstanding).length;
             const outstanding = total - completed;
             const rate = total > 0 ? ((completed / total) * 100).toFixed(1) : 0;
 
@@ -807,8 +525,7 @@
                 'Selesai': 0
             };
 
-            // Grafik memperhitungkan data terfilter agar selaras dengan scorecard
-            filteredData.forEach(item => {
+            rawData.forEach(item => {
                 const matchedKey = STATUS_STEPS.find(s => s.toLowerCase() === item.status.toLowerCase());
                 if (matchedKey) {
                     statusCounts[matchedKey]++;
@@ -837,10 +554,7 @@
                     plugins: {
                         legend: {
                             position: 'right',
-                            labels: {
-                                boxWidth: 12,
-                                font: { size: 11, family: 'Inter' }
-                            }
+                            labels: { boxWidth: 12, font: { size: 11, family: 'Inter' } }
                         }
                     },
                     cutout: '70%'
@@ -864,9 +578,7 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
-                    },
+                    plugins: { legend: { display: false } },
                     scales: {
                         y: { beginAtZero: true, ticks: { precision: 0, font: { family: 'Inter', size: 10 } } },
                         x: { ticks: { font: { family: 'Inter', size: 10 } } }
@@ -901,38 +613,23 @@
             tableBody.innerHTML = paginatedItems.map(item => {
                 const statusBadge = getStatusBadgeHTML(item.status);
                 const outstandingBadge = item.isOutstanding 
-                    ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>Ya</span>`
+                    ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>Ya (Outstanding)</span>`
                     : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">Tidak</span>`;
-
-                // Render Thumbnail Gambar / Foto Bukti
-                let photoHtml = `<span class="text-slate-400 text-[11px] italic">Tidak ada</span>`;
-                if (item.foto_bukti && item.foto_bukti.startsWith('http')) {
-                    photoHtml = `<a href="${escapeHtml(item.foto_bukti)}" target="_blank" class="block w-10 h-10 rounded-lg overflow-hidden border border-slate-200 hover:opacity-80 transition-opacity mx-auto"><img src="${escapeHtml(item.foto_bukti)}" alt="Bukti" class="w-full h-full object-cover"></a>`;
-                }
-
-                // Render LatLong / Posisi
-                let latLongHtml = item.latlong 
-                    ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.latlong)}" target="_blank" class="text-brand-600 hover:underline font-mono text-[11px] flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3 shrink-0"></i><span class="truncate max-w-[110px]">${escapeHtml(item.latlong)}</span></a>` 
-                    : `<span class="text-slate-400 text-[11px]">-</span>`;
 
                 return `
                     <tr class="hover:bg-slate-50/80 transition-colors">
-                        <td class="py-3.5 px-4 font-bold text-brand-600 cursor-pointer hover:underline" onclick="openDetailModal('${item.id}')">
-                            ${escapeHtml(item.no_sj)}
-                        </td>
-                        <td class="py-3.5 px-4 text-slate-800 font-semibold">${escapeHtml(item.nama_penerima)}</td>
-                        <td class="py-3.5 px-4 text-slate-600 font-medium">${escapeHtml(item.nama_toko)}</td>
+                        <td class="py-3.5 px-4 font-bold text-brand-600 cursor-pointer hover:underline" onclick="openDetailModal('${item.id}')">${escapeHtml(item.no_sj)}</td>
+                        <td class="py-3.5 px-4 text-slate-700 font-medium">${escapeHtml(item.nama_penerima)}</td>
+                        <td class="py-3.5 px-4 text-slate-800 font-semibold">${escapeHtml(item.nama_toko)}</td>
                         <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">${escapeHtml(item.tanggal_kirim)}</td>
                         <td class="py-3.5 px-4 text-slate-600">${escapeHtml(item.lokasi_tujuan)}</td>
-                        <td class="py-3.5 px-4 text-center">${photoHtml}</td>
-                        <td class="py-3.5 px-4">${latLongHtml}</td>
                         <td class="py-3.5 px-4 text-right font-mono font-medium">${escapeHtml(item.jumlah_barang)}</td>
                         <td class="py-3.5 px-4 text-slate-700">${escapeHtml(item.driver)}</td>
                         <td class="py-3.5 px-4 text-slate-600 font-mono text-xs">${escapeHtml(item.nopol)}</td>
                         <td class="py-3.5 px-4">${statusBadge}</td>
                         <td class="py-3.5 px-4 text-center">${outstandingBadge}</td>
                         <td class="py-3.5 px-4 text-center">
-                            <button onclick="openDetailModal('${item.id}')" title="Lihat Detail Stepper Progress" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors inline-flex items-center justify-center">
+                            <button onclick="openDetailModal('${item.id}')" title="Lihat Detail Form Progress" class="p-2 text-slate-500 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors inline-flex items-center justify-center">
                                 <i data-lucide="eye" class="w-5 h-5"></i>
                             </button>
                         </td>
@@ -961,30 +658,20 @@
 
         function renderPaginationControls(totalPages) {
             const container = document.getElementById('paginationButtons');
-            let html = `
-                <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} class="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600">
-                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
-                </button>
-            `;
+            let html = '';
+
+            html += `<button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} class="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>`;
 
             for (let i = 1; i <= totalPages; i++) {
                 if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
                     const isActive = i === currentPage;
-                    html += `
-                        <button onclick="goToPage(${i})" class="px-3 py-1 rounded-lg text-xs font-semibold ${isActive ? 'bg-brand-600 text-white' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}">
-                            ${i}
-                        </button>
-                    `;
+                    html += `<button onclick="goToPage(${i})" class="px-3 py-1 rounded-lg text-xs font-semibold ${isActive ? 'bg-brand-600 text-white' : 'bg-white border border-slate-200 text-slate-700 hover:bg-slate-50'}">${i}</button>`;
                 } else if (i === currentPage - 2 || i === currentPage + 2) {
                     html += `<span class="text-xs text-slate-400 px-1">...</span>`;
                 }
             }
 
-            html += `
-                <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} class="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600">
-                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                </button>
-            `;
+            html += `<button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled class="opacity-40 cursor-not-allowed"' : ''} class="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-600"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>`;
 
             container.innerHTML = html;
         }
@@ -1034,198 +721,71 @@
             applyFilters();
         }
 
-        function renderStepIconHTML(iconStr, extraClasses = '') {
-            if (!iconStr) {
-                return `<i class="fa-solid fa-circle-dot ${extraClasses}"></i>`;
-            }
-            if (iconStr.includes('fa-')) {
-                return `<i class="${escapeHtml(iconStr)} ${extraClasses}"></i>`;
-            }
-            return `<i data-lucide="${escapeHtml(iconStr)}" class="w-3.5 h-3.5 ${extraClasses}"></i>`;
-        }
-
-        function renderHorizontalStepper(status) {
-            const stepMeta = [
-                { label: 'Terdaftar', icon: 'clipboard' },
-                { label: 'Driver Siap', icon: 'user-check' },
-                { label: 'Dimuat', icon: 'package' },
-                { label: 'Dikirim', icon: 'truck' },
-                { label: 'Selesai', icon: 'check-circle-2' }
-            ];
-
-            let currentIdx = stepMeta.findIndex(s => s.label.toLowerCase() === status.toLowerCase());
-            if (currentIdx === -1) currentIdx = 0;
-
-            const isAllCompleted = currentIdx === stepMeta.length - 1;
-            const progressPercent = (currentIdx / (stepMeta.length - 1)) * 100;
-
-            let html = `
-                <div class="relative flex items-start justify-between">
-                    <div class="absolute top-3.5 left-6 right-6 h-0.5 bg-slate-200 -z-0"></div>
-                    <div class="absolute top-3.5 left-6 h-0.5 ${isAllCompleted ? 'bg-emerald-500' : 'bg-blue-600'} transition-all duration-500 -z-0" style="width: calc(${progressPercent}% - ${progressPercent > 0 ? '24px' : '0px'}); max-width: calc(100% - 48px);"></div>
-            `;
-
-            stepMeta.forEach((step, idx) => {
-                const isDone = idx < currentIdx || isAllCompleted;
-                const isCurrent = idx === currentIdx && !isAllCompleted;
-
-                let circleClass = 'bg-slate-100 text-slate-400 border-2 border-slate-200';
-                let textClass = 'text-slate-400 font-medium';
-                let innerIcon = `<i data-lucide="${step.icon}" class="w-3.5 h-3.5"></i>`;
-
-                if (isDone) {
-                    circleClass = isAllCompleted 
-                        ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-500/30' 
-                        : 'bg-blue-600 text-white shadow-sm shadow-blue-500/30';
-                    textClass = isAllCompleted ? 'text-emerald-700 font-bold' : 'text-blue-700 font-bold';
-                    innerIcon = `<i data-lucide="check" class="w-3.5 h-3.5"></i>`;
-                } else if (isCurrent) {
-                    circleClass = 'bg-amber-500 text-white ring-4 ring-amber-100 shadow-sm';
-                    textClass = 'text-amber-700 font-bold';
-                    innerIcon = `<i data-lucide="${step.icon}" class="w-3.5 h-3.5 animate-pulse"></i>`;
-                }
-
-                html += `
-                    <div class="relative z-10 flex flex-col items-center w-1/5 text-center px-0.5">
-                        <div class="w-7 h-7 rounded-full ${circleClass} flex items-center justify-center text-xs mb-1.5 transition-all">
-                            ${innerIcon}
-                        </div>
-                        <span class="text-[10px] leading-tight ${textClass}">${step.label}</span>
-                    </div>
-                `;
-            });
-
-            html += `</div>`;
-            document.getElementById('horizontalStepperContainer').innerHTML = html;
-        }
-
-        function renderVerticalStepper(steps) {
-            const container = document.getElementById('timelineContainer');
-            const badge = document.getElementById('stepCounterBadge');
-
-            if (!steps || steps.length === 0) {
-                badge.innerText = '0 Tahap';
-                container.innerHTML = `
-                    <div class="text-center py-6 px-3 bg-white rounded-xl border border-dashed border-slate-200">
-                        <p class="text-xs font-medium text-slate-500">Belum ada data riwayat progres pada Kolom K</p>
-                        <p class="text-[11px] text-slate-400 mt-0.5">Pastikan Kolom K berisi array JSON riwayat pengiriman.</p>
-                    </div>
-                `;
-                return;
-            }
-
-            badge.innerText = `${steps.length} Tahap`;
-
-            container.innerHTML = steps.map((step, index) => {
-                const isLast = index === steps.length - 1;
-                const isActive = Boolean(step.active);
-                const isCompletedStep = isActive && isLast && step.title && (step.title.toLowerCase().includes('selesai') || step.title.toLowerCase().includes('diterima'));
-
-                let nodeStyle = 'bg-slate-200 text-slate-500 border-2 border-white ring-1 ring-slate-300';
-                let lineStyle = 'bg-slate-200';
-                let cardStyle = 'bg-white border-slate-200/70 opacity-85';
-                let titleStyle = 'text-slate-600 font-semibold';
-
-                if (isCompletedStep) {
-                    nodeStyle = 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30 ring-4 ring-emerald-50';
-                    cardStyle = 'bg-emerald-50/40 border-emerald-200';
-                    titleStyle = 'text-emerald-900 font-bold';
-                } else if (isActive) {
-                    nodeStyle = isLast 
-                        ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30 ring-4 ring-amber-100' 
-                        : 'bg-blue-600 text-white shadow-sm shadow-blue-500/20';
-                    lineStyle = 'bg-blue-500';
-                    cardStyle = isLast ? 'bg-amber-50/40 border-amber-200' : 'bg-white border-blue-100 shadow-xs';
-                    titleStyle = 'text-slate-900 font-bold';
-                }
-
-                return `
-                    <div class="relative flex gap-3.5 ${isLast ? '' : 'pb-5'}">
-                        ${!isLast ? `<div class="absolute left-[15px] top-8 bottom-0 w-0.5 ${lineStyle}"></div>` : ''}
-
-                        <div class="relative z-10 w-8 h-8 rounded-full ${nodeStyle} flex items-center justify-center shrink-0 text-xs mt-0.5 transition-all">
-                            ${renderStepIconHTML(step.icon)}
-                        </div>
-
-                        <div class="flex-1 rounded-xl border ${cardStyle} p-3 transition-all">
-                            <div class="flex items-start justify-between gap-2">
-                                <p class="text-xs leading-snug ${titleStyle}">
-                                    ${escapeHtml(step.title || 'Status diperbarui')}
-                                </p>
-                                ${isActive 
-                                    ? `<span class="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${isCompletedStep ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-100 text-blue-700'}">Aktif</span>` 
-                                    : `<span class="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wider bg-slate-100 text-slate-500">Terjadwal</span>`
-                                }
-                            </div>
-                            <div class="flex items-center gap-1.5 mt-1.5 text-[11px] text-slate-500">
-                                <i class="fa-regular fa-clock text-[10px] text-slate-400"></i>
-                                <span>${escapeHtml(step.time || '-')}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
+        // ==========================================================
+        // RENDER FOTO BUKTI & PENDEKATAN HYBRID PETA (MINI MAP + LINK)
+        // ==========================================================
         function openDetailModal(id) {
             const item = rawData.find(d => d.id == id);
             if (!item) return;
 
             document.getElementById('modalNoSJ').innerText = item.no_sj;
-            document.getElementById('modalDriverName').innerText = item.driver && item.driver !== '-' ? item.driver : 'Belum Ditugaskan';
-            document.getElementById('modalNopol').innerText = item.nopol && item.nopol !== '-' ? item.nopol : '-';
-            document.getElementById('modalTujuanBadge').innerText = item.lokasi_tujuan ? `• ${item.lokasi_tujuan}` : '';
+            document.getElementById('modalDriverName').innerText = item.driver || '-';
+            document.getElementById('modalNopol').innerText = item.nopol || '-';
+            document.getElementById('modalBerangkatTime').innerText = item.tanggal_kirim || '-';
+            document.getElementById('modalCatatan').innerText = `Diterima di lokasi oleh: ${item.nama_penerima || '-'}`;
 
-            // Handle Foto Bukti di Modal
-            const photoContainer = document.getElementById('modalPhotoContainer');
-            if (item.foto_bukti && item.foto_bukti.startsWith('http')) {
-                photoContainer.innerHTML = `<a href="${escapeHtml(item.foto_bukti)}" target="_blank" class="w-full h-full block"><img src="${escapeHtml(item.foto_bukti)}" alt="Bukti Kirim" class="w-full h-full object-cover hover:scale-105 transition-transform"></a>`;
-            } else {
-                photoContainer.innerHTML = `<span class="text-slate-400 text-xs italic">Tidak ada foto bukti</span>`;
-            }
-
-            // Handle LatLong / Maps Link di Modal
-            const latLongText = document.getElementById('modalLatLongText');
-            const mapLink = document.getElementById('modalMapLink');
-            if (item.latlong) {
-                latLongText.innerText = item.latlong;
-                mapLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.latlong)}`;
-                mapLink.classList.remove('hidden');
-            } else {
-                latLongText.innerText = 'Koordinat tidak tersedia';
-                mapLink.classList.add('hidden');
-            }
-
-            const firstLetter = (item.driver && item.driver !== '-') ? item.driver.charAt(0).toUpperCase() : '?';
+            const firstLetter = (item.driver && item.driver !== '-') ? item.driver.charAt(0).toUpperCase() : 'F';
             document.getElementById('modalDriverAvatar').innerText = firstLetter;
 
-            renderHorizontalStepper(item.status);
-
-            const steps = item.historySteps || [];
-            renderVerticalStepper(steps);
-
-            const activeSteps = steps.filter(s => s.active);
-            const latestStep = activeSteps.length > 0 ? activeSteps[activeSteps.length - 1] : (steps.length > 0 ? steps[steps.length - 1] : null);
-            const berangkatStep = steps.find(s => s.title && s.title.toLowerCase().includes('berangkat'));
-
-            const bannerEl = document.getElementById('modalStatusBanner');
-            const titleWrapperEl = document.getElementById('modalBannerTitleWrapper');
-            const isSelesai = item.status.toLowerCase() === 'selesai';
-
-            if (isSelesai) {
-                bannerEl.className = 'bg-emerald-50/70 border-l-4 border-emerald-500 p-4 rounded-xl space-y-2';
-                titleWrapperEl.className = 'flex items-center gap-2 text-emerald-700 font-bold text-sm';
+            // 1. Render Foto Bukti dari Kolom M
+            const fotoContainer = document.getElementById('modalFotoContainer');
+            if (item.foto_bukti && item.foto_bukti.startsWith('data:image')) {
+                fotoContainer.innerHTML = `<img src="${item.foto_bukti}" alt="Foto Bukti" class="w-full h-full object-cover rounded-xl shadow-sm cursor-pointer" onclick="window.open('${item.foto_bukti}', '_blank')" title="Klik untuk memperbesar">`;
+            } else if (item.foto_bukti && item.foto_bukti.length > 20) {
+                const formattedBase64 = item.foto_bukti.startsWith('http') ? item.foto_bukti : `data:image/jpeg;base64,${item.foto_bukti}`;
+                fotoContainer.innerHTML = `<img src="${formattedBase64}" alt="Foto Bukti" class="w-full h-full object-cover rounded-xl shadow-sm cursor-pointer" onclick="window.open('${formattedBase64}', '_blank')" title="Klik untuk memperbesar">`;
             } else {
-                bannerEl.className = 'bg-amber-50/70 border-l-4 border-amber-400 p-4 rounded-xl space-y-2';
-                titleWrapperEl.className = 'flex items-center gap-2 text-amber-800 font-bold text-sm';
+                fotoContainer.innerHTML = `<span class="text-xs text-slate-400 italic">Tidak ada foto bukti</span>`;
             }
 
-            document.getElementById('modalCurrentStatusTitle').innerText = `Status: ${item.status}`;
-            document.getElementById('modalBerangkatTime').innerText = berangkatStep ? berangkatStep.time : (latestStep ? latestStep.time : item.tanggal_kirim || '-');
-            document.getElementById('modalCatatan').innerText = latestStep ? latestStep.title : `Penerima: ${item.nama_penerima || '-'} (${item.nama_toko || '-'})`;
+            // 2. Pendekatan Hybrid: Mini Map Preview + Tombol Pintasan (Kolom N)
+            const latLongTextElem = document.getElementById('modalLatLongText');
+            const miniMapContainer = document.getElementById('modalMiniMapContainer');
+            const mapLinkElem = document.getElementById('modalMapLink');
+
+            if (item.latlong && item.latlong.trim() !== '') {
+                latLongTextElem.innerText = item.latlong;
+                
+                // Sanitasi koordinat (hilangkan spasi berlebih)
+                const cleanCoord = item.latlong.replace(/\s+/g, '');
+                
+                // Gunakan iframe OpenStreetMap embed / Static map yang ringan dan cepat dimuat (lazy)
+                miniMapContainer.innerHTML = `
+                    <iframe width="100%" height="100%" frameborder="0" scrolling="no" marginheight="0" marginwidth="0" loading="lazy"
+                        src="https://www.openstreetmap.org/export/embed.html?bbox=${parseFloat(cleanCoord.split(',')[1])-0.005}%2C${parseFloat(cleanCoord.split(',')[0])-0.005}%2C${parseFloat(cleanCoord.split(',')[1])+0.005}%2C${parseFloat(cleanCoord.split(',')[0])+0.005}&layer=mapnik&marker=${cleanCoord}" style="border:0;">
+                    </iframe>
+                `;
+
+                // Aktifkan tombol pintasan ke Google Maps
+                mapLinkElem.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.latlong)}`;
+                mapLinkElem.classList.remove('hidden');
+            } else {
+                latLongTextElem.innerText = '-';
+                miniMapContainer.innerHTML = `<span class="text-[11px] text-slate-400 italic">Koordinat tidak tersedia</span>`;
+                mapLinkElem.classList.add('hidden');
+            }
 
             document.getElementById('detailModal').classList.remove('hidden');
             lucide.createIcons();
+        }
+
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById(id + 'Icon');
+            content.classList.toggle('hidden');
+            if (icon) {
+                icon.classList.toggle('rotate-180');
+            }
         }
 
         function closeModal() {
