@@ -1,0 +1,1335 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Tracking Pengiriman Barang - Grand Mitra</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { blue: '#02528a', lightBlue: '#e8f2f8', orange: '#e67e22', amber: '#f39c12', green: '#27ae60' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .step-active { background-color: #f39c12; color: white; border-color: #f39c12; }
+        .step-completed { background-color: #0284c7; color: white; border-color: #0284c7; }
+        .step-finished { background-color: #10b981; color: white; border-color: #10b981; }
+        .step-pending { background-color: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen font-sans text-slate-800 flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-800 text-white p-2 rounded-lg font-bold text-lg flex items-center justify-center w-10 h-10 shadow-sm">
+                    <i class="fa-solid fa-truck-fast"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-slate-900 text-base leading-tight">Logistik Express</h1>
+                    <p class="text-xs text-slate-500">Sistem Tracking Surat Jalan Real-Time</p>
+                </div>
+            </div>
+
+            <!-- Role Selector -->
+            <div class="flex bg-slate-100 p-1 rounded-xl border border-slate-200 text-xs font-semibold">
+                <button id="btnRoleDriver" onclick="switchRole('driver')" class="px-3 py-1.5 rounded-lg transition-all text-slate-600">
+                    <i class="fa-solid fa-id-card mr-1"></i> Driver
+                </button>
+                <button id="btnRoleAdmin" onclick="checkAdminPassword()" class="px-3 py-1.5 rounded-lg transition-all text-slate-600">
+                    <i class="fa-solid fa-user-gear mr-1"></i> Admin
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex flex-col items-center justify-center hidden">
+        <div class="bg-white p-5 rounded-2xl shadow-xl flex flex-col items-center space-y-3 max-w-xs w-full mx-4">
+            <i class="fa-solid fa-circle-notch fa-spin text-blue-700 text-3xl"></i>
+            <span class="text-xs font-semibold text-slate-700 text-center" id="loadingText">Menghubungkan ke Google Sheets...</span>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-xl w-full mx-auto p-3 sm:p-4 mb-12 space-y-4">
+
+        <!-- CONFIG / APPS SCRIPT URL BANNER -->
+        <div>
+            <div id="dbLockedHeader" class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center justify-between text-xs">
+                <span class="font-bold text-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-database text-blue-600"></i> Integrasi Google Sheets
+                </span>
+                <div class="flex items-center gap-2">
+                    <span id="syncBadge" class="text-amber-600 font-semibold flex items-center bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                        <i class="fa-solid fa-circle-notch fa-spin text-[9px] mr-1"></i> Memuat Data
+                    </span>
+                    <button onclick="unlockGoogleSheetConfig()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-2.5 py-1 rounded-lg border font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-lock text-slate-500"></i> Buka Pengaturan
+                    </button>
+                </div>
+            </div>
+
+            <div id="dbConfigPanel" class="bg-white p-4 rounded-2xl shadow-sm border border-blue-200 text-xs space-y-2 hidden mt-2">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-blue-900 flex items-center gap-1.5">
+                        <i class="fa-solid fa-gear text-blue-600"></i> Konfigurasi Google Sheets (Admin)
+                    </span>
+                    <button onclick="lockGoogleSheetConfig()" class="text-slate-400 hover:text-slate-600 font-bold">
+                        <i class="fa-solid fa-xmark text-sm"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-1">
+                    <label class="block text-[11px] font-semibold text-slate-500">Google Apps Script Web App URL:</label>
+                    <div class="flex gap-2">
+                        <input type="text" id="scriptUrlInput" class="flex-1 p-2 bg-slate-50 rounded-xl border border-slate-300 font-mono text-[11px] focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        <button onclick="saveScriptUrl()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-3 py-1.5 rounded-xl transition">
+                            Simpan
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="text-[10px] text-slate-400 flex items-center justify-between pt-1">
+                    <span>Spreadsheet ID: <code class="font-mono bg-slate-100 px-1 py-0.5 rounded">14BND0HXHlEsB6jcr1EIb7irSrKl7rPL0kqeTT1R0cP4</code></span>
+                    <button onclick="showAppsScriptGuide()" class="text-blue-600 font-bold underline">Petunjuk Setup Script</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN VIEW -->
+        <div id="adminView" class="hidden space-y-4">
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-warehouse text-amber-600"></i> Schedule Availability & Kuota Gudang
+                    </span>
+                    <button onclick="openQuotaModal()" class="bg-amber-100 hover:bg-amber-200 text-amber-800 font-bold px-3 py-1.5 rounded-xl transition flex items-center gap-1">
+                        <i class="fa-solid fa-sliders"></i> Set Kuota Manual
+                    </button>
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                    <label class="font-semibold text-slate-500">Pilih Tanggal Jadwal:</label>
+                    <select id="quotaDateSelect" onchange="renderQuotaAvailability()" class="p-1.5 bg-slate-50 border border-slate-300 rounded-xl font-medium focus:outline-none"></select>
+                </div>
+                <div id="quotaInfoCard" class="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 space-y-2"></div>
+            </div>
+
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200 space-y-3 text-xs">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-rose-700 flex items-center gap-1.5">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Outstanding SJ Belum Selesai (Terlambat)
+                    </span>
+                    <span id="outstandingCountBadge" class="bg-rose-100 text-rose-800 font-bold px-2.5 py-0.5 rounded-full">0 SJ</span>
+                </div>
+                <div id="outstandingTableContainer" class="space-y-2"></div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                <h2 id="adminFormTitle" class="text-base font-bold text-slate-800 mb-4 flex items-center">
+                    <i class="fa-solid fa-file-circle-plus text-blue-600 mr-2"></i> Input Surat Jalan Baru (Admin)
+                </h2>
+                <div id="quotaLockWarning" class="hidden mb-4 p-3 bg-rose-50 border-l-4 border-rose-600 rounded-r-xl text-rose-800 text-xs font-semibold flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation text-rose-600 text-lg"></i>
+                    <div>
+                        <div class="font-bold">Sistem Input Terkunci Otomatis (Auto-Lock)!</div>
+                        <div class="text-[11px] text-rose-700 font-normal">Total Surat Jalan untuk tanggal ini telah mencapai/melebihi batas kuota manual yang ditentukan.</div>
+                    </div>
+                </div>
+
+                <form id="formInputSJ" onsubmit="handleFormSubmit(event)" class="space-y-3 text-xs">
+                    <input type="hidden" id="editSJOriginalNo" value="">
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Nomor Pengiriman / SJ *</label>
+                        <input type="text" id="inputNoSJ" required placeholder="Contoh: 261092257" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Nama Penerima *</label>
+                        <input type="text" id="inputPenerima" required placeholder="Contoh: JEFFRY KAMADINATA" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Nama Toko / Perusahaan</label>
+                        <input type="text" id="inputToko" placeholder="Contoh: GRAND M*** B*** P***" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Lokasi Tujuan *</label>
+                            <input type="text" id="inputTujuan" required placeholder="Contoh: CIKUDA" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Jumlah Barang (Dus) *</label>
+                            <input type="number" id="inputJumlahDus" required placeholder="230" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Driver Ditugaskan *</label>
+                            <input type="text" id="inputDriver" required placeholder="Contoh: SUTIYO" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-600 mb-1">Plat Kendaraan *</label>
+                            <input type="text" id="inputPlat" required placeholder="Contoh: KPS04" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-600 mb-1">Tanggal Kirim *</label>
+                        <input type="date" id="inputTanggal" required onchange="checkQuotaAndLockForm()" class="w-full p-2.5 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-600">
+                    </div>
+                    <div class="flex gap-2 pt-1">
+                        <button type="submit" id="btnSubmitAdmin" class="flex-1 bg-blue-700 hover:bg-blue-800 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:text-slate-500 text-white font-bold py-3 rounded-xl transition shadow-md flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> Simpan Surat Jalan
+                        </button>
+                        <button type="button" id="btnCancelEdit" onclick="resetAdminForm()" class="hidden bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 rounded-xl transition">
+                            Batal
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-base font-bold text-slate-800">Daftar Pengiriman Active</h2>
+                    <div class="flex items-center gap-2">
+                        <button onclick="fetchDataFromSheet()" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs px-2.5 py-1 rounded-lg border font-semibold">
+                            <i class="fa-solid fa-rotate mr-1"></i> Refresh
+                        </button>
+                        <span id="totalSJCount" class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full">0 SJ</span>
+                    </div>
+                </div>
+                <div class="space-y-2 pt-1 text-xs">
+                    <div class="relative">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400"></i>
+                        <input type="text" id="adminSearchInput" oninput="applyAdminFilters()" placeholder="Cari No SJ, Penerima, Toko, Driver, Tujuan..." class="w-full pl-9 pr-9 py-2 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 font-medium">
+                        <button id="adminSearchClear" onclick="clearAdminSearch()" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 hidden">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Filter Tanggal:</label>
+                            <input type="date" id="adminFilterDate" onchange="applyAdminFilters()" class="w-full p-1.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-0.5">Filter Status:</label>
+                            <select id="adminFilterStatus" onchange="applyAdminFilters()" class="w-full p-1.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none">
+                                <option value="ALL">Semua Status</option>
+                                <option value="1">1. Terdaftar</option>
+                                <option value="2">2. Driver Siap</option>
+                                <option value="3">3. Dimuat</option>
+                                <option value="4">4. Dikirim</option>
+                                <option value="5">5. Selesai</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="adminSJList" class="space-y-3 pt-2"></div>
+                <div class="flex items-center justify-between pt-3 border-t border-slate-100 text-xs">
+                    <span id="adminPageInfo" class="text-slate-500 font-medium">Halaman 1 dari 1</span>
+                    <div class="flex gap-1.5">
+                        <button id="btnPrevPage" onclick="changeAdminPage(-1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-slate-700 font-bold disabled:opacity-50">
+                            <i class="fa-solid fa-chevron-left mr-1"></i> Prev
+                        </button>
+                        <button id="btnNextPage" onclick="changeAdminPage(1)" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-slate-700 font-bold disabled:opacity-50">
+                            Next <i class="fa-solid fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DRIVER VIEW (HALAMAN KHUSUS DRIVER) -->
+        <div id="driverView" class="space-y-4">
+            <div class="bg-white p-3.5 rounded-2xl shadow-sm border border-slate-200 space-y-2 text-xs">
+                <div class="flex items-center justify-between font-bold text-slate-700">
+                    <span><i class="fa-solid fa-list-check text-blue-600 mr-1"></i> Pilih Surat Jalan Driver:</span>
+                    <button onclick="resetDriverSearch()" class="text-[10px] text-blue-600 hover:underline">Reset Filter</button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div class="relative flex gap-1">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2.5 text-slate-400"></i>
+                            <input type="text" id="driverSearchInput" placeholder="Ketik No SJ / Penerima..." class="w-full pl-8 pr-7 py-1.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-600">
+                        </div>
+                        <button onclick="filterDriverDropdown()" class="bg-blue-700 hover:bg-blue-800 text-white font-bold px-3 py-1.5 rounded-xl text-xs transition flex items-center gap-1 shadow-sm">
+                            <i class="fa-solid fa-magnifying-glass"></i> Cari
+                        </button>
+                    </div>
+                    <div>
+                        <input type="date" id="driverFilterDate" onchange="filterDriverDropdown()" class="w-full p-1.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none">
+                    </div>
+                </div>
+
+                <select id="selectDriverSJ" onchange="loadDriverData(this.value)" class="w-full p-2 rounded-xl border border-blue-200 bg-blue-50/50 font-mono font-bold text-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-600"></select>
+                <p class="text-[10px] text-slate-400 italic">*Ditampilkan 5 SJ terbaru demi kecepatan loading. Ketik nomor SJ di atas dan klik tombol **Cari** untuk mencari SJ lainnya.</p>
+            </div>
+
+            <!-- CARD UTAMA DASHBOARD DRIVER -->
+            <div id="driverCardContent" class="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 sm:p-5 bg-gradient-to-b from-blue-50/50 to-white border-b border-slate-100">
+                    <div class="text-xs text-slate-400 font-semibold tracking-wider uppercase mb-1">Nomor Pengiriman</div>
+                    <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+                        <h2 id="displayNoSJ" class="text-2xl font-bold text-blue-950 font-mono tracking-tight">-</h2>
+                        <span id="displayPenerima" class="inline-flex items-center bg-blue-100/80 text-blue-800 text-xs font-bold px-3 py-1 rounded-full border border-blue-200/50 truncate max-w-[200px]">
+                            <i class="fa-solid fa-user text-[10px] mr-1.5"></i> <span id="textPenerima">-</span>
+                        </span>
+                    </div>
+
+                    <div id="displayToko" class="text-base font-bold text-slate-800 tracking-wide mb-3">-</div>
+
+                    <div class="flex flex-wrap items-center gap-2 text-xs">
+                        <div class="flex items-center bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl border border-slate-200/60 font-medium">
+                            <i class="fa-regular fa-calendar-days text-slate-500 mr-2"></i>
+                            <span id="displayTanggal">-</span>
+                        </div>
+                        <div class="flex items-center bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl border border-slate-200/60 font-semibold">
+                            <i class="fa-solid fa-city text-slate-500 mr-2"></i>
+                            <span id="displayTujuan">-</span>
+                        </div>
+                        <div class="flex items-center bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl border border-slate-200/60 font-medium">
+                            <i class="fa-solid fa-box text-amber-600 mr-2"></i>
+                            <span id="displayJumlahDus">- dus</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-4 sm:p-5">
+                    <div class="text-xs font-bold text-slate-400 tracking-wider uppercase mb-5">Progress Pengiriman</div>
+
+                    <!-- STEPPER TRACKER -->
+                    <div class="relative mb-6">
+                        <div class="absolute top-4 left-[10%] right-[10%] h-[3px] bg-slate-200 -z-0"></div>
+                        <div id="progressLine" class="absolute top-4 left-[10%] h-[3px] bg-sky-600 transition-all duration-300 -z-0" style="width: 0%;"></div>
+
+                        <div class="grid grid-cols-5 text-center relative z-10">
+                            <div class="flex flex-col items-center">
+                                <div id="stepCircle1" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-pending">1</div>
+                                <div id="stepLabel1" class="mt-2 text-[10px] sm:text-xs font-bold text-slate-400 leading-tight"><i class="fa-regular fa-clipboard block text-slate-400 text-xs mb-0.5"></i> Terdaftar</div>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div id="stepCircle2" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-pending">2</div>
+                                <div id="stepLabel2" class="mt-2 text-[10px] sm:text-xs font-bold text-slate-400 leading-tight"><i class="fa-solid fa-truck-front block text-slate-400 text-xs mb-0.5"></i> Driver Siap</div>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div id="stepCircle3" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-pending">3</div>
+                                <div id="stepLabel3" class="mt-2 text-[10px] sm:text-xs font-bold text-slate-400 leading-tight"><i class="fa-solid fa-box block text-slate-400 text-xs mb-0.5"></i> Dimuat</div>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div id="stepCircle4" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-pending">4</div>
+                                <div id="stepLabel4" class="mt-2 text-[10px] sm:text-xs font-bold text-slate-400 leading-tight"><i class="fa-solid fa-truck-fast block text-slate-400 text-xs mb-0.5"></i> Dikirim</div>
+                            </div>
+                            <div class="flex flex-col items-center">
+                                <div id="stepCircle5" class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-pending">5</div>
+                                <div id="stepLabel5" class="mt-2 text-[10px] sm:text-xs font-bold text-slate-400 leading-tight"><i id="stepIcon5" class="fa-solid fa-square-check block text-slate-300 text-xs mb-0.5"></i> Selesai</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="statusCard" class="bg-amber-50/80 border-l-4 border-amber-500 rounded-2xl p-4 mb-4 text-xs space-y-2">
+                        <div class="font-bold text-slate-800 text-sm flex items-center">
+                            <span id="statusCardTitle" class="flex items-center">-</span>
+                        </div>
+                        <div class="grid grid-cols-1 gap-1 text-slate-600">
+                            <div class="flex justify-between sm:justify-start sm:gap-8">
+                                <span class="w-20 text-slate-500">Waktu</span>
+                                <span id="statusCardTime" class="font-bold text-slate-800">-</span>
+                            </div>
+                            <div class="flex justify-between sm:justify-start sm:gap-8">
+                                <span class="w-20 text-slate-500">Catatan</span>
+                                <span id="statusCardNote" class="text-slate-700 font-medium">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- POD Display Section -->
+                    <div id="podDisplaySection" class="hidden mb-4 p-3 bg-emerald-50 rounded-2xl border border-emerald-200 text-xs space-y-2">
+                        <div class="font-bold text-emerald-800 flex items-center justify-between">
+                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-camera"></i> Bukti Penerimaan & Lokasi</span>
+                            <a id="linkGMapCoord" href="#" target="_blank" class="text-[11px] text-blue-600 underline font-semibold hidden"><i class="fa-solid fa-map-location-dot"></i> Buka Peta</a>
+                        </div>
+                        <img id="displayPodImage" src="" alt="POD" class="w-full h-36 object-cover rounded-xl border border-emerald-300">
+                        <div id="displayCoordText" class="text-[11px] text-slate-600 font-mono hidden"></div>
+                    </div>
+
+                    <div class="mb-5">
+                        <button onclick="toggleAccordion('artiStatusAcc')" class="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200/80 rounded-2xl p-3 flex items-center justify-between text-xs font-semibold text-slate-700 transition">
+                            <span class="flex items-center"><i class="fa-solid fa-circle-info text-sky-600 text-sm mr-2"></i> Arti Status Pengiriman</span>
+                            <i id="artiStatusAccIcon" class="fa-solid fa-chevron-down text-slate-400 text-xs transition-transform"></i>
+                        </button>
+                        <div id="artiStatusAcc" class="hidden mt-2 p-3 bg-slate-50 rounded-2xl border border-slate-200/60 text-xs text-slate-600 space-y-1.5">
+                            <p><b>1. Terdaftar:</b> Surat jalan resmi telah dibuat oleh pihak admin.</p>
+                            <p><b>2. Driver Siap:</b> Pengemudi telah ditugaskan dan siap memuat barang.</p>
+                            <p><b>3. Dimuat:</b> Barang sedang/selesai dimasukkan ke dalam armada.</p>
+                            <p><b>4. Dikirim:</b> Kendaraan dalam perjalanan menuju alamat tujuan.</p>
+                            <p><b>5. Selesai:</b> Barang telah terkirim dan diterima di lokasi.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-2xl p-3.5 border border-slate-200/70 flex items-center space-x-3.5 mb-6">
+                        <div id="driverAvatar" class="w-12 h-12 rounded-full bg-slate-800 text-white font-bold text-lg flex items-center justify-center shrink-0">D</div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">PENGEMUDI</div>
+                            <div id="driverName" class="font-bold text-slate-900 text-base truncate">-</div>
+                            <div id="driverPlat" class="text-xs text-slate-600 font-semibold flex items-center mt-0.5">
+                                🚚 <span class="ml-1 bg-white px-2 py-0.5 rounded border border-slate-200 font-mono text-[11px]" id="textPlat">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="text-xs font-bold text-slate-400 tracking-wider uppercase mb-4 flex items-center">
+                            <i class="fa-solid fa-location-dot text-red-500 mr-2 text-sm"></i> RIWAYAT PENGIRIMAN
+                        </div>
+                        <div id="timelineContainer" class="relative pl-6 space-y-5 border-l-2 border-slate-200 ml-2 text-xs"></div>
+                    </div>
+                </div>
+
+                <!-- TOMBOL PROGRESS DRIVER -->
+                <div class="p-4 bg-slate-50 border-t border-slate-200/80 space-y-2">
+                    <div class="text-xs font-bold text-slate-600 mb-2"><i class="fa-solid fa-pen-to-square text-blue-600 mr-1"></i> Update Status Pengiriman Oleh Driver:</div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button id="btnDriverStep1" onclick="updateDriverStatus('Muat Barang', 'Mulai memuat barang ke armada')" class="bg-amber-500 hover:bg-amber-600 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:text-slate-500 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-box"></i> 1. Mulai Muat
+                        </button>
+                        <button id="btnDriverStep2" onclick="updateDriverStatus('Selesai Muat', 'Semua barang selesai dimuat')" class="bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:text-slate-500 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-boxes-packing"></i> 2. Selesai Muat
+                        </button>
+                        <button id="btnDriverStep3" onclick="updateDriverStatus('Berangkat', 'Kendaraan berangkat dari gudang')" class="bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:text-slate-500 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-truck-arrow-right"></i> 3. Berangkat Kirim
+                        </button>
+                        <button id="btnDriverStep4" onclick="openFinishModal()" class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed disabled:text-slate-500 text-white font-bold py-2.5 px-3 rounded-xl shadow-sm text-xs transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-circle-check"></i> 4. Sampai & Selesai
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Modal Form Selesai & Upload POD -->
+    <div id="finishModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 text-left shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3 border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5 text-emerald-700">
+                    <i class="fa-solid fa-circle-check"></i> Konfirmasi Selesai Kirim & POD
+                </h3>
+                <button onclick="closeFinishModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            </div>
+            <form onsubmit="handleFinishSubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Nama Penerima Di Lokasi *</label>
+                    <input type="text" id="finishPenerimaLokasi" required placeholder="Contoh: Bpk. Hendra (Gudang)" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Upload Foto Bukti Penerimaan (POD) *</label>
+                    <input type="file" id="finishPodFile" accept="image/*" required onchange="previewPodImage(event)" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs file:mr-2 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                    
+                    <!-- Indikator Progress Kompresi Foto -->
+                    <div id="uploadProgressContainer" class="hidden mt-2 space-y-1 text-center">
+                        <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                            <div id="uploadProgressBar" class="bg-emerald-600 h-1.5 w-0 transition-all duration-300"></div>
+                        </div>
+                        <span id="uploadProgressText" class="text-[11px] font-semibold text-emerald-700">Memproses foto...</span>
+                    </div>
+
+                    <div id="podPreviewContainer" class="mt-2 hidden">
+                        <img id="podPreviewImg" src="" alt="Preview POD" class="w-full h-32 object-cover rounded-xl border border-slate-200">
+                    </div>
+                </div>
+                <div class="space-y-1">
+                    <div class="flex items-center justify-between">
+                        <label class="font-semibold text-slate-700">Titik Koordinat Lokasi (Opsional)</label>
+                        <button type="button" onclick="captureCurrentLocation()" class="bg-blue-50 hover:bg-blue-100 text-blue-700 font-semibold px-2.5 py-1 rounded-lg border border-blue-200 flex items-center gap-1 transition">
+                            <i class="fa-solid fa-location-crosshairs text-blue-600"></i> Ambil GPS Saat Ini
+                        </button>
+                    </div>
+                    <input type="text" id="finishCoordinates" placeholder="Contoh: -6.17511, 106.82715" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl font-mono text-[11px] focus:outline-none focus:ring-2 focus:ring-emerald-600">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Catatan Tambahan (Opsional)</label>
+                    <textarea id="finishCatatan" rows="2" placeholder="Barang diterima lengkap." class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-emerald-600 focus:outline-none"></textarea>
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeFinishModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-xl transition">Batal</button>
+                    <button type="submit" id="btnSubmitFinish" class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 text-white font-bold py-2.5 rounded-xl transition shadow">Selesaikan Pengiriman</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Set Kuota Gudang -->
+    <div id="quotaModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 text-left shadow-2xl border border-slate-100">
+            <div class="flex items-center justify-between mb-3 border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-1.5 text-amber-700">
+                    <i class="fa-solid fa-warehouse"></i> Set Batas Kuota Gudang (Manual)
+                </h3>
+                <button onclick="closeQuotaModal()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            </div>
+            <form onsubmit="handleQuotaSubmit(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Pilih Tanggal Jadwal</label>
+                    <input type="date" id="modalQuotaDate" required class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none">
+                </div>
+                <div>
+                    <label class="block font-semibold text-slate-700 mb-1">Batas Maksimal SJ (Kuota Manual) *</label>
+                    <input type="number" id="modalQuotaMax" required min="1" placeholder="Contoh: 10" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:outline-none font-mono font-bold">
+                </div>
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeQuotaModal()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl">Batal</button>
+                    <button type="submit" class="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl shadow">Simpan Kuota</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Password Auth -->
+    <div id="passwordModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-5 text-center shadow-2xl border border-slate-100">
+            <div class="w-12 h-12 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fa-solid fa-lock"></i>
+            </div>
+            <h3 class="font-bold text-slate-800 text-base mb-1">Akses Dilindungi</h3>
+            <p id="passwordModalSub" class="text-xs text-slate-500 mb-3">Masukkan password untuk melanjutkan.</p>
+            <form onsubmit="handlePasswordSubmit(event)" class="space-y-3 text-xs">
+                <input type="password" id="inputAuthPassword" required placeholder="Password..." class="w-full p-2.5 bg-slate-50 rounded-xl border border-slate-300 text-center font-bold tracking-widest text-base focus:ring-2 focus:ring-blue-600 focus:outline-none">
+                <div class="flex gap-2">
+                    <button type="button" onclick="closePasswordModal()" class="flex-1 bg-slate-200 text-slate-700 font-bold py-2 rounded-xl">Batal</button>
+                    <button type="submit" class="flex-1 bg-blue-700 text-white font-bold py-2 rounded-xl shadow">Masuk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Instructions Apps Script -->
+    <div id="scriptGuideModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-lg w-full p-5 text-left shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-3 border-b pb-2">
+                <h3 class="font-bold text-slate-800 text-sm">Panduan Koneksi Google Apps Script</h3>
+                <button onclick="closeScriptGuide()" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+            </div>
+            <div class="space-y-3 text-xs text-slate-600">
+                <p>1. Buka Google Spreadsheet Anda (<a href="https://docs.google.com/spreadsheets/d/14BND0HXHlEsB6jcr1EIb7irSrKl7rPL0kqeTT1R0cP4/edit" target="_blank" class="text-blue-600 underline">Link Spreadsheet</a>).</p>
+                <p>2. Klik menu <b>Extensions (Ekstensi) > Apps Script</b>.</p>
+                <p>3. Pastikan kode Apps Script versi terbaru sudah ditempel dan di-deploy ulang sebagai Web App (Akses: Anyone).</p>
+            </div>
+            <button onclick="closeScriptGuide()" class="w-full bg-slate-800 text-white font-bold py-2 rounded-xl text-xs mt-4">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Modal Notification -->
+    <div id="modalOverlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-xs w-full p-5 text-center shadow-2xl border border-slate-100">
+            <div id="modalIcon" class="w-12 h-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl mx-auto mb-3">
+                <i class="fa-solid fa-check"></i>
+            </div>
+            <h3 id="modalTitle" class="font-bold text-slate-800 text-base mb-1">Berhasil</h3>
+            <p id="modalMessage" class="text-xs text-slate-500 mb-4">Status pengiriman berhasil diperbarui.</p>
+            <button onclick="closeModal()" class="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-xl text-xs transition">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Application Script Logic -->
+    <script>
+        const INITIAL_DATA = [
+            {
+                noSJ: "261092257", penerima: "JEFFRY KAMADINATA", toko: "GRAND M*** B*** P***",
+                tanggal: "11 Nov 2026", tujuan: "CIKUDA", jumlahDus: 230, driver: "SUTIYO", plat: "KPS04",
+                stepProgress: 4, rawTimestamp: 1731310000000, podImage: "", coordinates: "",
+                statusCard: { title: "🚚 Kendaraan Dalam Perjalanan", time: "11/11 09:38", note: "Pastikan ada penerima di lokasi" },
+                timeline: [
+                    { title: "Terdaftar — jadwal kirim 11 Nov 2026", time: "11/11 08:03 WIB", icon: "fa-regular fa-clipboard", active: false },
+                    { title: "Mulai muat barang", time: "11/11 09:38 WIB", icon: "fa-solid fa-box", active: true },
+                    { title: "Semua barang selesai dimuat", time: "11/11 09:38 WIB", icon: "fa-solid fa-boxes-packing", active: true },
+                    { title: "Kendaraan berangkat dari gudang", time: "11/11 09:38 WIB", icon: "fa-solid fa-truck", active: true }
+                ]
+            }
+        ];
+
+        let currentRole = 'driver';
+        let sjDatabase = [];
+        let filteredAdminData = [];
+        let activeSJIndex = 0;
+        let appsScriptUrl = localStorage.getItem('logistik_apps_script_url') || 'https://script.google.com/macros/s/AKfycbx7hD_n7vJ8HeeGqYX5Yx8xXIQpLdcMFG92pvXWgXrop5zsFi_t2ye2NtVZh81_qEAE/exec';
+        let pendingAuthPurpose = '';
+        let adminCurrentPage = 1;
+        const adminPageSize = 3;
+        let warehouseQuotas = JSON.parse(localStorage.getItem('warehouse_quotas') || '{}');
+        let tempPodBase64 = "";
+
+        window.onload = function() {
+            document.getElementById('scriptUrlInput').value = appsScriptUrl;
+            const today = new Date().toISOString().split('T')[0];
+            const inputDate = document.getElementById('inputTanggal');
+            if (inputDate) inputDate.value = today;
+            
+            // Muat cepat dari cache lokal sambil menunggu sinkronisasi server
+            const cachedData = localStorage.getItem('logistik_sj_data');
+            if (cachedData) {
+                try {
+                    sjDatabase = JSON.parse(cachedData);
+                    sortAndRefreshData();
+                    document.getElementById('syncBadge').className = "text-emerald-600 font-semibold flex items-center bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200";
+                    document.getElementById('syncBadge').innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i> Data Cache Lokal`;
+                } catch(e) {
+                    sjDatabase = INITIAL_DATA;
+                }
+            } else {
+                sjDatabase = INITIAL_DATA;
+                sortAndRefreshData();
+            }
+
+            fetchDataFromSheet();
+            switchRole('driver');
+        };
+
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text || "Memproses Data...";
+            document.getElementById('loadingOverlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').classList.add('hidden');
+        }
+
+        function checkAdminPassword() {
+            pendingAuthPurpose = 'admin';
+            document.getElementById('passwordModalSub').textContent = "Masukkan password Admin (gmb123) untuk mengakses modul ini.";
+            document.getElementById('inputAuthPassword').value = '';
+            document.getElementById('passwordModal').classList.remove('hidden');
+        }
+
+        function unlockGoogleSheetConfig() {
+            pendingAuthPurpose = 'config';
+            document.getElementById('passwordModalSub').textContent = "Masukkan password (gmb123) untuk membuka Integrasi Google Sheets.";
+            document.getElementById('inputAuthPassword').value = '';
+            document.getElementById('passwordModal').classList.remove('hidden');
+        }
+
+        function closePasswordModal() { document.getElementById('passwordModal').classList.add('hidden'); }
+
+        function handlePasswordSubmit(e) {
+            e.preventDefault();
+            if (document.getElementById('inputAuthPassword').value === 'gmb123') {
+                closePasswordModal();
+                if (pendingAuthPurpose === 'admin') switchRole('admin');
+                else if (pendingAuthPurpose === 'config') {
+                    document.getElementById('dbConfigPanel').classList.remove('hidden');
+                    document.getElementById('dbLockedHeader').classList.add('hidden');
+                }
+            } else { showModal("Password Salah", "Password salah. Silakan coba lagi."); }
+        }
+
+        function lockGoogleSheetConfig() {
+            document.getElementById('dbConfigPanel').classList.add('hidden');
+            document.getElementById('dbLockedHeader').classList.remove('hidden');
+        }
+
+        function saveScriptUrl() {
+            const url = document.getElementById('scriptUrlInput').value.trim();
+            if (url) {
+                appsScriptUrl = url;
+                localStorage.setItem('logistik_apps_script_url', url);
+                showModal("URL Tersimpan", "Google Apps Script Web App URL berhasil disimpan.");
+                fetchDataFromSheet();
+            }
+        }
+
+        async function fetchDataFromSheet() {
+            const badge = document.getElementById('syncBadge');
+            if (!appsScriptUrl) return;
+            try {
+                const response = await fetch(appsScriptUrl);
+                const data = await response.json();
+                if (Array.isArray(data) && data.length > 0) {
+                    sjDatabase = data;
+                    localStorage.setItem('logistik_sj_data', JSON.stringify(sjDatabase));
+                    badge.className = "text-emerald-600 font-semibold flex items-center bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200";
+                    badge.innerHTML = `<i class="fa-solid fa-check-circle mr-1"></i> Terhubung Sheet`;
+                    sortAndRefreshData();
+                }
+            } catch (err) {
+                console.error("Gagal sinkronisasi background:", err);
+            }
+        }
+
+        function sortAndRefreshData() {
+            sjDatabase.sort((a, b) => (b.rawTimestamp || 0) - (a.rawTimestamp || 0));
+            updateAppViews();
+        }
+
+        async function sendToGoogleSheet(action, payload) {
+            if (!appsScriptUrl) return;
+            showLoading("Mengirim data & foto ke Google Sheets (85%)...");
+            try {
+                let reqBody = { action: action, data: payload };
+                if (action === "delete") reqBody = { action: action, noSJ: payload };
+                
+                await fetch(appsScriptUrl, {
+                    method: 'POST', 
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(reqBody)
+                });
+                
+                localStorage.setItem('logistik_sj_data', JSON.stringify(sjDatabase));
+                showLoading("Data berhasil tersimpan di server (100%)!");
+                await new Promise(resolve => setTimeout(resolve, 600));
+            } catch (e) {
+                console.error("Error saat mengirim ke Google Sheet:", e);
+            } finally { 
+                hideLoading(); 
+            }
+        }
+
+        function updateAppViews() {
+            filterDriverDropdown();
+            renderDriverView();
+            applyAdminFilters();
+            populateQuotaDateDropdown();
+            renderOutstandingTable();
+            checkQuotaAndLockForm();
+        }
+
+        function switchRole(role) {
+            currentRole = role;
+            renderRoleUI();
+        }
+
+        function renderRoleUI() {
+            const btnDriver = document.getElementById('btnRoleDriver');
+            const btnAdmin = document.getElementById('btnRoleAdmin');
+            if (currentRole === 'driver') {
+                btnDriver.className = "px-3 py-1.5 rounded-lg transition-all bg-blue-700 text-white font-bold shadow-sm";
+                btnAdmin.className = "px-3 py-1.5 rounded-lg transition-all text-slate-600";
+                document.getElementById('driverView').classList.remove('hidden');
+                document.getElementById('adminView').classList.add('hidden');
+            } else {
+                btnAdmin.className = "px-3 py-1.5 rounded-lg transition-all bg-blue-700 text-white font-bold shadow-sm";
+                btnDriver.className = "px-3 py-1.5 rounded-lg transition-all text-slate-600";
+                document.getElementById('adminView').classList.remove('hidden');
+                document.getElementById('driverView').classList.add('hidden');
+                checkQuotaAndLockForm();
+            }
+        }
+
+        function formatDateToDisplay(rawDate) {
+            if (!rawDate) return '';
+            const d = new Date(rawDate);
+            if (isNaN(d.getTime())) return rawDate;
+            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agt", "Sep", "Okt", "Nov", "Des"];
+            return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
+        function checkQuotaAndLockForm() {
+            const inputDateVal = document.getElementById('inputTanggal').value;
+            const btnSubmit = document.getElementById('btnSubmitAdmin');
+            const warningBanner = document.getElementById('quotaLockWarning');
+            const originalNo = document.getElementById('editSJOriginalNo').value;
+
+            if (!inputDateVal) return;
+            const formattedDate = formatDateToDisplay(inputDateVal);
+            const currentSJCount = sjDatabase.filter(item => item.tanggal === formattedDate && item.noSJ !== originalNo).length;
+            const maxQuota = warehouseQuotas[formattedDate] || 10;
+
+            if (currentSJCount >= maxQuota) {
+                if(btnSubmit) btnSubmit.disabled = true;
+                if(warningBanner) warningBanner.classList.remove('hidden');
+            } else {
+                if(btnSubmit) btnSubmit.disabled = false;
+                if(warningBanner) warningBanner.classList.add('hidden');
+            }
+        }
+
+        function populateQuotaDateDropdown() {
+            const select = document.getElementById('quotaDateSelect');
+            if(!select) return;
+            const datesSet = new Set();
+            sjDatabase.forEach(item => { if (item.tanggal) datesSet.add(item.tanggal); });
+            const todayStr = formatDateToDisplay(new Date().toISOString().split('T')[0]);
+            datesSet.add(todayStr);
+
+            const currentVal = select.value;
+            select.innerHTML = '';
+            datesSet.forEach(dateStr => {
+                const opt = document.createElement('option');
+                opt.value = dateStr;
+                opt.textContent = dateStr;
+                select.appendChild(opt);
+            });
+            if (currentVal && datesSet.has(currentVal)) select.value = currentVal;
+            renderQuotaAvailability();
+        }
+
+        function renderQuotaAvailability() {
+            const select = document.getElementById('quotaDateSelect');
+            const container = document.getElementById('quotaInfoCard');
+            if (!select || !container) return;
+            const dateStr = select.value;
+            if (!dateStr) return;
+
+            const countSJ = sjDatabase.filter(item => item.tanggal === dateStr).length;
+            const maxQuota = warehouseQuotas[dateStr] || 10;
+
+            let statusBadge = `<span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Tersedia</span>`;
+            let recommendation = `<p class="text-slate-600">Kapasitas gudang aman untuk penambahan Surat Jalan.</p>`;
+
+            if (countSJ >= maxQuota) {
+                statusBadge = `<span class="bg-rose-100 text-rose-800 px-2 py-0.5 rounded font-bold">Full / Penuh</span>`;
+                recommendation = `<p class="text-rose-700 font-semibold"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Rekomendasi: Kuota penuh!</p>`;
+            }
+
+            container.innerHTML = `
+                <div class="flex items-center justify-between font-bold text-slate-800">
+                    <span>Pemeriksaan Kuota (${dateStr}):</span>
+                    ${statusBadge}
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-slate-600">
+                    <div>Terpakai: <b class="text-slate-900">${countSJ} SJ</b></div>
+                    <div>Batas Kuota: <b class="text-slate-900">${maxQuota} SJ</b></div>
+                </div>
+                ${recommendation}
+            `;
+        }
+
+        function openQuotaModal() {
+            const selectDate = document.getElementById('quotaDateSelect').value;
+            document.getElementById('modalQuotaDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('modalQuotaMax').value = warehouseQuotas[selectDate] || 10;
+            document.getElementById('quotaModal').classList.remove('hidden');
+        }
+
+        function closeQuotaModal() { document.getElementById('quotaModal').classList.add('hidden'); }
+
+        function handleQuotaSubmit(e) {
+            e.preventDefault();
+            const rawDate = document.getElementById('modalQuotaDate').value;
+            const maxVal = parseInt(document.getElementById('modalQuotaMax').value);
+            const formattedDate = formatDateToDisplay(rawDate);
+            warehouseQuotas[formattedDate] = maxVal;
+            localStorage.setItem('warehouse_quotas', JSON.stringify(warehouseQuotas));
+            closeQuotaModal();
+            populateQuotaDateDropdown();
+            checkQuotaAndLockForm();
+            showModal("Kuota Disimpan", `Batas kuota manual untuk tanggal ${formattedDate} berhasil diatur ke ${maxVal} SJ.`);
+        }
+
+        function renderOutstandingTable() {
+            const container = document.getElementById('outstandingTableContainer');
+            const badgeCount = document.getElementById('outstandingCountBadge');
+            if(!container || !badgeCount) return;
+            const outstandingList = sjDatabase.filter(item => item.stepProgress < 5);
+            badgeCount.textContent = `${outstandingList.length} SJ`;
+
+            container.innerHTML = '';
+            if (outstandingList.length === 0) {
+                container.innerHTML = `<div class="p-3 bg-slate-50 text-slate-400 rounded-xl text-center">Tidak ada SJ outstanding. Semua pengiriman selesai.</div>`;
+                return;
+            }
+
+            outstandingList.slice(0, 5).forEach(item => {
+                const div = document.createElement('div');
+                div.className = "p-2.5 bg-rose-50/60 border border-rose-200 rounded-xl flex items-center justify-between text-xs";
+                div.innerHTML = `
+                    <div>
+                        <div class="font-bold text-slate-900 font-mono">#${item.noSJ} - ${item.penerima}</div>
+                        <div class="text-[11px] text-slate-500">Tujuan: ${item.tujuan} | Jadwal: ${item.tanggal}</div>
+                    </div>
+                    <span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px]">Step ${item.stepProgress}/5</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function filterDriverDropdown() {
+            const search = document.getElementById('driverSearchInput').value.toLowerCase().trim();
+            const dateVal = document.getElementById('driverFilterDate').value;
+            const select = document.getElementById('selectDriverSJ');
+            if(!select) return;
+            select.innerHTML = '';
+
+            let matches = 0;
+            let displayCount = 0;
+
+            sjDatabase.forEach((sj, originalIdx) => {
+                const matchSearch = !search || sj.noSJ.toLowerCase().includes(search) || sj.penerima.toLowerCase().includes(search);
+                let matchDate = true;
+                if (dateVal) {
+                    const formattedFilterDate = formatDateToDisplay(dateVal);
+                    matchDate = sj.tanggal.includes(formattedFilterDate);
+                }
+
+                let shouldInclude = false;
+                if (search || dateVal) {
+                    if (matchSearch && matchDate) shouldInclude = true;
+                } else {
+                    if (displayCount < 5) {
+                        shouldInclude = true;
+                        displayCount++;
+                    }
+                }
+
+                if (shouldInclude) {
+                    const opt = document.createElement('option');
+                    opt.value = originalIdx;
+                    opt.textContent = `SJ: ${sj.noSJ} - ${sj.penerima} (${sj.tanggal})`;
+                    if (matches === 0 && activeSJIndex === 0) activeSJIndex = originalIdx;
+                    if (originalIdx === activeSJIndex) opt.selected = true;
+                    select.appendChild(opt);
+                    matches++;
+                }
+            });
+
+            if (matches === 0) {
+                const opt = document.createElement('option');
+                opt.value = ""; opt.textContent = "-- Tidak Ada SJ Ditemukan. Gunakan Tombol Cari --";
+                select.appendChild(opt);
+            } else {
+                renderDriverView();
+            }
+        }
+
+        function resetDriverSearch() {
+            document.getElementById('driverSearchInput').value = '';
+            document.getElementById('driverFilterDate').value = '';
+            filterDriverDropdown();
+        }
+        
+        function loadDriverData(idx) {
+            if (idx !== "") {
+                activeSJIndex = parseInt(idx);
+                renderDriverView();
+            }
+        }
+
+        function renderDriverView() {
+            if (sjDatabase.length === 0 || activeSJIndex >= sjDatabase.length) return;
+            const data = sjDatabase[activeSJIndex];
+
+            document.getElementById('displayNoSJ').textContent = data.noSJ;
+            document.getElementById('textPenerima').textContent = data.penerima;
+            document.getElementById('displayToko').textContent = data.toko || '-';
+            document.getElementById('displayTanggal').textContent = data.tanggal;
+            document.getElementById('displayTujuan').textContent = data.tujuan;
+            document.getElementById('displayJumlahDus').textContent = `${data.jumlahDus} dus`;
+
+            document.getElementById('driverName').textContent = data.driver;
+            document.getElementById('textPlat').textContent = data.plat;
+            document.getElementById('driverAvatar').textContent = data.driver ? data.driver.charAt(0).toUpperCase() : 'D';
+
+            updateStepper(data.stepProgress);
+            updateDriverButtonsState(data.stepProgress);
+
+            const statusObj = data.statusCard || {};
+            document.getElementById('statusCardTitle').innerHTML = statusObj.title || (data.stepProgress === 5 ? "✅ Pengiriman Selesai" : "📋 Dalam Proses");
+            document.getElementById('statusCardTime').textContent = statusObj.time || '-';
+            document.getElementById('statusCardNote').textContent = statusObj.note || '-';
+
+            const podSec = document.getElementById('podDisplaySection');
+            const coordText = document.getElementById('displayCoordText');
+            const linkGMap = document.getElementById('linkGMapCoord');
+
+            if (data.podImage || data.coordinates) {
+                podSec.classList.remove('hidden');
+                if (data.podImage) {
+                    document.getElementById('displayPodImage').src = data.podImage;
+                    document.getElementById('displayPodImage').classList.remove('hidden');
+                } else {
+                    document.getElementById('displayPodImage').classList.add('hidden');
+                }
+                
+                if (data.coordinates) {
+                    coordText.textContent = `Koordinat Lokasi: ${data.coordinates}`;
+                    coordText.classList.remove('hidden');
+                    linkGMap.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(data.coordinates)}`;
+                    linkGMap.classList.remove('hidden');
+                } else {
+                    coordText.classList.add('hidden');
+                    linkGMap.classList.add('hidden');
+                }
+            } else {
+                podSec.classList.add('hidden');
+            }
+            renderTimeline(data.timeline);
+        }
+
+        function updateStepper(activeStep) {
+            const progressLine = document.getElementById('progressLine');
+            const percentMap = { 1: '0%', 2: '25%', 3: '50%', 4: '75%', 5: '100%' };
+            if(progressLine) progressLine.style.width = percentMap[activeStep] || '0%';
+
+            for (let i = 1; i <= 5; i++) {
+                const circle = document.getElementById(`stepCircle${i}`);
+                if(!circle) continue;
+                if (i < activeStep) {
+                    circle.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-completed";
+                    circle.innerHTML = '<i class="fa-solid fa-check text-xs"></i>';
+                } else if (i === activeStep) {
+                    if (i === 5) {
+                        circle.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-finished";
+                        circle.innerHTML = '<i class="fa-solid fa-check text-xs"></i>';
+                    } else {
+                        circle.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-active";
+                        circle.textContent = i;
+                    }
+                } else {
+                    circle.className = "w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs border-2 transition-all shadow-sm step-pending";
+                    circle.textContent = i;
+                }
+            }
+        }
+
+        function updateDriverButtonsState(currentStep) {
+            document.getElementById('btnDriverStep1').disabled = currentStep >= 3;
+            document.getElementById('btnDriverStep2').disabled = currentStep >= 3;
+            document.getElementById('btnDriverStep3').disabled = currentStep >= 4;
+            document.getElementById('btnDriverStep4').disabled = currentStep >= 5;
+        }
+
+        function renderTimeline(items) {
+            const container = document.getElementById('timelineContainer');
+            if(!container) return;
+            container.innerHTML = '';
+            if (!items || items.length === 0) return;
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "relative group";
+                div.innerHTML = `
+                    <div class="absolute -left-[31px] top-0.5 w-5 h-5 rounded-full bg-amber-500 text-white flex items-center justify-center text-[9px] shadow-sm"><i class="${item.icon || 'fa-solid fa-box'}"></i></div>
+                    <div><div class="font-bold text-slate-800 text-xs">${item.title}</div><div class="text-[11px] text-slate-400 font-medium">${item.time}</div></div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- FUNGSI KOMPRESI GAMBAR & PROGRESS BAR UPLOAD ---
+        function showUploadProgress(percent, message) {
+            const container = document.getElementById('uploadProgressContainer');
+            const bar = document.getElementById('uploadProgressBar');
+            const text = document.getElementById('uploadProgressText');
+            if (container && bar && text) {
+                container.classList.remove('hidden');
+                bar.style.width = percent + '%';
+                text.textContent = message;
+            }
+        }
+
+        function hideUploadProgress() {
+            const container = document.getElementById('uploadProgressContainer');
+            if (container) container.classList.add('hidden');
+        }
+
+        function compressImage(file, maxWidth = 650, maxHeight = 650, quality = 0.65, callback) {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > maxWidth) {
+                            height = Math.round((height * maxWidth) / width);
+                            width = maxWidth;
+                        }
+                    } else {
+                        if (height > maxHeight) {
+                            width = Math.round((width * maxHeight) / height);
+                            height = maxHeight;
+                        }
+                    }
+
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Konversi ke Base64 JPEG terkompresi agar ukuran aman di sel Spreadsheet (< 50.000 karakter)
+                    const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    callback(dataUrl);
+                };
+            };
+        }
+
+        function openFinishModal() {
+            document.getElementById('finishPenerimaLokasi').value = '';
+            document.getElementById('finishCatatan').value = '';
+            document.getElementById('finishPodFile').value = '';
+            document.getElementById('finishCoordinates').value = '';
+            document.getElementById('podPreviewContainer').classList.add('hidden');
+            hideUploadProgress();
+            tempPodBase64 = "";
+            document.getElementById('finishModal').classList.remove('hidden');
+        }
+
+        function closeFinishModal() { document.getElementById('finishModal').classList.add('hidden'); }
+
+        function previewPodImage(e) {
+            const file = e.target.files[0];
+            const btnSubmit = document.getElementById('btnSubmitFinish');
+            if (file) {
+                if (btnSubmit) btnSubmit.disabled = true;
+                showUploadProgress(35, "Mengompres ukuran foto agar cepat diunggah...");
+                
+                compressImage(file, 650, 650, 0.65, function(compressedBase64) {
+                    tempPodBase64 = compressedBase64;
+                    document.getElementById('podPreviewImg').src = tempPodBase64;
+                    document.getElementById('podPreviewContainer').classList.remove('hidden');
+                    
+                    showUploadProgress(100, "Foto berhasil dikompres & siap dikirim!");
+                    if (btnSubmit) btnSubmit.disabled = false;
+                    setTimeout(hideUploadProgress, 1200);
+                });
+            }
+        }
+
+        function captureCurrentLocation() {
+            const coordInput = document.getElementById('finishCoordinates');
+            if (!navigator.geolocation) { alert("Browser Anda tidak mendukung GPS."); return; }
+            coordInput.value = "Mendapatkan lokasi GPS...";
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    coordInput.value = `${position.coords.latitude.toFixed(6)}, ${position.coords.longitude.toFixed(6)}`;
+                },
+                function(error) {
+                    coordInput.value = "";
+                    alert("Gagal mendeteksi lokasi: " + error.message);
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        }
+
+        async function handleFinishSubmit(e) {
+            e.preventDefault();
+            const penerimaLokasi = document.getElementById('finishPenerimaLokasi').value.trim();
+            const coordinates = document.getElementById('finishCoordinates').value.trim();
+            const catatan = document.getElementById('finishCatatan').value.trim();
+            closeFinishModal();
+            const noteFull = `Diterima di lokasi oleh: ${penerimaLokasi}. ${catatan ? '(' + catatan + ')' : ''}`;
+            await updateDriverStatus('Selesai', noteFull, penerimaLokasi, tempPodBase64, coordinates);
+        }
+
+        async function updateDriverStatus(actionType, noteText, recipientName = '', podImg = '', coords = '') {
+            if (sjDatabase.length === 0) return;
+            const data = sjDatabase[activeSJIndex];
+            if (!data.timeline) data.timeline = [];
+            const now = new Date();
+            const timeStr = `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+            const timeWib = `${timeStr} WIB`;
+
+            if (actionType === 'Muat Barang' || actionType === 'Selesai Muat') {
+                data.stepProgress = 3;
+                data.statusCard = { title: "📦 Barang Selesai Dimuat", time: timeStr, note: noteText };
+                data.timeline.push({ title: noteText, time: timeWib, icon: "fa-solid fa-boxes-packing", active: true });
+            } else if (actionType === 'Berangkat') {
+                data.stepProgress = 4;
+                data.statusCard = { title: "🚚 Kendaraan Dalam Perjalanan", time: timeStr, note: noteText };
+                data.timeline.push({ title: "Kendaraan berangkat dari gudang", time: timeWib, icon: "fa-solid fa-truck", active: true });
+            } else if (actionType === 'Selesai') {
+                data.stepProgress = 5;
+                data.statusCard = { title: "✅ Pengiriman Selesai", time: timeStr, note: noteText };
+                if (podImg) data.podImage = podImg;
+                if (coords) data.coordinates = coords;
+                data.timeline.push({ title: `Pengiriman selesai — Diterima oleh: ${recipientName}`, time: timeWib, icon: "fa-solid fa-circle-check", active: true });
+            }
+
+            renderDriverView();
+            applyAdminFilters();
+            await sendToGoogleSheet("update", data);
+            showModal("Status Diperbarui", `Status pengiriman SJ ${data.noSJ} berhasil diperbarui dan disimpan ke Google Sheets.`);
+        }
+
+        function applyAdminFilters() {
+            const searchInput = document.getElementById('adminSearchInput');
+            const dateInput = document.getElementById('adminFilterDate');
+            const statusInput = document.getElementById('adminFilterStatus');
+            if(!searchInput) return;
+
+            const search = searchInput.value.toLowerCase();
+            const dateVal = dateInput.value;
+            const statusVal = statusInput.value;
+            
+            filteredAdminData = sjDatabase.filter(item => {
+                const matchSearch = !search || item.noSJ.toLowerCase().includes(search) || item.penerima.toLowerCase().includes(search);
+                let matchDate = true;
+                if (dateVal) {
+                    const formattedFilterDate = formatDateToDisplay(dateVal);
+                    matchDate = item.tanggal.includes(formattedFilterDate);
+                }
+                let matchStatus = statusVal === 'ALL' || String(item.stepProgress) === String(statusVal);
+                return matchSearch && matchDate && matchStatus;
+            });
+            adminCurrentPage = 1;
+            renderAdminView();
+        }
+
+        function clearAdminSearch() { document.getElementById('adminSearchInput').value = ''; applyAdminFilters(); }
+
+        function renderAdminView() {
+            const container = document.getElementById('adminSJList');
+            const countBadge = document.getElementById('totalSJCount');
+            if(!container || !countBadge) return;
+
+            countBadge.textContent = `${filteredAdminData.length} SJ`;
+            container.innerHTML = '';
+
+            if (filteredAdminData.length === 0) {
+                container.innerHTML = `<div class="p-4 text-center text-slate-400 text-xs bg-slate-50 rounded-2xl">Tidak ada data Surat Jalan.</div>`;
+                document.getElementById('adminPageInfo').textContent = "Halaman 0 dari 0";
+                return;
+            }
+
+            const totalPages = Math.ceil(filteredAdminData.length / adminPageSize);
+            if (adminCurrentPage > totalPages) adminCurrentPage = totalPages;
+            const pageItems = filteredAdminData.slice((adminCurrentPage - 1) * adminPageSize, adminCurrentPage * adminPageSize);
+
+            pageItems.forEach(item => {
+                const originalIndex = sjDatabase.findIndex(x => x.noSJ === item.noSJ);
+                const card = document.createElement('div');
+                card.className = "p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs space-y-2";
+                const podBadge = item.podImage ? `<span class="bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded text-[10px] font-semibold"><i class="fa-solid fa-camera"></i> POD Ada</span>` : '';
+                card.innerHTML = `
+                    <div class="flex items-center justify-between font-mono font-bold text-slate-900 text-sm">
+                        <span>#${item.noSJ} ${podBadge}</span>
+                        <span class="px-2 py-0.5 rounded text-[10px] bg-blue-100 text-blue-800">Step ${item.stepProgress}/5</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1 text-slate-600">
+                        <div><b>Penerima:</b> ${item.penerima}</div>
+                        <div><b>Tujuan:</b> ${item.tujuan}</div>
+                        <div><b>Driver:</b> ${item.driver}</div>
+                        <div><b>Tanggal:</b> ${item.tanggal}</div>
+                    </div>
+                    <div class="pt-2 border-t flex justify-between">
+                        <div class="flex gap-2">
+                            <button onclick="editSJ('${item.noSJ}')" class="bg-amber-100 text-amber-800 px-2.5 py-1 rounded font-bold">Update</button>
+                            <button onclick="deleteSJ('${item.noSJ}')" class="bg-rose-100 text-rose-800 px-2.5 py-1 rounded font-bold">Hapus</button>
+                        </div>
+                        <button onclick="selectAndSwitchToDriver(${originalIndex})" class="text-blue-700 font-bold">Tracker Driver →</button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            document.getElementById('adminPageInfo').textContent = `Halaman ${adminCurrentPage} dari ${totalPages}`;
+        }
+
+        function changeAdminPage(dir) { adminCurrentPage += dir; renderAdminView(); }
+
+        function editSJ(noSJ) {
+            const item = sjDatabase.find(x => x.noSJ === noSJ);
+            if (!item) return;
+            document.getElementById('editSJOriginalNo').value = item.noSJ;
+            document.getElementById('inputNoSJ').value = item.noSJ;
+            document.getElementById('inputPenerima').value = item.penerima;
+            document.getElementById('inputToko').value = item.toko || '';
+            document.getElementById('inputTujuan').value = item.tujuan;
+            document.getElementById('inputJumlahDus').value = item.jumlahDus;
+            document.getElementById('inputDriver').value = item.driver;
+            document.getElementById('inputPlat').value = item.plat;
+            document.getElementById('btnCancelEdit').classList.remove('hidden');
+            checkQuotaAndLockForm();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function resetAdminForm() {
+            document.getElementById('editSJOriginalNo').value = '';
+            document.getElementById('formInputSJ').reset();
+            document.getElementById('btnCancelEdit').classList.add('hidden');
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('inputTanggal').value = today;
+            checkQuotaAndLockForm();
+        }
+
+        async function deleteSJ(noSJ) {
+            if (!confirm(`Hapus Surat Jalan #${noSJ}?`)) return;
+            sjDatabase = sjDatabase.filter(x => x.noSJ !== noSJ);
+            sortAndRefreshData();
+            await sendToGoogleSheet("delete", noSJ);
+            showModal("Terhapus", "Surat Jalan berhasil dihapus.");
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const originalNo = document.getElementById('editSJOriginalNo').value;
+            const noSJ = document.getElementById('inputNoSJ').value.trim();
+            const penerima = document.getElementById('inputPenerima').value.trim();
+            const toko = document.getElementById('inputToko').value.trim();
+            const tujuan = document.getElementById('inputTujuan').value.trim();
+            const jumlahDus = parseInt(document.getElementById('inputJumlahDus').value);
+            const driver = document.getElementById('inputDriver').value.trim();
+            const plat = document.getElementById('inputPlat').value.trim();
+            const rawDate = document.getElementById('inputTanggal').value;
+
+            const formattedDate = formatDateToDisplay(rawDate);
+            const timeStr = `${String(new Date().getDate()).padStart(2,'0')}/${String(new Date().getMonth()+1).padStart(2,'0')} ${String(new Date().getHours()).padStart(2,'0')}:${String(new Date().getMinutes()).padStart(2,'0')}`;
+
+            const countSJ = sjDatabase.filter(item => item.tanggal === formattedDate && item.noSJ !== originalNo).length;
+            const maxQuota = warehouseQuotas[formattedDate] || 10;
+            if (countSJ >= maxQuota) {
+                showModal("Kuota Penuh", `Gagal menambahkan SJ! Kuota gudang untuk tanggal ${formattedDate} sudah penuh.`);
+                return;
+            }
+
+            if (originalNo) {
+                const item = sjDatabase.find(x => x.noSJ === originalNo);
+                if (item) {
+                    item.originalNoSJ = originalNo;
+                    item.noSJ = noSJ; item.penerima = penerima; item.toko = toko || '-';
+                    item.tanggal = formattedDate; item.tujuan = tujuan; item.jumlahDus = jumlahDus;
+                    item.driver = driver; item.plat = plat;
+                    await sendToGoogleSheet("update", item);
+                }
+            } else {
+                const newSJ = {
+                    noSJ: noSJ, penerima: penerima, toko: toko || '-', tanggal: formattedDate,
+                    tujuan: tujuan, jumlahDus: jumlahDus, driver: driver, plat: plat,
+                    stepProgress: 2, rawTimestamp: new Date().getTime(), podImage: "", coordinates: "",
+                    statusCard: { title: "📋 Surat Jalan Terdaftar & Driver Siap", time: timeStr, note: "Menunggu muat" },
+                    timeline: [{ title: `Terdaftar — jadwal kirim ${formattedDate}`, time: `${timeStr} WIB`, icon: "fa-regular fa-clipboard", active: false }]
+                };
+                sjDatabase.unshift(newSJ);
+                await sendToGoogleSheet("create", newSJ);
+            }
+            resetAdminForm();
+            sortAndRefreshData();
+            showModal("Berhasil", "Data Surat Jalan berhasil disimpan.");
+        }
+
+        function selectAndSwitchToDriver(idx) {
+            activeSJIndex = idx;
+            const select = document.getElementById('selectDriverSJ');
+            if(select) select.value = idx;
+            renderDriverView();
+            switchRole('driver');
+        }
+
+        function toggleAccordion(id) { const acc = document.getElementById(id); if(acc) acc.classList.toggle('hidden'); }
+        function showAppsScriptGuide() { document.getElementById('scriptGuideModal').classList.remove('hidden'); }
+        function closeScriptGuide() { document.getElementById('scriptGuideModal').classList.add('hidden'); }
+        function showModal(title, msg) {
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalMessage').textContent = msg;
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+        function closeModal() { document.getElementById('modalOverlay').classList.add('hidden'); }
+    </script>
+</body>
+</html>
