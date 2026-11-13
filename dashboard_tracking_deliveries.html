@@ -163,51 +163,59 @@
         <!-- Section Filters & Search -->
         <div class="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-4">
             
-            <!-- Baris 1: Search & Filter Tanggal -->
+            <!-- Baris 1: Search & Tombol Preset Periode Waktu -->
             <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center">
                 <!-- Search Box -->
                 <div class="relative lg:col-span-6">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
                         <i data-lucide="search" class="w-4 h-4"></i>
                     </div>
-                    <input type="text" id="searchInput" oninput="handleSearchInput()" placeholder="Cari No SJ, Customer, Toko, Driver, No Polisi..." class="w-full pl-9 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all">
+                    <input type="text" id="searchInput" oninput="handleSearchInput()" placeholder="Cari No SJ, Penerima, Toko, Driver, No Polisi..." class="w-full pl-9 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 focus:bg-white transition-all">
                     <button id="clearSearchBtn" onclick="clearSearch()" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600">
                         <i data-lucide="x" class="w-4 h-4"></i>
                     </button>
                 </div>
 
-                <!-- Date Range Filter -->
-                <div class="lg:col-span-6 flex items-center gap-2">
-                    <div class="flex-1 flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
-                        <span class="text-[11px] font-bold text-slate-400 uppercase">Dari:</span>
-                        <input type="date" id="startDate" onchange="applyFilters()" class="w-full bg-transparent text-xs text-slate-700 focus:outline-none font-medium">
-                    </div>
-                    <div class="flex-1 flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
-                        <span class="text-[11px] font-bold text-slate-400 uppercase">Sampai:</span>
-                        <input type="date" id="endDate" onchange="applyFilters()" class="w-full bg-transparent text-xs text-slate-700 focus:outline-none font-medium">
-                    </div>
-                    <button onclick="resetDateFilter()" title="Reset Tanggal" class="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition-all text-xs font-semibold">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                    </button>
+                <!-- Preset Periode Waktu -->
+                <div class="lg:col-span-6 flex flex-wrap items-center gap-1.5 justify-end">
+                    <button onclick="setDatePreset('bulan_ini')" id="btnPresetBulanIni" class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all bg-brand-600 text-white border-brand-600">Bulan Ini</button>
+                    <button onclick="setDatePreset('3_bulan')" id="btnPreset3Bulan" class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200">3 Bulan Terakhir</button>
+                    <button onclick="setDatePreset('tahun_ini')" id="btnPresetTahunIni" class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200">Tahun Ini</button>
+                    <button onclick="setDatePreset('all')" id="btnPresetAll" class="px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200">All</button>
                 </div>
             </div>
 
-            <!-- Baris 2: Filter Tambahan (Dropdown Driver & Toko) -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-slate-100">
-                <!-- Dropdown Filter Driver -->
-                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                    <i data-lucide="user-check" class="w-4 h-4 text-slate-400"></i>
-                    <select id="driverFilterSelect" onchange="applyFilters()" class="w-full bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer">
-                        <option value="ALL">Semua Driver (Pengemudi)</option>
-                    </select>
+            <!-- Baris 2: Custom Date Range & Dropdown Filter Tambahan -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-3 items-center pt-2 border-t border-slate-100">
+                <!-- Custom Date Inputs -->
+                <div class="lg:col-span-6 flex items-center gap-2">
+                    <div class="flex-1 flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase">Dari:</span>
+                        <input type="date" id="startDate" onchange="onCustomDateChange()" class="w-full bg-transparent text-xs text-slate-700 focus:outline-none font-medium">
+                    </div>
+                    <div class="flex-1 flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5">
+                        <span class="text-[11px] font-bold text-slate-400 uppercase">Sampai:</span>
+                        <input type="date" id="endDate" onchange="onCustomDateChange()" class="w-full bg-transparent text-xs text-slate-700 focus:outline-none font-medium">
+                    </div>
                 </div>
 
-                <!-- Dropdown Filter Toko / Perusahaan -->
-                <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-                    <i data-lucide="store" class="w-4 h-4 text-slate-400"></i>
-                    <select id="storeFilterSelect" onchange="applyFilters()" class="w-full bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer">
-                        <option value="ALL">Semua Toko / Perusahaan</option>
-                    </select>
+                <!-- Dropdown Filter Driver & Nama Penerima -->
+                <div class="lg:col-span-6 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <!-- Dropdown Filter Driver -->
+                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                        <i data-lucide="user-check" class="w-4 h-4 text-slate-400"></i>
+                        <select id="driverFilterSelect" onchange="applyFilters()" class="w-full bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer">
+                            <option value="ALL">Semua Driver</option>
+                        </select>
+                    </div>
+
+                    <!-- Dropdown Filter Nama Penerima (Menggantikan Toko/Perusahaan) -->
+                    <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+                        <i data-lucide="user" class="w-4 h-4 text-slate-400"></i>
+                        <select id="penerimaFilterSelect" onchange="applyFilters()" class="w-full bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer">
+                            <option value="ALL">Semua Nama Penerima</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 
@@ -263,23 +271,25 @@
                     <i data-lucide="inbox" class="w-8 h-8"></i>
                 </div>
                 <p class="text-slate-600 font-semibold text-base">Tidak ada data ditemukan</p>
-                <p class="text-slate-400 text-xs">Coba sesuaikan filter driver, toko, rentang tanggal, atau pencarian Anda.</p>
+                <p class="text-slate-400 text-xs">Coba sesuaikan filter rentang tanggal, penerima, driver, atau pencarian Anda.</p>
             </div>
 
             <div id="tableContainer" class="hidden overflow-x-auto">
                 <table class="w-full text-left text-xs sm:text-sm">
                     <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold uppercase tracking-wider text-[11px]">
                         <tr>
-                            <th class="py-3.5 px-4">Nomor Pengiriman / SJ</th>
+                            <th class="py-3.5 px-4">Nomor SJ</th>
                             <th class="py-3.5 px-4">Nama Penerima</th>
-                            <th class="py-3.5 px-4">Nama Toko / Perusahaan</th>
+                            <th class="py-3.5 px-4">Toko / Perusahaan</th>
                             <th class="py-3.5 px-4">Tanggal Kirim</th>
                             <th class="py-3.5 px-4">Lokasi Tujuan</th>
-                            <th class="py-3.5 px-4 text-right">Jumlah Barang (Dus)</th>
-                            <th class="py-3.5 px-4">Driver Ditugaskan</th>
-                            <th class="py-3.5 px-4">Plat Kendaraan</th>
+                            <th class="py-3.5 px-4 text-center">Foto Bukti</th>
+                            <th class="py-3.5 px-4">Lat / Long</th>
+                            <th class="py-3.5 px-4 text-right">Dus</th>
+                            <th class="py-3.5 px-4">Driver</th>
+                            <th class="py-3.5 px-4">Plat</th>
                             <th class="py-3.5 px-4">Status</th>
-                            <th class="py-3.5 px-4 text-center">Outstanding?</th>
+                            <th class="py-3.5 px-4 text-center">Outstanding</th>
                             <th class="py-3.5 px-4 text-center">Detail</th>
                         </tr>
                     </thead>
@@ -320,6 +330,25 @@
 
             <div class="p-4 sm:p-6 space-y-5 max-h-[80vh] overflow-y-auto text-slate-800">
                 
+                <!-- Section Foto Bukti & Koordinat di Modal -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col items-center justify-center text-center">
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Foto Bukti Pengiriman</p>
+                        <div id="modalPhotoContainer" class="w-full h-32 bg-slate-200 rounded-xl overflow-hidden flex items-center justify-center text-slate-400 text-xs">
+                            Tidak ada foto
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 flex flex-col justify-between">
+                        <div>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Titik Koordinat (Lat/Long)</p>
+                            <p id="modalLatLongText" class="font-mono text-xs font-semibold text-slate-800 break-all">-</p>
+                        </div>
+                        <a id="modalMapLink" href="#" target="_blank" class="hidden mt-3 w-full py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold rounded-xl text-center transition-all flex items-center justify-center gap-1.5">
+                            <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> Buka di Google Maps
+                        </a>
+                    </div>
+                </div>
+
                 <div>
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">PROGRESS PENGIRIMAN</h4>
                     <div id="horizontalStepperContainer" class="relative"></div>
@@ -359,7 +388,7 @@
                         F
                     </div>
                     <div class="space-y-1 flex-1 min-w-0">
-                        <p class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">PENGEMUDI & TUJUAN</p>
+                        <p class="text-[10px] font-bold text-slate-400 tracking-wider uppercase">PENGEMUDI & PENERIMA</p>
                         <p id="modalDriverName" class="font-bold text-slate-900 text-sm truncate">-</p>
                         <div class="flex flex-wrap items-center gap-2">
                             <div class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-slate-100 border border-slate-200 rounded-md text-[11px] text-slate-600 font-mono">
@@ -368,23 +397,6 @@
                             </div>
                             <span id="modalTujuanBadge" class="text-[11px] text-slate-500 truncate"></span>
                         </div>
-                    </div>
-                </div>
-
-                <div class="border border-slate-200 rounded-2xl overflow-hidden">
-                    <button onclick="toggleAccordion('artiStatusAccordion')" class="w-full px-4 py-3 bg-white flex items-center justify-between text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="info" class="w-4 h-4 text-sky-500"></i>
-                            <span>Arti Status Pengiriman</span>
-                        </div>
-                        <i data-lucide="chevron-down" id="artiStatusAccordionIcon" class="w-4 h-4 text-slate-400 transition-transform"></i>
-                    </button>
-                    <div id="artiStatusAccordion" class="hidden px-4 py-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-600 space-y-2">
-                        <p><strong>Terdaftar:</strong> Surat jalan telah dibuat dan terdaftar di sistem.</p>
-                        <p><strong>Driver Siap:</strong> Pengemudi dan armada telah ditugaskan.</p>
-                        <p><strong>Dimuat:</strong> Barang sedang diproses dan muat ke dalam truk.</p>
-                        <p><strong>Dikirim:</strong> Armada dalam perjalanan menuju alamat tujuan.</p>
-                        <p><strong>Selesai:</strong> Barang telah diterima di lokasi penerima.</p>
                     </div>
                 </div>
 
@@ -411,11 +423,97 @@
         let isOutstandingOnly = false;
         let statusChartInstance = null;
         let barChartInstance = null;
+        let activePreset = 'bulan_ini';
 
         window.onload = function () {
             lucide.createIcons();
+            setDefaultBulanIni();
             fetchCSVData();
         };
+
+        // Mengatur default tanggal ke Bulan Ini berjalan
+        function setDefaultBulanIni() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            
+            const firstDay = `${year}-${month}-01`;
+            const lastDayObj = new Date(year, now.getMonth() + 1, 0);
+            const lastDay = `${year}-${month}-${String(lastDayObj.getDate()).padStart(2, '0')}`;
+
+            document.getElementById('startDate').value = firstDay;
+            document.getElementById('endDate').value = lastDay;
+            activePreset = 'bulan_ini';
+            updatePresetUI('bulan_ini');
+        }
+
+        function setDatePreset(preset) {
+            activePreset = preset;
+            updatePresetUI(preset);
+
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth();
+            const day = now.getDate();
+
+            let startStr = '';
+            let endStr = '';
+
+            const formatDate = (d) => {
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const dt = String(d.getDate()).padStart(2, '0');
+                return `${y}-${m}-${dt}`;
+            };
+
+            if (preset === 'bulan_ini') {
+                const firstDay = new Date(year, month, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                startStr = formatDate(firstDay);
+                endStr = formatDate(lastDay);
+            } else if (preset === '3_bulan') {
+                const startMonth = new Date(year, month - 2, 1);
+                const lastDay = new Date(year, month + 1, 0);
+                startStr = formatDate(startMonth);
+                endStr = formatDate(lastDay);
+            } else if (preset === 'tahun_ini') {
+                startStr = `${year}-01-01`;
+                endStr = `${year}-12-31`;
+            } else if (preset === 'all') {
+                startStr = '';
+                endStr = '';
+            }
+
+            document.getElementById('startDate').value = startStr;
+            document.getElementById('endDate').value = endStr;
+            applyFilters();
+        }
+
+        function updatePresetUI(preset) {
+            const presets = ['bulan_ini', '3_bulan', 'tahun_ini', 'all'];
+            const mapId = {
+                'bulan_ini': 'btnPresetBulanIni',
+                '3_bulan': 'btnPreset3Bulan',
+                'tahun_ini': 'btnPresetTahunIni',
+                'all': 'btnPresetAll'
+            };
+
+            presets.forEach(p => {
+                const btn = document.getElementById(mapId[p]);
+                if (!btn) return;
+                if (p === preset) {
+                    btn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all bg-brand-600 text-white border-brand-600";
+                } else {
+                    btn.className = "px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200";
+                }
+            });
+        }
+
+        function onCustomDateChange() {
+            activePreset = 'custom';
+            updatePresetUI('');
+            applyFilters();
+        }
 
         function parseColumnKJSON(rawKolomK) {
             if (!rawKolomK || typeof rawKolomK !== 'string') return [];
@@ -507,7 +605,7 @@
                         const headers = results.meta && results.meta.fields ? results.meta.fields : Object.keys(results.data[0]);
                         const colKHeader = headers[10];
 
-                        // Mapping data & balik urutan agar data inputan paling akhir/baru ada di paling atas
+                        // Mapping data & balik urutan agar data terbaru ada di paling atas
                         rawData = results.data.map((item, idx) => {
                             const getVal = (possibleKeys) => {
                                 for (let k of possibleKeys) {
@@ -518,10 +616,12 @@
                             };
 
                             const no_sj = getVal(['Nomor Pengiriman / SJ', 'no sj', 'nosj', 'no. sj', 'no_sj', 'surat jalan']) || `SJ-${1000 + idx}`;
-                            const nama_penerima = getVal(['Nama Penerima', 'penerima']);
-                            const nama_toko = getVal(['Nama Toko / Perusahaan', 'nama toko', 'perusahaan', 'customer']);
+                            const nama_penerima = getVal(['Nama Penerima', 'penerima', 'customer']) || '-';
+                            const nama_toko = getVal(['Nama Toko / Perusahaan', 'nama toko', 'perusahaan']) || '-';
                             const tanggal_kirim = getVal(['Tanggal Kirim', 'tanggal', 'tgl', 'date']);
                             const lokasi_tujuan = getVal(['Lokasi Tujuan', 'tujuan', 'lokasi']);
+                            const foto_bukti = getVal(['Foto Bukti', 'foto', 'image', 'bukti_foto', 'photo']) || '';
+                            const latlong = getVal(['LatLong', 'koordinat', 'lat/long', 'gps', 'location_latlong', 'lat_long']) || '';
                             const jumlah_barang = getVal(['Jumlah Barang (Dus)', 'jumlah barang', 'dus', 'qty']) || '0';
                             const driver = getVal(['Driver Ditugaskan', 'driver', 'supir', 'pengemudi']) || '-';
                             const nopol = getVal(['Plat Kendaraan', 'nopol', 'no polisi', 'plat']) || '-';
@@ -544,6 +644,8 @@
                                 tanggal_kirim,
                                 parsedDate: parseSheetDate(tanggal_kirim),
                                 lokasi_tujuan,
+                                foto_bukti,
+                                latlong,
                                 jumlah_barang,
                                 driver,
                                 nopol,
@@ -553,7 +655,7 @@
                                 historySteps,
                                 rawItem: item
                             };
-                        }).reverse(); // Baris baru/inputan terakhir diposisikan di paling atas
+                        }).reverse();
 
                         populateFilterDropdowns();
                         applyFilters();
@@ -569,39 +671,39 @@
             });
         }
 
-        // Mengisi opsi pilihan Dropdown Driver & Toko secara dinamis
+        // Mengisi opsi pilihan Dropdown Driver & Nama Penerima secara dinamis
         function populateFilterDropdowns() {
             const driverSet = new Set();
-            const storeSet = new Set();
+            const penerimaSet = new Set();
 
             rawData.forEach(item => {
                 if (item.driver && item.driver !== '-') driverSet.add(item.driver);
-                if (item.nama_toko && item.nama_toko !== '-') storeSet.add(item.nama_toko);
+                if (item.nama_penerima && item.nama_penerima !== '-') penerimaSet.add(item.nama_penerima);
             });
 
             const driverSelect = document.getElementById('driverFilterSelect');
-            const storeSelect = document.getElementById('storeFilterSelect');
+            const penerimaSelect = document.getElementById('penerimaFilterSelect');
 
-            let driverHtml = '<option value="ALL">Semua Driver (Pengemudi)</option>';
+            let driverHtml = '<option value="ALL">Semua Driver</option>';
             Array.from(driverSet).sort().forEach(d => {
                 driverHtml += `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`;
             });
             driverSelect.innerHTML = driverHtml;
 
-            let storeHtml = '<option value="ALL">Semua Toko / Perusahaan</option>';
-            Array.from(storeSet).sort().forEach(s => {
-                storeHtml += `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`;
+            let penerimaHtml = '<option value="ALL">Semua Nama Penerima</option>';
+            Array.from(penerimaSet).sort().forEach(p => {
+                penerimaHtml += `<option value="${escapeHtml(p)}">${escapeHtml(p)}</option>`;
             });
-            storeSelect.innerHTML = storeHtml;
+            penerimaSelect.innerHTML = penerimaHtml;
         }
 
-        // Apply All Filters (Search, Date Range, Driver, Store, Status Pills, Outstanding)
+        // Apply All Filters (Search, Date Range, Driver, Nama Penerima, Status Pills, Outstanding)
         function applyFilters() {
             const searchValue = document.getElementById('searchInput').value.toLowerCase().trim();
             const startDateVal = document.getElementById('startDate').value;
             const endDateVal = document.getElementById('endDate').value;
             const selectedDriver = document.getElementById('driverFilterSelect').value;
-            const selectedStore = document.getElementById('storeFilterSelect').value;
+            const selectedPenerima = document.getElementById('penerimaFilterSelect').value;
 
             const startDate = startDateVal ? new Date(startDateVal) : null;
             const endDate = endDateVal ? new Date(endDateVal) : null;
@@ -630,8 +732,8 @@
                 // 3. Driver Filter
                 const matchDriver = (selectedDriver === 'ALL') ? true : item.driver === selectedDriver;
 
-                // 4. Store Filter
-                const matchStore = (selectedStore === 'ALL') ? true : item.nama_toko === selectedStore;
+                // 4. Nama Penerima Filter
+                const matchPenerima = (selectedPenerima === 'ALL') ? true : item.nama_penerima === selectedPenerima;
 
                 // 5. Status Pills Filter
                 const matchStatus = (activeStatusFilter === 'ALL') ? true : item.status.toLowerCase() === activeStatusFilter.toLowerCase();
@@ -639,21 +741,13 @@
                 // 6. Outstanding Checkbox Filter
                 const matchOutstanding = isOutstandingOnly ? item.isOutstanding : true;
 
-                return matchSearch && matchDate && matchDriver && matchStore && matchStatus && matchOutstanding;
+                return matchSearch && matchDate && matchDriver && matchPenerima && matchStatus && matchOutstanding;
             });
 
             currentPage = 1;
             updateDashboardMetrics();
             updateCharts();
             renderTable();
-        }
-
-        function resetDateFilter() {
-            document.getElementById('startDate').value = '';
-            document.getElementById('endDate').value = '';
-            document.getElementById('driverFilterSelect').value = 'ALL';
-            document.getElementById('storeFilterSelect').value = 'ALL';
-            applyFilters();
         }
 
         // Fitur Export ke Excel (.xlsx) menggunakan SheetJS
@@ -663,37 +757,35 @@
                 return;
             }
 
-            // Siapkan data array untuk excel
             const exportRows = filteredData.map((item, index) => ({
                 "No": index + 1,
-                "Nomor Pengiriman / SJ": item.no_sj,
+                "Nomor SJ": item.no_sj,
                 "Nama Penerima": item.nama_penerima,
-                "Nama Toko / Perusahaan": item.nama_toko,
+                "Toko / Perusahaan": item.nama_toko,
                 "Tanggal Kirim": item.tanggal_kirim,
                 "Lokasi Tujuan": item.lokasi_tujuan,
+                "Foto Bukti URL": item.foto_bukti,
+                "Lat / Long": item.latlong,
                 "Jumlah Barang (Dus)": item.jumlah_barang,
-                "Driver Ditugaskan": item.driver,
+                "Driver": item.driver,
                 "Plat Kendaraan": item.nopol,
                 "Status": item.status,
-                "Outstanding": item.isOutstanding ? "Ya (Outstanding)" : "Tidak"
+                "Outstanding": item.isOutstanding ? "Ya" : "Tidak"
             }));
 
-            // Buat worksheet dan workbook
             const worksheet = XLSX.utils.json_to_sheet(exportRows);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Data Tracking Pengiriman");
 
-            // Format nama file dengan tanggal hari ini
             const dateStr = new Date().toISOString().slice(0, 10);
             const fileName = `Laporan_Tracking_Pengiriman_${dateStr}.xlsx`;
-
-            // Download file excel
             XLSX.writeFile(workbook, fileName);
         }
 
         function updateDashboardMetrics() {
-            const total = rawData.length;
-            const completed = rawData.filter(d => !d.isOutstanding).length;
+            // Nilai scorecard & persentase mengikuti data yang terfilter
+            const total = filteredData.length;
+            const completed = filteredData.filter(d => !d.isOutstanding).length;
             const outstanding = total - completed;
             const rate = total > 0 ? ((completed / total) * 100).toFixed(1) : 0;
 
@@ -715,7 +807,8 @@
                 'Selesai': 0
             };
 
-            rawData.forEach(item => {
+            // Grafik memperhitungkan data terfilter agar selaras dengan scorecard
+            filteredData.forEach(item => {
                 const matchedKey = STATUS_STEPS.find(s => s.toLowerCase() === item.status.toLowerCase());
                 if (matchedKey) {
                     statusCounts[matchedKey]++;
@@ -808,18 +901,31 @@
             tableBody.innerHTML = paginatedItems.map(item => {
                 const statusBadge = getStatusBadgeHTML(item.status);
                 const outstandingBadge = item.isOutstanding 
-                    ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>Ya (Outstanding)</span>`
+                    ? `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200/60"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>Ya</span>`
                     : `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200/60">Tidak</span>`;
+
+                // Render Thumbnail Gambar / Foto Bukti
+                let photoHtml = `<span class="text-slate-400 text-[11px] italic">Tidak ada</span>`;
+                if (item.foto_bukti && item.foto_bukti.startsWith('http')) {
+                    photoHtml = `<a href="${escapeHtml(item.foto_bukti)}" target="_blank" class="block w-10 h-10 rounded-lg overflow-hidden border border-slate-200 hover:opacity-80 transition-opacity mx-auto"><img src="${escapeHtml(item.foto_bukti)}" alt="Bukti" class="w-full h-full object-cover"></a>`;
+                }
+
+                // Render LatLong / Posisi
+                let latLongHtml = item.latlong 
+                    ? `<a href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.latlong)}" target="_blank" class="text-brand-600 hover:underline font-mono text-[11px] flex items-center gap-1"><i data-lucide="map-pin" class="w-3 h-3 shrink-0"></i><span class="truncate max-w-[110px]">${escapeHtml(item.latlong)}</span></a>` 
+                    : `<span class="text-slate-400 text-[11px]">-</span>`;
 
                 return `
                     <tr class="hover:bg-slate-50/80 transition-colors">
                         <td class="py-3.5 px-4 font-bold text-brand-600 cursor-pointer hover:underline" onclick="openDetailModal('${item.id}')">
                             ${escapeHtml(item.no_sj)}
                         </td>
-                        <td class="py-3.5 px-4 text-slate-700 font-medium">${escapeHtml(item.nama_penerima)}</td>
-                        <td class="py-3.5 px-4 text-slate-800 font-semibold">${escapeHtml(item.nama_toko)}</td>
+                        <td class="py-3.5 px-4 text-slate-800 font-semibold">${escapeHtml(item.nama_penerima)}</td>
+                        <td class="py-3.5 px-4 text-slate-600 font-medium">${escapeHtml(item.nama_toko)}</td>
                         <td class="py-3.5 px-4 text-slate-600 whitespace-nowrap">${escapeHtml(item.tanggal_kirim)}</td>
                         <td class="py-3.5 px-4 text-slate-600">${escapeHtml(item.lokasi_tujuan)}</td>
+                        <td class="py-3.5 px-4 text-center">${photoHtml}</td>
+                        <td class="py-3.5 px-4">${latLongHtml}</td>
                         <td class="py-3.5 px-4 text-right font-mono font-medium">${escapeHtml(item.jumlah_barang)}</td>
                         <td class="py-3.5 px-4 text-slate-700">${escapeHtml(item.driver)}</td>
                         <td class="py-3.5 px-4 text-slate-600 font-mono text-xs">${escapeHtml(item.nopol)}</td>
@@ -1070,6 +1176,26 @@
             document.getElementById('modalNopol').innerText = item.nopol && item.nopol !== '-' ? item.nopol : '-';
             document.getElementById('modalTujuanBadge').innerText = item.lokasi_tujuan ? `• ${item.lokasi_tujuan}` : '';
 
+            // Handle Foto Bukti di Modal
+            const photoContainer = document.getElementById('modalPhotoContainer');
+            if (item.foto_bukti && item.foto_bukti.startsWith('http')) {
+                photoContainer.innerHTML = `<a href="${escapeHtml(item.foto_bukti)}" target="_blank" class="w-full h-full block"><img src="${escapeHtml(item.foto_bukti)}" alt="Bukti Kirim" class="w-full h-full object-cover hover:scale-105 transition-transform"></a>`;
+            } else {
+                photoContainer.innerHTML = `<span class="text-slate-400 text-xs italic">Tidak ada foto bukti</span>`;
+            }
+
+            // Handle LatLong / Maps Link di Modal
+            const latLongText = document.getElementById('modalLatLongText');
+            const mapLink = document.getElementById('modalMapLink');
+            if (item.latlong) {
+                latLongText.innerText = item.latlong;
+                mapLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.latlong)}`;
+                mapLink.classList.remove('hidden');
+            } else {
+                latLongText.innerText = 'Koordinat tidak tersedia';
+                mapLink.classList.add('hidden');
+            }
+
             const firstLetter = (item.driver && item.driver !== '-') ? item.driver.charAt(0).toUpperCase() : '?';
             document.getElementById('modalDriverAvatar').innerText = firstLetter;
 
@@ -1100,15 +1226,6 @@
 
             document.getElementById('detailModal').classList.remove('hidden');
             lucide.createIcons();
-        }
-
-        function toggleAccordion(id) {
-            const content = document.getElementById(id);
-            const icon = document.getElementById(id + 'Icon');
-            content.classList.toggle('hidden');
-            if (icon) {
-                icon.classList.toggle('rotate-180');
-            }
         }
 
         function closeModal() {
