@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="Sofyan Mujid (https://sofyanmujid.web.app/ & https://sofyanalitics.web.app/)">
+    <title>Aplikasi Viewer Dokumen & Krisbow PL</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PapaParse untuk CSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- SheetJS (XLSX) untuk Export Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #3b82f6;
+            width: 24px;
+            height: 24px;
+            -webkit-animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 flex h-screen overflow-hidden">
+
+    <!-- Mobile Overlay Backdrop (DocViewer Pro) -->
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-20 hidden md:hidden transition-opacity duration-300" onclick="toggleSidebar()"></div>
+
+    <!-- Sidebar Navigation -->
+    <aside id="sidebar" class="fixed md:relative z-30 w-72 h-full bg-white border-r border-slate-200 flex flex-col transition-all duration-300 transform -translate-x-full md:translate-x-0 md:ml-0 shadow-lg md:shadow-none shrink-0">
+        
+        <!-- Sidebar Header -->
+        <div class="p-3.5 border-b border-slate-200 bg-slate-50 flex flex-col gap-2.5">
+            <div class="flex items-center justify-between">
+                <!-- Partner Logos Header -->
+                <div class="flex items-center gap-2.5 overflow-hidden">
+                    <img 
+                        src="https://grandmitra.com/wp-content/uploads/2024/09/gm-1536x328.png" 
+                        alt="Grandmitra Logo" 
+                        class="h-6 max-w-[110px] object-contain"
+                        onerror="this.onerror=null; this.src='https://placehold.co/110x30/1e293b/ffffff?text=Grandmitra';"
+                    />
+                    <span class="text-slate-300 font-light text-sm">|</span>
+                    <img 
+                        src="https://www.krisbow.com/images/logo.png" 
+                        alt="Krisbow Logo" 
+                        class="h-5 max-w-[80px] object-contain"
+                        onerror="this.onerror=null; this.src='https://placehold.co/80x25/dc2626/ffffff?text=Krisbow';"
+                    />
+                </div>
+                <button onclick="toggleSidebar()" class="text-slate-500 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-200/60 md:hidden" title="Tutup Sidebar">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <div class="flex items-center gap-2 pt-1 border-t border-slate-200/60">
+                <i class="fa-solid fa-file-pdf text-red-600 text-sm"></i>
+                <h1 class="font-bold text-slate-800 text-sm tracking-tight">DocViewer Pro Catalog</h1>
+            </div>
+        </div>
+
+        <!-- Menu Pilihan Modul Terintegrasi -->
+        <div class="px-3 pt-2 pb-1 border-b border-slate-100">
+            <button onclick="openKrisbowPLView()" class="w-full text-left p-2 rounded-lg flex items-center justify-between bg-gradient-to-r from-red-600 to-red-700 text-white font-medium text-xs hover:from-red-700 hover:to-red-800 transition-all shadow-sm">
+                <span class="flex items-center gap-2">
+                    <i class="fa-solid fa-database text-sm"></i>
+                    <span>Krisbow Price List (PL)</span>
+                </span>
+                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+            </button>
+        </div>
+
+        <!-- Search Bar in Sidebar -->
+        <div class="p-3 border-b border-slate-100">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                <input 
+                    type="text" 
+                    id="search-input" 
+                    oninput="handleSearch()"
+                    placeholder="Cari file PDF / kabel..." 
+                    class="w-full pl-9 pr-8 py-2 text-sm bg-slate-100 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
+                />
+                <button 
+                    id="clear-search" 
+                    onclick="clearSearch()" 
+                    class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1" 
+                    title="Hapus Pencarian">
+                    <i class="fa-solid fa-circle-xmark text-sm"></i>
+                </button>
+            </div>
+            <div class="flex items-center justify-between mt-2 px-1">
+                <span id="file-count" class="text-xs font-medium text-slate-500">Memuat berkas...</span>
+                <button onclick="fetchCSVData()" class="text-xs text-blue-600 hover:text-blue-800 font-medium flex items-center gap-1">
+                    <i class="fa-solid fa-rotate-right text-[10px]"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Navigation / File List Container -->
+        <div class="flex-1 overflow-y-auto p-2 relative" id="file-list-container">
+            <!-- Loading Indicator -->
+            <div id="loading-spinner" class="flex flex-col items-center justify-center p-8 text-slate-400 gap-2">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-blue-600"></i>
+                <span class="text-xs">Mengunduh daftar dokumen...</span>
+            </div>
+
+            <!-- Empty / Error State -->
+            <div id="empty-state" class="hidden flex flex-col items-center justify-center p-6 text-center text-slate-400 gap-2 mt-4">
+                <i class="fa-solid fa-folder-open text-3xl"></i>
+                <p id="empty-state-msg" class="text-xs">Tidak ada dokumen ditemukan</p>
+                <button onclick="fetchCSVData()" class="mt-2 px-3 py-1 bg-blue-50 text-blue-600 rounded text-xs hover:bg-blue-100 font-medium">
+                    Coba Lagi
+                </button>
+            </div>
+
+            <!-- List of items -->
+            <div id="file-list" class="space-y-1"></div>
+        </div>
+
+        <!-- Sidebar Footer / LocalStorage Info & Author Links -->
+        <div class="p-3 border-t border-slate-200 bg-slate-50 text-xs text-slate-500 flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+                <span class="flex items-center gap-1.5">
+                    <span id="storage-status-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                    <span>Storage Lokal Aktif</span>
+                </span>
+                <button onclick="clearLocalStorage()" class="hover:text-red-600 transition-colors" title="Hapus Riwayat Sesi">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+            <!-- Author Credits -->
+            <div class="pt-2 border-t border-slate-200/80 flex items-center justify-between text-[11px] text-slate-400">
+                <span>Pengembang:</span>
+                <div class="flex items-center gap-2">
+                    <a href="https://sofyanmujid.web.app/" target="_blank" class="hover:text-blue-600 hover:underline flex items-center gap-0.5" title="Sofyan Mujid Profile">
+                        <span>Profile</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                    </a>
+                    <span>•</span>
+                    <a href="https://sofyanalitics.web.app/" target="_blank" class="hover:text-blue-600 hover:underline flex items-center gap-0.5" title="Sofyan Analytics">
+                        <span>Analytics</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Canvas Area -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-200/70">
+        
+        <!-- Header / Top Bar -->
+        <header class="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shadow-sm z-10">
+            <div class="flex items-center gap-3 overflow-hidden pr-2">
+                <!-- Toggle Sidebar Button -->
+                <button 
+                    onclick="toggleSidebar()" 
+                    class="p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors flex-shrink-0"
+                    title="Sembunyikan/Tampilkan Navigasi">
+                    <i class="fa-solid fa-bars text-lg"></i>
+                </button>
+
+                <!-- Document Info Header & Partner Brand -->
+                <div class="truncate flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <h2 id="current-doc-title" class="font-semibold text-slate-800 text-sm md:text-base truncate">
+                            Pilih Dokumen
+                        </h2>
+                        <span id="current-doc-badge" class="hidden text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0"></span>
+                    </div>
+                    <p id="current-doc-url" class="text-xs text-slate-400 truncate hidden md:block">
+                        Silakan pilih berkas dari panel sebelah kiri
+                    </p>
+                </div>
+            </div>
+
+            <!-- Header Action Controls & Top Bar Logos -->
+            <div class="flex items-center gap-3 flex-shrink-0">
+                <!-- Tombol Akses Krisbow PL -->
+                <button 
+                    onclick="openKrisbowPLView()" 
+                    class="flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white text-xs md:text-sm font-medium px-3 py-2 rounded-lg transition-colors shadow-sm"
+                    title="Buka Krisbow Price List">
+                    <i class="fa-solid fa-table-list"></i>
+                    <span>Krisbow PL</span>
+                </button>
+
+                <div class="hidden sm:flex items-center gap-2.5 px-3 py-1 bg-slate-50 border border-slate-200 rounded-lg">
+                    <img 
+                        src="https://grandmitra.com/wp-content/uploads/2024/09/gm-1536x328.png" 
+                        alt="Grandmitra Logo" 
+                        class="h-5 object-contain"
+                        onerror="this.style.display='none';"
+                    />
+                    <span class="text-slate-300 font-light text-xs">|</span>
+                    <img 
+                        src="https://www.krisbow.com/images/logo.png" 
+                        alt="Krisbow Logo" 
+                        class="h-4 object-contain"
+                        onerror="this.style.display='none';"
+                    />
+                </div>
+                <!-- Open in New Tab Button -->
+                <a 
+                    id="btn-open-newtab" 
+                    href="#" 
+                    target="_blank" 
+                    class="hidden items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-xs md:text-sm font-medium px-3.5 py-2 rounded-lg transition-colors shadow-sm"
+                    title="Buka dokumen di tab baru">
+                    <span>Buka di Tab Baru</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                </a>
+            </div>
+        </header>
+
+        <!-- Welcome / Initial Screen Canvas -->
+        <div id="welcome-canvas" class="flex-1 flex flex-col items-center justify-center p-6 text-center text-slate-500">
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl mb-4 shadow-sm">
+                <i class="fa-solid fa-file-pdf"></i>
+            </div>
+            <h3 class="text-lg font-bold text-slate-800 mb-1">Selamat Datang di DocViewer Pro</h3>
+            <p class="text-sm max-w-sm mb-4">Pilih salah satu dokumen dari daftar di sebelah kiri atau buka modul Krisbow Price List.</p>
+            <button onclick="openKrisbowPLView()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-medium transition shadow-sm flex items-center gap-2">
+                <i class="fa-solid fa-database"></i>
+                <span>Buka Krisbow Price List</span>
+            </button>
+        </div>
+
+        <!-- Viewer Iframe & Fallback Container -->
+        <div id="iframe-container" class="flex-1 w-full h-full relative hidden z-10 bg-white">
+            <iframe 
+                id="doc-frame" 
+                class="w-full h-full border-none bg-white" 
+                src="about:blank" 
+                title="Preview Dokumen"
+                allow="fullscreen">
+            </iframe>
+            <!-- Embed Error / Alternative Viewer Overlay -->
+            <div id="embed-fallback" class="hidden absolute inset-0 bg-slate-50 flex flex-col items-center justify-center p-6 text-center z-20">
+                <div class="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl mb-4 shadow-sm">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 mb-1">Pratinjau Tidak Dapat Ditampilkan Langsung</h3>
+                <p class="text-sm text-slate-500 max-w-md mb-6">
+                    Penyedia dokumen menolak tampilan langsung via frame internal. Anda tetap dapat membukanya melalui tombol di bawah:
+                </p>
+                <div class="flex flex-wrap items-center justify-center gap-3">
+                    <a id="fallback-direct-link" href="#" target="_blank" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow-sm transition flex items-center gap-2">
+                        <span>Buka Dokumen di Tab Baru</span>
+                        <i class="fa-solid fa-arrow-up-right-from-square text-xs"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Container Tampilan Krisbow PL (Sistem Informasi Data Terpusat) -->
+        <div id="krisbow-pl-container" class="flex-1 flex flex-row relative hidden w-full h-full overflow-hidden bg-gray-50">
+            
+            <!-- Halaman Login Overlay khusus Krisbow PL -->
+            <div id="loginOverlay" class="absolute inset-0 bg-gradient-to-br from-blue-900 via-gray-900 to-black z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 border border-gray-100 transform transition-all">
+                    <div class="text-center mb-8">
+                        <div class="inline-flex items-center justify-center w-16 h-16 bg-blue-50 text-blue-600 rounded-full mb-4 shadow-inner">
+                            <i class="fas fa-database text-2xl"></i>
+                        </div>
+                        <h1 class="text-2xl font-bold text-gray-900">Data Hub Login</h1>
+                        <p class="text-sm text-gray-500 mt-1">Masukkan password akses untuk masuk ke sistem</p>
+                    </div>
+                    
+                    <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Password Akses</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-gray-400"></i>
+                                </div>
+                                <input type="password" id="loginPassword" required class="block w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-xl bg-gray-50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" placeholder="Masukkan password...">
+                                <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 focus:outline-none">
+                                    <i id="togglePasswordIcon" class="fas fa-eye text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div id="loginError" class="hidden text-red-500 text-xs font-medium text-center bg-red-50 py-2 rounded-lg border border-red-100">
+                            Password salah! Silakan coba lagi. (Hint: gmb123)
+                        </div>
+
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition shadow-lg shadow-blue-500/30 flex items-center justify-center gap-2">
+                            <span>Masuk ke Sistem</span>
+                            <i class="fas fa-arrow-right text-xs"></i>
+                        </button>
+                    </form>
+                    
+                    <div class="mt-8 text-center border-t border-gray-100 pt-4">
+                        <p class="text-xs text-gray-400">&copy; 2026 Sistem Informasi Data Terpusat</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sidebar Krisbow PL -->
+            <aside id="krisbowSidebar" class="bg-white flex-shrink-0 border-r border-gray-200 flex flex-col transition-all duration-300 absolute inset-y-0 left-0 z-40 md:relative w-64 md:w-64 transform -translate-x-full md:translate-x-0 overflow-hidden shadow-xl md:shadow-none">
+                <div class="h-16 flex items-center px-6 border-b border-gray-100 justify-between bg-white">
+                    <div class="flex items-center gap-2 text-blue-600">
+                        <i class="fas fa-database text-xl"></i>
+                        <h1 class="text-lg font-bold text-gray-900 truncate">Data Hub</h1>
+                    </div>
+                    <button class="md:hidden text-gray-400 hover:text-red-500 transition" onclick="toggleKrisbowSidebar()">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="flex-1 overflow-y-auto py-4 px-3 hide-scrollbar">
+                    <p class="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Daftar Menu Brand</p>
+                    <nav id="nav-container" class="space-y-2">
+                        <!-- Navigasi Parent & Children Krisbow PL -->
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- Overlay Mobile Krisbow PL -->
+            <div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden md:hidden" onclick="toggleKrisbowSidebar()"></div>
+
+            <!-- Area Konten Utama Krisbow PL -->
+            <div class="flex-1 flex flex-col min-w-0 h-full overflow-hidden bg-gray-50">
+                <!-- Header Atas Krisbow PL -->
+                <header class="h-16 bg-white shadow-sm border-b border-gray-200 flex items-center justify-between px-4 sm:px-6 z-20">
+                    <div class="flex items-center gap-4">
+                        <button class="text-gray-500 hover:text-blue-600 focus:outline-none transition p-1" onclick="toggleKrisbowSidebar()" title="Toggle Sidebar">
+                            <i class="fas fa-bars text-xl"></i>
+                        </button>
+                        <h2 class="text-lg font-semibold text-gray-800 hidden sm:block truncate" id="currentSheetTitle">Memuat Konfigurasi...</h2>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 sm:gap-3">
+                        <div class="hidden sm:flex bg-gray-100 p-1 rounded-lg border border-gray-200">
+                            <button onclick="setViewMode('table')" id="btnViewTable" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all bg-white shadow-sm text-blue-600">
+                                <i class="fas fa-table"></i> <span class="ml-1">Tabel</span>
+                            </button>
+                            <button onclick="setViewMode('card')" id="btnViewCard" class="px-3 py-1.5 rounded-md text-sm font-medium transition-all text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-th-large"></i> <span class="ml-1">Card</span>
+                            </button>
+                        </div>
+                        <div class="flex sm:hidden bg-gray-100 p-1 rounded-lg border border-gray-200">
+                            <button onclick="setViewMode('table')" id="btnViewTableMob" class="px-2.5 py-1.5 rounded-md text-sm transition-all bg-white shadow-sm text-blue-600">
+                                <i class="fas fa-table"></i>
+                            </button>
+                            <button onclick="setViewMode('card')" id="btnViewCardMob" class="px-2.5 py-1.5 rounded-md text-sm transition-all text-gray-500 hover:text-gray-700">
+                                <i class="fas fa-th-large"></i>
+                            </button>
+                        </div>
+
+                        <button onclick="exportToExcel()" class="text-sm bg-green-50 text-green-600 px-3 py-1.5 rounded-md hover:bg-green-100 transition shadow-sm border border-green-200 flex items-center gap-1.5" title="Export ke Excel">
+                            <i class="fas fa-file-excel"></i> <span class="hidden sm:inline">Excel</span>
+                        </button>
+
+                        <button onclick="refreshCurrentData()" class="text-sm bg-blue-50 text-blue-600 px-3 py-1.5 rounded-md hover:bg-blue-100 transition shadow-sm border border-blue-200 flex items-center gap-1.5" title="Refresh Data">
+                            <i class="fas fa-sync-alt"></i> <span class="hidden sm:inline">Refresh</span>
+                        </button>
+
+                        <button onclick="handleLogout()" class="text-sm bg-red-50 text-red-600 px-3 py-1.5 rounded-md hover:bg-red-100 transition shadow-sm border border-red-200 flex items-center gap-1.5 ml-2" title="Keluar Sistem">
+                            <i class="fas fa-sign-out-alt"></i> <span class="hidden sm:inline">Keluar</span>
+                        </button>
+                    </div>
+                </header>
+
+                <!-- Data Content Area -->
+                <main class="flex-1 overflow-hidden flex flex-col w-full px-4 sm:px-6 py-6">
+                    <div class="bg-white rounded-t-xl shadow-sm border-b border-gray-100 p-4 flex flex-col sm:flex-row justify-between gap-4 items-center">
+                        <div class="relative w-full sm:max-w-md">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <input type="text" id="searchInput" class="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg bg-gray-50 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm transition" placeholder="Ketik kata kunci untuk mencari...">
+                            <button id="clearSearchBtn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-red-500 hidden transition" onclick="clearSearch()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-2 text-sm w-full sm:w-auto justify-between sm:justify-end">
+                            <label for="perPage" class="text-gray-600 font-medium whitespace-nowrap">Tampilkan:</label>
+                            <select id="perPage" class="border border-gray-300 rounded-lg text-sm py-1.5 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white shadow-sm" onchange="changePerPage(this.value)">
+                                <option value="10">10 Baris</option>
+                                <option value="20">20 Baris</option>
+                                <option value="all">Semua Data</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="bg-white shadow-sm flex-1 overflow-hidden flex flex-col relative rounded-b-xl border border-t-0 border-gray-100">
+                        <div id="loadingIndicator" class="absolute inset-0 bg-white z-20 flex flex-col items-center justify-center hidden bg-opacity-95 rounded-b-xl">
+                            <div class="loader mb-3"></div>
+                            <p class="text-gray-500 text-sm font-medium animate-pulse" id="loadingText">Mengambil Konfigurasi & Data...</p>
+                        </div>
+
+                        <div id="tableViewContainer" class="overflow-auto flex-1 block">
+                            <table class="min-w-full divide-y divide-gray-200 table-auto w-full">
+                                <thead class="bg-gray-50 sticky top-0 z-10" id="tableHeader"></thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="tableBody"></tbody>
+                            </table>
+                        </div>
+
+                        <div id="cardViewContainer" class="overflow-y-auto flex-1 p-4 bg-gray-50 hidden">
+                            <div id="cardContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                        </div>
+                        
+                        <div id="emptyState" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-white z-10 rounded-b-xl">
+                            <i class="fas fa-search text-5xl text-gray-200 mb-4"></i>
+                            <h3 class="text-lg font-medium text-gray-900">Data Tidak Ditemukan</h3>
+                            <p class="text-gray-500 text-sm mt-1">Coba sesuaikan kata kunci pencarian Anda.</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white px-4 py-3 border border-gray-200 shadow-sm rounded-xl mt-4 flex items-center justify-between sm:px-6">
+                        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-sm text-gray-700">
+                                    Menampilkan <span class="font-bold text-gray-900" id="pageStart">0</span> &mdash; <span class="font-bold text-gray-900" id="pageEnd">0</span> dari <span class="font-bold text-gray-900" id="totalItems">0</span> total data
+                                </p>
+                            </div>
+                            <div>
+                                <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination" id="paginationControls"></nav>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between w-full sm:hidden">
+                            <button onclick="changePage(state.currentPage - 1)" id="btnPrevMobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+                                <i class="fas fa-arrow-left mr-2"></i> Prev
+                            </button>
+                            <span class="text-sm text-gray-700 font-medium">
+                                <span id="mobileCurrentPage">1</span> / <span id="mobileTotalPages">1</span>
+                            </span>
+                            <button onclick="changePage(state.currentPage + 1)" id="btnNextMobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm">
+                                Next <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </main>
+
+    <!-- JavaScript Logic Combined -->
+    <script>
+        /* ==========================================================================
+           1. LOGIK UTAMA DOCVIEWER PRO (PDF & DOCUMENT VIEWER)
+           ========================================================================== */
+        const CABLE_TYPES = {
+            'NYA': { type: 'Kawat (Solid/Tunggal)', color: 'bg-amber-100 text-amber-800 border-amber-300' },
+            'NYM': { type: 'Kawat (Solid/Tunggal)', color: 'bg-amber-100 text-amber-800 border-amber-300' },
+            'NYY': { type: 'Kawat (Solid/Tunggal)', color: 'bg-amber-100 text-amber-800 border-amber-300' },
+            'NYFGBY': { type: 'Kawat/Pilin (Armor Ground)', color: 'bg-indigo-100 text-indigo-800 border-indigo-300' },
+            'NYMHY': { type: 'Serabut (Flexible)', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+            'NYAF': { type: 'Serabut (Flexible)', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' },
+            'NYYHY': { type: 'Serabut (Flexible)', color: 'bg-emerald-100 text-emerald-800 border-emerald-300' }
+        };
+
+        function getCableInfo(title) {
+            if (!title) return null;
+            const upper = title.toUpperCase();
+            for (const [key, value] of Object.entries(CABLE_TYPES)) {
+                if (upper.includes(key)) {
+                    return { key, ...value };
+                }
+            }
+            return null;
+        }
+
+        const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRzgyLMktjvL-VnPMen1U5dlfAd-75C3J7FheKuLwBq2Q6JI2rke5Y4rSuKtVom850ZzKitpQ1AqkOl/pub?gid=0&single=true&output=csv";
+        
+        const PROXIES = [
+            (url) => url,
+            (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+            (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`
+        ];
+
+        let documentList = [];
+        let activeDocIndex = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchCSVData();
+            restoreLastViewedDoc();
+        });
+
+        async function fetchCSVData() {
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const fileListEl = document.getElementById('file-list');
+            const emptyState = document.getElementById('empty-state');
+            
+            if (loadingSpinner) loadingSpinner.classList.remove('hidden');
+            if (fileListEl) fileListEl.innerHTML = '';
+            if (emptyState) emptyState.classList.add('hidden');
+
+            let csvText = null;
+
+            for (const proxyFn of PROXIES) {
+                try {
+                    const targetUrl = proxyFn(CSV_URL);
+                    const response = await fetch(targetUrl, { cache: "no-cache" });
+                    if (response.ok) {
+                        const text = await response.text();
+                        if (text && text.trim().length > 0) {
+                            csvText = text;
+                            break;
+                        }
+                    }
+                } catch (err) {
+                    console.warn("Fetch attempt failed, trying next method...", err);
+                }
+            }
+
+            if (csvText) {
+                documentList = parseCSV(csvText);
+                if (documentList.length > 0) {
+                    localStorage.setItem('docviewer_cached_list', JSON.stringify(documentList));
+                    renderFileList(documentList);
+                } else {
+                    showEmptyState("Format CSV tidak berisi data dokumen yang valid.");
+                }
+            } else {
+                const cachedData = localStorage.getItem('docviewer_cached_list');
+                if (cachedData) {
+                    try {
+                        documentList = JSON.parse(cachedData);
+                        renderFileList(documentList);
+                        console.log("Menggunakan data cache lokal.");
+                    } catch (e) {
+                        showEmptyState("Gagal memuat dokumen dari server maupun cache.");
+                    }
+                } else {
+                    showEmptyState("Gagal mengunduh CSV dari Google Sheets. Pastikan spreadsheet dipublikasikan ke web.");
+                }
+            }
+
+            if (loadingSpinner) loadingSpinner.classList.add('hidden');
+        }
+
+        function showEmptyState(msg) {
+            const emptyState = document.getElementById('empty-state');
+            const msgEl = document.getElementById('empty-state-msg');
+            const countEl = document.getElementById('file-count');
+            
+            if (msgEl) msgEl.innerText = msg;
+            if (emptyState) emptyState.classList.remove('hidden');
+            if (countEl) countEl.innerText = "0 Berkas";
+        }
+
+        function parseCSV(text) {
+            const lines = text.split(/\r\n|\n|\r/);
+            const items = [];
+
+            lines.forEach((line) => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+                
+                const columns = parseCSVRow(trimmed);
+                
+                if (columns.length >= 1) {
+                    let col1 = columns[0] ? columns[0].trim() : '';
+                    let col2 = columns[1] ? columns[1].trim() : '';
+
+                    if (col1 || col2) {
+                        let name = col1;
+                        let url = col2;
+
+                        if (isValidURL(col1) && !isValidURL(col2)) {
+                            url = col1;
+                            name = col2 || `Dokumen ${items.length + 1}`;
+                        } else if (!isValidURL(col1) && isValidURL(col2)) {
+                            name = col1;
+                            url = col2;
+                        } else if (isValidURL(col1)) {
+                            url = col1;
+                            name = `Dokumen ${items.length + 1}`;
+                        }
+
+                        const isHeader = ['nama', 'title', 'judul', 'url', 'link', 'alamat'].includes(name.toLowerCase());
+                        
+                        if (!isHeader && url && isValidURL(url)) {
+                            items.push({ 
+                                id: items.length, 
+                                name: name || `Dokumen ${items.length + 1}`, 
+                                url: url 
+                            });
+                        }
+                    }
+                }
+            });
+
+            return items;
+        }
+
+        function parseCSVRow(row) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            const delimiter = row.includes(';') && !row.includes(',') ? ';' : ',';
+
+            for (let i = 0; i < row.length; i++) {
+                const char = row[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === delimiter && !inQuotes) {
+                    result.push(current.replace(/^"|"$/g, '').trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.replace(/^"|"$/g, '').trim());
+            return result;
+        }
+
+        function isValidURL(string) {
+            if (!string) return false;
+            try {
+                const u = new URL(string);
+                return u.protocol === "http:" || u.protocol === "https:";
+            } catch (_) {
+                return false;
+            }
+        }
+
+        function renderFileList(list) {
+            const fileListEl = document.getElementById('file-list');
+            const emptyState = document.getElementById('empty-state');
+            const countEl = document.getElementById('file-count');
+
+            if (!fileListEl) return;
+
+            fileListEl.innerHTML = '';
+            if (countEl) countEl.innerText = `${list.length} Berkas Tersedia`;
+
+            if (list.length === 0) {
+                if (emptyState) emptyState.classList.remove('hidden');
+                return;
+            }
+
+            if (emptyState) emptyState.classList.add('hidden');
+
+            list.forEach((item) => {
+                const isActive = activeDocIndex === item.id;
+                const cableInfo = getCableInfo(item.name);
+                
+                const btn = document.createElement('button');
+                btn.className = `w-full text-left p-2.5 rounded-lg flex items-center gap-2.5 transition-all ${
+                    isActive 
+                    ? 'bg-blue-50 text-blue-700 font-semibold border-l-4 border-blue-600 shadow-sm' 
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
+                }`;
+                btn.onclick = () => selectDocument(item);
+
+                let badgeHtml = '';
+                if (cableInfo) {
+                    badgeHtml = `<span class="text-[9px] px-1.5 py-0.5 rounded border font-medium ${cableInfo.color}">${cableInfo.type}</span>`;
+                }
+
+                btn.innerHTML = `
+                    <i class="fa-solid ${getIconForUrl(item.url)} ${isActive ? 'text-blue-600' : 'text-slate-400'} text-base"></i>
+                    <div class="truncate flex-1">
+                        <p class="text-xs md:text-sm truncate leading-tight">${escapeHtml(item.name)}</p>
+                        ${badgeHtml ? `<div class="mt-1">${badgeHtml}</div>` : ''}
+                    </div>
+                    ${isActive ? '<i class="fa-solid fa-chevron-right text-xs text-blue-600"></i>' : ''}
+                `;
+
+                fileListEl.appendChild(btn);
+            });
+        }
+
+        function getIconForUrl(url) {
+            if (url.includes('.pdf')) return 'fa-file-pdf text-red-500';
+            if (url.includes('docs.google.com')) return 'fa-file-word text-blue-500';
+            if (url.includes('sheets.google.com')) return 'fa-file-excel text-emerald-500';
+            return 'fa-file-lines';
+        }
+
+        function handleSearch() {
+            const query = document.getElementById('search-input').value.toLowerCase().trim();
+            const clearBtn = document.getElementById('clear-search');
+
+            if (query.length > 0) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+
+            const filtered = documentList.filter(doc => {
+                const cableInfo = getCableInfo(doc.name);
+                const typeText = cableInfo ? cableInfo.type.toLowerCase() : '';
+                return doc.name.toLowerCase().includes(query) || 
+                       doc.url.toLowerCase().includes(query) || 
+                       typeText.includes(query);
+            });
+
+            renderFileList(filtered);
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('search-input');
+            input.value = '';
+            document.getElementById('clear-search').classList.add('hidden');
+            renderFileList(documentList);
+            input.focus();
+        }
+
+        function selectDocument(doc) {
+            document.getElementById('krisbow-pl-container').classList.add('hidden');
+
+            activeDocIndex = doc.id;
+            localStorage.setItem('docviewer_last_selected', JSON.stringify(doc));
+
+            document.getElementById('current-doc-title').innerText = doc.name;
+            document.getElementById('current-doc-url').innerText = doc.url;
+
+            const currentBadge = document.getElementById('current-doc-badge');
+            const cableInfo = getCableInfo(doc.name);
+            if (cableInfo) {
+                currentBadge.innerText = cableInfo.type;
+                currentBadge.className = `text-[10px] px-2 py-0.5 rounded-full font-medium border shrink-0 ${cableInfo.color}`;
+                currentBadge.classList.remove('hidden');
+            } else {
+                currentBadge.classList.add('hidden');
+            }
+            
+            const btnOpenNewTab = document.getElementById('btn-open-newtab');
+            btnOpenNewTab.href = doc.url;
+            btnOpenNewTab.classList.remove('hidden');
+            btnOpenNewTab.classList.add('flex');
+
+            const iframeContainer = document.getElementById('iframe-container');
+            const iframe = document.getElementById('doc-frame');
+            const welcomeCanvas = document.getElementById('welcome-canvas');
+            const embedFallback = document.getElementById('embed-fallback');
+            const fallbackDirectLink = document.getElementById('fallback-direct-link');
+
+            fallbackDirectLink.href = doc.url;
+            embedFallback.classList.add('hidden');
+
+            let embedUrl = formatEmbedUrl(doc.url);
+
+            iframe.src = embedUrl;
+            welcomeCanvas.classList.add('hidden');
+            iframeContainer.classList.remove('hidden');
+
+            handleSearch();
+
+            if (window.innerWidth < 768) {
+                toggleSidebar(false);
+            }
+        }
+
+        function openKrisbowPLView() {
+            document.getElementById('welcome-canvas').classList.add('hidden');
+            document.getElementById('iframe-container').classList.add('hidden');
+            
+            const krisbowContainer = document.getElementById('krisbow-pl-container');
+            krisbowContainer.classList.remove('hidden');
+
+            document.getElementById('current-doc-title').innerText = "Krisbow Price List (PL) Data Hub";
+            document.getElementById('current-doc-url').innerText = "Sistem Informasi Data Terpusat";
+            document.getElementById('current-doc-badge').classList.add('hidden');
+            document.getElementById('btn-open-newtab').classList.add('hidden');
+
+            const isLoggedIn = sessionStorage.getItem('gmb_logged_in');
+            if (isLoggedIn === 'true') {
+                document.getElementById('loginOverlay').classList.add('hidden');
+                initKrisbowApp();
+            } else {
+                document.getElementById('loginOverlay').classList.remove('hidden');
+            }
+
+            if (window.innerWidth < 768) {
+                toggleSidebar(false);
+            }
+        }
+
+        function formatEmbedUrl(rawUrl) {
+            if (!rawUrl) return 'about:blank';
+            let url = rawUrl.trim();
+
+            const driveFileIdMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+            if (driveFileIdMatch && driveFileIdMatch[1]) {
+                const fileId = driveFileIdMatch[1];
+                return `https://drive.google.com/file/d/${fileId}/preview`;
+            }
+
+            if (url.includes('drive.google.com') || url.includes('docs.google.com')) {
+                if (url.includes('/view') || url.includes('/edit')) {
+                    return url.replace(/\/view.*$/, '/preview').replace(/\/edit.*$/, '/preview');
+                }
+                return url;
+            }
+
+            if (url.toLowerCase().includes('.pdf')) {
+                return `https://docs.google.com/gview?url=${encodeURIComponent(url)}&embedded=true`;
+            }
+
+            return url;
+        }
+
+        function restoreLastViewedDoc() {
+            const savedDoc = localStorage.getItem('docviewer_last_selected');
+            if (savedDoc) {
+                try {
+                    const doc = JSON.parse(savedDoc);
+                    selectDocument(doc);
+                } catch (e) {
+                    console.error("Gagal memuat dokumen terakhir dari storage", e);
+                }
+            }
+        }
+
+        function toggleSidebar(forceState = null) {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            const isMobile = window.innerWidth < 768;
+
+            if (isMobile) {
+                const isClosed = sidebar.classList.contains('-translate-x-full');
+                const shouldOpen = forceState !== null ? forceState : isClosed;
+
+                if (shouldOpen) {
+                    sidebar.classList.remove('-translate-x-full');
+                    overlay.classList.remove('hidden');
+                } else {
+                    sidebar.classList.add('-translate-x-full');
+                    overlay.classList.add('hidden');
+                }
+            } else {
+                const isHidden = sidebar.classList.contains('md:-ml-72');
+                const shouldHide = forceState !== null ? !forceState : !isHidden;
+
+                if (shouldHide) {
+                    sidebar.classList.add('md:-ml-72');
+                } else {
+                    sidebar.classList.remove('md:-ml-72');
+                }
+            }
+        }
+
+        function clearLocalStorage() {
+            localStorage.removeItem('docviewer_last_selected');
+            localStorage.removeItem('docviewer_cached_list');
+            location.reload();
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        /* ==========================================================================
+           2. LOGIK TERINTEGRASI KRISBOW PL (PRICE LIST)
+           ========================================================================== */
+        const MASTER_SHEETS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRi1f0t8VW_7RgczLs69mKyqjbDu1eO_O4pqk4trNuhr8OBayM4JfKMwFToMA_yaKJUpcgIHXBN0Yqh/pub?gid=1501244974&single=true&output=csv';
+        const CORRECT_PASSWORD = 'gmb123';
+        
+        let sheetsConfig = [];
+        let isKrisbowInitialized = false;
+
+        let state = {
+            currentSheetId: '',
+            data: [],          
+            filteredData: [],  
+            headers: [],       
+            currentPage: 1,
+            perPage: 10,       
+            searchQuery: '',
+            viewMode: 'table',
+            sortColumn: null,     
+            sortDirection: 'asc'  
+        };
+
+        const CACHE_EXPIRY_MS = 60 * 60 * 1000;
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const passInput = document.getElementById('loginPassword').value;
+            const errorDiv = document.getElementById('loginError');
+
+            if (passInput === CORRECT_PASSWORD) {
+                sessionStorage.setItem('gmb_logged_in', 'true');
+                document.getElementById('loginOverlay').classList.add('hidden');
+                errorDiv.classList.add('hidden');
+                initKrisbowApp();
+            } else {
+                errorDiv.classList.remove('hidden');
+                document.getElementById('loginPassword').focus();
+            }
+        }
+
+        function handleLogout() {
+            sessionStorage.removeItem('gmb_logged_in');
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginOverlay').classList.remove('hidden');
+        }
+
+        function togglePasswordVisibility() {
+            const passField = document.getElementById('loginPassword');
+            const icon = document.getElementById('togglePasswordIcon');
+            if (passField.type === 'password') {
+                passField.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                passField.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        function initKrisbowApp() {
+            if (isKrisbowInitialized) return;
+            isKrisbowInitialized = true;
+
+            if (window.innerWidth < 768) {
+                setViewMode('card');
+            } else {
+                setViewMode('table');
+            }
+
+            setupSearchListener();
+            loadMasterConfig();
+        }
+
+        async function loadMasterConfig() {
+            setLoadingText('Memuat Konfigurasi Sheet...');
+            showLoading(true);
+            try {
+                const response = await fetch(MASTER_SHEETS_URL);
+                if (!response.ok) throw new Error('Gagal mengambil master konfigurasi sheet.');
+                
+                const csvText = await response.text();
+                
+                Papa.parse(csvText, {
+                    header: false,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        const rows = results.data;
+                        sheetsConfig = [];
+                        
+                        let startIndex = 0;
+                        if (rows.length > 0) {
+                            const firstRow0 = String(rows[0][0]).toLowerCase();
+                            if (firstRow0.includes('parent') || firstRow0.includes('id') || firstRow0.includes('nama')) {
+                                startIndex = 1;
+                            }
+                        }
+
+                        let currentParent = 'Lainnya';
+
+                        for (let i = startIndex; i < rows.length; i++) {
+                            const r = rows[i];
+                            if (r && r.length >= 4) {
+                                const parentVal = r[0] ? r[0].toString().trim() : '';
+                                if (parentVal !== '') {
+                                    currentParent = parentVal;
+                                }
+
+                                const id = r[1] ? r[1].toString().trim() : `sheet_${i}`;
+                                const name = r[2] ? r[2].toString().trim() : '';
+                                const url = r[3] ? r[3].toString().trim() : '';
+                                
+                                if (name && url) {
+                                    sheetsConfig.push({
+                                        parent: currentParent,
+                                        id: id || `sheet_${i}`,
+                                        name: name,
+                                        url: url
+                                    });
+                                }
+                            }
+                        }
+
+                        if (sheetsConfig.length === 0) {
+                            Papa.parse(csvText, {
+                                header: true,
+                                skipEmptyLines: true,
+                                complete: function(res2) {
+                                    res2.data.forEach((row, idx) => {
+                                        const keys = Object.keys(row);
+                                        const parentVal = row.parent || row.Parent || row[keys[0]];
+                                        if (parentVal && parentVal.toString().trim() !== '') {
+                                            currentParent = parentVal.toString().trim();
+                                        }
+
+                                        const id = row.id || row.ID || row[keys[1]];
+                                        const name = row.name || row.Name || row['Nama Sheet'] || row.nama || row[keys[2]];
+                                        const url = row.url || row.URL || row.Link || row[keys[3]];
+                                        
+                                        if (name && url) {
+                                            sheetsConfig.push({
+                                                parent: currentParent,
+                                                id: id ? id.toString().trim() : `sheet_${idx + 1}`,
+                                                name: name.toString().trim(),
+                                                url: url.toString().trim()
+                                            });
+                                        }
+                                    });
+                                    finishInitMaster();
+                                },
+                                error: function() {
+                                    showLoading(false);
+                                    alert('Gagal memparsing master konfigurasi sheet.');
+                                }
+                            });
+                        } else {
+                            finishInitMaster();
+                        }
+                    },
+                    error: function(err) {
+                        console.error("Master CSV Parse Error:", err);
+                        showLoading(false);
+                        alert('Gagal memuat link master sheet.');
+                    }
+                });
+            } catch (error) {
+                console.error("Master Network Error:", error);
+                showLoading(false);
+                alert('Gagal terhubung ke link master sheet.');
+            }
+        }
+
+        function finishInitMaster() {
+            if (sheetsConfig.length === 0) {
+                showLoading(false);
+                alert('Tidak ada sheet yang ditemukan dari link master.');
+                return;
+            }
+            state.currentSheetId = sheetsConfig[0].id;
+            renderNav();
+            updateCurrentSheetTitle();
+            loadSheetData(state.currentSheetId);
+        }
+
+        function toggleKrisbowSidebar() {
+            const sidebar = document.getElementById('krisbowSidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            
+            sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('md:w-0');
+            sidebar.classList.toggle('md:w-64');
+            sidebar.classList.toggle('md:border-r');
+            
+            if (!sidebar.classList.contains('-translate-x-full')) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function setViewMode(mode) {
+            state.viewMode = mode;
+            
+            const btnTable = document.getElementById('btnViewTable');
+            const btnCard = document.getElementById('btnViewCard');
+            const btnTableMob = document.getElementById('btnViewTableMob');
+            const btnCardMob = document.getElementById('btnViewCardMob');
+            const tableView = document.getElementById('tableViewContainer');
+            const cardView = document.getElementById('cardViewContainer');
+
+            const activeClasses = ['bg-white', 'shadow-sm', 'text-blue-600'];
+            const inactiveClasses = ['text-gray-500', 'hover:text-gray-700'];
+
+            if (mode === 'table') {
+                btnTable.classList.add(...activeClasses);
+                btnTable.classList.remove(...inactiveClasses);
+                btnTableMob.classList.add(...activeClasses);
+                btnTableMob.classList.remove(...inactiveClasses);
+                
+                btnCard.classList.remove(...activeClasses);
+                btnCard.classList.add(...inactiveClasses);
+                btnCardMob.classList.remove(...activeClasses);
+                btnCardMob.classList.add(...inactiveClasses);
+
+                tableView.classList.remove('hidden');
+                tableView.classList.add('block');
+                cardView.classList.add('hidden');
+                cardView.classList.remove('block');
+            } else {
+                btnCard.classList.add(...activeClasses);
+                btnCard.classList.remove(...inactiveClasses);
+                btnCardMob.classList.add(...activeClasses);
+                btnCardMob.classList.remove(...inactiveClasses);
+                
+                btnTable.classList.remove(...activeClasses);
+                btnTable.classList.add(...inactiveClasses);
+                btnTableMob.classList.remove(...activeClasses);
+                btnTableMob.classList.add(...inactiveClasses);
+
+                cardView.classList.remove('hidden');
+                cardView.classList.add('block');
+                tableView.classList.add('hidden');
+                tableView.classList.remove('block');
+            }
+        }
+
+        function renderNav() {
+            const navContainer = document.getElementById('nav-container');
+            navContainer.innerHTML = '';
+            
+            const grouped = {};
+            sheetsConfig.forEach(sheet => {
+                const p = sheet.parent || 'Lainnya';
+                if (!grouped[p]) grouped[p] = [];
+                grouped[p].push(sheet);
+            });
+
+            Object.keys(grouped).forEach(parentName => {
+                const items = grouped[parentName];
+                
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'mb-1';
+                
+                const parentBtn = document.createElement('button');
+                parentBtn.className = `w-full text-left px-3 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-between text-gray-700 hover:bg-gray-100`;
+                parentBtn.innerHTML = `
+                    <span class="flex items-center gap-2.5"><i class="fas fa-folder text-blue-500"></i> ${parentName}</span>
+                    <i class="fas fa-chevron-down text-xs text-gray-400 transition-transform duration-200"></i>
+                `;
+                
+                const childContainer = document.createElement('div');
+                childContainer.className = `space-y-1 pl-4 mt-1 border-l-2 border-blue-50 ml-3 hidden`;
+                
+                parentBtn.onclick = () => {
+                    childContainer.classList.toggle('hidden');
+                    parentBtn.querySelector('.fa-chevron-down').classList.toggle('rotate-180');
+                };
+                
+                items.forEach(sheet => {
+                    const isActive = state.currentSheetId === sheet.id;
+                    const childBtn = document.createElement('button');
+                    
+                    childBtn.className = `w-full text-left px-3 py-2 rounded-md text-xs font-medium transition-all flex items-center gap-2.5 ${
+                        isActive 
+                        ? 'bg-blue-50 text-blue-700 font-semibold shadow-sm border border-blue-100' 
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`;
+                    childBtn.innerHTML = `<i class="fas fa-file-csv ${isActive ? 'text-blue-600' : 'text-gray-400'}"></i> ${sheet.name}`;
+                    
+                    childBtn.onclick = () => {
+                        switchSheet(sheet.id);
+                        if (window.innerWidth < 768) {
+                            toggleKrisbowSidebar();
+                        }
+                    };
+                    childContainer.appendChild(childBtn);
+                });
+                
+                groupDiv.appendChild(parentBtn);
+                groupDiv.appendChild(childContainer);
+                navContainer.appendChild(groupDiv);
+            });
+        }
+
+        function updateCurrentSheetTitle() {
+            const activeSheet = sheetsConfig.find(s => s.id === state.currentSheetId);
+            if (activeSheet) {
+                document.getElementById('currentSheetTitle').textContent = `${activeSheet.parent} - ${activeSheet.name}`;
+            }
+        }
+
+        function switchSheet(sheetId) {
+            if (state.currentSheetId === sheetId) return;
+            state.currentSheetId = sheetId;
+            state.currentPage = 1;
+            state.sortColumn = null;     
+            state.sortDirection = 'asc';
+            
+            clearSearch(false); 
+            renderNav();
+            updateCurrentSheetTitle();
+            loadSheetData(sheetId);
+        }
+
+        function refreshCurrentData() {
+            localStorage.removeItem(`sheet_data_${state.currentSheetId}`);
+            localStorage.removeItem(`sheet_time_${state.currentSheetId}`);
+            loadSheetData(state.currentSheetId);
+        }
+
+        async function loadSheetData(sheetId) {
+            setLoadingText('Mengambil & Merapikan Data...');
+            showLoading(true);
+            const sheet = sheetsConfig.find(s => s.id === sheetId);
+            if (!sheet) {
+                showLoading(false);
+                return;
+            }
+            
+            try {
+                const cacheTime = localStorage.getItem(`sheet_time_${sheetId}`);
+                const cachedData = localStorage.getItem(`sheet_data_${sheetId}`);
+                const now = new Date().getTime();
+
+                if (cachedData && cacheTime && (now - cacheTime < CACHE_EXPIRY_MS)) {
+                    const parsedData = JSON.parse(cachedData);
+                    state.headers = parsedData.headers;
+                    state.data = parsedData.data;
+                    applyFiltersAndRender();
+                    showLoading(false);
+                    return;
+                }
+
+                const response = await fetch(sheet.url);
+                if (!response.ok) throw new Error('Gagal mengambil data dari Google Sheets');
+                
+                const csvText = await response.text();
+                
+                Papa.parse(csvText, {
+                    header: false,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        const cleaned = cleanMessyData(results.data);
+                        state.headers = cleaned.headers;
+                        state.data = cleaned.data;
+                        
+                        try {
+                            localStorage.setItem(`sheet_data_${sheetId}`, JSON.stringify(cleaned));
+                            localStorage.setItem(`sheet_time_${sheetId}`, new Date().getTime());
+                        } catch (e) {
+                            console.warn("Storage Quota Exceeded. Membersihkan cache lama.");
+                            localStorage.clear();
+                        }
+
+                        applyFiltersAndRender();
+                        showLoading(false);
+                    },
+                    error: function(error) {
+                        console.error("CSV Parse Error:", error);
+                        showLoading(false);
+                        alert("Gagal membaca struktur data CSV.");
+                    }
+                });
+            } catch (error) {
+                console.error("Network Error:", error);
+                showLoading(false);
+                alert("Gagal mengambil data. Pastikan perangkat terhubung internet dan link Sheet aktif.");
+            }
+        }
+
+        function cleanMessyData(rawArray) {
+            if (!rawArray || rawArray.length === 0) return { headers: [], data: [] };
+
+            let maxColsCount = 0;
+            let headerRowIndex = 0;
+            
+            const searchLimit = Math.min(15, rawArray.length);
+            for (let i = 0; i < searchLimit; i++) {
+                const validCells = rawArray[i].filter(cell => cell && cell.toString().trim() !== '').length;
+                if (validCells > maxColsCount) {
+                    maxColsCount = validCells;
+                    headerRowIndex = i;
+                }
+            }
+
+            let rawHeaders = rawArray[headerRowIndex];
+            let cleanHeaders = [];
+            let headerCounts = {};
+
+            rawHeaders.forEach((h, idx) => {
+                let hName = h ? h.toString().trim() : `Kolom_${idx + 1}`;
+                if (hName === '') hName = `Kolom_${idx + 1}`;
+                
+                if (headerCounts[hName]) {
+                    headerCounts[hName]++;
+                    hName = `${hName} (${headerCounts[hName]})`;
+                } else {
+                    headerCounts[hName] = 1;
+                }
+                cleanHeaders.push(hName);
+            });
+
+            let cleanDataList = [];
+            for (let i = headerRowIndex + 1; i < rawArray.length; i++) {
+                const row = rawArray[i];
+                
+                const isRowEmpty = row.every(cell => !cell || cell.toString().trim() === '');
+                if (isRowEmpty) continue;
+
+                let rowData = {};
+                cleanHeaders.forEach((headerName, idx) => {
+                    rowData[headerName] = row[idx] !== undefined && row[idx].toString().trim() !== '' ? row[idx] : '-';
+                });
+                cleanDataList.push(rowData);
+            }
+
+            return { headers: cleanHeaders, data: cleanDataList };
+        }
+
+        function exportToExcel() {
+            if (!state.filteredData || state.filteredData.length === 0) {
+                alert("Tidak ada data untuk diexport!");
+                return;
+            }
+
+            const exportData = state.filteredData.map((row, index) => {
+                let obj = { "No": index + 1 };
+                state.headers.forEach(h => {
+                    obj[h] = row[h] !== undefined ? row[h] : '-';
+                });
+                return obj;
+            });
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            
+            const activeSheet = sheetsConfig.find(s => s.id === state.currentSheetId);
+            const sheetName = activeSheet ? `${activeSheet.parent}_${activeSheet.name}`.replace(/[^a-zA-Z0-9]/g, "_").substring(0, 30) : "Data_Export";
+            
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Sheet1");
+            XLSX.writeFile(workbook, `${sheetName}_${new Date().toISOString().slice(0,10)}.xlsx`);
+        }
+
+        function setupSearchListener() {
+            const searchInput = document.getElementById('searchInput');
+            const clearBtn = document.getElementById('clearSearchBtn');
+
+            searchInput.addEventListener('input', (e) => {
+                state.searchQuery = e.target.value.toLowerCase();
+                clearBtn.classList.toggle('hidden', state.searchQuery.length === 0);
+                state.currentPage = 1;
+                applyFiltersAndRender();
+            });
+        }
+
+        function clearSearch(renderAfter = true) {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+            state.searchQuery = '';
+            const clearBtn = document.getElementById('clearSearchBtn');
+            if (clearBtn) clearBtn.classList.add('hidden');
+            state.currentPage = 1;
+            if (renderAfter) applyFiltersAndRender();
+        }
+
+        function changePerPage(value) {
+            state.perPage = value === 'all' ? 'all' : parseInt(value);
+            state.currentPage = 1;
+            applyFiltersAndRender();
+        }
+
+        function changePage(newPage) {
+            const totalItems = state.filteredData.length;
+            const effectivePerPage = state.perPage === 'all' ? (totalItems || 1) : state.perPage;
+            const totalPages = state.perPage === 'all' ? 1 : Math.ceil(totalItems / effectivePerPage);
+            
+            if (newPage < 1 || newPage > totalPages) return;
+            state.currentPage = newPage;
+            renderView();
+        }
+
+        function sortData(column) {
+            if (state.sortColumn === column) {
+                if (state.sortDirection === 'asc') {
+                    state.sortDirection = 'desc';
+                } else if (state.sortDirection === 'desc') {
+                    state.sortColumn = null;
+                    state.sortDirection = 'asc';
+                }
+            } else {
+                state.sortColumn = column;
+                state.sortDirection = 'asc';
+            }
+
+            applyFiltersAndRender();
+        }
+
+        function applyFiltersAndRender() {
+            if (state.searchQuery.trim() === '') {
+                state.filteredData = [...state.data];
+            } else {
+                state.filteredData = state.data.filter(row => {
+                    return Object.values(row).some(val => 
+                        String(val).toLowerCase().includes(state.searchQuery)
+                    );
+                });
+            }
+
+            if (state.sortColumn) {
+                state.filteredData.sort((a, b) => {
+                    let valA = a[state.sortColumn] !== undefined ? a[state.sortColumn] : '';
+                    let valB = b[state.sortColumn] !== undefined ? b[state.sortColumn] : '';
+
+                    if (valA === '-') valA = '';
+                    if (valB === '-') valB = '';
+
+                    let numA = parseFloat(valA);
+                    let numB = parseFloat(valB);
+
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return state.sortDirection === 'asc' ? numA - numB : numB - numA;
+                    }
+
+                    let strA = String(valA).toLowerCase();
+                    let strB = String(valB).toLowerCase();
+
+                    if (strA < strB) return state.sortDirection === 'asc' ? -1 : 1;
+                    if (strA > strB) return state.sortDirection === 'asc' ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            renderView();
+        }
+
+        function renderView() {
+            const emptyState = document.getElementById('emptyState');
+            
+            if (state.filteredData.length === 0) {
+                emptyState.classList.remove('hidden');
+                document.getElementById('tableHeader').innerHTML = '';
+                document.getElementById('tableBody').innerHTML = '';
+                document.getElementById('cardContainer').innerHTML = '';
+                renderPagination(0, 0);
+                return;
+            } else {
+                emptyState.classList.add('hidden');
+            }
+
+            const totalItems = state.filteredData.length;
+            const effectivePerPage = state.perPage === 'all' ? totalItems : state.perPage;
+            const startIndex = (state.currentPage - 1) * effectivePerPage;
+            const endIndex = state.perPage === 'all' ? totalItems : Math.min(startIndex + effectivePerPage, totalItems);
+            const paginatedItems = state.filteredData.slice(startIndex, endIndex);
+
+            renderTableHeader();
+            renderTableBody(paginatedItems);
+            renderCardView(paginatedItems);
+            renderPagination(startIndex + 1, endIndex);
+        }
+
+        function renderTableHeader() {
+            const thead = document.getElementById('tableHeader');
+            let html = '<tr>';
+            html += `<th scope="col" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-100 border-b w-12 shadow-sm">No</th>`;
+            
+            state.headers.forEach(h => {
+                let iconClass = "fa-sort text-gray-300 ml-1";
+                if (state.sortColumn === h) {
+                    iconClass = state.sortDirection === 'asc' ? "fa-sort-up text-blue-600 ml-1" : "fa-sort-down text-blue-600 ml-1";
+                }
+                
+                html += `
+                    <th scope="col" onclick="sortData('${h}')" class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-100 border-b shadow-sm whitespace-nowrap cursor-pointer hover:bg-gray-200 transition select-none">
+                        <div class="flex items-center justify-between">
+                            <span>${h}</span>
+                            <i class="fas ${iconClass}"></i>
+                        </div>
+                    </th>
+                `;
+            });
+            html += '</tr>';
+            thead.innerHTML = html;
+        }
+
+        // Fungsi pembantu untuk memformat nilai sel dengan hyperlink Krisbow pada Article Code jika brand KRISBOW
+        function formatCellContent(headerName, cellVal, row) {
+            if (cellVal === '-' || !cellVal) return '-';
+
+            const cleanHeader = headerName.trim().toUpperCase();
+            if (cleanHeader === 'ARTICLE CODE' || cleanHeader === 'ARTICLE_CODE' || cleanHeader === 'KODE ARTIKEL') {
+                // Cek apakah kolom BRAND bernilai KRISBOW (atau jika tidak ada kolom brand, asumsikan dari nama sheet/default)
+                let brandVal = '';
+                for (let k in row) {
+                    if (k.trim().toUpperCase() === 'BRAND' || k.trim().toUpperCase() === 'MERK') {
+                        brandVal = String(row[k]).trim().toUpperCase();
+                        break;
+                    }
+                }
+
+                // Jika kolom brand tidak ada atau bernilai KRISBOW
+                const isKrisbowBrand = brandVal === '' || brandVal.includes('KRISBOW');
+
+                if (isKrisbowBrand) {
+                    const articleCode = String(cellVal).trim();
+                    const productLink = `https://www.krisbow.com/product/filter?q=${encodeURIComponent(articleCode)}&page=1`;
+                    return `<a href="${productLink}" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 hover:underline font-semibold inline-flex items-center gap-1" title="Buka produk ${articleCode} di Krisbow.com">${escapeHtml(articleCode)} <i class="fas fa-external-link-alt text-[10px]"></i></a>`;
+                }
+            }
+
+            return escapeHtml(String(cellVal));
+        }
+
+        function renderTableBody(items) {
+            const tbody = document.getElementById('tableBody');
+            let html = '';
+            const totalItems = state.filteredData.length;
+            const effectivePerPage = state.perPage === 'all' ? totalItems : state.perPage;
+            const startNumber = (state.currentPage - 1) * effectivePerPage + 1;
+
+            items.forEach((row, index) => {
+                html += `<tr class="hover:bg-blue-50 transition-colors duration-150 group">`;
+                html += `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">${startNumber + index}</td>`;
+                
+                state.headers.forEach(h => {
+                    let cellVal = row[h];
+                    let formattedVal = formatCellContent(h, cellVal, row);
+                    let rawVal = cellVal !== undefined ? cellVal : '-';
+                    let displayVal = String(rawVal).length > 70 ? String(rawVal).substring(0,70) + '...' : formattedVal;
+                    
+                    html += `<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-800 border-l border-gray-100" title="${rawVal}">${displayVal}</td>`;
+                });
+                html += `</tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function renderCardView(items) {
+            const container = document.getElementById('cardContainer');
+            let html = '';
+            const totalItems = state.filteredData.length;
+            const effectivePerPage = state.perPage === 'all' ? totalItems : state.perPage;
+            const startNumber = (state.currentPage - 1) * effectivePerPage + 1;
+
+            items.forEach((row, index) => {
+                html += `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                    <div class="bg-gray-50 px-5 py-3 border-b border-gray-200 flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-md">#${startNumber + index}</span>
+                        </div>
+                    </div>
+                    <div class="p-5 flex flex-col gap-4">`;
+                
+                state.headers.forEach((h) => {
+                    let cellVal = row[h];
+                    let formattedVal = formatCellContent(h, cellVal, row);
+                    html += `
+                        <div class="flex flex-col border-b border-gray-50 pb-2 last:border-0 last:pb-0">
+                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">${h}</span>
+                            <span class="text-sm text-gray-800 break-words leading-relaxed">${formattedVal}</span>
+                        </div>
+                    `;
+                });
+                
+                html += `</div></div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderPagination(startNum, endNum) {
+            const totalItems = state.filteredData.length;
+            const effectivePerPage = state.perPage === 'all' ? (totalItems || 1) : state.perPage;
+            const totalPages = state.perPage === 'all' ? 1 : Math.ceil(totalItems / effectivePerPage);
+            
+            document.getElementById('pageStart').textContent = startNum;
+            document.getElementById('pageEnd').textContent = endNum;
+            document.getElementById('totalItems').textContent = totalItems;
+
+            document.getElementById('mobileCurrentPage').textContent = totalPages === 0 ? 0 : state.currentPage;
+            document.getElementById('mobileTotalPages').textContent = totalPages;
+            
+            const btnPrevMob = document.getElementById('btnPrevMobile');
+            const btnNextMob = document.getElementById('btnNextMobile');
+            btnPrevMob.disabled = state.currentPage === 1 || totalPages === 0;
+            btnNextMob.disabled = state.currentPage === totalPages || totalPages === 0;
+
+            const nav = document.getElementById('paginationControls');
+            let navHtml = '';
+
+            const isPrevDisabled = state.currentPage === 1 || totalPages === 0;
+            navHtml += `
+                <button onclick="changePage(${state.currentPage - 1})" ${isPrevDisabled ? 'disabled' : ''} class="relative inline-flex items-center px-3 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-chevron-left h-4 w-4 text-center leading-4"></i>
+                </button>
+            `;
+
+            let startPage = Math.max(1, state.currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4 && startPage > 1) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const isActive = i === state.currentPage;
+                const activeClass = isActive 
+                    ? "z-10 bg-blue-50 border-blue-500 text-blue-600 relative inline-flex items-center px-4 py-2 border text-sm font-bold" 
+                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50 relative inline-flex items-center px-4 py-2 border text-sm font-medium";
+                navHtml += `<button onclick="changePage(${i})" class="${activeClass}">${i}</button>`;
+            }
+
+            const isNextDisabled = state.currentPage === totalPages || totalPages === 0;
+            navHtml += `
+                <button onclick="changePage(${state.currentPage + 1})" ${isNextDisabled ? 'disabled' : ''} class="relative inline-flex items-center px-3 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fas fa-chevron-right h-4 w-4 text-center leading-4"></i>
+                </button>
+            `;
+
+            nav.innerHTML = navHtml;
+        }
+
+        function showLoading(show) {
+            const loader = document.getElementById('loadingIndicator');
+            if (show) {
+                loader.classList.remove('hidden');
+            } else {
+                loader.classList.add('hidden');
+            }
+        }
+
+        function setLoadingText(text) {
+            document.getElementById('loadingText').textContent = text;
+        }
+    </script>
+</body>
+</html>
