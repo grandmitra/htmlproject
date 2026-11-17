@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teori Kuda Mati - Animasi Interaktif Manajemen Organisasi</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+        h1, h2, h3, .font-display {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        /* Animasi Kustom untuk Adegan SVG */
+        @keyframes flyBuzz1 {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(12px, -10px) rotate(15deg); }
+            50% { transform: translate(-8px, -18px) rotate(-10deg); }
+            75% { transform: translate(-15px, -5px) rotate(5deg); }
+        }
+        @keyframes flyBuzz2 {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(-14px, -12px); }
+            66% { transform: translate(10px, -20px); }
+        }
+        @keyframes haloFloat {
+            0%, 100% { transform: translateY(0px); opacity: 0.85; }
+            50% { transform: translateY(-6px); opacity: 1; }
+        }
+        @keyframes whipSwing {
+            0%, 100% { transform: rotate(-25deg); }
+            45% { transform: rotate(35deg); }
+            55% { transform: rotate(28deg); }
+        }
+        @keyframes shockwave {
+            0% { transform: scale(0.5); opacity: 1; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+        @keyframes riderSwap {
+            0% { transform: translateX(-80px); opacity: 0; }
+            20% { transform: translateX(0px); opacity: 1; }
+            75% { transform: translateX(0px) rotate(0deg); opacity: 1; }
+            100% { transform: translateX(90px) rotate(25deg); opacity: 0; }
+        }
+        @keyframes talkBob {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+        @keyframes moneyDrop {
+            0% { transform: translateY(-140px) rotate(0deg); opacity: 0; }
+            20% { opacity: 1; }
+            85% { transform: translateY(15px) rotate(180deg); opacity: 1; }
+            100% { transform: translateY(25px) rotate(200deg); opacity: 0; }
+        }
+        @keyframes confettiFall {
+            0% { transform: translateY(-60px) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(120px) rotate(360deg); opacity: 0; }
+        }
+        @keyframes walkAway {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(220px); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        }
+
+        .anim-fly-1 { animation: flyBuzz1 2.2s infinite ease-in-out; }
+        .anim-fly-2 { animation: flyBuzz2 1.8s infinite ease-in-out; }
+        .anim-halo { animation: haloFloat 2.5s infinite ease-in-out; }
+        .anim-whip { transform-origin: 185px 175px; animation: whipSwing 0.9s infinite ease-in-out; }
+        .anim-shock { transform-origin: 310px 230px; animation: shockwave 0.9s infinite ease-out; }
+        .anim-rider { animation: riderSwap 3.2s infinite ease-in-out; }
+        .anim-talk { animation: talkBob 0.7s infinite ease-in-out; }
+        .anim-money-1 { animation: moneyDrop 1.8s infinite linear; }
+        .anim-money-2 { animation: moneyDrop 2.1s 0.5s infinite linear; }
+        .anim-money-3 { animation: moneyDrop 1.6s 1.0s infinite linear; }
+        .anim-confetti { animation: confettiFall 2.2s infinite linear; }
+        .anim-walk { animation: walkAway 4s forwards ease-in-out; }
+        .pulse-danger { animation: pulseGlow 2s infinite; }
+
+        /* Smooth transition untuk tombol tab */
+        .scenario-btn {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .scenario-btn:hover {
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-amber-200 selection:text-amber-900">
+
+    <!-- Navbar / Top Bar -->
+    <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 shadow-md">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center font-extrabold text-xl shadow-inner">
+                    <i class="fa-solid fa-horse"></i>
+                </div>
+                <div>
+                    <span class="text-xs uppercase tracking-wider text-amber-400 font-bold block">Studi Manajemen & Organisasi</span>
+                    <h1 class="text-lg sm:text-xl font-extrabold leading-tight">Teori Kuda Mati <span class="text-slate-400 font-normal text-sm hidden sm:inline">(The Dead Horse Theory)</span></h1>
+                </div>
+            </div>
+
+            <!-- Kontrol Auto-Play & Reset -->
+            <div class="flex items-center gap-2">
+                <button id="btnAutoPlay" onclick="toggleAutoPlay()" class="px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-2 transition shadow">
+                    <i id="autoPlayIcon" class="fa-solid fa-play"></i>
+                    <span id="autoPlayText">Putar Otomatis</span>
+                </button>
+                <button onclick="triggerRationalSolution()" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold flex items-center gap-2 transition shadow" title="Ambil Keputusan Rasional">
+                    <i class="fa-solid fa-person-walking-arrow-right"></i>
+                    <span class="hidden md:inline">Turun dari Kuda</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-12">
+
+        <!-- Hero / Pengantar Pepatah -->
+        <section class="bg-gradient-to-br from-amber-50 via-white to-orange-50 border border-amber-200/80 rounded-2xl p-6 sm:p-8 shadow-sm relative overflow-hidden">
+            <div class="max-w-3xl relative z-10">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-bold mb-3">
+                    <i class="fa-solid fa-feather-pointed"></i> Kebijaksanaan Kuno Suku Dakota
+                </div>
+                <blockquote class="text-xl sm:text-2xl md:text-3xl font-extrabold text-slate-900 leading-snug mb-3">
+                    “Jika Anda menyadari bahwa Anda sedang menunggangi seekor kuda yang sudah mati, strategi terbaik adalah <span class="text-amber-600 underline decoration-wavy decoration-amber-400">turun</span>.”
+                </blockquote>
+                <p class="text-slate-600 text-sm sm:text-base leading-relaxed">
+                    Dalam dunia korporasi, pemerintahan, maupun proyek bisnis, "kuda mati" melambangkan strategi yang gagal, produk usang, atau sistem yang tidak lagi relevan. Namun, alih-alih mengakuinya dan berhenti, organisasi sering kali terjebak dalam <strong>6 respon absurd</strong> berikut ini.
+                </p>
+            </div>
+            <!-- Dekorasi Latar -->
+            <div class="hidden lg:flex absolute right-8 top-1/2 -translate-y-1/2 text-amber-200/50 text-9xl pointer-events-none">
+                <i class="fa-solid fa-skull"></i>
+            </div>
+        </section>
+
+        <!-- BAGIAN 1: PANGGUNG ANIMASI INTERAKTIF RESPON ABSURD -->
+        <section class="space-y-6">
+            <div class="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                <div>
+                    <span class="text-xs font-bold uppercase tracking-wider text-rose-600">Simulasi Interaktif</span>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Respon Absurd yang Sering Dilakukan Organisasi</h2>
+                    <p class="text-slate-600 text-sm sm:text-base mt-1">Klik salah satu skenario di bawah untuk melihat bagaimana organisasi berusaha "menghidupkan kembali" kuda yang mati.</p>
+                </div>
+
+                <!-- Indikator Pemborosan Anggaran (Sunk Cost Meter) -->
+                <div class="bg-white border border-slate-200 rounded-xl p-3.5 shadow-sm min-w-[250px]">
+                    <div class="flex justify-between items-center text-xs font-bold mb-1.5">
+                        <span class="text-slate-500 uppercase"><i class="fa-solid fa-fire text-rose-500 mr-1"></i> Anggaran Terbuang</span>
+                        <span id="wastedAmount" class="text-rose-600 font-extrabold text-sm">Rp 500 Juta</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                        <div id="wastedBar" class="bg-gradient-to-r from-amber-500 to-rose-600 h-2.5 rounded-full transition-all duration-500" style="width: 15%;"></div>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px] text-slate-400 mt-1">
+                        <span>Status Kuda: <strong id="horseStatusText" class="text-rose-600">100% Mati</strong></span>
+                        <span id="actionCounter">Upaya ke-1</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid Utama: Panggung Animasi + Panel Kontrol -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+                <!-- Panggung SVG Animasi (7 Kolom di Desktop) -->
+                <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-md overflow-hidden flex flex-col">
+                    <!-- Header Panggung -->
+                    <div class="bg-slate-800 text-white px-4 py-2.5 flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                            <span class="ml-2 font-semibold text-slate-300" id="stageHeaderTitle">Adegan 1: Membeli Cambuk Lebih Kuat</span>
+                        </div>
+                        <span class="px-2 py-0.5 rounded bg-slate-700 text-amber-300 font-mono text-[11px]" id="soundEffectBadge">*CTAR! CTAR!*</span>
+                    </div>
+
+                    <!-- Kanvas SVG Interaktif -->
+                    <div class="relative w-full aspect-[16/10] bg-gradient-to-b from-sky-100 via-sky-50 to-amber-50 select-none overflow-hidden">
+                        <svg id="animationStage" viewBox="0 0 640 400" class="w-full h-full">
+                            <defs>
+                                <!-- Gradien Tanah -->
+                                <linearGradient id="groundGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#d97706" stop-opacity="0.25"/>
+                                    <stop offset="100%" stop-color="#92400e" stop-opacity="0.45"/>
+                                </linearGradient>
+                                <!-- Gradien Kuda -->
+                                <linearGradient id="horseGrad" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="0%" stop-color="#854d0e"/>
+                                    <stop offset="100%" stop-color="#713f12"/>
+                                </linearGradient>
+                            </defs>
+
+                            <!-- Latar Langit & Awan -->
+                            <g opacity="0.6">
+                                <circle cx="90" cy="65" r="24" fill="#ffffff"/>
+                                <circle cx="115" cy="60" r="30" fill="#ffffff"/>
+                                <circle cx="142" cy="68" r="22" fill="#ffffff"/>
+
+                                <circle cx="490" cy="55" r="20" fill="#ffffff"/>
+                                <circle cx="515" cy="50" r="26" fill="#ffffff"/>
+                                <circle cx="538" cy="58" r="18" fill="#ffffff"/>
+                            </g>
+
+                            <!-- Garis Cakrawala & Tanah -->
+                            <rect x="0" y="295" width="640" height="105" fill="url(#groundGrad)"/>
+                            <line x1="0" y1="295" x2="640" y2="295" stroke="#b45309" stroke-width="2" stroke-opacity="0.4"/>
+
+                            <!-- Bayangan Kuda di Tanah -->
+                            <ellipse cx="320" cy="308" rx="145" ry="16" fill="#451a03" opacity="0.22"/>
+
+                            <!-- ========================================== -->
+                            <!-- SUBJEK UTAMA: KUDA MATI (SELALU TERGELETAK) -->
+                            <!-- ========================================== -->
+                            <g id="deadHorseGroup">
+                                <!-- Halo Malaikat di atas kepala kuda -->
+                                <ellipse cx="425" cy="185" rx="22" ry="6" fill="none" stroke="#facc15" stroke-width="3.5" class="anim-halo"/>
+
+                                <!-- Ekor Kuda -->
+                                <path d="M 195 265 Q 155 270 150 295 Q 170 290 198 278 Z" fill="#451a03"/>
+
+                                <!-- Kaki Belakang (Terjulur Kaku) -->
+                                <rect x="215" y="280" width="14" height="32" rx="5" transform="rotate(65 215 280)" fill="#713f12"/>
+                                <rect x="235" y="285" width="14" height="32" rx="5" transform="rotate(75 235 285)" fill="#5c330d"/>
+
+                                <!-- Badan Kuda (Terbaring Datar) -->
+                                <rect x="200" y="242" width="165" height="58" rx="28" fill="url(#horseGrad)"/>
+                                <!-- Pelana Kuda -->
+                                <path d="M 260 242 Q 285 235 310 242 L 305 268 Q 285 274 265 268 Z" fill="#dc2626"/>
+                                <rect x="278" y="268" width="10" height="22" fill="#991b1b"/>
+
+                                <!-- Kaki Depan (Terjulur Kaku) -->
+                                <rect x="340" y="282" width="14" height="34" rx="5" transform="rotate(-70 340 282)" fill="#713f12"/>
+                                <rect x="355" y="287" width="14" height="34" rx="5" transform="rotate(-80 355 287)" fill="#5c330d"/>
+
+                                <!-- Leher & Kepala Kuda Tergeletak di Tanah -->
+                                <path d="M 345 250 L 395 262 L 388 292 L 338 282 Z" fill="#854d0e"/>
+                                <!-- Kepala -->
+                                <rect x="380" y="255" width="68" height="42" rx="18" transform="rotate(12 380 255)" fill="#854d0e"/>
+                                <!-- Moncong -->
+                                <ellipse cx="445" cy="285" rx="16" ry="14" fill="#a16207"/>
+                                <!-- Telinga Lunglai -->
+                                <ellipse cx="392" cy="252" rx="7" ry="14" transform="rotate(-35 392 252)" fill="#713f12"/>
+
+                                <!-- Mata Huruf 'X' (Tanda Mati Kartun) -->
+                                <g stroke="#1e293b" stroke-width="3.5" stroke-linecap="round">
+                                    <line x1="406" y1="267" x2="416" y2="277"/>
+                                    <line x1="416" y1="267" x2="406" y2="277"/>
+                                </g>
+
+                                <!-- Lidah Menjulur Keluar -->
+                                <path d="M 450 293 Q 465 305 455 312 Q 445 314 442 297 Z" fill="#fb7185" stroke="#e11d48" stroke-width="1.5"/>
+
+                                <!-- Lalat Berdengung di Sekitar Kuda -->
+                                <g class="anim-fly-1">
+                                    <circle cx="310" cy="215" r="3" fill="#1e293b"/>
+                                    <ellipse cx="308" cy="212" rx="4" ry="2" fill="#94a3b8" opacity="0.7"/>
+                                </g>
+                                <g class="anim-fly-2">
+                                    <circle cx="395" cy="225" r="2.8" fill="#1e293b"/>
+                                    <ellipse cx="397" cy="222" rx="4" ry="2" fill="#94a3b8" opacity="0.7"/>
+                                </g>
+                            </g>
+
+                            <!-- ==================================================== -->
+                            <!-- LAYER ADEGAN 1: MEMBELI CAMBUK YANG LEBIH KUAT       -->
+                            <!-- ==================================================== -->
+                            <g id="scene-0" class="scene-layer">
+                                <!-- Manajer Marah di Kiri -->
+                                <g transform="translate(135, 165)">
+                                    <!-- Badan Jas -->
+                                    <rect x="10" y="45" width="42" height="65" rx="10" fill="#1e293b"/>
+                                    <!-- Dasi Merah -->
+                                    <polygon points="31,48 27,75 31,82 35,75" fill="#ef4444"/>
+                                    <!-- Kaki -->
+                                    <rect x="15" y="110" width="12" height="25" fill="#0f172a"/>
+                                    <rect x="35" y="110" width="12" height="25" fill="#0f172a"/>
+                                    <!-- Kepala Merah Padam (Emosi) -->
+                                    <circle cx="31" cy="24" r="20" fill="#fca5a5"/>
+                                    <!-- Alis Marah -->
+                                    <line x1="25" y1="18" x2="35" y2="22" stroke="#7f1d1d" stroke-width="3"/>
+                                    <circle cx="36" cy="24" r="2.5" fill="#1e293b"/>
+                                    <!-- Mulut Berteriak -->
+                                    <ellipse cx="38" cy="34" rx="6" ry="5" fill="#7f1d1d"/>
+                                </g>
+
+                                <!-- Cambuk Super Canggih / Berduri Beranimasi -->
+                                <g class="anim-whip">
+                                    <!-- Gagang Cambuk Laser -->
+                                    <rect x="180" y="170" width="35" height="8" rx="4" fill="#ef4444"/>
+                                    <!-- Tali Cambuk -->
+                                    <path d="M 215 174 Q 265 130 315 225" fill="none" stroke="#dc2626" stroke-width="5" stroke-linecap="round"/>
+                                    <!-- Efek Percikan Listrik -->
+                                    <polygon points="315,225 305,212 325,215 312,238" fill="#facc15"/>
+                                </g>
+
+                                <!-- Efek Gelombang Kejut -->
+                                <circle cx="310" cy="230" r="22" fill="none" stroke="#ef4444" stroke-width="3" class="anim-shock"/>
+
+                                <!-- Balon Teks -->
+                                <g transform="translate(55, 85)">
+                                    <rect x="0" y="0" width="185" height="46" rx="12" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+                                    <text x="92" y="20" text-anchor="middle" font-size="11" font-weight="800" fill="#dc2626">"CAMBUK TURBO X-9000!"</text>
+                                    <text x="92" y="35" text-anchor="middle" font-size="10" fill="#475569">Ayo lari lebih cepat, pemalas!</text>
+                                </g>
+                            </g>
+
+                            <!-- ==================================================== -->
+                            <!-- LAYER ADEGAN 2: MENGGANTI PENUNGGANG KUDA            -->
+                            <!-- ==================================================== -->
+                            <g id="scene-1" class="scene-layer hidden">
+                                <!-- Papan Penunjuk SDM / HR -->
+                                <g transform="translate(65, 115)">
+                                    <rect x="0" y="0" width="135" height="52" rx="10" fill="#1e293b"/>
+                                    <text x="67" y="21" text-anchor="middle" font-size="10" font-weight="700" fill="#38bdf8">DIVISI SDM / HR</text>
+                                    <text x="67" y="37" text-anchor="middle" font-size="10" fill="#f8fafc">"Pecat joki lama, rekrut baru!"</text>
+                                </g>
+
+                                <!-- Panah Rotasi -->
+                                <path d="M 225 145 Q 285 110 345 145" fill="none" stroke="#0284c7" stroke-width="3" stroke-dasharray="6,4"/>
+                                <polygon points="345,145 335,137 338,150" fill="#0284c7"/>
+
+                                <!-- Penunggang Baru yang Terus Berganti di Atas Kuda Mati -->
+                                <g class="anim-rider">
+                                    <g transform="translate(262, 162)">
+                                        <!-- Topi Koboi / Helm Proyek -->
+                                        <ellipse cx="24" cy="10" rx="22" ry="5" fill="#f59e0b"/>
+                                        <path d="M 12 10 Q 24 -4 36 10 Z" fill="#d97706"/>
+                                        <!-- Kepala -->
+                                        <circle cx="24" cy="22" r="14" fill="#fed7aa"/>
+                                        <circle cx="28" cy="20" r="2" fill="#1e293b"/>
+                                        <!-- Badan -->
+                                        <rect x="10" y="36" width="28" height="44" rx="8" fill="#2563eb"/>
+                                        <!-- Kaki Menunggang -->
+                                        <rect x="16" y="65" width="12" height="28" rx="4" fill="#1e3a8a"/>
+                                        <!-- Tag Nama "JOKI BARU" -->
+                                        <rect x="2" y="45" width="44" height="14" rx="3" fill="#ffffff"/>
+                                        <text x="24" y="55" text-anchor="middle" font-size="8" font-weight="800" fill="#1e293b">MANAJER BARU</text>
+                                    </g>
+                                </g>
+                            </g>
+
+                            <!-- ==================================================== -->
+                            <!-- LAYER ADEGAN 3: MEMBENTUK KOMITE & RAPAT EVALUASI    -->
+                            <!-- ==================================================== -->
+                            <g id="scene-2" class="scene-layer hidden">
+                                <!-- Konsultan 1 (Kiri) dengan Kaca Pembesar -->
+                                <g transform="translate(125, 175)" class="anim-talk">
+                                    <rect x="10" y="42" width="38" height="62" rx="8" fill="#334155"/>
+                                    <rect x="14" y="104" width="11" height="22" fill="#0f172a"/>
+                                    <rect x="33" y="104" width="11" height="22" fill="#0f172a"/>
+                                    <circle cx="29" cy="22" r="18" fill="#fde68a"/>
+                                    <!-- Kacamata -->
+                                    <circle cx="34" cy="20" r="5" fill="none" stroke="#1e293b" stroke-width="2"/>
+                                    <!-- Kaca Pembesar -->
+                                    <circle cx="62" cy="55" r="14" fill="#bae6fd" fill-opacity="0.5" stroke="#475569" stroke-width="3"/>
+                                    <line x1="48" y1="65" x2="38" y2="75" stroke="#475569" stroke-width="4"/>
+                                </g>
+
+                                <!-- Konsultan 2 (Kanan) dengan Papan Klip & Grafik -->
+                                <g transform="translate(475, 175)" class="anim-talk">
+                                    <rect x="10" y="42" width="38" height="62" rx="8" fill="#475569"/>
+                                    <rect x="14" y="104" width="11" height="22" fill="#0f172a"/>
+                                    <rect x="33" y="104" width="11" height="22" fill="#0f172a"/>
+                                    <circle cx="29" cy="22" r="18" fill="#fed7aa"/>
+                                    <!-- Clipboard -->
+                                    <rect x="-12" y="45" width="24" height="32" rx="2" fill="#ffffff" stroke="#94a3b8" stroke-width="2"/>
+                                    <line x1="-8" y1="53" x2="8" y2="53" stroke="#ef4444" stroke-width="2"/>
+                                    <line x1="-8" y1="60" x2="6" y2="60" stroke="#64748b" stroke-width="2"/>
+                                </g>
+
+                                <!-- Balon Diskusi Rapat -->
+                                <g transform="translate(185, 72)">
+                                    <rect x="0" y="0" width="270" height="62" rx="14" fill="#ffffff" stroke="#6366f1" stroke-width="2.5"/>
+                                    <text x="135" y="22" text-anchor="middle" font-size="11" font-weight="800" fill="#4f46e5">KOMITE EVALUASI KUDA (RAPAT KE-42)</text>
+                                    <text x="135" y="38" text-anchor="middle" font-size="10" fill="#334155">"Indikasi awal menunjukkan penurunan mobilitas."</text>
+                                    <text x="135" y="52" text-anchor="middle" font-size="10" font-weight="700" fill="#0f172a">"Kesimpulan: Perlu studi banding 6 bulan lagi!"</text>
+                                </g>
+                            </g>
+
+                            <!-- ==================================================== -->
+                            <!-- LAYER ADEGAN 4: PELATIHAN MENUNGGANG KUDA MATI       -->
+                            <!-- ==================================================== -->
+                            <g id="scene-3" class="scene-layer hidden">
+                                <!-- Papan Tulis / Proyektor di Latar -->
+                                <g transform="translate(135, 65)">
+                                    <!-- Kaki Papan -->
+                                    <line x1="40" y1="125" x2="25" y2="175" stroke="#475569" stroke-width="4"/>
+                                    <line x1="210" y1="125" x2="225" y2="175" stroke="#475569" stroke-width="4"/>
+                                    <!-- Layar Whiteboard -->
+                                    <rect x="15" y="10" width="220" height="120" rx="8" fill="#ffffff" stroke="#334155" stroke-width="4"/>
+                                    <rect x="15" y="10" width="220" height="26" rx="4" fill="#0d9488"/>
+                                    <text x="125" y="27" text-anchor="middle" font-size="10" font-weight="800" fill="#ffffff">SERTIFIKASI: MENUNGGANG KUDA MATI 101</text>
+                                    <!-- Isi Slide -->
+                                    <text x="30" y="55" font-size="10" font-weight="700" fill="#0f172a">Modul 1: Mindset Positif Terhadap Kuda Kaku</text>
+                                    <text x="30" y="73" font-size="10" fill="#475569">Modul 2: Teknik Postur Duduk Tanpa Gerakan</text>
+                                    <text x="30" y="91" font-size="10" fill="#475569">Modul 3: KPI & Motivasi Kuda Non-Aktif</text>
+                                    <rect x="30" y="102" width="110" height="18" rx="4" fill="#ccfbf1"/>
+                                    <text x="85" y="114" text-anchor="middle" font-size="9" font-weight="800" fill="#0f766e">BIAYA: Rp 150 Juta / Batch</text>
+                                </g>
+
+                                <!-- Trainer / Motivator -->
+                                <g transform="translate(80, 175)" class="anim-talk">
+                                    <rect x="10" y="42" width="36" height="62" rx="8" fill="#0d9488"/>
+                                    <rect x="14" y="104" width="10" height="22" fill="#0f172a"/>
+                                    <rect x="32" y="104" width="10" height="22" fill="#0f172a"/>
+                                    <circle cx="28" cy="22" r="17" fill="#fed7aa"/>
+                                    <!-- Tongkat Penunjuk -->
+                                    <line x1="42" y1="55" x2="95" y2="15" stroke="#b45309" stroke-width="3"/>
+                                </g>
+                            </g>
+
+                            <!-- ==================================================== -->
+                            <!-- LAYER ADEGAN 5: REBRANDING / GANTI NAMA ISTILAH      -->
+                            <!-- ==================================================== -->
+                            <g id="scene-4" class="scene-layer hidden">
+                                <!-- Konfeti Perayaan -->
+                                <g class="anim-confetti">
+                                    <rect x="180" y="60" width="8" height="8" fill="#ec4899"/>
+                                    <rect x="260" y="40" width="8" height="8" fill="#eab308"/>
+                                    <rect x="350" y="55" width="8" height="8" fill="#3b82f6"/>
+                                    <rect x="430" y="45" width="8" height="8" fill="#10b981"/>
+                                </g>
+
+                                <!-- Spanduk Mengkilap Menutupi Sebagian Kuda -->
+                                <g transform="translate(185, 195)">
+                                    <!-- Tiang Spanduk -->
+                                    <rect x="10" y="0" width="6" height="105" fill="#64748b"/>
+                                    <rect x="244" y="0" width="6" height="105" fill="#64748b"/>
+                                    <!-- Kain Banner -->
+                                    <rect x="5" y="5" width="250" height="64" rx="10" fill="#7c3aed" stroke="#ddd6fe" stroke-width="3"/>
+                                    <text x="130" y="26" text-anchor="middle" font-size="9" font-weight="700" fill="#ddd6fe">✨ REBRANDING & TRANSFORMASI ✨</text>
+                                    <text x="130" y="44" text-anchor="middle" font-size="13" font-weight="800" fill="#ffffff">"KUDA MASA DEPAN 2.0"</text>
+                                    <text x="130" y="59" text-anchor="middle" font-size="9" fill="#fde047">(Bukan Mati, Hanya Mode Hemat Energi!)</text>
+                                </g>
+
+                                <!-- Tim Marketing Bersorak -->
+                                <g transform="translate(475, 180)">
+                                    <rect x="10" y="42" width="36" height="62" rx="8" fill="#db2777"/>
+                                    <rect x="14" y="104" width="10" height="22" fill="#0f172a"/>
+                                    <rect x="32" y="104" width="10" height="22" fill="#0f172a"/>
+                                    <circle cx="28" cy="22" r="17" fill="#fed7aa"/>
+                                    <!-- Megafon -->
+                                    <polygon points="8,35 -14,25 -14,45" fill="#facc15"/>
+                                </g>
+                            </g>
+
+                            <!-- ==================================================== -->
+                            <!-- LAYER ADEGAN 6: MENGUCURKAN LEBIH BANYAK ANGGARAN    -->
+                            <!-- ==================================================== -->
+                            <g id="scene-5" class="scene-layer hidden">
+                                <!-- Hujan Kantong Uang & Lembaran Uang -->
+                                <g class="anim-money-1">
+                                    <circle cx="230" cy="140" r="18" fill="#16a34a"/>
+                                    <text x="230" y="145" text-anchor="middle" font-size="14" font-weight="800" fill="#ffffff">Rp</text>
+                                    <rect x="340" y="110" width="28" height="14" rx="2" fill="#22c55e"/>
+                                </g>
+                                <g class="anim-money-2">
+                                    <circle cx="310" cy="120" r="20" fill="#15803d"/>
+                                    <text x="310" y="126" text-anchor="middle" font-size="15" font-weight="800" fill="#ffffff">$$$</text>
+                                    <rect x="260" y="95" width="28" height="14" rx="2" fill="#4ade80"/>
+                                </g>
+                                <g class="anim-money-3">
+                                    <circle cx="385" cy="135" r="18" fill="#16a34a"/>
+                                    <text x="385" y="140" text-anchor="middle" font-size="14" font-weight="800" fill="#ffffff">Rp</text>
+                                </g>
+
+                                <!-- Tumpukan Karung Uang di Sekitar Kuda -->
+                                <g transform="translate(170, 255)">
+                                    <ellipse cx="22" cy="28" rx="20" ry="18" fill="#15803d"/>
+                                    <text x="22" y="33" text-anchor="middle" font-size="12" font-weight="800" fill="#bbf7d0">APBN+</text>
+                                </g>
+                                <g transform="translate(435, 255)">
+                                    <ellipse cx="24" cy="28" rx="22" ry="18" fill="#166534"/>
+                                    <text x="24" y="33" text-anchor="middle" font-size="11" font-weight="800" fill="#bbf7d0">DANA DARURAT</text>
+                                </g>
+
+                                <!-- Balon Komentar CFO / Manajemen -->
+                                <g transform="translate(175, 55)">
+                                    <rect x="0" y="0" width="290" height="48" rx="12" fill="#ffffff" stroke="#16a34a" stroke-width="2.5"/>
+                                    <text x="145" y="20" text-anchor="middle" font-size="11" font-weight="800" fill="#15803d">"SUNTIK DANA TALANGAN Rp 10 MILIAR!"</text>
+                                    <text x="145" y="36" text-anchor="middle" font-size="10" fill="#334155">Masalahnya cuma kurang modal, bukan kudanya yang mati!</text>
+                                </g>
+                            </g>
+
+                            <!-- ==================================================== -->
+                            <!-- LAYER SOLUSI RASIONAL: TURUN DARI KUDA               -->
+                            <!-- ==================================================== -->
+                            <g id="scene-rational" class="scene-layer hidden">
+                                <!-- Tim Berjalan Meninggalkan Kuda Mati Menuju Kendaraan Baru -->
+                                <g class="anim-walk">
+                                    <g transform="translate(260, 175)">
+                                        <rect x="10" y="42" width="36" height="62" rx="8" fill="#059669"/>
+                                        <rect x="14" y="104" width="10" height="22" fill="#0f172a"/>
+                                        <rect x="32" y="104" width="10" height="22" fill="#0f172a"/>
+                                        <circle cx="28" cy="22" r="17" fill="#fed7aa"/>
+                                        <!-- Senyum Lega -->
+                                        <path d="M 24 26 Q 29 31 34 26" fill="none" stroke="#1e293b" stroke-width="2"/>
+                                    </g>
+                                </g>
+
+                                <!-- Banner Keputusan Bijak -->
+                                <g transform="translate(145, 65)">
+                                    <rect x="0" y="0" width="350" height="62" rx="14" fill="#ecfdf5" stroke="#10b981" stroke-width="3"/>
+                                    <text x="175" y="24" text-anchor="middle" font-size="13" font-weight="800" fill="#047857">✅ KEPUTUSAN RASIONAL: TURUN DARI KUDA!</text>
+                                    <text x="175" y="43" text-anchor="middle" font-size="11" fill="#065f46">Mengakui kegagalan lebih awal menghemat waktu, biaya, & energi</text>
+                                </g>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- Deskripsi Penjelasan Adegan Aktif -->
+                    <div class="p-5 bg-slate-50 border-t border-slate-200 flex-1 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1.5">
+                                <span id="sceneTag" class="px-2.5 py-0.5 rounded-md bg-rose-100 text-rose-700 text-xs font-bold">Respon #1</span>
+                                <h3 id="sceneTitle" class="text-lg font-extrabold text-slate-900">Membeli Cambuk yang Lebih Kuat</h3>
+                            </div>
+                            <p id="sceneDesc" class="text-slate-600 text-sm leading-relaxed">
+                                Organisasi berinvestasi pada alat baru yang lebih mahal, menekan tim lebih keras, atau menambah jam kerja lembur—padahal sistem utamanya memang sudah tidak berfungsi lagi.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Panel Pilihan 6 Respon Absurd (5 Kolom di Desktop) -->
+                <div class="lg:col-span-5 space-y-2.5">
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400 px-1 mb-1">Pilih 6 Respon Absurd Organisasi:</div>
+
+                    <button onclick="selectScenario(0)" id="btn-scenario-0" class="scenario-btn w-full text-left p-3.5 rounded-xl border-2 border-rose-500 bg-rose-50/70 shadow-sm flex items-start gap-3.5">
+                        <div class="w-9 h-9 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 font-bold text-sm mt-0.5">1</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-sm sm:text-base">Membeli cambuk yang lebih kuat</div>
+                            <div class="text-xs text-slate-500 mt-0.5">Menambah tekanan & alat mahal pada sistem yang mati.</div>
+                        </div>
+                    </button>
+
+                    <button onclick="selectScenario(1)" id="btn-scenario-1" class="scenario-btn w-full text-left p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 flex items-start gap-3.5">
+                        <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 font-bold text-sm mt-0.5">2</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-sm sm:text-base">Mengganti penunggang kuda</div>
+                            <div class="text-xs text-slate-500 mt-0.5">Mencari kambing hitam tanpa memperbaiki inti masalah.</div>
+                        </div>
+                    </button>
+
+                    <button onclick="selectScenario(2)" id="btn-scenario-2" class="scenario-btn w-full text-left p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 flex items-start gap-3.5">
+                        <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 font-bold text-sm mt-0.5">3</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-sm sm:text-base">Membentuk komite & rapat evaluasi</div>
+                            <div class="text-xs text-slate-500 mt-0.5">Terus meneliti kondisi kuda demi menunda keputusan pahit.</div>
+                        </div>
+                    </button>
+
+                    <button onclick="selectScenario(3)" id="btn-scenario-3" class="scenario-btn w-full text-left p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 flex items-start gap-3.5">
+                        <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 font-bold text-sm mt-0.5">4</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-sm sm:text-base">Pelatihan menunggang kuda mati</div>
+                            <div class="text-xs text-slate-500 mt-0.5">Mengirim pegawai ikut training untuk hal yang sia-sia.</div>
+                        </div>
+                    </button>
+
+                    <button onclick="selectScenario(4)" id="btn-scenario-4" class="scenario-btn w-full text-left p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 flex items-start gap-3.5">
+                        <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 font-bold text-sm mt-0.5">5</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-sm sm:text-base">Mengganti nama / rebranding istilah</div>
+                            <div class="text-xs text-slate-500 mt-0.5">Mengemas kegagalan dengan jargon baru yang positif.</div>
+                        </div>
+                    </button>
+
+                    <button onclick="selectScenario(5)" id="btn-scenario-5" class="scenario-btn w-full text-left p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 flex items-start gap-3.5">
+                        <div class="w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 font-bold text-sm mt-0.5">6</div>
+                        <div>
+                            <div class="font-bold text-slate-900 text-sm sm:text-base">Mengucurkan lebih banyak anggaran</div>
+                            <div class="text-xs text-slate-500 mt-0.5">Menyuntik dana tambahan ke lubang hitam proyek gagal.</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- BAGIAN 2: PENYEBAB UTAMA TERJADINYA FENOMENA INI -->
+        <section class="pt-4 space-y-6">
+            <div class="text-center max-w-2xl mx-auto">
+                <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Analisis Psikologi Organisasi</span>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-1">Penyebab Utama Terjadinya Fenomena Ini</h2>
+                <p class="text-slate-600 text-sm sm:text-base mt-2">Mengapa orang-orang cerdas di dalam organisasi tetap mempertahankan proyek yang jelas-jelas sudah mati?</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Kartu 1: Sunk Cost Fallacy -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition group relative overflow-hidden">
+                    <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-sack-dollar"></i>
+                    </div>
+                    <div class="text-xs font-bold text-amber-600 uppercase tracking-wider mb-1">Bias Kognitif #1</div>
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Sunk Cost Fallacy</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-4">
+                        Keengganan untuk berhenti hanya karena merasa <strong>sudah terlalu banyak waktu, uang, atau tenaga</strong> yang diinvestasikan sebelumnya.
+                    </p>
+                    <div class="p-3 rounded-xl bg-amber-50/70 border border-amber-100 text-xs text-amber-900 italic">
+                        “Kita sudah habis Rp 5 Miliar di proyek ini, sayang sekali kalau dihentikan sekarang!”
+                    </div>
+                </div>
+
+                <!-- Kartu 2: Penyangkalan (Denial) -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition group relative overflow-hidden">
+                    <div class="w-12 h-12 rounded-xl bg-sky-100 text-sky-600 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-eye-slash"></i>
+                    </div>
+                    <div class="text-xs font-bold text-sky-600 uppercase tracking-wider mb-1">Mekanisme Pertahanan #2</div>
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Penyangkalan (Denial)</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-4">
+                        Pemimpin atau manajemen <strong>menolak menerima kenyataan</strong> objektif di lapangan bahwa strategi atau proyek tersebut memang gagal total.
+                    </p>
+                    <div class="p-3 rounded-xl bg-sky-50/70 border border-sky-100 text-xs text-sky-900 italic">
+                        “Ini bukan gagal, pasar saja yang belum siap menerima inovasi brilian kita.”
+                    </div>
+                </div>
+
+                <!-- Kartu 3: Faktor Ego dan Reputasi -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition group relative overflow-hidden">
+                    <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-xl mb-4 group-hover:scale-110 transition-transform">
+                        <i class="fa-solid fa-crown"></i>
+                    </div>
+                    <div class="text-xs font-bold text-rose-600 uppercase tracking-wider mb-1">Politik & Gengsi #3</div>
+                    <h3 class="text-xl font-extrabold text-slate-900 mb-2">Faktor Ego dan Reputasi</h3>
+                    <p class="text-slate-600 text-sm leading-relaxed mb-4">
+                        Rasa malu atau <strong>takut kehilangan muka</strong> jika harus mengakui kesalahan keputusan di hadapan publik, pemegang saham, atau atasan.
+                    </p>
+                    <div class="p-3 rounded-xl bg-rose-50/70 border border-rose-100 text-xs text-rose-900 italic">
+                        “Kalau proyek unggulan saya ditutup, apa kata direksi dan bawahan saya nanti?”
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- BAGIAN 3: CALL TO ACTION SOLUSI RASIONAL -->
+        <section class="bg-slate-900 text-white rounded-2xl p-6 sm:p-8 shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
+            <div class="space-y-2 max-w-2xl">
+                <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold uppercase tracking-wider">Kesimpulan Strategis</span>
+                <h3 class="text-xl sm:text-2xl font-extrabold">Berani Menghentikan Proyek Mati Adalah Tanda Kepemimpinan Dewasa</h3>
+                <p class="text-slate-300 text-sm leading-relaxed">
+                    Turun dari kuda yang mati bukan berarti menyerah—melainkan membebaskan sumber daya terbaik Anda untuk menunggangi peluang baru yang masih hidup dan bertumbuh.
+                </p>
+            </div>
+            <button onclick="triggerRationalSolution()" class="shrink-0 px-6 py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm sm:text-base shadow-lg transition transform hover:scale-105 flex items-center gap-2.5">
+                <i class="fa-solid fa-circle-check text-lg"></i>
+                <span>Praktikkan: Turun dari Kuda!</span>
+            </button>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-white mt-12 py-6 text-center text-xs text-slate-500">
+        <p>Infografis Interaktif <strong>Teori Kuda Mati (The Dead Horse Theory)</strong> — Dirancang untuk edukasi manajemen perubahan & pengambilan keputusan strategis.</p>
+    </footer>
+
+    <!-- Logika JavaScript Interaktif -->
+    <script>
+        // Data 6 Skenario Respon Absurd Organisasi
+        const scenarios = [
+            {
+                id: 0,
+                tag: "Respon #1",
+                headerTitle: "Adegan 1: Membeli Cambuk Lebih Kuat",
+                title: "Membeli cambuk yang lebih kuat",
+                sound: "*CTAR! CTAR!*",
+                desc: "Organisasi berinvestasi pada peralatan baru yang lebih mahal, menekan tim lebih keras, atau menambah jam kerja lembur—padahal sistem utamanya memang sudah tidak berfungsi lagi.",
+                costAdded: 500 // dalam juta
+            },
+            {
+                id: 1,
+                tag: "Respon #2",
+                headerTitle: "Adegan 2: Mengganti Penunggang Kuda",
+                title: "Mengganti penunggang kuda",
+                sound: "*NEXT! PECAT!*",
+                desc: "Mencari kambing hitam dengan memecat manajer atau mengganti penanggung jawab proyek berulang kali, tanpa pernah memperbaiki akar masalah bahwa strategi dasarnya memang keliru.",
+                costAdded: 750
+            },
+            {
+                id: 2,
+                tag: "Respon #3",
+                headerTitle: "Adegan 3: Membentuk Komite & Rapat Evaluasi",
+                title: "Membentuk komite, tim studi, atau rapat evaluasi",
+                sound: "*BLAH BLAH...*",
+                desc: "Membentuk tim task-force, menyewa konsultan mahal, dan menggelar rapat maraton berbulan-bulan hanya untuk menyimpulkan bahwa kuda tersebut memang sedang tidak bergerak.",
+                costAdded: 1200
+            },
+            {
+                id: 3,
+                tag: "Respon #4",
+                headerTitle: "Adegan 4: Pelatihan Menunggang Kuda Mati",
+                title: "Mengirim pegawai ikut pelatihan menunggang kuda mati",
+                sound: "*CATAT! CATAT!*",
+                desc: "Mengadakan seminar motivasi dan workshop peningkatan kapasitas SDM agar pegawai lebih terampil mengoperasikan sistem atau produk yang sebenarnya sudah usang.",
+                costAdded: 450
+            },
+            {
+                id: 4,
+                tag: "Respon #5",
+                headerTitle: "Adegan 5: Rebranding & Ganti Istilah",
+                title: "Mengganti nama atau menata ulang istilah",
+                sound: "*TADA! 2.0!*",
+                desc: "Mengubah istilah 'kuda mati' menjadi 'Kuda Masa Depan 2.0' atau 'Tantangan Mobilitas Baru' agar terdengar positif di laporan tahunan, meski realitasnya nol besar.",
+                costAdded: 900
+            },
+            {
+                id: 5,
+                tag: "Respon #6",
+                headerTitle: "Adegan 6: Mengucurkan Anggaran Tambahan",
+                title: "Mengucurkan lebih banyak anggaran dan sumber daya",
+                sound: "*CHA-CHING!*",
+                desc: "Menyuntikkan dana talangan besar-besaran dengan keyakinan keliru bahwa proyek tersebut gagal hanya karena kekurangan modal, bukan karena konsepnya yang mati.",
+                costAdded: 3500
+            }
+        ];
+
+        let currentIndex = 0;
+        let totalWastedMillion = 500;
+        let actionCount = 1;
+        let autoPlayInterval = null;
+
+        /**
+         * Memilih skenario respon absurd berdasarkan indeks (0 - 5)
+         */
+        function selectScenario(index, isFromAuto = false) {
+            // Jika user klik manual saat auto-play berjalan, hentikan auto-play agar tidak mengganggu
+            if (!isFromAuto && autoPlayInterval) {
+                stopAutoPlay();
+            }
+
+            currentIndex = index;
+            const data = scenarios[index];
+
+            // Sembunyikan semua layer SVG adegan
+            document.querySelectorAll('.scene-layer').forEach(layer => {
+                layer.classList.add('hidden');
+            });
+
+            // Tampilkan layer SVG yang dipilih
+            const activeLayer = document.getElementById(`scene-${index}`);
+            if (activeLayer) {
+                activeLayer.classList.remove('hidden');
+            }
+
+            // Perbarui teks informasi panggung
+            document.getElementById('stageHeaderTitle').textContent = data.headerTitle;
+            document.getElementById('soundEffectBadge').textContent = data.sound;
+            document.getElementById('sceneTag').textContent = data.tag;
+            document.getElementById('sceneTag').className = "px-2.5 py-0.5 rounded-md bg-rose-100 text-rose-700 text-xs font-bold";
+            document.getElementById('sceneTitle').textContent = data.title;
+            document.getElementById('sceneDesc').textContent = data.desc;
+
+            // Perbarui tampilan tombol aktif di panel kanan
+            for (let i = 0; i < scenarios.length; i++) {
+                const btn = document.getElementById(`btn-scenario-${i}`);
+                const badge = btn.querySelector('div:first-child');
+                if (i === index) {
+                    btn.className = "scenario-btn w-full text-left p-3.5 rounded-xl border-2 border-rose-500 bg-rose-50/70 shadow-sm flex items-start gap-3.5";
+                    badge.className = "w-9 h-9 rounded-lg bg-rose-600 text-white flex items-center justify-center shrink-0 font-bold text-sm mt-0.5";
+                } else {
+                    btn.className = "scenario-btn w-full text-left p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 flex items-start gap-3.5";
+                    badge.className = "w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 font-bold text-sm mt-0.5";
+                }
+            }
+
+            // Tambahkan statistik pemborosan anggaran
+            actionCount++;
+            totalWastedMillion += data.costAdded;
+            updateWasteMeter(false);
+        }
+
+        /**
+         * Memicu adegan solusi rasional ("Turun dari Kuda")
+         */
+        function triggerRationalSolution() {
+            if (autoPlayInterval) {
+                stopAutoPlay();
+            }
+
+            // Sembunyikan semua layer
+            document.querySelectorAll('.scene-layer').forEach(layer => {
+                layer.classList.add('hidden');
+            });
+
+            // Tampilkan layer solusi rasional & restart animasi jalan
+            const rationalLayer = document.getElementById('scene-rational');
+            rationalLayer.classList.remove('hidden');
+            const walker = rationalLayer.querySelector('.anim-walk');
+            walker.style.animation = 'none';
+            walker.offsetHeight; /* trigger reflow */
+            walker.style.animation = null;
+
+            // Reset gaya tombol panel kanan
+            for (let i = 0; i < scenarios.length; i++) {
+                const btn = document.getElementById(`btn-scenario-${i}`);
+                const badge = btn.querySelector('div:first-child');
+                btn.className = "scenario-btn w-full text-left p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 flex items-start gap-3.5";
+                badge.className = "w-9 h-9 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 font-bold text-sm mt-0.5";
+            }
+
+            // Perbarui teks panggung ke mode solusi
+            document.getElementById('stageHeaderTitle').textContent = "Keputusan Bijak: Turun dari Kuda Mati";
+            document.getElementById('soundEffectBadge').textContent = "*LEGA & RASIONAL*";
+            document.getElementById('sceneTag').textContent = "Solusi Terbaik";
+            document.getElementById('sceneTag').className = "px-2.5 py-0.5 rounded-md bg-emerald-100 text-emerald-700 text-xs font-bold";
+            document.getElementById('sceneTitle').textContent = "Berhenti, Evaluasi Jujur, dan Pindah ke Strategi Baru";
+            document.getElementById('sceneDesc').textContent = "Organisasi mengakui kenyataan bahwa proyek lama sudah tidak relevan, menghentikan pemborosan anggaran, dan mengalihkan tim terbaiknya ke inovasi baru yang hidup.";
+
+            updateWasteMeter(true);
+
+            // Scroll halus ke panggung animasi agar pengguna melihat hasilnya
+            document.getElementById('animationStage').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        /**
+         * Memperbarui bar indikator pemborosan anggaran
+         */
+        function updateWasteMeter(isSaved) {
+            const amountEl = document.getElementById('wastedAmount');
+            const barEl = document.getElementById('wastedBar');
+            const statusEl = document.getElementById('horseStatusText');
+            const countEl = document.getElementById('actionCounter');
+
+            if (isSaved) {
+                amountEl.textContent = "Pemborosan Dihentikan!";
+                amountEl.className = "text-emerald-600 font-extrabold text-sm";
+                barEl.className = "bg-emerald-500 h-2.5 rounded-full transition-all duration-500";
+                barEl.style.width = "100%";
+                statusEl.textContent = "Ditinggalkan (Move On)";
+                statusEl.className = "text-emerald-600 font-bold";
+                countEl.textContent = "Selesai";
+            } else {
+                const formatted = totalWastedMillion >= 1000
+                    ? `Rp ${(totalWastedMillion / 1000).toFixed(1)} Miliar`
+                    : `Rp ${totalWastedMillion} Juta`;
+
+                amountEl.textContent = formatted;
+                amountEl.className = "text-rose-600 font-extrabold text-sm";
+                barEl.className = "bg-gradient-to-r from-amber-500 to-rose-600 h-2.5 rounded-full transition-all duration-500";
+
+                const percentage = Math.min(100, Math.round((totalWastedMillion / 10000) * 100));
+                barEl.style.width = `${Math.max(15, percentage)}%`;
+
+                statusEl.textContent = "100% Tetap Mati";
+                statusEl.className = "text-rose-600 font-bold";
+                countEl.textContent = `Upaya ke-${actionCount}`;
+            }
+        }
+
+        /**
+         * Toggle Mode Putar Otomatis (Auto-Play)
+         */
+        function toggleAutoPlay() {
+            if (autoPlayInterval) {
+                stopAutoPlay();
+            } else {
+                startAutoPlay();
+            }
+        }
+
+        function startAutoPlay() {
+            const btn = document.getElementById('btnAutoPlay');
+            const icon = document.getElementById('autoPlayIcon');
+            const text = document.getElementById('autoPlayText');
+
+            btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-500');
+            btn.classList.add('bg-amber-600', 'hover:bg-amber-500');
+            icon.className = "fa-solid fa-pause";
+            text.textContent = "Jeda Otomatis";
+
+            autoPlayInterval = setInterval(() => {
+                const nextIndex = (currentIndex + 1) % scenarios.length;
+                selectScenario(nextIndex, true);
+            }, 3400);
+        }
+
+        function stopAutoPlay() {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = null;
+
+            const btn = document.getElementById('btnAutoPlay');
+            const icon = document.getElementById('autoPlayIcon');
+            const text = document.getElementById('autoPlayText');
+
+            btn.classList.remove('bg-amber-600', 'hover:bg-amber-500');
+            btn.classList.add('bg-indigo-600', 'hover:bg-indigo-500');
+            icon.className = "fa-solid fa-play";
+            text.textContent = "Putar Otomatis";
+        }
+    </script>
+</body>
+</html>
