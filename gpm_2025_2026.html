@@ -172,33 +172,65 @@
         </aside>
 
         <!-- Main Content Area -->
-        <main class="flex-1 p-4 md:p-6 flex flex-col gap-6 overflow-y-auto bg-gray-50/50">
+        <main class="flex-1 p-4 md:p-6 flex flex-col gap-5 overflow-y-auto bg-gray-50/50">
             
-            <!-- Scorecards Row (6 Kartu termasuk Total QTY) -->
+            <!-- Scorecards Baris 1: Total & Rasio -->
             <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 shrink-0">
                 <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center">
-                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Jual</p>
+                    <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Jual</p>
                     <h3 class="text-lg xl:text-xl font-bold text-brand-text truncate" id="sc-total-jual">Rp 0</h3>
                 </div>
                 <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center">
-                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total QTY</p>
+                    <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider mb-1">Total QTY</p>
                     <h3 class="text-lg xl:text-xl font-bold text-brand-text truncate" id="sc-total-qty">0</h3>
                 </div>
                 <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center">
-                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Modal</p>
+                    <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Modal</p>
                     <h3 class="text-lg xl:text-xl font-bold text-brand-text truncate" id="sc-total-modal">Rp 0</h3>
                 </div>
                 <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center">
-                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Laba Kotor</p>
+                    <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider mb-1">Total Laba Kotor</p>
                     <h3 class="text-lg xl:text-xl font-bold text-brand-text truncate" id="sc-total-laba">Rp 0</h3>
                 </div>
                 <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center">
-                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">GPM</p>
+                    <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider mb-1">GPM</p>
                     <h3 class="text-lg xl:text-xl font-bold text-brand-primary truncate" id="sc-gpm">0%</h3>
                 </div>
                 <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center">
-                    <p class="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-1">Price Point</p>
+                    <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider mb-1">Price Point</p>
                     <h3 class="text-lg xl:text-xl font-bold text-brand-accent truncate" id="sc-price-point">Rp 0</h3>
+                </div>
+            </div>
+
+            <!-- Scorecards Baris 2: Rata-rata per Bulan -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 shrink-0">
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Rata-rata Jual / Bln</p>
+                        <span class="text-[10px] bg-brand-light text-brand-primary px-1.5 py-0.5 rounded font-medium month-count-badge">0 bln</span>
+                    </div>
+                    <h3 class="text-lg xl:text-xl font-bold text-brand-text truncate" id="sc-avg-jual">Rp 0</h3>
+                </div>
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Rata-rata QTY / Bln</p>
+                        <span class="text-[10px] bg-brand-light text-brand-primary px-1.5 py-0.5 rounded font-medium month-count-badge">0 bln</span>
+                    </div>
+                    <h3 class="text-lg xl:text-xl font-bold text-brand-text truncate" id="sc-avg-qty">0</h3>
+                </div>
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Rata-rata Modal / Bln</p>
+                        <span class="text-[10px] bg-brand-light text-brand-primary px-1.5 py-0.5 rounded font-medium month-count-badge">0 bln</span>
+                    </div>
+                    <h3 class="text-lg xl:text-xl font-bold text-brand-text truncate" id="sc-avg-modal">Rp 0</h3>
+                </div>
+                <div class="bg-brand-card p-4 rounded-xl border border-brand-border card-shadow flex flex-col justify-center relative overflow-hidden">
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider">Rata-rata Laba Kotor / Bln</p>
+                        <span class="text-[10px] bg-brand-light text-brand-primary px-1.5 py-0.5 rounded font-medium month-count-badge">0 bln</span>
+                    </div>
+                    <h3 class="text-lg xl:text-xl font-bold text-brand-accent truncate" id="sc-avg-laba">Rp 0</h3>
                 </div>
             </div>
 
@@ -281,13 +313,12 @@
 
         const CACHE_KEY = 'gmb_dashboard_parsed_v2';
         const CACHE_TIME_KEY = 'gmb_dashboard_cache_time_v2';
-        const CACHE_DURATION_MS = 6 * 60 * 60 * 1000; // 6 Jam agar tetap cepat saat dibuka berulang kali
+        const CACHE_DURATION_MS = 6 * 60 * 60 * 1000; // 6 Jam
 
         let rawData = [];
         let filteredData = [];
         let charts = {};
 
-        // State pilihan aktif untuk masing-masing slicer (agar tetap tersimpan meski daftar opsi difilter oleh kotak ketik)
         const slicerState = {
             tahun: ['All'],
             bulan: ['All'],
@@ -297,7 +328,6 @@
             consignment: ['All']
         };
 
-        // Menyimpan opsi valid terakhir untuk masing-masing slicer
         const validOptionsState = {
             tahun: [],
             bulan: [],
@@ -333,7 +363,6 @@
                     localStorage.setItem(CACHE_KEY, serialized);
                     localStorage.setItem(CACHE_TIME_KEY, payload.timestamp.toString());
                 } catch (e) {
-                    // Jika data melebihi kuota localStorage (~5MB), simpan otomatis ke IndexedDB
                     try {
                         const db = await this.openDB();
                         const tx = db.transaction(this.storeName, 'readwrite');
@@ -344,7 +373,6 @@
                 }
             },
             async getCache() {
-                // 1. Cek localStorage terlebih dahulu (paling cepat)
                 try {
                     const raw = localStorage.getItem(CACHE_KEY);
                     if (raw) {
@@ -355,7 +383,6 @@
                     }
                 } catch (e) {}
 
-                // 2. Cek IndexedDB jika tidak ada di localStorage
                 try {
                     const db = await this.openDB();
                     return await new Promise((resolve) => {
@@ -386,7 +413,6 @@
             }
         };
 
-        // URUTAN BULAN STANDARD
         const stdMonthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
         
         function normalizeMonth(monthStr) {
@@ -530,7 +556,6 @@
             setTimeout(() => loader.style.display = 'none', 300);
         }
 
-        // Helper pencocokan teks ketikan (mendukung pemisah koma, misal: "onda, amstard")
         function matchesSearchTerms(value, query) {
             if (!query || !query.trim()) return true;
             const terms = query.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0);
@@ -551,7 +576,6 @@
                 const select = document.getElementById(`slicer-${id}`);
                 const searchInput = document.getElementById(`search-${id}`);
 
-                // Event klik opsi di dalam select
                 select.addEventListener('mousedown', function(e) {
                     if (e.target.tagName === 'OPTION') {
                         e.preventDefault();
@@ -572,14 +596,12 @@
                     }
                 });
 
-                // Event mengetik di kotak pencarian filter
                 if (searchInput) {
                     searchInput.addEventListener('input', function() {
                         const isMonth = (id === 'bulan');
                         renderSelectOptions(id, validOptionsState[id], slicerState[id], isMonth, this.value);
                     });
 
-                    // Tekan Enter pada kotak pencarian Brand/lainnya untuk langsung memilih hasil ketikan
                     searchInput.addEventListener('keydown', function(e) {
                         if (e.key === 'Enter') {
                             e.preventDefault();
@@ -589,13 +611,11 @@
                 }
             });
 
-            // Tombol "Pilih" khusus Brand untuk langsung memilih semua brand yang cocok dengan ketikan (misal: "onda, amstard")
             const btnSelectMatchBrand = document.getElementById('select-match-brand');
             if (btnSelectMatchBrand) {
                 btnSelectMatchBrand.addEventListener('click', () => selectMatchingOptions('brand'));
             }
 
-            // Tombol Reset Semua Filter
             document.getElementById('btn-reset').addEventListener('click', () => {
                 slicerIds.forEach(id => {
                     slicerState[id] = ['All'];
@@ -606,7 +626,6 @@
             });
         }
 
-        // Memilih otomatis semua opsi yang sesuai dengan kata kunci ketikan
         function selectMatchingOptions(id) {
             const searchInput = document.getElementById(`search-${id}`);
             const query = searchInput ? searchInput.value : '';
@@ -641,7 +660,6 @@
                 combinedValues.sort();
             }
 
-            // Filter daftar tampilan berdasarkan kata kunci ketikan, tetapi tetap tampilkan item yang sedang terpilih
             const visibleValues = combinedValues.filter(val => 
                 selectedValues.includes(val) || matchesSearchTerms(val, searchQuery)
             );
@@ -662,7 +680,6 @@
             updateSlicerBadge(id, selectedValues);
         }
 
-        // Fungsi Inti Cascading Filter Strict
         function applyFilters() {
             let fTahun = slicerState.tahun;
             let fBulan = slicerState.bulan;
@@ -694,7 +711,6 @@
             validOptionsState.brand = validBrand;
             validOptionsState.consignment = validCons;
 
-            // Bersihkan pilihan yang tidak lagi valid akibat filter lain
             slicerState.tahun = fTahun.filter(v => v === 'All' || validTahun.includes(v)); if (slicerState.tahun.length === 0) slicerState.tahun = ['All'];
             slicerState.bulan = fBulan.filter(v => v === 'All' || validBulan.includes(v)); if (slicerState.bulan.length === 0) slicerState.bulan = ['All'];
             slicerState.departemen = fDept.filter(v => v === 'All' || validDept.includes(v)); if (slicerState.departemen.length === 0) slicerState.departemen = ['All'];
@@ -702,7 +718,6 @@
             slicerState.brand = fBrand.filter(v => v === 'All' || validBrand.includes(v)); if (slicerState.brand.length === 0) slicerState.brand = ['All'];
             slicerState.consignment = fCons.filter(v => v === 'All' || validCons.includes(v)); if (slicerState.consignment.length === 0) slicerState.consignment = ['All'];
 
-            // Render ulang masing-masing select sambil mempertahankan kata kunci pencarian yang sedang diketik
             renderSelectOptions('tahun', validTahun, slicerState.tahun, false, document.getElementById('search-tahun').value);
             renderSelectOptions('bulan', validBulan, slicerState.bulan, true, document.getElementById('search-bulan').value);
             renderSelectOptions('departemen', validDept, slicerState.departemen, false, document.getElementById('search-departemen').value);
@@ -710,7 +725,6 @@
             renderSelectOptions('brand', validBrand, slicerState.brand, false, document.getElementById('search-brand').value);
             renderSelectOptions('consignment', validCons, slicerState.consignment, false, document.getElementById('search-consignment').value);
 
-            // Re-assign variabel setelah pembersihan
             fTahun = slicerState.tahun;
             fBulan = slicerState.bulan;
             fDept = slicerState.departemen;
@@ -743,22 +757,46 @@
 
         function updateScorecards() {
             let totalAmount = 0, totalProfit = 0, totalQty = 0;
+            const uniqueMonths = new Set();
 
             filteredData.forEach(row => {
                 totalAmount += row.TOTAL_AMOUNT;
                 totalProfit += row.PROFIT_AMOUNT;
                 totalQty += row.TOTAL_QTY;
+                if (row.TAHUN && row.BULAN) {
+                    uniqueMonths.add(`${row.TAHUN}-${row.BULAN}`);
+                }
             });
 
+            const totalModal = totalAmount - totalProfit;
+            const monthCount = uniqueMonths.size;
+
+            // Update Scorecard Total (Baris 1)
             document.getElementById('sc-total-jual').innerText = formatRp(totalAmount);
             document.getElementById('sc-total-qty').innerText = formatQty(totalQty);
-            let totalModal = totalAmount - totalProfit;
             document.getElementById('sc-total-modal').innerText = formatRp(totalModal);
             document.getElementById('sc-total-laba').innerText = formatRp(totalProfit);
-            let gpm = totalAmount > 0 ? (totalProfit / totalAmount) : 0;
+            
+            const gpm = totalAmount > 0 ? (totalProfit / totalAmount) : 0;
             document.getElementById('sc-gpm').innerText = formatPercent(gpm);
-            let pricePoint = totalQty > 0 ? (totalAmount / totalQty) : 0;
+            
+            const pricePoint = totalQty > 0 ? (totalAmount / totalQty) : 0;
             document.getElementById('sc-price-point').innerText = formatRp(pricePoint);
+
+            // Update Scorecard Rata-rata per Bulan (Baris 2)
+            const avgJual = monthCount > 0 ? (totalAmount / monthCount) : 0;
+            const avgQty = monthCount > 0 ? (totalQty / monthCount) : 0;
+            const avgModal = monthCount > 0 ? (totalModal / monthCount) : 0;
+            const avgLaba = monthCount > 0 ? (totalProfit / monthCount) : 0;
+
+            document.getElementById('sc-avg-jual').innerText = formatRp(avgJual);
+            document.getElementById('sc-avg-qty').innerText = formatQty(avgQty);
+            document.getElementById('sc-avg-modal').innerText = formatRp(avgModal);
+            document.getElementById('sc-avg-laba').innerText = formatRp(avgLaba);
+
+            document.querySelectorAll('.month-count-badge').forEach(el => {
+                el.innerText = `${monthCount} bln`;
+            });
         }
 
         function renderTable() {
