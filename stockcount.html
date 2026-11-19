@@ -107,52 +107,62 @@
 
     <!-- Header / Top Navbar -->
     <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md">
-        <div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-2">
-            <div class="flex items-center gap-2.5">
-                <div class="bg-blue-600 p-2 rounded-xl shadow-inner">
-                    <i data-lucide="scan-barcode" class="w-6 h-6 text-white"></i>
+        <div class="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="bg-blue-600 p-2 rounded-xl shadow-inner shrink-0">
+                    <i data-lucide="scan-barcode" class="w-5 h-5 sm:w-6 sm:h-6 text-white"></i>
                 </div>
-                <div>
-                    <h1 class="font-bold text-base sm:text-lg leading-tight tracking-tight flex items-center gap-1.5">
+                <div class="min-w-0">
+                    <h1 class="font-bold text-sm sm:text-lg leading-tight tracking-tight flex items-center gap-1.5 truncate">
                         StockCount <span class="text-blue-400">Pro</span>
                     </h1>
-                    <p class="text-[11px] text-slate-400 hidden sm:block">Sistem Stock Opname & Audit Inventaris</p>
+                    <p class="text-[11px] text-emerald-400 flex items-center gap-1.5 font-medium">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block"></span>
+                        <span>Online &bull; Cloud Ready</span>
+                    </p>
                 </div>
             </div>
 
-            <!-- Kontrol Suara & Navigasi Tab Utama -->
-            <div class="flex items-center gap-1.5 sm:gap-2">
-                <button onclick="toggleSound()" id="btn-sound" title="Suara Beep Scan" class="p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 text-xs font-medium">
+            <!-- Kontrol Suara, Navigasi Tab Utama & Cloud -->
+            <div class="flex items-center gap-1.5 sm:gap-2 shrink-0">
+                <button onclick="toggleSound()" id="btn-sound" title="Suara Beep Scan" class="p-2 sm:p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1.5 text-xs font-medium">
                     <i data-lucide="volume-2" id="icon-sound" class="w-4 h-4 text-emerald-400"></i>
                     <span class="hidden md:inline" id="label-sound">Suara Aktif</span>
                 </button>
 
-                <button onclick="switchTab('count')" id="nav-count" class="px-3 py-2 rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-sm">
+                <button onclick="switchTab('count')" id="nav-count" class="px-2.5 sm:px-3 py-2 rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-sm">
                     <i data-lucide="clipboard-check" class="w-4 h-4"></i>
                     <span>Hitung</span>
                 </button>
 
-                <button onclick="switchTab('master')" id="nav-master" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
+                <button onclick="switchTab('master')" id="nav-master" class="px-2.5 sm:px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
                     <i data-lucide="database" class="w-4 h-4"></i>
                     <span>Master <span id="badge-master-count" class="ml-0.5 px-1.5 py-0.2 bg-slate-700 text-[10px] rounded-full">0</span></span>
+                </button>
+
+                <button onclick="toggleTopBlock()" id="btn-cloud-toggle" title="Cloud & Sync / Panel Atas" class="p-2 sm:p-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 transition flex items-center gap-1 text-xs font-medium">
+                    <i data-lucide="cloud" class="w-4 h-4"></i>
                 </button>
             </div>
         </div>
 
-        <!-- Bar Pemilihan Sesi (Lokasi / Rak / Batch) -->
-        <div class="bg-slate-800/90 border-t border-slate-700/80 px-4 py-2.5">
+        <!-- Bar Pemilihan Sesi (Lokasi / Rak / Batch) + Tombol Collapse/Unhide -->
+        <div class="bg-slate-800/95 border-t border-slate-700/80 px-3 sm:px-4 py-2">
             <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2">
-                <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+                <div class="flex items-center gap-2 flex-1 min-w-[180px]">
                     <i data-lucide="map-pin" class="w-4 h-4 text-blue-400 shrink-0"></i>
-                    <select id="session-selector" onchange="changeSession(this.value)" class="bg-slate-900 border border-slate-700 text-white text-sm rounded-xl px-3 py-1.5 w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                    <select id="session-selector" onchange="changeSession(this.value)" class="bg-slate-900 border border-slate-700 text-white text-xs sm:text-sm rounded-xl px-2.5 py-1.5 w-full max-w-[210px] sm:max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium truncate">
                         <!-- Diisi oleh JS -->
                     </select>
+                    <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 shrink-0">
+                        Draft Lokal
+                    </span>
                 </div>
 
                 <div class="flex items-center gap-1.5">
                     <button onclick="openSessionModal('create')" class="px-2.5 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs font-medium flex items-center gap-1 transition" title="Sesi Baru">
                         <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-                        <span>Sesi Baru</span>
+                        <span class="hidden xs:inline sm:inline">Sesi Baru</span>
                     </button>
                     <button onclick="openSessionModal('edit')" class="p-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 transition" title="Ubah Nama Sesi">
                         <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
@@ -160,59 +170,101 @@
                     <button onclick="confirmDeleteSession()" class="p-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/40 transition" title="Hapus Sesi Ini">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                     </button>
+
+                    <!-- Tombol Collapse / Unhide Panel Atas -->
+                    <button onclick="toggleTopBlock()" id="btn-toggle-top-panel" class="ml-1 px-2.5 py-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-100 border border-slate-600 text-xs font-semibold flex items-center gap-1 transition">
+                        <i data-lucide="chevron-up" id="icon-toggle-panel" class="w-3.5 h-3.5 text-blue-400"></i>
+                        <span id="label-toggle-panel">Sembunyikan</span>
+                    </button>
                 </div>
             </div>
         </div>
     </header>
 
     <!-- MAIN CONTENT CONTAINER -->
-    <main class="flex-1 max-w-5xl w-full mx-auto px-4 py-5 space-y-5">
+    <main class="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-4 py-4 sm:py-5 space-y-4 sm:space-y-5">
 
         <!-- ========================================== -->
         <!-- TAB 1: HALAMAN HITUNG STOK (STOCK COUNT)   -->
         <!-- ========================================== -->
-        <div id="view-count" class="space-y-5">
+        <div id="view-count" class="space-y-4 sm:space-y-5">
             
-            <!-- Dashboard Ringkasan Statistik -->
-            <section class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
-                    <div class="flex items-center justify-between text-slate-500 mb-1">
-                        <span class="text-xs font-medium">Total SKU</span>
-                        <i data-lucide="layers" class="w-4 h-4 text-blue-500"></i>
+            <!-- BLOK COLLAPSIBLE (Gambar 1: Cloud Sync + 4 Kartu Statistik) -->
+            <!-- Secara default tersembunyi (collapsed) pada layar HP agar langsung tampil posisi Gambar 2 -->
+            <div id="collapsible-top-block" class="space-y-4 transition-all duration-300">
+                
+                <!-- Kartu Sinkronisasi Cloud / Master Data Google Sheets -->
+                <section class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h2 class="text-sm font-bold text-slate-800">Master Data Google Sheets</h2>
+                                <span class="sm:hidden inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-800">
+                                    Draft Lokal
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-0.5" id="cloud-sync-subtitle">
+                                <span id="cloud-master-count">0</span> SKU lokal &bull; <span id="last-sync-label">Belum pernah sync cloud</span>
+                            </p>
+                        </div>
                     </div>
-                    <div class="text-2xl font-extrabold text-slate-800" id="stat-total-sku">0</div>
-                    <div class="text-[11px] text-slate-400 mt-0.5">Jenis barang dihitung</div>
-                </div>
 
-                <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
-                    <div class="flex items-center justify-between text-slate-500 mb-1">
-                        <span class="text-xs font-medium">Total Kuantitas</span>
-                        <i data-lucide="package-check" class="w-4 h-4 text-indigo-500"></i>
+                    <div class="flex items-center gap-2">
+                        <button onclick="simulateCloudSync('pull')" class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl border border-blue-200 bg-blue-50/50 hover:bg-blue-100/70 text-blue-600 text-xs font-semibold flex items-center justify-center gap-1.5 transition">
+                            <i data-lucide="cloud-download" class="w-4 h-4"></i>
+                            <span>Sync Master</span>
+                        </button>
+                        <button onclick="simulateCloudSync('push')" class="flex-1 sm:flex-none px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm transition">
+                            <i data-lucide="send" class="w-4 h-4"></i>
+                            <span>Kirim Hasil SO</span>
+                        </button>
                     </div>
-                    <div class="text-2xl font-extrabold text-indigo-600" id="stat-total-qty">0</div>
-                    <div class="text-[11px] text-slate-400 mt-0.5">Total unit fisik</div>
-                </div>
+                </section>
 
-                <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
-                    <div class="flex items-center justify-between text-slate-500 mb-1">
-                        <span class="text-xs font-medium">Sesuai (Match)</span>
-                        <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i>
+                <!-- Dashboard Ringkasan Statistik -->
+                <section class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <div class="flex items-center justify-between text-slate-500 mb-1">
+                            <span class="text-xs font-medium">Total SKU</span>
+                            <i data-lucide="layers" class="w-4 h-4 text-blue-500"></i>
+                        </div>
+                        <div class="text-2xl font-extrabold text-slate-800" id="stat-total-sku">0</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">Jenis barang dihitung</div>
                     </div>
-                    <div class="text-2xl font-extrabold text-emerald-600" id="stat-match">0</div>
-                    <div class="text-[11px] text-slate-400 mt-0.5">Sama dengan sistem</div>
-                </div>
 
-                <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
-                    <div class="flex items-center justify-between text-slate-500 mb-1">
-                        <span class="text-xs font-medium">Selisih (Variance)</span>
-                        <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <div class="flex items-center justify-between text-slate-500 mb-1">
+                            <span class="text-xs font-medium">Total Fisik</span>
+                            <i data-lucide="package-check" class="w-4 h-4 text-indigo-500"></i>
+                        </div>
+                        <div class="text-2xl font-extrabold text-indigo-600" id="stat-total-qty">0</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">Total unit aktual</div>
                     </div>
-                    <div class="text-2xl font-extrabold text-amber-600" id="stat-variance">0</div>
-                    <div class="text-[11px] text-slate-400 mt-0.5">Kurang / Lebih / Baru</div>
-                </div>
-            </section>
 
-            <!-- Area Input & Pemindaian Barcode -->
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <div class="flex items-center justify-between text-slate-500 mb-1">
+                            <span class="text-xs font-medium">Sesuai (Match)</span>
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i>
+                        </div>
+                        <div class="text-2xl font-extrabold text-emerald-600" id="stat-match">0</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">Sama dengan sistem</div>
+                    </div>
+
+                    <div class="bg-white p-3.5 rounded-2xl border border-slate-200/80 shadow-sm">
+                        <div class="flex items-center justify-between text-slate-500 mb-1">
+                            <span class="text-xs font-medium">Selisih (Variance)</span>
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>
+                        </div>
+                        <div class="text-2xl font-extrabold text-amber-600" id="stat-variance">0</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">Kurang / Lebih / Baru</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Area Input & Pemindaian Barcode (Default Posisi Utama di Layar HP) -->
             <section class="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-5 space-y-4">
                 <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
                     <div class="flex items-center gap-2">
@@ -280,10 +332,10 @@
                             </div>
                         </div>
 
-                        <!-- Input Kuantitas (Muncul atau bisa diatur) -->
+                        <!-- Input Kuantitas -->
                         <div class="flex items-center gap-2">
                             <div id="qty-input-group" class="flex items-center bg-slate-50 border border-slate-300 rounded-xl overflow-hidden w-full sm:w-36">
-                                <button type="button" onclick="adjustInputQty(-1)" class="px-3 py-3 hover:bg-slate-200 text-slate-700 font-bold transition">-</button>
+                                <button type="button" onclick="adjustInputQty(-1)" class="px-3.5 py-3 hover:bg-slate-200 text-slate-700 font-bold transition">-</button>
                                 <input 
                                     type="number" 
                                     id="qty-input" 
@@ -292,7 +344,7 @@
                                     step="any"
                                     class="w-full text-center bg-transparent font-bold text-slate-800 text-base focus:outline-none"
                                 >
-                                <button type="button" onclick="adjustInputQty(1)" class="px-3 py-3 hover:bg-slate-200 text-slate-700 font-bold transition">+</button>
+                                <button type="button" onclick="adjustInputQty(1)" class="px-3.5 py-3 hover:bg-slate-200 text-slate-700 font-bold transition">+</button>
                             </div>
 
                             <button 
@@ -321,7 +373,7 @@
                 </form>
             </section>
 
-            <!-- Daftar Hasil Hitungan & Toolbar Ekspor -->
+            <!-- Daftar Hasil Hitungan & Toolbar Ekspor + Paging -->
             <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <!-- Header Toolbar -->
                 <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -343,13 +395,17 @@
 
                     <!-- Tombol Aksi Laporan & Ekspor -->
                     <div class="flex flex-wrap items-center gap-2">
-                        <button onclick="exportSessionCSV()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                        <button onclick="simulateCloudSync('push')" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm transition">
+                            <i data-lucide="upload-cloud" class="w-3.5 h-3.5"></i>
+                            <span>Kirim ke Sheets</span>
+                        </button>
+                        <button onclick="exportSessionCSV()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition">
                             <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
-                            <span>Export CSV</span>
+                            <span>CSV</span>
                         </button>
                         <button onclick="copySummaryToClipboard()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition">
                             <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                            <span>Salin Teks</span>
+                            <span>Salin</span>
                         </button>
                         <button onclick="printReport()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition">
                             <i data-lucide="printer" class="w-3.5 h-3.5"></i>
@@ -365,20 +421,37 @@
                         <input 
                             type="text" 
                             id="list-search-input" 
-                            oninput="renderCountList()" 
+                            oninput="handleListSearchChange()" 
                             placeholder="Filter item di sesi ini..." 
                             class="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                     </div>
-                    <button onclick="confirmClearSessionItems()" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-rose-50 transition">
+                    <button onclick="confirmClearSessionItems()" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-rose-50 transition shrink-0">
                         <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
                         <span>Reset Hitungan</span>
                     </button>
                 </div>
 
-                <!-- Kontainer Daftar Item Terhitung -->
+                <!-- Kontainer Daftar Item Terhitung (Urutan Terbaru di Atas) -->
                 <div id="count-items-container" class="divide-y divide-slate-100">
                     <!-- Diisi oleh JS -->
+                </div>
+
+                <!-- Footer Kontrol Paging Daftar Item -->
+                <div id="count-pagination-bar" class="hidden px-4 py-3 bg-slate-50 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+                    <div class="flex items-center gap-2 text-slate-600">
+                        <span id="paging-info-text">Menampilkan 1-10 dari 0 item</span>
+                        <select id="paging-size-select" onchange="changePageSize(this.value)" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="10">10 / hal</option>
+                            <option value="25">25 / hal</option>
+                            <option value="50">50 / hal</option>
+                            <option value="100">100 / hal</option>
+                        </select>
+                    </div>
+
+                    <div id="paging-buttons-container" class="flex items-center gap-1">
+                        <!-- Tombol halaman dirender oleh JS -->
+                    </div>
                 </div>
             </section>
         </div>
@@ -469,9 +542,7 @@
     <!-- ========================================== -->
     <!-- AREA CETAK LAPORAN (KHUSUS PRINT)          -->
     <!-- ========================================== -->
-    <div id="print-area" class="hidden">
-        <!-- Diisi secara dinamis saat printReport() dipanggil -->
-    </div>
+    <div id="print-area" class="hidden"></div>
 
     <!-- ========================================== -->
     <!-- MODALS (SESI, PRODUK, EDIT ITEM, KONFIRMASI) -->
@@ -576,7 +647,7 @@
         </div>
     </div>
 
-    <!-- Modal Konfirmasi Kustom (Pengganti confirm() bawaan browser) -->
+    <!-- Modal Konfirmasi Kustom -->
     <div id="modal-confirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4">
             <div class="flex items-start gap-3">
@@ -602,20 +673,22 @@
         // ==========================================
         // 1. STATE & STORAGE MANAGEMENT
         // ==========================================
-        const STORAGE_KEY = 'stockcount_pro_data_v1';
+        const STORAGE_KEY = 'stockcount_pro_data_v2';
 
         let appState = {
             soundEnabled: true,
             scanMode: 'auto', // 'auto' (+1 langsung) | 'manual' (input qty dulu)
             activeFilter: 'all', // 'all' | 'variance' | 'match' | 'unregistered'
+            isTopBlockCollapsed: null, // null = otomatis detect layar HP (collapsed di HP, expanded di Desktop)
+            lastCloudSync: null,
             activeSessionId: 'sess-default-1',
             sessions: [
                 {
                     id: 'sess-default-1',
-                    name: 'Gudang Utama - Rak A',
+                    name: 'Stock Opname Utama',
                     pic: 'Admin Gudang',
                     createdAt: new Date().toISOString(),
-                    items: {} // Key: sku/barcode -> { sku, name, category, unit, systemQty, countedQty, note, updatedAt, isRegistered }
+                    items: {}
                 },
                 {
                     id: 'sess-default-2',
@@ -626,13 +699,18 @@
                 }
             ],
             masterProducts: {
-                // Contoh data awal agar langsung siap dicoba
                 '8991002101015': { sku: '8991002101015', name: 'Kopi Kapal Api Special 165gr', category: 'Minuman', unit: 'Pcs', systemQty: 24 },
                 '8992761111014': { sku: '8992761111014', name: 'Aqua Air Mineral 600ml', category: 'Minuman', unit: 'Botol', systemQty: 48 },
                 '8998866200318': { sku: '8998866200318', name: 'Indomie Goreng Original 85gr', category: 'Makanan', unit: 'Bks', systemQty: 40 },
                 '8999999001234': { sku: '8999999001234', name: 'Teh Botol Sosro Kotak 250ml', category: 'Minuman', unit: 'Kotak', systemQty: 12 },
                 'SKU-EL-001': { sku: 'SKU-EL-001', name: 'Kabel Data USB-C Fast Charging 1m', category: 'Elektronik', unit: 'Pcs', systemQty: 15 }
             }
+        };
+
+        // State Paging Daftar Hitungan
+        let paginationState = {
+            currentPage: 1,
+            pageSize: 10
         };
 
         let html5QrcodeScanner = null;
@@ -647,28 +725,30 @@
                 if (saved) {
                     const parsed = JSON.parse(saved);
                     appState = { ...appState, ...parsed };
-                    // Pastikan minimal ada 1 sesi
                     if (!appState.sessions || appState.sessions.length === 0) {
                         appState.sessions = [{
                             id: 'sess-' + Date.now(),
-                            name: 'Sesi Stock Opname 1',
+                            name: 'Stock Opname Utama',
                             pic: '',
                             createdAt: new Date().toISOString(),
                             items: {}
                         }];
                         appState.activeSessionId = appState.sessions[0].id;
                     }
-                    // Pastikan activeSessionId valid
                     if (!appState.sessions.find(s => s.id === appState.activeSessionId)) {
                         appState.activeSessionId = appState.sessions[0].id;
                     }
+                }
+
+                // Default posisi Gambar 2 (panel atas tersembunyi) ketika dibuka di layar HP (<= 768px)
+                if (appState.isTopBlockCollapsed === null) {
+                    appState.isTopBlockCollapsed = window.innerWidth <= 768;
                 }
             } catch (e) {
                 console.error('Gagal memuat data dari localStorage:', e);
             }
         }
 
-        // Simpan state ke localStorage
         function saveState() {
             try {
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
@@ -679,6 +759,54 @@
 
         function getActiveSession() {
             return appState.sessions.find(s => s.id === appState.activeSessionId) || appState.sessions[0];
+        }
+
+        // ==========================================
+        // 1B. COLLAPSE / UNHIDE BLOK ATAS & CLOUD SYNC
+        // ==========================================
+        function toggleTopBlock() {
+            appState.isTopBlockCollapsed = !appState.isTopBlockCollapsed;
+            saveState();
+            updateTopBlockUI();
+        }
+
+        function updateTopBlockUI() {
+            const topBlock = document.getElementById('collapsible-top-block');
+            const labelBtn = document.getElementById('label-toggle-panel');
+            const iconBtn = document.getElementById('icon-toggle-panel');
+            const cloudBtn = document.getElementById('btn-cloud-toggle');
+
+            if (appState.isTopBlockCollapsed) {
+                topBlock.classList.add('hidden');
+                labelBtn.textContent = 'Tampilkan';
+                iconBtn.setAttribute('data-lucide', 'chevron-down');
+                cloudBtn.classList.remove('ring-2', 'ring-emerald-400/50');
+            } else {
+                topBlock.classList.remove('hidden');
+                labelBtn.textContent = 'Sembunyikan';
+                iconBtn.setAttribute('data-lucide', 'chevron-up');
+                cloudBtn.classList.add('ring-2', 'ring-emerald-400/50');
+            }
+            lucide.createIcons();
+        }
+
+        function simulateCloudSync(direction) {
+            const nowStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            appState.lastCloudSync = `Terakhir sync pukul ${nowStr}`;
+            saveState();
+            document.getElementById('last-sync-label').textContent = appState.lastCloudSync;
+
+            if (direction === 'pull') {
+                showToast('Master Data berhasil disinkronkan!', 'success');
+            } else {
+                const session = getActiveSession();
+                const count = Object.keys(session.items || {}).length;
+                if (count === 0) {
+                    showToast('Belum ada item di sesi ini untuk dikirim.', 'warning');
+                    return;
+                }
+                showToast(`${count} SKU dari "${session.name}" siap/terkirim ke Cloud!`, 'success');
+            }
         }
 
         // ==========================================
@@ -699,12 +827,11 @@
 
                 if (type === 'success') {
                     oscillator.type = 'sine';
-                    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // Nada A5
+                    oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
                     gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
                     oscillator.start();
                     oscillator.stop(audioCtx.currentTime + 0.09);
                 } else if (type === 'new') {
-                    // Dua nada untuk item tak terdaftar di master
                     oscillator.type = 'triangle';
                     oscillator.frequency.setValueAtTime(660, audioCtx.currentTime);
                     oscillator.frequency.setValueAtTime(990, audioCtx.currentTime + 0.08);
@@ -718,9 +845,7 @@
                     oscillator.start();
                     oscillator.stop(audioCtx.currentTime + 0.2);
                 }
-            } catch (e) {
-                // Abaikan jika browser memblokir audio sebelum interaksi
-            }
+            } catch (e) {}
         }
 
         function toggleSound() {
@@ -785,7 +910,6 @@
             document.getElementById('confirm-message').textContent = message;
             const yesBtn = document.getElementById('confirm-yes-btn');
             
-            // Hapus listener lama dengan cloneNode
             const newYesBtn = yesBtn.cloneNode(true);
             yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
             
@@ -819,15 +943,15 @@
             if (tab === 'count') {
                 viewCount.classList.remove('hidden');
                 viewMaster.classList.add('hidden');
-                navCount.className = 'px-3 py-2 rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-sm';
-                navMaster.className = 'px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5';
+                navCount.className = 'px-2.5 sm:px-3 py-2 rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-sm';
+                navMaster.className = 'px-2.5 sm:px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5';
                 renderDashboardAndList();
             } else {
                 if (isCameraRunning) stopCameraScanner();
                 viewCount.classList.add('hidden');
                 viewMaster.classList.remove('hidden');
-                navMaster.className = 'px-3 py-2 rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-sm';
-                navCount.className = 'px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5';
+                navMaster.className = 'px-2.5 sm:px-3 py-2 rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-sm';
+                navCount.className = 'px-2.5 sm:px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5';
                 renderMasterTable();
             }
         }
@@ -844,6 +968,7 @@
 
         function changeSession(sessionId) {
             appState.activeSessionId = sessionId;
+            paginationState.currentPage = 1;
             saveState();
             renderDashboardAndList();
             const active = getActiveSession();
@@ -888,6 +1013,7 @@
                 };
                 appState.sessions.push(newSess);
                 appState.activeSessionId = newSess.id;
+                paginationState.currentPage = 1;
                 showToast(`Sesi "${name}" berhasil dibuat`, 'success');
             } else {
                 const active = getActiveSession();
@@ -914,6 +1040,7 @@
                 () => {
                     appState.sessions = appState.sessions.filter(s => s.id !== active.id);
                     appState.activeSessionId = appState.sessions[0].id;
+                    paginationState.currentPage = 1;
                     saveState();
                     renderSessionSelector();
                     renderDashboardAndList();
@@ -964,7 +1091,6 @@
                 return;
             }
 
-            // Cek apakah cocok persis dengan master SKU untuk live preview
             const exactMaster = Object.values(appState.masterProducts).find(p => p.sku.toLowerCase() === q);
             if (exactMaster) {
                 document.getElementById('preview-name').textContent = exactMaster.name;
@@ -975,7 +1101,6 @@
                 previewEl.classList.add('hidden');
             }
 
-            // Filter daftar produk master untuk autocomplete
             const matches = Object.values(appState.masterProducts).filter(p => 
                 p.sku.toLowerCase().includes(q) || 
                 p.name.toLowerCase().includes(q)
@@ -1017,7 +1142,6 @@
             }
         }
 
-        // Sembunyikan autocomplete saat klik di luar
         document.addEventListener('click', (e) => {
             if (!e.target.closest('#barcode-input') && !e.target.closest('#autocomplete-list')) {
                 document.getElementById('autocomplete-list').classList.add('hidden');
@@ -1035,7 +1159,6 @@
                 return;
             }
 
-            // Jika user mengetik sebagian nama barang dan menekan enter, ambil kecocokan pertama jika ada
             if (!appState.masterProducts[rawCode]) {
                 const matchByName = Object.values(appState.masterProducts).find(p => 
                     p.sku.toLowerCase() === rawCode.toLowerCase()
@@ -1047,7 +1170,6 @@
             
             processBarcodeEntry(rawCode, qtyToAdd);
 
-            // Reset form & fokus kembali ke input barcode untuk scan beruntun
             barcodeInput.value = '';
             if (appState.scanMode === 'auto') {
                 qtyInput.value = 1;
@@ -1060,13 +1182,11 @@
         function processBarcodeEntry(sku, addQty) {
             const session = getActiveSession();
             const master = appState.masterProducts[sku];
-            const now = new Date().toISOString();
+            const now = Date.now(); // Timestamp presisi milidetik agar urutan terbaru selalu di paling atas
 
             if (session.items[sku]) {
-                // Sudah ada di sesi ini, tambahkan kuantitas
                 session.items[sku].countedQty = Number((session.items[sku].countedQty + addQty).toFixed(4));
                 session.items[sku].updatedAt = now;
-                // Sinkronisasi info master terbaru jika baru didaftarkan
                 if (master) {
                     session.items[sku].name = master.name;
                     session.items[sku].category = master.category;
@@ -1077,7 +1197,6 @@
                 playBeep('success');
                 showToast(`+${addQty} ${session.items[sku].name} (Total: ${session.items[sku].countedQty})`, 'success');
             } else {
-                // Item baru di sesi ini
                 if (master) {
                     session.items[sku] = {
                         sku: master.sku,
@@ -1093,7 +1212,6 @@
                     playBeep('success');
                     showToast(`Terhitung: ${master.name} (+${addQty})`, 'success');
                 } else {
-                    // Barcode tidak ditemukan di Master Data
                     session.items[sku] = {
                         sku: sku,
                         name: `Item Tak Terdaftar (${sku})`,
@@ -1110,6 +1228,8 @@
                 }
             }
 
+            // Reset ke halaman 1 agar item yang barusan di-input langsung terlihat di baris paling atas
+            paginationState.currentPage = 1;
             saveState();
             renderSessionSelector();
             renderDashboardAndList();
@@ -1147,7 +1267,6 @@
                     { facingMode: "environment" },
                     config,
                     (decodedText) => {
-                        // Cegah double-scan barcode yang sama dalam 1.5 detik
                         const now = Date.now();
                         if (decodedText === lastScannedCode && (now - lastScannedTime) < 1500) {
                             return;
@@ -1158,7 +1277,6 @@
                         if (appState.scanMode === 'auto') {
                             processBarcodeEntry(decodedText, 1);
                         } else {
-                            // Mode manual: isi input barcode dan tutup kamera agar user bisa isi qty
                             const barcodeInput = document.getElementById('barcode-input');
                             barcodeInput.value = decodedText;
                             handleSearchAutocomplete(decodedText);
@@ -1168,9 +1286,7 @@
                             document.getElementById('qty-input').select();
                         }
                     },
-                    (errorMessage) => {
-                        // Abaikan error scanning per frame
-                    }
+                    (errorMessage) => {}
                 );
 
                 isCameraRunning = true;
@@ -1196,18 +1312,36 @@
         }
 
         // ==========================================
-        // 7. RENDER DASHBOARD & DAFTAR HITUNGAN
+        // 7. RENDER DASHBOARD, DAFTAR HITUNGAN & PAGING
         // ==========================================
         function setFilter(filterName) {
             appState.activeFilter = filterName;
+            paginationState.currentPage = 1;
             renderDashboardAndList();
+        }
+
+        function handleListSearchChange() {
+            paginationState.currentPage = 1;
+            renderCountList();
+        }
+
+        function changePageSize(newSize) {
+            paginationState.pageSize = parseInt(newSize, 10) || 10;
+            paginationState.currentPage = 1;
+            renderCountList();
+        }
+
+        function goToPage(page) {
+            paginationState.currentPage = page;
+            renderCountList();
+            // Scroll halus kembali ke bagian atas daftar item
+            document.getElementById('list-search-input').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function renderDashboardAndList() {
             const session = getActiveSession();
             const itemsArray = Object.values(session.items || {});
             
-            // Hitung Statistik
             let totalSku = itemsArray.length;
             let totalQty = 0;
             let matchCount = 0;
@@ -1227,19 +1361,16 @@
                 }
             });
 
-            // Update Kartu Statistik
             document.getElementById('stat-total-sku').textContent = totalSku;
             document.getElementById('stat-total-qty').textContent = Number(totalQty.toFixed(2));
             document.getElementById('stat-match').textContent = matchCount;
             document.getElementById('stat-variance').textContent = varianceCount;
 
-            // Update Badge Filter
             document.getElementById('count-all').textContent = totalSku;
             document.getElementById('count-variance').textContent = varianceCount;
             document.getElementById('count-match').textContent = matchCount;
             document.getElementById('count-unregistered').textContent = unregisteredCount;
 
-            // Update Styling Tombol Filter
             ['all', 'variance', 'match', 'unregistered'].forEach(f => {
                 const btn = document.getElementById(`filter-${f}`);
                 if (f === appState.activeFilter) {
@@ -1255,14 +1386,17 @@
         function renderCountList() {
             const session = getActiveSession();
             const container = document.getElementById('count-items-container');
+            const paginationBar = document.getElementById('count-pagination-bar');
             const searchQuery = document.getElementById('list-search-input').value.trim().toLowerCase();
 
-            // Urutkan berdasarkan waktu scan terbaru di atas
-            let items = Object.values(session.items || {}).sort((a, b) => 
-                new Date(b.updatedAt) - new Date(a.updatedAt)
-            );
+            // 1. Urutkan berdasarkan waktu input/update TERBARU di paling atas (Descending)
+            let items = Object.values(session.items || {}).sort((a, b) => {
+                const timeA = typeof a.updatedAt === 'number' ? a.updatedAt : new Date(a.updatedAt).getTime();
+                const timeB = typeof b.updatedAt === 'number' ? b.updatedAt : new Date(b.updatedAt).getTime();
+                return timeB - timeA;
+            });
 
-            // Terapkan Filter Tab
+            // 2. Terapkan Filter Status
             items = items.filter(item => {
                 const diff = item.countedQty - item.systemQty;
                 if (appState.activeFilter === 'match') return item.isRegistered && diff === 0;
@@ -1271,7 +1405,7 @@
                 return true;
             });
 
-            // Terapkan Filter Pencarian Teks
+            // 3. Terapkan Filter Pencarian Teks
             if (searchQuery) {
                 items = items.filter(item => 
                     item.sku.toLowerCase().includes(searchQuery) ||
@@ -1280,22 +1414,41 @@
                 );
             }
 
-            if (items.length === 0) {
+            const totalFilteredItems = items.length;
+
+            if (totalFilteredItems === 0) {
+                paginationBar.classList.add('hidden');
                 container.innerHTML = `
                     <div class="py-12 px-4 text-center">
                         <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
                             <i data-lucide="scan-line" class="w-6 h-6"></i>
                         </div>
                         <h3 class="text-sm font-bold text-slate-700">Belum ada item di daftar ini</h3>
-                        <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Mulai pindai barcode menggunakan kamera, scanner USB/Bluetooth, atau ketik SKU di kolom atas.</p>
+                        <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Pindai barcode pakai kamera, scanner USB/Bluetooth, atau ketik SKU di kolom atas.</p>
                     </div>
                 `;
                 lucide.createIcons();
                 return;
             }
 
-            container.innerHTML = items.map(item => {
+            // 4. Kalkulasi Paging
+            const pageSize = paginationState.pageSize;
+            const totalPages = Math.ceil(totalFilteredItems / pageSize);
+            if (paginationState.currentPage > totalPages) {
+                paginationState.currentPage = totalPages;
+            }
+            if (paginationState.currentPage < 1) {
+                paginationState.currentPage = 1;
+            }
+
+            const startIndex = (paginationState.currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, totalFilteredItems);
+            const pagedItems = items.slice(startIndex, endIndex);
+
+            // 5. Render Daftar Item Halaman Aktif
+            container.innerHTML = pagedItems.map((item, idx) => {
                 const diff = Number((item.countedQty - item.systemQty).toFixed(4));
+                const isNewestItem = (paginationState.currentPage === 1 && idx === 0);
                 let statusBadge = '';
                 let diffText = '';
 
@@ -1316,10 +1469,11 @@
                 const timeStr = new Date(item.updatedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
                 return `
-                    <div class="p-3.5 sm:p-4 hover:bg-slate-50/80 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div class="p-3.5 sm:p-4 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isNewestItem ? 'bg-blue-50/40' : 'hover:bg-slate-50/80'}">
                         <!-- Info Produk -->
                         <div class="space-y-1 flex-1 min-w-0">
                             <div class="flex flex-wrap items-center gap-1.5">
+                                ${isNewestItem ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white">Terbaru</span>` : ''}
                                 <span class="font-mono text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">${escapeHTML(item.sku)}</span>
                                 ${statusBadge}
                                 <span class="text-[11px] text-slate-400 flex items-center gap-1">
@@ -1369,7 +1523,49 @@
                 `;
             }).join('');
 
+            // 6. Render Kontrol Paging
+            paginationBar.classList.remove('hidden');
+            document.getElementById('paging-info-text').textContent = `Menampilkan ${startIndex + 1}-${endIndex} dari ${totalFilteredItems} item`;
+            document.getElementById('paging-size-select').value = String(pageSize);
+
+            renderPaginationButtons(paginationState.currentPage, totalPages);
             lucide.createIcons();
+        }
+
+        function renderPaginationButtons(currentPage, totalPages) {
+            const btnContainer = document.getElementById('paging-buttons-container');
+            let html = '';
+
+            // Tombol Prev
+            html += `
+                <button onclick="goToPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold disabled:opacity-40 disabled:pointer-events-none hover:bg-slate-100 transition">
+                    &laquo; Prev
+                </button>
+            `;
+
+            // Nomor Halaman (tampilkan maksimal 5 tombol halaman di sekitar halaman aktif)
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            for (let p = startPage; p <= endPage; p++) {
+                if (p === currentPage) {
+                    html += `<button class="w-8 h-8 rounded-lg bg-blue-600 text-white font-bold shadow-xs">${p}</button>`;
+                } else {
+                    html += `<button onclick="goToPage(${p})" class="w-8 h-8 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold hover:bg-slate-100 transition">${p}</button>`;
+                }
+            }
+
+            // Tombol Next
+            html += `
+                <button onclick="goToPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-700 font-semibold disabled:opacity-40 disabled:pointer-events-none hover:bg-slate-100 transition">
+                    Next &raquo;
+                </button>
+            `;
+
+            btnContainer.innerHTML = html;
         }
 
         function updateCountItemQty(sku, delta) {
@@ -1384,7 +1580,8 @@
             }
 
             item.countedQty = newQty;
-            item.updatedAt = new Date().toISOString();
+            item.updatedAt = Date.now(); // Naikkan ke urutan teratas saat kuantitas diubah
+            paginationState.currentPage = 1;
             saveState();
             renderDashboardAndList();
         }
@@ -1418,6 +1615,7 @@
                 `Semua hasil hitungan di sesi "${session.name}" akan dikosongkan. Master data produk tetap aman.`,
                 () => {
                     session.items = {};
+                    paginationState.currentPage = 1;
                     saveState();
                     renderSessionSelector();
                     renderDashboardAndList();
@@ -1458,8 +1656,9 @@
                 } else {
                     session.items[sku].countedQty = newQty;
                     session.items[sku].note = note;
-                    session.items[sku].updatedAt = new Date().toISOString();
+                    session.items[sku].updatedAt = Date.now();
                 }
+                paginationState.currentPage = 1;
                 saveState();
                 renderSessionSelector();
                 renderDashboardAndList();
@@ -1474,6 +1673,8 @@
         function updateMasterBadge() {
             const count = Object.keys(appState.masterProducts || {}).length;
             document.getElementById('badge-master-count').textContent = count;
+            const cloudCountEl = document.getElementById('cloud-master-count');
+            if (cloudCountEl) cloudCountEl.textContent = count;
         }
 
         function renderMasterTable() {
@@ -1577,7 +1778,6 @@
 
             appState.masterProducts[sku] = { sku, name, category, unit, systemQty };
 
-            // Sinkronisasi jika item tersebut sudah pernah di-scan di sesi aktif
             const session = getActiveSession();
             if (session.items[sku]) {
                 session.items[sku].name = name;
@@ -1641,7 +1841,6 @@
             showToast('7 produk contoh berhasil dimuat', 'success');
         }
 
-        // Download Template CSV
         function downloadCSVTemplate() {
             const csvContent = [
                 'Barcode,Nama_Produk,Kategori,Satuan,Stok_Sistem',
@@ -1654,7 +1853,6 @@
             showToast('Template CSV berhasil diunduh', 'success');
         }
 
-        // Import CSV Master Produk
         function handleCSVImport(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1669,7 +1867,6 @@
                     return;
                 }
 
-                // Deteksi pemisah koma (,) atau titik koma (;)
                 const delimiter = lines[0].includes(';') ? ';' : ',';
                 let importedCount = 0;
 
@@ -1693,7 +1890,7 @@
                 renderMasterTable();
                 renderDashboardAndList();
                 showToast(`Berhasil mengimpor ${importedCount} produk ke Master!`, 'success');
-                event.target.value = ''; // Reset input file
+                event.target.value = '';
             };
             reader.readAsText(file);
         }
@@ -1722,7 +1919,7 @@
         // ==========================================
         function exportSessionCSV() {
             const session = getActiveSession();
-            const items = Object.values(session.items || {});
+            const items = Object.values(session.items || {}).sort((a, b) => b.updatedAt - a.updatedAt);
 
             if (items.length === 0) {
                 showToast('Tidak ada data hitungan untuk di-export.', 'warning');
@@ -1765,7 +1962,7 @@
                 ].join(',');
             });
 
-            const csvString = '\uFEFF' + [headers.join(','), ...rows].join('\n'); // BOM UTF-8 agar Excel membaca karakter dengan benar
+            const csvString = '\uFEFF' + [headers.join(','), ...rows].join('\n');
             const safeFilename = `StockCount_${session.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0,10)}.csv`;
             
             triggerDownload(csvString, safeFilename, 'text/csv;charset=utf-8;');
@@ -1786,7 +1983,7 @@
 
         function copySummaryToClipboard() {
             const session = getActiveSession();
-            const items = Object.values(session.items || {});
+            const items = Object.values(session.items || {}).sort((a, b) => b.updatedAt - a.updatedAt);
 
             if (items.length === 0) {
                 showToast('Belum ada data hitungan untuk disalin.', 'warning');
@@ -1811,7 +2008,6 @@
                 if (item.note) text += `   Catatan: ${item.note}\n`;
             });
 
-            // Menggunakan textarea sementara + execCommand('copy') agar kompatibel dengan iframe/sandbox
             const tempInput = document.createElement('textarea');
             tempInput.value = text;
             document.body.appendChild(tempInput);
@@ -1827,7 +2023,7 @@
 
         function printReport() {
             const session = getActiveSession();
-            const items = Object.values(session.items || {});
+            const items = Object.values(session.items || {}).sort((a, b) => b.updatedAt - a.updatedAt);
 
             if (items.length === 0) {
                 showToast('Belum ada data untuk dicetak.', 'warning');
@@ -1908,12 +2104,15 @@
             loadState();
             updateSoundUI();
             updateScanModeUI();
+            updateTopBlockUI();
+            if (appState.lastCloudSync) {
+                document.getElementById('last-sync-label').textContent = appState.lastCloudSync;
+            }
             renderSessionSelector();
             updateMasterBadge();
             renderDashboardAndList();
             lucide.createIcons();
 
-            // Fokus otomatis ke input barcode pada desktop agar scanner USB langsung siap pakai
             if (window.innerWidth > 768) {
                 document.getElementById('barcode-input').focus();
             }
