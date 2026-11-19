@@ -1,0 +1,2843 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StockCount Pro - Stock Opname & Google Sheets Sync</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- HTML5-QRCode untuk Kamera Barcode Scanner -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 9999px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Styling khusus kamera html5-qrcode */
+        #qr-reader {
+            border: none !important;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        #qr-reader video {
+            border-radius: 0.75rem;
+            object-fit: cover;
+        }
+        #qr-reader__dashboard_section_csr span,
+        #qr-reader__dashboard_section_swaplink {
+            display: none !important;
+        }
+
+        /* Animasi highlight untuk item yang baru saja di-scan/diperbarui di posisi teratas */
+        @keyframes highlightPulse {
+            0% { background-color: #dbeafe; }
+            60% { background-color: #eff6ff; }
+            100% { background-color: transparent; }
+        }
+        .animate-latest-scan {
+            animation: highlightPulse 1.8s ease-out;
+        }
+
+        /* Print styles untuk laporan audit bersih */
+        @media print {
+            body * { visibility: hidden; }
+            #print-area, #print-area * { visibility: visible; }
+            #print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                background: white;
+                padding: 20px;
+            }
+            .no-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-xs w-full pointer-events-none"></div>
+
+    <!-- Header / Top Navbar (Mendukung Mode Collapse / Auto-Hide di Mobile) -->
+    <header class="bg-slate-900 text-white sticky top-0 z-30 shadow-md no-print">
+        
+        <!-- Baris Kontrol Minimalis (Selalu Tampil agar User Bisa Membuka/Menutup Panel Atas Kapan Saja) -->
+        <div class="max-w-5xl mx-auto px-3 sm:px-4 py-2 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+                <div class="bg-blue-600 p-1.5 rounded-lg shadow-inner shrink-0">
+                    <i data-lucide="scan-barcode" class="w-4 h-4 sm:w-5 sm:h-5 text-white"></i>
+                </div>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                        <span class="font-bold text-sm sm:text-base tracking-tight truncate">StockCount <span class="text-blue-400">Pro</span></span>
+                        <span id="network-status-dot" class="w-2 h-2 rounded-full bg-emerald-400 shrink-0" title="Status Koneksi"></span>
+                    </div>
+                    <!-- Ringkasan Mini Saat Header Di-Collapse (Sangat Berguna di Layar HP) -->
+                    <div id="collapsed-mini-summary" class="text-[11px] text-slate-300 truncate flex items-center gap-1.5">
+                        <span id="mini-session-name" class="font-medium text-blue-300 truncate max-w-[115px] sm:max-w-[200px]">Stock Opname Utama</span>
+                        <span class="text-slate-500">&bull;</span>
+                        <span>SKU: <strong id="mini-stat-sku" class="text-white">0</strong></span>
+                        <span class="text-slate-500">|</span>
+                        <span>Fisik: <strong id="mini-stat-qty" class="text-emerald-400">0</strong></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tombol Aksi Cepat & Toggle Collapse Panel Atas -->
+            <div class="flex items-center gap-1.5 shrink-0">
+                <button onclick="toggleSound()" id="btn-sound" title="Suara Beep Scan" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition flex items-center gap-1 text-xs font-medium">
+                    <i data-lucide="volume-2" id="icon-sound" class="w-4 h-4 text-emerald-400"></i>
+                    <span class="hidden md:inline" id="label-sound">Beep</span>
+                </button>
+
+                <button onclick="toggleTopCollapse()" id="btn-toggle-top" class="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 text-xs font-semibold flex items-center gap-1.5 transition" title="Tampilkan / Sembunyikan Header & Ringkasan">
+                    <span id="label-toggle-top">Info & Menu</span>
+                    <i data-lucide="chevron-down" id="icon-toggle-top" class="w-4 h-4 text-blue-400 transition-transform duration-200"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Bagian Header yang Bisa Di-Collapse (Navigasi Tab + Selector Sesi Lokasi) -->
+        <div id="collapsible-header-drawer" class="border-t border-slate-800 transition-all">
+            <!-- Navigasi Tab Utama -->
+            <div class="max-w-5xl mx-auto px-3 sm:px-4 py-2.5 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+                    <span id="network-status-text">Online &bull; Cloud Ready</span>
+                </div>
+
+                <div class="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-end">
+                    <button onclick="switchTab('count')" id="nav-count" class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-sm">
+                        <i data-lucide="clipboard-check" class="w-4 h-4"></i>
+                        <span>Hitung</span>
+                    </button>
+
+                    <button onclick="switchTab('master')" id="nav-master" class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
+                        <i data-lucide="database" class="w-4 h-4"></i>
+                        <span>Master <span id="badge-master-count" class="ml-0.5 px-1.5 py-0.2 bg-slate-700 text-[10px] rounded-full">0</span></span>
+                    </button>
+
+                    <button onclick="switchTab('cloud')" id="nav-cloud" class="flex-1 sm:flex-initial justify-center px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5">
+                        <i data-lucide="cloud-cog" class="w-4 h-4 text-emerald-400"></i>
+                        <span>Cloud & Sync</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Bar Pemilihan Sesi (Lokasi / Rak / Batch) -->
+            <div class="bg-slate-800/95 border-t border-slate-700/80 px-3 sm:px-4 py-2.5">
+                <div class="max-w-5xl mx-auto flex flex-wrap items-center justify-between gap-2">
+                    <div class="flex items-center gap-2 flex-1 min-w-[200px]">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-blue-400 shrink-0"></i>
+                        <select id="session-selector" onchange="changeSession(this.value)" class="bg-slate-900 border border-slate-700 text-white text-xs sm:text-sm rounded-xl px-3 py-1.5 w-full max-w-xs focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                            <!-- Diisi oleh JS -->
+                        </select>
+                        <span id="session-sync-badge" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap">
+                            Draft Lokal
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <button onclick="openSessionModal('create')" class="px-2.5 py-1.5 rounded-xl bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 border border-blue-500/30 text-xs font-medium flex items-center gap-1 transition" title="Sesi Baru">
+                            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                            <span>Sesi Baru</span>
+                        </button>
+                        <button onclick="openSessionModal('edit')" class="p-1.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-slate-300 transition" title="Ubah Detail Sesi">
+                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick="confirmDeleteSession()" class="p-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/40 transition" title="Hapus Sesi Ini">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-1 max-w-5xl w-full mx-auto px-3 sm:px-4 py-3.5 sm:py-5 space-y-4 no-print">
+
+        <!-- ========================================== -->
+        <!-- TAB 1: HALAMAN HITUNG STOK (STOCK COUNT)   -->
+        <!-- ========================================== -->
+        <div id="view-count" class="space-y-4">
+            
+            <!-- BLOK RINGKASAN ATAS YANG BISA DI-COLLAPSE / AUTO-HIDE DI HP -->
+            <div id="collapsible-summary-drawer" class="space-y-3.5">
+                <!-- Banner Status Sinkronisasi Master & Kirim Cloud Cepat -->
+                <div class="bg-white border border-slate-200 rounded-2xl p-3 sm:px-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-2xs">
+                    <div class="flex items-center gap-2.5 text-xs">
+                        <div class="p-2 rounded-xl bg-blue-50 text-blue-600 shrink-0">
+                            <i data-lucide="refresh-cw" id="quick-sync-icon" class="w-4 h-4"></i>
+                        </div>
+                        <div>
+                            <div class="font-bold text-slate-800">Master Data Google Sheets</div>
+                            <div class="text-slate-500 text-[11px]" id="last-master-sync-label">Belum disinkronkan</div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="syncMasterFromGoogleSheets(true)" id="btn-quick-sync-master" class="px-3 py-1.5 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i data-lucide="cloud-download" class="w-3.5 h-3.5"></i>
+                            <span>Sync Master</span>
+                        </button>
+                        <button onclick="submitSessionToGoogleSheets()" id="btn-submit-so-top" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-xs transition">
+                            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                            <span>Kirim Hasil SO</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Dashboard Ringkasan Statistik (4 Kartu) -->
+                <section class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 sm:gap-3">
+                    <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="flex items-center justify-between text-slate-500 mb-1">
+                            <span class="text-xs font-medium">Total SKU</span>
+                            <i data-lucide="layers" class="w-4 h-4 text-blue-500"></i>
+                        </div>
+                        <div class="text-xl sm:text-2xl font-extrabold text-slate-800" id="stat-total-sku">0</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">Jenis barang dihitung</div>
+                    </div>
+
+                    <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="flex items-center justify-between text-slate-500 mb-1">
+                            <span class="text-xs font-medium">Total Fisik</span>
+                            <i data-lucide="package-check" class="w-4 h-4 text-indigo-500"></i>
+                        </div>
+                        <div class="text-xl sm:text-2xl font-extrabold text-indigo-600" id="stat-total-qty">0</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">Total unit aktual</div>
+                    </div>
+
+                    <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="flex items-center justify-between text-slate-500 mb-1">
+                            <span class="text-xs font-medium">Sesuai (Match)</span>
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-500"></i>
+                        </div>
+                        <div class="text-xl sm:text-2xl font-extrabold text-emerald-600" id="stat-match">0</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">Sama dengan sistem</div>
+                    </div>
+
+                    <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-2xs">
+                        <div class="flex items-center justify-between text-slate-500 mb-1">
+                            <span class="text-xs font-medium">Selisih (Variance)</span>
+                            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-500"></i>
+                        </div>
+                        <div class="text-xl sm:text-2xl font-extrabold text-amber-600" id="stat-variance">0</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5">Kurang / Lebih / Baru</div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ================================================== -->
+            <!-- AREA DOMINAN 1: INPUT & PEMINDAIAN BARCODE         -->
+            <!-- ================================================== -->
+            <section class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-3.5 sm:p-5 space-y-3.5">
+                <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                    <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <h2 class="font-bold text-slate-800 text-sm sm:text-base">Scan / Input Barcode</h2>
+                    </div>
+
+                    <!-- Mode Scan Switcher -->
+                    <div class="flex items-center bg-slate-100 p-1 rounded-xl text-xs font-medium">
+                        <button type="button" onclick="setScanMode('auto')" id="mode-auto" class="px-2.5 py-1 rounded-lg bg-white text-blue-600 shadow-2xs transition">
+                            Auto +1
+                        </button>
+                        <button type="button" onclick="setScanMode('manual')" id="mode-manual" class="px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition">
+                            Input Qty Manual
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Area Kamera Scanner -->
+                <div id="camera-wrapper" class="hidden bg-slate-900 rounded-2xl p-3 relative space-y-2.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-white px-1">
+                        <span class="text-xs font-medium flex items-center gap-1.5">
+                            <i data-lucide="camera" class="w-4 h-4 text-blue-400"></i>
+                            Arahkan kamera ke Barcode / QR Code
+                        </span>
+                        <div class="flex items-center gap-1.5">
+                            <button type="button" id="btn-torch" onclick="toggleCameraTorch()" class="hidden text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 px-2.5 py-1 rounded-lg font-medium flex items-center gap-1">
+                                <i data-lucide="flashlight" class="w-3.5 h-3.5"></i> Lampu
+                            </button>
+                            <button type="button" onclick="switchCameraFacing()" class="text-xs bg-slate-700 hover:bg-slate-600 text-white px-2.5 py-1 rounded-lg font-medium flex items-center gap-1">
+                                <i data-lucide="switch-camera" class="w-3.5 h-3.5"></i> Balik Kamera
+                            </button>
+                            <button type="button" onclick="stopCameraScanner()" class="text-xs bg-rose-600 hover:bg-rose-500 text-white px-2.5 py-1 rounded-lg font-medium flex items-center gap-1">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i> Tutup
+                            </button>
+                        </div>
+                    </div>
+                    <div id="qr-reader" class="w-full max-w-md mx-auto bg-black rounded-xl overflow-hidden"></div>
+                    <p id="camera-error-msg" class="hidden text-center text-rose-300 text-xs mt-2 px-2"></p>
+                </div>
+
+                <!-- Form Input Barcode & Kuantitas -->
+                <form id="scan-form" onsubmit="handleScanSubmit(event)" class="space-y-3">
+                    <div class="flex flex-col sm:flex-row gap-2.5">
+                        <!-- Input Barcode dengan Autocomplete Dropdown -->
+                        <div class="relative flex-1">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                                <i data-lucide="barcode" class="w-5 h-5 text-slate-400"></i>
+                            </div>
+                            <input 
+                                type="text" 
+                                id="barcode-input" 
+                                autocomplete="off"
+                                placeholder="Ketik / Scan Barcode atau Cari Nama Barang..." 
+                                oninput="handleSearchAutocomplete(this.value)"
+                                class="w-full pl-11 pr-24 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm sm:text-base font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                            >
+                            <!-- Tombol Buka Kamera di dalam bar input -->
+                            <button 
+                                type="button" 
+                                onclick="toggleCameraScanner()" 
+                                id="btn-camera"
+                                class="absolute right-1.5 top-1.5 bottom-1.5 px-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-2xs"
+                                title="Scan pakai Kamera HP/Laptop"
+                            >
+                                <i data-lucide="camera" class="w-4 h-4 text-blue-400"></i>
+                                <span>Kamera</span>
+                            </button>
+
+                            <!-- Dropdown Saran Produk Master -->
+                            <div id="autocomplete-list" class="hidden absolute left-0 right-0 top-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-20 max-h-60 overflow-y-auto divide-y divide-slate-100">
+                                <!-- Diisi secara dinamis -->
+                            </div>
+                        </div>
+
+                        <!-- Input Kuantitas -->
+                        <div class="flex items-center gap-2">
+                            <div id="qty-input-group" class="flex items-center bg-slate-50 border border-slate-300 rounded-xl overflow-hidden flex-1 sm:w-36">
+                                <button type="button" onclick="adjustInputQty(-1)" class="px-3.5 py-3 hover:bg-slate-200 text-slate-700 font-bold transition">-</button>
+                                <input 
+                                    type="number" 
+                                    id="qty-input" 
+                                    value="1" 
+                                    min="1" 
+                                    step="any"
+                                    class="w-full text-center bg-transparent font-bold text-slate-800 text-base focus:outline-none"
+                                >
+                                <button type="button" onclick="adjustInputQty(1)" class="px-3.5 py-3 hover:bg-slate-200 text-slate-700 font-bold transition">+</button>
+                            </div>
+
+                            <button 
+                                type="submit" 
+                                class="px-5 py-3 bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-semibold rounded-xl shadow-2xs transition flex items-center justify-center gap-2 shrink-0"
+                            >
+                                <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                                <span>Tambah</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Preview Info Produk Terakhir / Sedang Diketik -->
+                    <div id="live-product-preview" class="hidden bg-blue-50/80 border border-blue-200/80 rounded-xl px-3.5 py-2.5 flex items-center justify-between text-xs sm:text-sm">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="info" class="w-4 h-4 text-blue-600 shrink-0"></i>
+                            <div>
+                                <span class="font-bold text-slate-800" id="preview-name">-</span>
+                                <span class="text-slate-500 ml-1.5" id="preview-meta"></span>
+                            </div>
+                        </div>
+                        <div class="text-right font-semibold text-blue-700" id="preview-sys-qty">
+                            Stok Sistem: 0
+                        </div>
+                    </div>
+                </form>
+            </section>
+
+            <!-- ================================================== -->
+            <!-- AREA DOMINAN 2: DAFTAR HASIL HITUNGAN + PAGING     -->
+            <!-- ================================================== -->
+            <section class="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
+                <!-- Header Toolbar -->
+                <div class="p-3.5 sm:p-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+                    <!-- Filter Status -->
+                    <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+                        <button onclick="setFilter('all')" id="filter-all" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 text-white whitespace-nowrap transition">
+                            Semua (<span id="count-all">0</span>)
+                        </button>
+                        <button onclick="setFilter('variance')" id="filter-variance" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap transition">
+                            Selisih (<span id="count-variance">0</span>)
+                        </button>
+                        <button onclick="setFilter('match')" id="filter-match" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap transition">
+                            Sesuai (<span id="count-match">0</span>)
+                        </button>
+                        <button onclick="setFilter('unregistered')" id="filter-unregistered" class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap transition">
+                            Baru/Tak Terdaftar (<span id="count-unregistered">0</span>)
+                        </button>
+                    </div>
+
+                    <!-- Tombol Aksi Laporan & Ekspor -->
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <button onclick="submitSessionToGoogleSheets()" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition">
+                            <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i>
+                            <span>Kirim ke Sheets</span>
+                        </button>
+                        <button onclick="exportSessionCSV()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+                            <span>CSV</span>
+                        </button>
+                        <button onclick="copySummaryToClipboard()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            <span>Salin</span>
+                        </button>
+                        <button onclick="printReport()" class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 transition">
+                            <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                            <span>Cetak</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pencarian Dalam Daftar Hitungan & Reset -->
+                <div class="px-3.5 sm:px-4 py-2.5 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between gap-2">
+                    <div class="relative flex-1 max-w-sm">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input 
+                            type="text" 
+                            id="list-search-input" 
+                            oninput="onListSearchInput()" 
+                            placeholder="Filter item di sesi ini..." 
+                            class="w-full pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                    </div>
+                    <button onclick="confirmClearSessionItems()" class="text-xs text-rose-600 hover:text-rose-700 font-medium flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-rose-50 transition shrink-0">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                        <span>Reset Hitungan</span>
+                    </button>
+                </div>
+
+                <!-- Info Urutan & Ringkasan Paging Atas -->
+                <div id="top-paging-info-bar" class="hidden px-3.5 sm:px-4 py-1.5 bg-blue-50/50 border-b border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+                    <span class="flex items-center gap-1 text-blue-700 font-medium">
+                        <i data-lucide="arrow-up-down" class="w-3 h-3"></i>
+                        Urutan: Input Terakhir di Paling Atas
+                    </span>
+                    <span id="top-paging-range-text">Menampilkan 1-10 dari 0</span>
+                </div>
+
+                <!-- Kontainer Daftar Item Terhitung (Per Halaman) -->
+                <div id="count-items-container" class="divide-y divide-slate-100">
+                    <!-- Diisi oleh JS -->
+                </div>
+
+                <!-- Kontrol Pagination Bawah -->
+                <div id="pagination-controls-bar" class="hidden p-3 sm:px-4 bg-slate-50 border-t border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs">
+                    <div class="flex items-center gap-2 text-slate-600 w-full sm:w-auto justify-between sm:justify-start">
+                        <span id="bottom-paging-range-text" class="font-medium">Menampilkan 1–10 dari 0 item</span>
+                        <div class="flex items-center gap-1.5">
+                            <label for="page-size-select" class="text-slate-400">Per hal:</label>
+                            <select id="page-size-select" onchange="changePageSize(this.value)" class="bg-white border border-slate-300 rounded-lg px-2 py-1 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center gap-1 w-full sm:w-auto justify-center sm:justify-end" id="pagination-buttons-group">
+                        <!-- Tombol halaman dirender dinamis oleh JS -->
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 2: MASTER DATA PRODUK                  -->
+        <!-- ========================================== -->
+        <div id="view-master" class="hidden space-y-5">
+            
+            <section class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-5 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-800">Master Data Produk</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Tersinkronisasi dengan Google Sheets Master & tersimpan lokal di browser.</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="syncMasterFromGoogleSheets(true)" class="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition">
+                            <i data-lucide="cloud-download" class="w-4 h-4"></i>
+                            <span>Sync Google Sheets</span>
+                        </button>
+                        
+                        <label class="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition">
+                            <i data-lucide="upload" class="w-4 h-4"></i>
+                            <span>Import CSV Lokal</span>
+                            <input type="file" id="csv-file-input" accept=".csv,text/csv" onchange="handleCSVImport(event)" class="hidden">
+                        </label>
+
+                        <button onclick="openProductModal()" class="px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition">
+                            <i data-lucide="plus" class="w-4 h-4"></i>
+                            <span>Tambah Manual</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Pencarian & Aksi Bulk Master -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="relative flex-1 max-w-md">
+                        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input 
+                            type="text" 
+                            id="master-search-input" 
+                            oninput="renderMasterTable()" 
+                            placeholder="Cari SKU, barcode, nama produk, atau rak/kategori..." 
+                            class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-slate-400" id="master-sync-info-text"></span>
+                        <button onclick="confirmClearMasterData()" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold transition">
+                            Kosongkan Master
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabel Master Produk -->
+                <div class="overflow-x-auto border border-slate-200 rounded-xl">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 font-semibold">
+                                <th class="py-3 px-3.5">Barcode / SKU</th>
+                                <th class="py-3 px-3.5">Nama Produk</th>
+                                <th class="py-3 px-3.5 hidden sm:table-cell">Kategori / Rak</th>
+                                <th class="py-3 px-3.5 text-center">Satuan</th>
+                                <th class="py-3 px-3.5 text-right">Stok Sistem</th>
+                                <th class="py-3 px-3.5 text-right">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="master-table-body" class="divide-y divide-slate-100 text-xs sm:text-sm">
+                            <!-- Diisi oleh JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TAB 3: CLOUD SYNC, GOOGLE SHEETS & STORAGE -->
+        <!-- ========================================== -->
+        <div id="view-cloud" class="hidden space-y-5">
+            
+            <!-- 1. Konfigurasi Endpoint Google Sheets -->
+            <section class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                    <div>
+                        <h2 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <i data-lucide="sheet" class="w-5 h-5 text-emerald-600"></i>
+                            Konfigurasi Google Sheets & Web App
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Atur URL sumber Master Data CSV, URL Hasil SO CSV (`gid=243038121`), dan endpoint Google Apps Script.</p>
+                    </div>
+                </div>
+
+                <form onsubmit="saveCloudConfig(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">1. URL Google Sheets Master Data (Published CSV - GET)</label>
+                        <input type="url" id="cfg-master-csv-url" required class="w-full px-3.5 py-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <p class="text-[11px] text-slate-400 mt-1">Digunakan untuk menarik daftar barcode, nama produk, dan stok sistem ke localStorage.</p>
+                    </div>
+
+                    <div>
+                    <div class="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3.5 space-y-2.5">
+                        <div class="flex items-start justify-between gap-2">
+                            <div class="flex items-start gap-2">
+                                <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5"></i>
+                                <div class="text-xs text-emerald-950 leading-relaxed">
+                                    <strong>Endpoint Google Apps Script (`doPost` - POST) Siap Digunakan:</strong> URL Web App bawaan Anda sudah terpasang otomatis untuk mengirim baris hasil stok opname langsung ke tab <code>gid=243038121</code>.
+                                </div>
+                            </div>
+                            <span id="gas-endpoint-badge" class="px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-600 text-white whitespace-nowrap shrink-0">
+                                Siap Kirim ke Sheets
+                            </span>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-800 mb-1">3. URL Google Apps Script Web App (`doPost` Endpoint - POST)</label>
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <input type="url" id="cfg-gas-webapp-url" required oninput="updateGasEndpointStatusBadge()" placeholder="https://script.google.com/macros/s/AKfycb.../exec" class="flex-1 px-3.5 py-2 bg-white border border-emerald-300 rounded-xl text-xs font-mono focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                                <button type="button" onclick="openModal('modal-gas-guide')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shrink-0 transition">
+                                    <i data-lucide="code-2" class="w-4 h-4"></i>
+                                    <span>Lihat Kode Apps Script</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-wrap items-center justify-between gap-2 pt-1">
+                        <button type="button" onclick="resetDefaultUrls()" class="text-xs text-slate-500 hover:text-slate-700 underline">
+                            Reset ke Default (Semua URL)
+                        </button>
+                        <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-2xs transition">
+                            Simpan Pengaturan Cloud
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- 2. Verifikasi & Preview Tab Hasil SO dari Google Sheets (gid=243038121) -->
+            <section class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-5 space-y-4">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+                    <div>
+                        <h3 class="text-sm sm:text-base font-bold text-slate-800">Monitor Data Tab Hasil SO (`gid=243038121`)</h3>
+                        <p class="text-xs text-slate-500">Tarik data langsung dari link CSV tab Hasil SO untuk memastikan laporan telah tercatat di spreadsheet.</p>
+                    </div>
+                    <button onclick="fetchRemoteResultsCSV(true)" id="btn-fetch-remote-so" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 shadow-2xs transition shrink-0">
+                        <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+                        <span>Muat Data Hasil SO Cloud</span>
+                    </button>
+                </div>
+
+                <div id="remote-so-status" class="text-xs text-slate-500">
+                    Klik tombol di atas untuk membaca isi terkini dari tab <code>gid=243038121</code>.
+                </div>
+
+                <div class="overflow-x-auto border border-slate-200 rounded-xl max-h-72">
+                    <table class="w-full text-left border-collapse text-xs" id="remote-so-table">
+                        <thead class="bg-slate-50 border-b border-slate-200 text-slate-600 font-semibold sticky top-0">
+                            <tr id="remote-so-thead">
+                                <th class="py-2.5 px-3">Belum ada data dimuat</th>
+                            </tr>
+                        </thead>
+                        <tbody id="remote-so-tbody" class="divide-y divide-slate-100">
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 3. Manajemen LocalStorage (Backup, Restore & Log Pengiriman) -->
+            <section class="bg-white rounded-2xl border border-slate-200 shadow-2xs p-4 sm:p-5 space-y-4">
+                <div class="border-b border-slate-100 pb-3">
+                    <h3 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i data-lucide="hard-drive" class="w-4 h-4 text-indigo-600"></i>
+                        Penyimpanan Lokal (LocalStorage) & Riwayat Kirim
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Seluruh master produk, sesi hitungan, dan konfigurasi tersimpan otomatis di memori perangkat ini agar aman saat sinyal terputus.</p>
+                </div>
+
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                        <div class="text-slate-500">Kapasitas Terpakai</div>
+                        <div class="font-extrabold text-slate-800 text-base mt-0.5" id="storage-size-kb">0 KB</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                        <div class="text-slate-500">Total Sesi Tersimpan</div>
+                        <div class="font-extrabold text-slate-800 text-base mt-0.5" id="storage-sessions-count">0</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                        <div class="text-slate-500">Master Produk Lokal</div>
+                        <div class="font-extrabold text-slate-800 text-base mt-0.5" id="storage-master-count">0</div>
+                    </div>
+                    <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/70">
+                        <div class="text-slate-500">Log Pengiriman</div>
+                        <div class="font-extrabold text-slate-800 text-base mt-0.5" id="storage-logs-count">0</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="exportFullBackupJSON()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 transition">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Backup Semua Data (JSON)</span>
+                    </button>
+
+                    <label class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center gap-1.5 cursor-pointer transition">
+                        <i data-lucide="upload" class="w-4 h-4"></i>
+                        <span>Restore Backup (JSON)</span>
+                        <input type="file" accept=".json,application/json" onchange="importFullBackupJSON(event)" class="hidden">
+                    </label>
+
+                    <button onclick="confirmFactoryReset()" class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold flex items-center gap-1.5 transition ml-auto">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        <span>Reset Total LocalStorage</span>
+                    </button>
+                </div>
+
+                <!-- Log Riwayat Pengiriman -->
+                <div class="pt-2">
+                    <h4 class="text-xs font-bold text-slate-700 mb-2">Riwayat Pengiriman / Ekspor Terakhir:</h4>
+                    <div id="sync-logs-list" class="space-y-1.5 max-h-40 overflow-y-auto text-xs">
+                        <!-- Diisi JS -->
+                    </div>
+                </div>
+            </section>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-3 px-4 text-center text-xs text-slate-400 no-print">
+        StockCount Pro &bull; Offline-First LocalStorage &amp; Google Sheets Integration
+    </footer>
+
+    <!-- ========================================== -->
+    <!-- AREA CETAK LAPORAN (KHUSUS PRINT)          -->
+    <!-- ========================================== -->
+    <div id="print-area" class="hidden"></div>
+
+    <!-- ========================================== -->
+    <!-- MODALS                                     -->
+    <!-- ========================================== -->
+
+    <!-- Modal Panduan & Kode Google Apps Script (Code.gs) -->
+    <div id="modal-gas-guide" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-5 shadow-2xl space-y-4 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+                <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                    <i data-lucide="code-2" class="w-5 h-5 text-emerald-600"></i>
+                    Kode Google Apps Script (`Code.gs`) untuk Tab `gid=243038121`
+                </h3>
+                <button onclick="closeModal('modal-gas-guide')" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="overflow-y-auto space-y-3 text-xs text-slate-600 pr-1">
+                <ol class="list-decimal list-inside space-y-1.5 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <li>Buka file Google Spreadsheet Anda, lalu klik menu <strong>Extensions (Ekstensi) &gt; Apps Script</strong>.</li>
+                    <li>Hapus kode bawaan dan tempelkan seluruh kode di bawah ini (script otomatis mencari tab dengan <code>gid=243038121</code>).</li>
+                    <li>Klik <strong>Deploy (Terapkan) &gt; New deployment (Deployment baru)</strong> &gt; pilih tipe <strong>Web app</strong>.</li>
+                    <li>Setel <em>Execute as</em>: <strong>Me</strong>, dan <em>Who has access</em>: <strong>Anyone (Siapa saja)</strong>, lalu klik <strong>Deploy</strong>.</li>
+                    <li>Salin <strong>Web App URL</strong> yang muncul dan tempelkan pada pengaturan di aplikasi ini.</li>
+                </ol>
+
+                <div class="relative">
+                    <button type="button" onclick="copyGasScriptCode()" class="absolute top-2.5 right-2.5 px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-semibold flex items-center gap-1 shadow-xs">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i> Salin Kode
+                    </button>
+                    <pre id="gas-code-block" class="bg-slate-900 text-emerald-300 p-4 rounded-xl text-[11px] font-mono overflow-x-auto leading-relaxed">function doPost(e) {
+  try {
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var targetGid = 243038121;
+    var sheets = ss.getSheets();
+    var sheet = null;
+
+    // Cari tab sheet sesuai gid=243038121
+    for (var i = 0; i &lt; sheets.length; i++) {
+      if (sheets[i].getSheetId() == targetGid) {
+        sheet = sheets[i];
+        break;
+      }
+    }
+    if (!sheet) {
+      sheet = ss.getActiveSheet();
+    }
+
+    var payload = JSON.parse(e.postData.contents);
+    var items = payload.items || [];
+
+    // Buat header otomatis jika sheet masih kosong
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow([
+        'Waktu_Kirim',
+        'Sesi_Lokasi',
+        'Petugas',
+        'Barcode_SKU',
+        'Nama_Produk',
+        'Kategori',
+        'Satuan',
+        'Stok_Sistem',
+        'Stok_Fisik',
+        'Selisih',
+        'Status',
+        'Catatan'
+      ]);
+    }
+
+    var timestamp = new Date();
+    var rows = items.map(function(item) {
+      return [
+        timestamp,
+        payload.sessionName || '',
+        payload.pic || '',
+        "'" + item.sku, // Tanda kutip agar barcode angka panjang tidak berubah format
+        item.name || '',
+        item.category || '',
+        item.unit || 'Pcs',
+        Number(item.systemQty) || 0,
+        Number(item.countedQty) || 0,
+        Number(item.variance) || 0,
+        item.status || '',
+        item.note || ''
+      ];
+    });
+
+    if (rows.length &gt; 0) {
+      sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, rows[0].length).setValues(rows);
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'success', inserted: rows.length }))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ status: 'error', message: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}</pre>
+                </div>
+            </div>
+
+            <div class="flex justify-end pt-2 border-t border-slate-100 shrink-0">
+                <button type="button" onclick="closeModal('modal-gas-guide')" class="px-4 py-2 rounded-xl bg-slate-900 text-white text-xs font-semibold">Tutup Panduan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Sesi (Buat / Ubah Nama Sesi) -->
+    <div id="modal-session" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base" id="modal-session-title">Buat Sesi Stock Count</h3>
+                <button onclick="closeModal('modal-session')" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="saveSession(event)" class="space-y-4">
+                <input type="hidden" id="session-modal-mode" value="create">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Lokasi / Rak / Batch *</label>
+                    <input type="text" id="session-name-input" required placeholder="Contoh: Gudang Utama - Rak B2" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Petugas / Catatan Sesi</label>
+                    <input type="text" id="session-pic-input" placeholder="Contoh: Budi - Shift Pagi" class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-session')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">Simpan Sesi</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Tambah / Edit Produk Master -->
+    <div id="modal-product" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base" id="modal-product-title">Tambah Produk ke Master</h3>
+                <button onclick="closeModal('modal-product')" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="saveProductMaster(event)" class="space-y-3">
+                <input type="hidden" id="product-edit-original-sku" value="">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Barcode / SKU *</label>
+                    <input type="text" id="product-sku-input" required placeholder="Contoh: 8991234567890" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Nama Produk *</label>
+                    <input type="text" id="product-name-input" required placeholder="Contoh: Kopi Arabika 250gr" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Kategori / Rak</label>
+                        <input type="text" id="product-category-input" placeholder="Rak A1" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Satuan</label>
+                        <input type="text" id="product-unit-input" value="Pcs" placeholder="Pcs / Box / Kg" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Stok Sistem (Expected Qty)</label>
+                    <input type="number" step="any" id="product-sysqty-input" value="0" required class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-product')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold">Simpan Produk</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Edit Detail Item Terhitung (Qty & Catatan) -->
+    <div id="modal-edit-item" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <h3 class="font-bold text-slate-800 text-base">Edit Detail Hitungan</h3>
+                <button onclick="closeModal('modal-edit-item')" class="text-slate-400 hover:text-slate-600">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            <form onsubmit="saveEditedCountItem(event)" class="space-y-3">
+                <input type="hidden" id="edit-item-sku">
+                <div class="bg-slate-50 p-3 rounded-xl border border-slate-200/70">
+                    <div class="text-xs text-slate-500 font-mono" id="edit-item-sku-label">SKU</div>
+                    <div class="font-bold text-slate-800 text-sm" id="edit-item-name-label">Nama Produk</div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Jumlah Fisik Aktual</label>
+                    <input type="number" step="any" min="0" id="edit-item-qty" required class="w-full px-3.5 py-2.5 border border-slate-300 rounded-xl text-base font-bold focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Catatan Kondisi / Lokasi Spesifik</label>
+                    <input type="text" id="edit-item-note" placeholder="Contoh: Kemasan penyok 1 pcs, atau di rak atas" class="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closeModal('modal-edit-item')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">Batal</button>
+                    <button type="submit" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Kustom -->
+    <div id="modal-confirm" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-5 shadow-2xl space-y-4">
+            <div class="flex items-start gap-3">
+                <div class="p-2.5 rounded-full bg-rose-100 text-rose-600 shrink-0">
+                    <i data-lucide="alert-circle" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-slate-800 text-base" id="confirm-title">Konfirmasi</h3>
+                    <p class="text-xs text-slate-600 mt-1 leading-relaxed" id="confirm-message">Apakah Anda yakin?</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button type="button" onclick="closeModal('modal-confirm')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold">Batal</button>
+                <button type="button" id="confirm-yes-btn" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT APPLICATION LOGIC               -->
+    <!-- ========================================== -->
+    <script>
+        // ==========================================
+        // 1. KONFIGURASI DEFAULT & STATE MANAGEMENT
+        // ==========================================
+        const STORAGE_KEY = 'stockcount_pro_gsheets_v3';
+
+        const DEFAULT_MASTER_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQfFA7OMqKZicVSLuhpDVVc2vd50Hi9Vc7Y-LlNkNlg9XzESvp94M3_ICEFmpap6bL3XN7MmGGgmXdU/pub?output=csv';
+        const DEFAULT_RESULT_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQfFA7OMqKZicVSLuhpDVVc2vd50Hi9Vc7Y-LlNkNlg9XzESvp94M3_ICEFmpap6bL3XN7MmGGgmXdU/pub?gid=243038121&single=true&output=csv';
+        const DEFAULT_GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyuip14N-ssKnflEX6ACgkakRRVALCt4-i-sGOJObAqmKAVMUtvQI_iUsKjoNBQlJG3eQ/exec';
+
+        let appState = {
+            soundEnabled: true,
+            scanMode: 'auto', // 'auto' | 'manual'
+            activeFilter: 'all',
+            activeSessionId: 'sess-default-1',
+            isTopCollapsed: null, // null = otomatis collapse di mobile (< 768px), expand di desktop
+            pageSize: 10,         // Default 10 item per halaman agar ringkas di layar HP
+            config: {
+                masterCsvUrl: DEFAULT_MASTER_CSV_URL,
+                resultCsvUrl: DEFAULT_RESULT_CSV_URL,
+                gasWebAppUrl: DEFAULT_GAS_WEBAPP_URL // Default Endpoint Google Apps Script Web App doPost
+            },
+            lastMasterSync: null,
+            syncLogs: [],
+            sessions: [
+                {
+                    id: 'sess-default-1',
+                    name: 'Stock Opname Utama',
+                    pic: 'Petugas Gudang',
+                    createdAt: new Date().toISOString(),
+                    syncedAt: null,
+                    items: {}
+                }
+            ],
+            masterProducts: {}
+        };
+
+        // Variabel runtime untuk Paging & Highlight scan terakhir
+        let currentPage = 1;
+        let latestHighlightedSku = null;
+        let latestHighlightTimeout = null;
+
+        let html5QrcodeScanner = null;
+        let isCameraRunning = false;
+        let currentFacingMode = 'environment';
+        let torchEnabled = false;
+        let lastScannedCode = '';
+        let lastScannedTime = 0;
+
+        // Muat state dari localStorage
+        function loadState() {
+            try {
+                // Migrasi otomatis dari v2 jika ada
+                const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('stockcount_pro_gsheets_v2');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState = {
+                        ...appState,
+                        ...parsed,
+                        pageSize: Number(parsed.pageSize) || 10,
+                        config: {
+                            masterCsvUrl: parsed.config?.masterCsvUrl || DEFAULT_MASTER_CSV_URL,
+                            resultCsvUrl: parsed.config?.resultCsvUrl || DEFAULT_RESULT_CSV_URL,
+                            gasWebAppUrl: parsed.config?.gasWebAppUrl || DEFAULT_GAS_WEBAPP_URL
+                        }
+                    };
+                    if (!appState.sessions || appState.sessions.length === 0) {
+                        appState.sessions = [{
+                            id: 'sess-' + Date.now(),
+                            name: 'Sesi Stock Opname 1',
+                            pic: '',
+                            createdAt: new Date().toISOString(),
+                            syncedAt: null,
+                            items: {}
+                        }];
+                        appState.activeSessionId = appState.sessions[0].id;
+                    }
+                    if (!appState.sessions.find(s => s.id === appState.activeSessionId)) {
+                        appState.activeSessionId = appState.sessions[0].id;
+                    }
+                }
+
+                // Tentukan status collapse awal: otomatis ter-collapse di layar HP (< 768px) jika belum pernah diatur manual
+                if (appState.isTopCollapsed === null || appState.isTopCollapsed === undefined) {
+                    appState.isTopCollapsed = window.innerWidth < 768;
+                }
+            } catch (e) {
+                console.error('Gagal membaca localStorage:', e);
+                appState.isTopCollapsed = window.innerWidth < 768;
+            }
+        }
+
+        // Simpan seluruh state ke localStorage
+        function saveState() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+                updateStorageStatsUI();
+            } catch (e) {
+                showToast('Peringatan: Memori localStorage penuh!', 'error');
+            }
+        }
+
+        function getActiveSession() {
+            return appState.sessions.find(s => s.id === appState.activeSessionId) || appState.sessions[0];
+        }
+
+        function addSyncLog(action, detail, status = 'success') {
+            if (!appState.syncLogs) appState.syncLogs = [];
+            appState.syncLogs.unshift({
+                time: new Date().toISOString(),
+                action,
+                detail,
+                status
+            });
+            if (appState.syncLogs.length > 30) {
+                appState.syncLogs = appState.syncLogs.slice(0, 30);
+            }
+            saveState();
+            renderSyncLogs();
+        }
+
+        // ==========================================
+        // 1B. COLLAPSE / HIDE HEADER & RINGKASAN ATAS
+        // ==========================================
+        function toggleTopCollapse() {
+            appState.isTopCollapsed = !appState.isTopCollapsed;
+            saveState();
+            applyTopCollapseUI();
+        }
+
+        function applyTopCollapseUI() {
+            const headerDrawer = document.getElementById('collapsible-header-drawer');
+            const summaryDrawer = document.getElementById('collapsible-summary-drawer');
+            const miniSummary = document.getElementById('collapsed-mini-summary');
+            const labelBtn = document.getElementById('label-toggle-top');
+            const iconBtn = document.getElementById('icon-toggle-top');
+
+            if (appState.isTopCollapsed) {
+                headerDrawer.classList.add('hidden');
+                if (summaryDrawer) summaryDrawer.classList.add('hidden');
+                miniSummary.classList.remove('hidden');
+                labelBtn.textContent = 'Info & Menu';
+                iconBtn.style.transform = 'rotate(0deg)';
+            } else {
+                headerDrawer.classList.remove('hidden');
+                if (summaryDrawer) summaryDrawer.classList.remove('hidden');
+                miniSummary.classList.add('hidden');
+                labelBtn.textContent = 'Sembunyikan';
+                iconBtn.style.transform = 'rotate(180deg)';
+            }
+        }
+
+        // ==========================================
+        // 2. GOOGLE SHEETS CSV PARSER & SYNC MASTER
+        // ==========================================
+        function parseCSVText(text) {
+            const cleanText = text.replace(/^\uFEFF/, '');
+            const lines = cleanText.split(/\r?\n/).filter(line => line.trim() !== '');
+            if (lines.length === 0) return [];
+
+            const firstLine = lines[0];
+            const commaCount = (firstLine.match(/,/g) || []).length;
+            const semiCount = (firstLine.match(/;/g) || []).length;
+            const delimiter = semiCount > commaCount ? ';' : ',';
+
+            return lines.map(line => {
+                const row = [];
+                let cur = '';
+                let inQuotes = false;
+                for (let i = 0; i < line.length; i++) {
+                    const ch = line[i];
+                    if (ch === '"') {
+                        if (inQuotes && line[i + 1] === '"') {
+                            cur += '"';
+                            i++;
+                        } else {
+                            inQuotes = !inQuotes;
+                        }
+                    } else if (ch === delimiter && !inQuotes) {
+                        row.push(cur.trim());
+                        cur = '';
+                    } else {
+                        cur += ch;
+                    }
+                }
+                row.push(cur.trim());
+                return row;
+            });
+        }
+
+        function detectHeaderMapping(headers) {
+            const lowerHeaders = headers.map(h => h.toLowerCase().trim());
+            const findCol = (keywords, fallbackIdx) => {
+                const idx = lowerHeaders.findIndex(h => keywords.some(kw => h === kw || h.includes(kw)));
+                return idx !== -1 ? idx : fallbackIdx;
+            };
+
+            return {
+                skuIdx: findCol(['barcode', 'kode', 'sku', 'id_barang', 'item_code', 'plu'], 0),
+                nameIdx: findCol(['nama', 'name', 'produk', 'barang', 'item', 'deskripsi', 'description'], 1),
+                catIdx: findCol(['kategori', 'category', 'rak', 'lokasi', 'rack', 'bin', 'grup', 'group'], 2),
+                unitIdx: findCol(['satuan', 'unit', 'uom', 'kemasan'], 3),
+                qtyIdx: findCol(['stok', 'stock', 'qty', 'jumlah', 'sistem', 'system', 'saldo', 'on_hand'], 4)
+            };
+        }
+
+        async function syncMasterFromGoogleSheets(isManualClick = false) {
+            const url = appState.config.masterCsvUrl;
+            if (!url) {
+                if (isManualClick) showToast('URL Master CSV belum diatur.', 'warning');
+                return;
+            }
+
+            const icon = document.getElementById('quick-sync-icon');
+            if (icon) icon.classList.add('animate-spin');
+
+            try {
+                const fetchUrl = url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now();
+                const response = await fetch(fetchUrl);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                
+                const csvText = await response.text();
+                const rows = parseCSVText(csvText);
+
+                if (rows.length < 2) {
+                    throw new Error('Data CSV kosong atau hanya berisi header.');
+                }
+
+                const map = detectHeaderMapping(rows[0]);
+                const newMaster = {};
+                let count = 0;
+
+                for (let i = 1; i < rows.length; i++) {
+                    const cols = rows[i];
+                    const sku = (cols[map.skuIdx] || '').trim();
+                    const name = (cols[map.nameIdx] || '').trim();
+                    if (!sku || !name) continue;
+
+                    const category = (cols[map.catIdx] || 'Umum').trim();
+                    const unit = (cols[map.unitIdx] || 'Pcs').trim();
+                    let rawQty = (cols[map.qtyIdx] || '0').toString().replace(/[^0-9.-]/g, '');
+                    const systemQty = parseFloat(rawQty) || 0;
+
+                    newMaster[sku] = { sku, name, category, unit, systemQty };
+                    count++;
+                }
+
+                if (count > 0) {
+                    appState.masterProducts = newMaster;
+                    appState.lastMasterSync = new Date().toISOString();
+
+                    const session = getActiveSession();
+                    Object.keys(session.items).forEach(sku => {
+                        if (newMaster[sku]) {
+                            session.items[sku].name = newMaster[sku].name;
+                            session.items[sku].category = newMaster[sku].category;
+                            session.items[sku].unit = newMaster[sku].unit;
+                            session.items[sku].systemQty = newMaster[sku].systemQty;
+                            session.items[sku].isRegistered = true;
+                        }
+                    });
+
+                    saveState();
+                    updateMasterSyncUI();
+                    updateMasterBadge();
+                    renderMasterTable();
+                    renderDashboardAndList();
+                    addSyncLog('Sync Master CSV', `Berhasil memuat ${count} produk dari Google Sheets`, 'success');
+                    
+                    if (isManualClick) {
+                        showToast(`Sinkronisasi sukses! ${count} produk dimuat.`, 'success');
+                    }
+                } else {
+                    throw new Error('Tidak ditemukan baris produk valid pada CSV.');
+                }
+            } catch (err) {
+                console.error('Sync Master Error:', err);
+                addSyncLog('Sync Master Gagal', err.message, 'error');
+                if (isManualClick) {
+                    showToast(`Gagal sync Master: ${err.message}. Menggunakan data lokal.`, 'error');
+                }
+            } finally {
+                if (icon) icon.classList.remove('animate-spin');
+            }
+        }
+
+        function updateMasterSyncUI() {
+            const label = document.getElementById('last-master-sync-label');
+            const masterInfo = document.getElementById('master-sync-info-text');
+            const total = Object.keys(appState.masterProducts || {}).length;
+
+            if (appState.lastMasterSync) {
+                const timeStr = new Date(appState.lastMasterSync).toLocaleString('id-ID', {
+                    dateStyle: 'medium',
+                    timeStyle: 'short'
+                });
+                const text = `${total} SKU tersimpan lokal &bull; Terakhir sync: ${timeStr}`;
+                if (label) label.innerHTML = text;
+                if (masterInfo) masterInfo.innerHTML = `Sync: ${timeStr}`;
+            } else {
+                const text = `${total} SKU lokal &bull; Belum pernah sync cloud`;
+                if (label) label.innerHTML = text;
+            }
+        }
+
+        // ==========================================
+        // 3. KIRIM HASIL SO KE GOOGLE SHEETS & BACA TAB HASIL
+        // ==========================================
+        async function submitSessionToGoogleSheets() {
+            const session = getActiveSession();
+            // Kirim urut berdasarkan input terakhir di paling atas
+            const items = Object.values(session.items || {}).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+            if (items.length === 0) {
+                showToast('Belum ada item yang dihitung pada sesi ini.', 'warning');
+                return;
+            }
+
+            const gasUrl = (appState.config.gasWebAppUrl || DEFAULT_GAS_WEBAPP_URL).trim();
+
+            const btn = document.getElementById('btn-submit-so-top');
+            const origHtml = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.disabled = true;
+                btn.innerHTML = `<i data-lucide="loader-2" class="w-3.5 h-3.5 animate-spin"></i><span>Mengirim...</span>`;
+                lucide.createIcons();
+            }
+
+            const payload = {
+                action: 'submit_stock_opname',
+                target_gid: '243038121',
+                sessionId: session.id,
+                sessionName: session.name,
+                pic: session.pic || '',
+                submittedAt: new Date().toISOString(),
+                items: items.map(item => {
+                    const diff = Number((item.countedQty - item.systemQty).toFixed(4));
+                    let status = 'Sesuai';
+                    if (!item.isRegistered) status = 'Item Baru';
+                    else if (diff > 0) status = 'Lebih';
+                    else if (diff < 0) status = 'Kurang';
+
+                    return {
+                        sku: item.sku,
+                        name: item.name,
+                        category: item.category || 'Umum',
+                        unit: item.unit || 'Pcs',
+                        systemQty: item.isRegistered ? item.systemQty : 0,
+                        countedQty: item.countedQty,
+                        variance: diff,
+                        status: status,
+                        note: item.note || ''
+                    };
+                })
+            };
+
+            try {
+                await fetch(gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                session.syncedAt = new Date().toISOString();
+                saveState();
+                updateSessionBadgeUI();
+                addSyncLog('Kirim Hasil SO', `Sesi "${session.name}" (${items.length} SKU) dikirim ke Google Sheets (gid=243038121)`, 'success');
+                showToast(`Berhasil mengirim ${items.length} SKU ke Google Sheets!`, 'success');
+            } catch (err) {
+                console.error('Submit SO Error:', err);
+                addSyncLog('Gagal Kirim SO', err.message, 'error');
+                showToast(`Gagal mengirim data: ${err.message}`, 'error');
+            } finally {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = origHtml;
+                    lucide.createIcons();
+                }
+            }
+        }
+
+        async function fetchRemoteResultsCSV(isManual = false) {
+            const url = appState.config.resultCsvUrl;
+            const statusEl = document.getElementById('remote-so-status');
+            const thead = document.getElementById('remote-so-thead');
+            const tbody = document.getElementById('remote-so-tbody');
+
+            if (!url) return;
+            statusEl.innerHTML = `<span class="text-blue-600 font-medium">Sedang mengambil data dari tab gid=243038121...</span>`;
+
+            try {
+                const fetchUrl = url + (url.includes('?') ? '&' : '?') + '_t=' + Date.now();
+                const res = await fetch(fetchUrl);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const text = await res.text();
+                const rows = parseCSVText(text);
+
+                if (rows.length === 0) {
+                    statusEl.innerHTML = `<span class="text-amber-600">Tab Hasil SO (gid=243038121) saat ini masih kosong.</span>`;
+                    thead.innerHTML = `<tr><th class="py-2.5 px-3">Sheet Kosong</th></tr>`;
+                    tbody.innerHTML = '';
+                    return;
+                }
+
+                const headers = rows[0];
+                thead.innerHTML = `<tr>${headers.map(h => `<th class="py-2.5 px-3 whitespace-nowrap">${escapeHTML(h)}</th>`).join('')}</tr>`;
+
+                const dataRows = rows.slice(1).reverse().slice(0, 50);
+                if (dataRows.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="${headers.length}" class="py-4 px-3 text-center text-slate-400">Belum ada baris data di bawah header.</td></tr>`;
+                } else {
+                    tbody.innerHTML = dataRows.map(r => `
+                        <tr class="hover:bg-slate-50">
+                            ${headers.map((_, idx) => `<td class="py-2 px-3 whitespace-nowrap text-slate-700">${escapeHTML(r[idx] || '')}</td>`).join('')}
+                        </tr>
+                    `).join('');
+                }
+
+                statusEl.innerHTML = `<span class="text-emerald-600 font-semibold">Berhasil memuat ${rows.length - 1} baris data dari tab Hasil SO (gid=243038121).</span>`;
+                if (isManual) showToast('Data tab Hasil SO berhasil dimuat!', 'success');
+            } catch (err) {
+                statusEl.innerHTML = `<span class="text-rose-600">Gagal memuat CSV Hasil SO: ${escapeHTML(err.message)}</span>`;
+                if (isManual) showToast('Gagal memuat tab Hasil SO', 'error');
+            }
+        }
+
+        // ==========================================
+        // 4. AUDIO FEEDBACK (WEB AUDIO API)
+        // ==========================================
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+        function playBeep(type = 'success') {
+            if (!appState.soundEnabled) return;
+            try {
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                if (type === 'success') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.09);
+                } else if (type === 'new') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(660, audioCtx.currentTime);
+                    osc.frequency.setValueAtTime(990, audioCtx.currentTime + 0.08);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.16);
+                }
+            } catch (e) {}
+        }
+
+        function toggleSound() {
+            appState.soundEnabled = !appState.soundEnabled;
+            saveState();
+            updateSoundUI();
+            if (appState.soundEnabled) playBeep('success');
+        }
+
+        function updateSoundUI() {
+            const icon = document.getElementById('icon-sound');
+            const label = document.getElementById('label-sound');
+            if (appState.soundEnabled) {
+                icon.setAttribute('data-lucide', 'volume-2');
+                icon.className = 'w-4 h-4 text-emerald-400';
+                if (label) label.textContent = 'Beep';
+            } else {
+                icon.setAttribute('data-lucide', 'volume-x');
+                icon.className = 'w-4 h-4 text-slate-400';
+                if (label) label.textContent = 'Hening';
+            }
+            lucide.createIcons();
+        }
+
+        // ==========================================
+        // 5. TOAST, MODAL & NAVIGASI TAB
+        // ==========================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-slate-900 text-white border-l-4 border-emerald-500',
+                warning: 'bg-slate-900 text-white border-l-4 border-amber-500',
+                error: 'bg-slate-900 text-white border-l-4 border-rose-500',
+                info: 'bg-slate-900 text-white border-l-4 border-blue-500'
+            };
+
+            toast.className = `${colors[type] || colors.info} px-4 py-3 rounded-xl shadow-lg text-xs font-medium flex items-center justify-between gap-2 pointer-events-auto transition-all duration-300`;
+            toast.innerHTML = `<span>${escapeHTML(message)}</span>`;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        function showConfirm(title, message, onConfirmCallback) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-message').textContent = message;
+            const yesBtn = document.getElementById('confirm-yes-btn');
+            const newYesBtn = yesBtn.cloneNode(true);
+            yesBtn.parentNode.replaceChild(newYesBtn, yesBtn);
+            newYesBtn.addEventListener('click', () => {
+                closeModal('modal-confirm');
+                onConfirmCallback();
+            });
+            openModal('modal-confirm');
+        }
+
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function switchTab(tab) {
+            const views = {
+                count: document.getElementById('view-count'),
+                master: document.getElementById('view-master'),
+                cloud: document.getElementById('view-cloud')
+            };
+            const navs = {
+                count: document.getElementById('nav-count'),
+                master: document.getElementById('nav-master'),
+                cloud: document.getElementById('nav-cloud')
+            };
+
+            if (tab !== 'count' && isCameraRunning) {
+                stopCameraScanner();
+            }
+
+            Object.keys(views).forEach(key => {
+                if (key === tab) {
+                    views[key].classList.remove('hidden');
+                    navs[key].className = 'flex-1 sm:flex-initial justify-center px-3 py-2 rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 shadow-2xs';
+                } else {
+                    views[key].classList.add('hidden');
+                    navs[key].className = 'flex-1 sm:flex-initial justify-center px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs sm:text-sm font-semibold transition flex items-center gap-1.5';
+                }
+            });
+
+            if (tab === 'count') renderDashboardAndList();
+            if (tab === 'master') renderMasterTable();
+            if (tab === 'cloud') {
+                populateCloudConfigForm();
+                updateStorageStatsUI();
+                renderSyncLogs();
+            }
+        }
+
+        // ==========================================
+        // 6. MANAJEMEN SESI STOCK COUNT
+        // ==========================================
+        function renderSessionSelector() {
+            const selector = document.getElementById('session-selector');
+            selector.innerHTML = appState.sessions.map(sess => {
+                const itemCount = Object.keys(sess.items || {}).length;
+                return `<option value="${escapeHTML(sess.id)}" ${sess.id === appState.activeSessionId ? 'selected' : ''}>
+                    ${escapeHTML(sess.name)} (${itemCount} SKU)
+                </option>`;
+            }).join('');
+
+            const active = getActiveSession();
+            const miniSess = document.getElementById('mini-session-name');
+            if (miniSess) miniSess.textContent = active.name;
+
+            updateSessionBadgeUI();
+        }
+
+        function updateSessionBadgeUI() {
+            const session = getActiveSession();
+            const badge = document.getElementById('session-sync-badge');
+            if (session.syncedAt) {
+                const t = new Date(session.syncedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                badge.className = 'px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 whitespace-nowrap';
+                badge.textContent = `Terkirim ke Cloud (${t})`;
+            } else {
+                badge.className = 'px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 whitespace-nowrap';
+                badge.textContent = 'Draft Lokal';
+            }
+        }
+
+        function changeSession(sessionId) {
+            appState.activeSessionId = sessionId;
+            currentPage = 1;
+            saveState();
+            renderSessionSelector();
+            renderDashboardAndList();
+            showToast(`Aktif: ${getActiveSession().name}`, 'info');
+        }
+
+        function openSessionModal(mode) {
+            document.getElementById('session-modal-mode').value = mode;
+            const title = document.getElementById('modal-session-title');
+            const nameInput = document.getElementById('session-name-input');
+            const picInput = document.getElementById('session-pic-input');
+
+            if (mode === 'create') {
+                title.textContent = 'Buat Sesi Stock Count Baru';
+                nameInput.value = '';
+                picInput.value = '';
+            } else {
+                const active = getActiveSession();
+                title.textContent = 'Ubah Detail Sesi';
+                nameInput.value = active.name;
+                picInput.value = active.pic || '';
+            }
+            openModal('modal-session');
+            setTimeout(() => nameInput.focus(), 100);
+        }
+
+        function saveSession(e) {
+            e.preventDefault();
+            const mode = document.getElementById('session-modal-mode').value;
+            const name = document.getElementById('session-name-input').value.trim();
+            const pic = document.getElementById('session-pic-input').value.trim();
+            if (!name) return;
+
+            if (mode === 'create') {
+                const newSess = {
+                    id: 'sess-' + Date.now(),
+                    name,
+                    pic,
+                    createdAt: new Date().toISOString(),
+                    syncedAt: null,
+                    items: {}
+                };
+                appState.sessions.push(newSess);
+                appState.activeSessionId = newSess.id;
+                currentPage = 1;
+                showToast(`Sesi "${name}" dibuat`, 'success');
+            } else {
+                const active = getActiveSession();
+                active.name = name;
+                active.pic = pic;
+                showToast('Detail sesi diperbarui', 'success');
+            }
+
+            saveState();
+            renderSessionSelector();
+            renderDashboardAndList();
+            closeModal('modal-session');
+        }
+
+        function confirmDeleteSession() {
+            if (appState.sessions.length <= 1) {
+                showToast('Minimal harus ada 1 sesi aktif.', 'warning');
+                return;
+            }
+            const active = getActiveSession();
+            showConfirm(
+                'Hapus Sesi Ini?',
+                `Semua data hitungan di sesi "${active.name}" akan dihapus permanen. Lanjutkan?`,
+                () => {
+                    appState.sessions = appState.sessions.filter(s => s.id !== active.id);
+                    appState.activeSessionId = appState.sessions[0].id;
+                    currentPage = 1;
+                    saveState();
+                    renderSessionSelector();
+                    renderDashboardAndList();
+                    showToast('Sesi dihapus', 'info');
+                }
+            );
+        }
+
+        // ==========================================
+        // 7. SCAN & INPUT BARCODE LOGIC (LIFO / TERBARU DI ATAS)
+        // ==========================================
+        function setScanMode(mode) {
+            appState.scanMode = mode;
+            saveState();
+            updateScanModeUI();
+        }
+
+        function updateScanModeUI() {
+            const btnAuto = document.getElementById('mode-auto');
+            const btnManual = document.getElementById('mode-manual');
+            const qtyInput = document.getElementById('qty-input');
+
+            if (appState.scanMode === 'auto') {
+                btnAuto.className = 'px-2.5 py-1 rounded-lg bg-white text-blue-600 shadow-2xs transition';
+                btnManual.className = 'px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
+                qtyInput.value = 1;
+            } else {
+                btnManual.className = 'px-2.5 py-1 rounded-lg bg-white text-blue-600 shadow-2xs transition';
+                btnAuto.className = 'px-2.5 py-1 rounded-lg text-slate-600 hover:text-slate-900 transition';
+            }
+        }
+
+        function adjustInputQty(delta) {
+            const input = document.getElementById('qty-input');
+            let val = parseFloat(input.value) || 0;
+            input.value = Math.max(1, val + delta);
+        }
+
+        function handleSearchAutocomplete(query) {
+            const listEl = document.getElementById('autocomplete-list');
+            const previewEl = document.getElementById('live-product-preview');
+            const q = query.trim().toLowerCase();
+
+            if (!q) {
+                listEl.classList.add('hidden');
+                previewEl.classList.add('hidden');
+                return;
+            }
+
+            const exactMaster = Object.values(appState.masterProducts).find(p => p.sku.toLowerCase() === q);
+            if (exactMaster) {
+                document.getElementById('preview-name').textContent = exactMaster.name;
+                document.getElementById('preview-meta').textContent = `(${exactMaster.sku} • ${exactMaster.category || 'Umum'})`;
+                document.getElementById('preview-sys-qty').textContent = `Stok Sistem: ${exactMaster.systemQty} ${exactMaster.unit || 'Pcs'}`;
+                previewEl.classList.remove('hidden');
+            } else {
+                previewEl.classList.add('hidden');
+            }
+
+            const matches = Object.values(appState.masterProducts).filter(p => 
+                p.sku.toLowerCase().includes(q) || p.name.toLowerCase().includes(q)
+            ).slice(0, 7);
+
+            if (matches.length === 0) {
+                listEl.classList.add('hidden');
+                return;
+            }
+
+            listEl.innerHTML = matches.map(p => `
+                <button type="button" onclick="selectAutocompleteProduct('${escapeHTML(p.sku)}')" class="w-full text-left px-3.5 py-2.5 hover:bg-blue-50 flex items-center justify-between gap-2 transition">
+                    <div class="min-w-0">
+                        <div class="text-xs sm:text-sm font-semibold text-slate-800 truncate">${escapeHTML(p.name)}</div>
+                        <div class="text-[11px] text-slate-500 font-mono">${escapeHTML(p.sku)} &bull; ${escapeHTML(p.category || 'Umum')}</div>
+                    </div>
+                    <div class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-lg shrink-0">
+                        Sistem: ${p.systemQty}
+                    </div>
+                </button>
+            `).join('');
+            listEl.classList.remove('hidden');
+        }
+
+        function selectAutocompleteProduct(sku) {
+            const barcodeInput = document.getElementById('barcode-input');
+            barcodeInput.value = sku;
+            document.getElementById('autocomplete-list').classList.add('hidden');
+            
+            if (appState.scanMode === 'auto') {
+                processBarcodeEntry(sku, 1);
+                barcodeInput.value = '';
+                document.getElementById('live-product-preview').classList.add('hidden');
+            } else {
+                handleSearchAutocomplete(sku);
+                const qtyInput = document.getElementById('qty-input');
+                qtyInput.focus();
+                qtyInput.select();
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#barcode-input') && !e.target.closest('#autocomplete-list')) {
+                document.getElementById('autocomplete-list').classList.add('hidden');
+            }
+        });
+
+        function handleScanSubmit(e) {
+            e.preventDefault();
+            const barcodeInput = document.getElementById('barcode-input');
+            const qtyInput = document.getElementById('qty-input');
+            
+            let rawCode = barcodeInput.value.trim();
+            if (!rawCode) {
+                barcodeInput.focus();
+                return;
+            }
+
+            if (!appState.masterProducts[rawCode]) {
+                const matchBySku = Object.values(appState.masterProducts).find(p => p.sku.toLowerCase() === rawCode.toLowerCase());
+                if (matchBySku) rawCode = matchBySku.sku;
+            }
+
+            const qtyToAdd = appState.scanMode === 'auto' ? 1 : (parseFloat(qtyInput.value) || 1);
+            processBarcodeEntry(rawCode, qtyToAdd);
+
+            barcodeInput.value = '';
+            if (appState.scanMode === 'auto') qtyInput.value = 1;
+            document.getElementById('autocomplete-list').classList.add('hidden');
+            document.getElementById('live-product-preview').classList.add('hidden');
+            barcodeInput.focus();
+        }
+
+        function triggerLatestHighlight(sku) {
+            latestHighlightedSku = sku;
+            if (latestHighlightTimeout) clearTimeout(latestHighlightTimeout);
+            latestHighlightTimeout = setTimeout(() => {
+                latestHighlightedSku = null;
+            }, 2000);
+        }
+
+        function processBarcodeEntry(sku, addQty) {
+            const session = getActiveSession();
+            const master = appState.masterProducts[sku];
+            const now = new Date().toISOString();
+
+            session.syncedAt = null;
+
+            if (session.items[sku]) {
+                session.items[sku].countedQty = Number((session.items[sku].countedQty + addQty).toFixed(4));
+                session.items[sku].updatedAt = now; // Perbarui timestamp agar naik ke paling atas
+                if (master) {
+                    session.items[sku].name = master.name;
+                    session.items[sku].category = master.category;
+                    session.items[sku].unit = master.unit;
+                    session.items[sku].systemQty = master.systemQty;
+                    session.items[sku].isRegistered = true;
+                }
+                playBeep('success');
+                showToast(`+${addQty} ${session.items[sku].name} (Total: ${session.items[sku].countedQty})`, 'success');
+            } else {
+                if (master) {
+                    session.items[sku] = {
+                        sku: master.sku,
+                        name: master.name,
+                        category: master.category || 'Umum',
+                        unit: master.unit || 'Pcs',
+                        systemQty: Number(master.systemQty) || 0,
+                        countedQty: addQty,
+                        note: '',
+                        updatedAt: now,
+                        isRegistered: true
+                    };
+                    playBeep('success');
+                    showToast(`Terhitung: ${master.name} (+${addQty})`, 'success');
+                } else {
+                    session.items[sku] = {
+                        sku: sku,
+                        name: `Item Tak Terdaftar (${sku})`,
+                        category: 'Belum Terdaftar',
+                        unit: 'Pcs',
+                        systemQty: 0,
+                        countedQty: addQty,
+                        note: '',
+                        updatedAt: now,
+                        isRegistered: false
+                    };
+                    playBeep('new');
+                    showToast(`Barcode baru ditambahkan: ${sku} (+${addQty})`, 'warning');
+                }
+            }
+
+            if (navigator.vibrate) navigator.vibrate(50);
+
+            // Reset ke Halaman 1 & sorot item terakhir agar langsung terlihat di paling atas
+            currentPage = 1;
+            triggerLatestHighlight(sku);
+
+            saveState();
+            renderSessionSelector();
+            renderDashboardAndList();
+        }
+
+        // ==========================================
+        // 8. KAMERA BARCODE SCANNER (HTML5-QRCODE)
+        // ==========================================
+        function toggleCameraScanner() {
+            if (isCameraRunning) stopCameraScanner();
+            else startCameraScanner();
+        }
+
+        async function switchCameraFacing() {
+            currentFacingMode = currentFacingMode === 'environment' ? 'user' : 'environment';
+            if (isCameraRunning) {
+                await stopCameraScanner();
+                await startCameraScanner();
+            }
+        }
+
+        async function toggleCameraTorch() {
+            if (!html5QrcodeScanner || !isCameraRunning) return;
+            try {
+                torchEnabled = !torchEnabled;
+                await html5QrcodeScanner.applyVideoConstraints({
+                    advanced: [{ torch: torchEnabled }]
+                });
+            } catch (e) {
+                showToast('Lampu flash tidak didukung perangkat ini.', 'warning');
+            }
+        }
+
+        async function startCameraScanner() {
+            const wrapper = document.getElementById('camera-wrapper');
+            const errMsg = document.getElementById('camera-error-msg');
+            wrapper.classList.remove('hidden');
+            errMsg.classList.add('hidden');
+            torchEnabled = false;
+
+            try {
+                if (!html5QrcodeScanner) {
+                    html5QrcodeScanner = new Html5Qrcode("qr-reader");
+                }
+
+                await html5QrcodeScanner.start(
+                    { facingMode: currentFacingMode },
+                    { fps: 12, qrbox: { width: 250, height: 140 }, aspectRatio: 1.5 },
+                    (decodedText) => {
+                        const now = Date.now();
+                        if (decodedText === lastScannedCode && (now - lastScannedTime) < 1400) return;
+                        lastScannedCode = decodedText;
+                        lastScannedTime = now;
+
+                        if (appState.scanMode === 'auto') {
+                            processBarcodeEntry(decodedText, 1);
+                        } else {
+                            const barcodeInput = document.getElementById('barcode-input');
+                            barcodeInput.value = decodedText;
+                            handleSearchAutocomplete(decodedText);
+                            playBeep('success');
+                            stopCameraScanner();
+                            document.getElementById('qty-input').focus();
+                            document.getElementById('qty-input').select();
+                        }
+                    },
+                    () => {}
+                );
+
+                isCameraRunning = true;
+                try {
+                    const caps = html5QrcodeScanner.getRunningTrackCapabilities();
+                    if (caps && caps.torch) {
+                        document.getElementById('btn-torch').classList.remove('hidden');
+                    }
+                } catch (e) {}
+            } catch (err) {
+                errMsg.textContent = "Kamera tidak dapat diakses. Pastikan izin kamera diizinkan pada browser.";
+                errMsg.classList.remove('hidden');
+                isCameraRunning = false;
+            }
+        }
+
+        async function stopCameraScanner() {
+            const wrapper = document.getElementById('camera-wrapper');
+            if (html5QrcodeScanner && isCameraRunning) {
+                try { await html5QrcodeScanner.stop(); } catch (e) {}
+            }
+            isCameraRunning = false;
+            document.getElementById('btn-torch').classList.add('hidden');
+            wrapper.classList.add('hidden');
+        }
+
+        // ==========================================
+        // 9. RENDER DASHBOARD, DAFTAR HITUNGAN & PAGINATION
+        // ==========================================
+        function setFilter(filterName) {
+            appState.activeFilter = filterName;
+            currentPage = 1;
+            renderDashboardAndList();
+        }
+
+        function onListSearchInput() {
+            currentPage = 1;
+            renderCountList();
+        }
+
+        function changePageSize(newSize) {
+            appState.pageSize = parseInt(newSize, 10) || 10;
+            currentPage = 1;
+            saveState();
+            renderCountList();
+        }
+
+        function goToPage(page) {
+            currentPage = page;
+            renderCountList();
+        }
+
+        function renderDashboardAndList() {
+            const session = getActiveSession();
+            const itemsArray = Object.values(session.items || {});
+            
+            let totalSku = itemsArray.length;
+            let totalQty = 0;
+            let matchCount = 0;
+            let varianceCount = 0;
+            let unregisteredCount = 0;
+
+            itemsArray.forEach(item => {
+                totalQty += Number(item.countedQty) || 0;
+                const diff = item.countedQty - item.systemQty;
+                if (!item.isRegistered) {
+                    unregisteredCount++;
+                    varianceCount++;
+                } else if (diff === 0) {
+                    matchCount++;
+                } else {
+                    varianceCount++;
+                }
+            });
+
+            const formattedTotalQty = Number(totalQty.toFixed(2));
+
+            document.getElementById('stat-total-sku').textContent = totalSku;
+            document.getElementById('stat-total-qty').textContent = formattedTotalQty;
+            document.getElementById('stat-match').textContent = matchCount;
+            document.getElementById('stat-variance').textContent = varianceCount;
+
+            // Update juga ringkasan mini di header saat mode collapse aktif
+            const miniSku = document.getElementById('mini-stat-sku');
+            const miniQty = document.getElementById('mini-stat-qty');
+            if (miniSku) miniSku.textContent = totalSku;
+            if (miniQty) miniQty.textContent = formattedTotalQty;
+
+            document.getElementById('count-all').textContent = totalSku;
+            document.getElementById('count-variance').textContent = varianceCount;
+            document.getElementById('count-match').textContent = matchCount;
+            document.getElementById('count-unregistered').textContent = unregisteredCount;
+
+            ['all', 'variance', 'match', 'unregistered'].forEach(f => {
+                const btn = document.getElementById(`filter-${f}`);
+                btn.className = f === appState.activeFilter
+                    ? 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-900 text-white whitespace-nowrap transition'
+                    : 'px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap transition';
+            });
+
+            renderCountList();
+        }
+
+        function renderCountList() {
+            const session = getActiveSession();
+            const container = document.getElementById('count-items-container');
+            const searchQuery = document.getElementById('list-search-input').value.trim().toLowerCase();
+            const topPagingBar = document.getElementById('top-paging-info-bar');
+            const bottomPagingBar = document.getElementById('pagination-controls-bar');
+
+            // 1. Selalu urutkan berdasarkan input terakhir di paling atas (Newest First / LIFO)
+            let items = Object.values(session.items || {}).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+            // 2. Filter berdasarkan tab status
+            items = items.filter(item => {
+                const diff = item.countedQty - item.systemQty;
+                if (appState.activeFilter === 'match') return item.isRegistered && diff === 0;
+                if (appState.activeFilter === 'variance') return !item.isRegistered || diff !== 0;
+                if (appState.activeFilter === 'unregistered') return !item.isRegistered;
+                return true;
+            });
+
+            // 3. Filter berdasarkan pencarian teks
+            if (searchQuery) {
+                items = items.filter(item => 
+                    item.sku.toLowerCase().includes(searchQuery) ||
+                    item.name.toLowerCase().includes(searchQuery) ||
+                    (item.note && item.note.toLowerCase().includes(searchQuery))
+                );
+            }
+
+            if (items.length === 0) {
+                topPagingBar.classList.add('hidden');
+                bottomPagingBar.classList.add('hidden');
+                container.innerHTML = `
+                    <div class="py-12 px-4 text-center">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
+                            <i data-lucide="scan-line" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-sm font-bold text-slate-700">Belum ada item di daftar ini</h3>
+                        <p class="text-xs text-slate-400 mt-1 max-w-xs mx-auto">Pindai barcode pakai kamera, scanner USB/Bluetooth, atau ketik nama/SKU barang di kolom atas.</p>
+                    </div>
+                `;
+                lucide.createIcons();
+                return;
+            }
+
+            // 4. Perhitungan Pagination
+            const pageSize = Number(appState.pageSize) || 10;
+            const totalItems = items.length;
+            const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+            if (currentPage < 1) currentPage = 1;
+
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, totalItems);
+            const pagedItems = items.slice(startIndex, endIndex);
+
+            // Tampilkan bar info paging atas & bawah
+            topPagingBar.classList.remove('hidden');
+            bottomPagingBar.classList.remove('hidden');
+            document.getElementById('top-paging-range-text').textContent = `Hal ${currentPage}/${totalPages} (${startIndex + 1}–${endIndex} dari ${totalItems})`;
+            document.getElementById('bottom-paging-range-text').textContent = `Menampilkan ${startIndex + 1}–${endIndex} dari ${totalItems} item`;
+            document.getElementById('page-size-select').value = String(pageSize);
+
+            // Render item pada halaman aktif
+            container.innerHTML = pagedItems.map((item, idxOnPage) => {
+                const globalIndex = startIndex + idxOnPage + 1;
+                const isLatest = item.sku === latestHighlightedSku && globalIndex === 1;
+                const diff = Number((item.countedQty - item.systemQty).toFixed(4));
+                let statusBadge = '';
+                let diffText = '';
+
+                if (!item.isRegistered) {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-700">Baru / Tak Terdaftar</span>`;
+                    diffText = `<span class="text-purple-600 font-bold">+${item.countedQty}</span>`;
+                } else if (diff === 0) {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-100 text-emerald-700">Sesuai</span>`;
+                    diffText = `<span class="text-emerald-600 font-bold">0</span>`;
+                } else if (diff > 0) {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-blue-100 text-blue-700">Lebih (+${diff})</span>`;
+                    diffText = `<span class="text-blue-600 font-bold">+${diff}</span>`;
+                } else {
+                    statusBadge = `<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-100 text-rose-700">Kurang (${diff})</span>`;
+                    diffText = `<span class="text-rose-600 font-bold">${diff}</span>`;
+                }
+
+                const timeStr = new Date(item.updatedAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+                return `
+                    <div class="p-3.5 sm:p-4 hover:bg-slate-50/80 transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${isLatest ? 'animate-latest-scan border-l-4 border-l-blue-600' : ''}">
+                        <div class="space-y-1 flex-1 min-w-0">
+                            <div class="flex flex-wrap items-center gap-1.5">
+                                <span class="text-[11px] font-bold text-slate-400">#${globalIndex}</span>
+                                <span class="font-mono text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">${escapeHTML(item.sku)}</span>
+                                ${statusBadge}
+                                ${globalIndex === 1 ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white">Terbaru</span>` : ''}
+                                <span class="text-[11px] text-slate-400 flex items-center gap-1">
+                                    <i data-lucide="clock" class="w-3 h-3"></i> ${timeStr}
+                                </span>
+                            </div>
+                            
+                            <h4 class="font-bold text-slate-800 text-sm sm:text-base truncate">${escapeHTML(item.name)}</h4>
+                            
+                            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+                                <span>Stok Sistem: <strong class="text-slate-700">${item.isRegistered ? item.systemQty : '-'}</strong> ${escapeHTML(item.unit)}</span>
+                                <span>Selisih: ${diffText}</span>
+                                ${!item.isRegistered ? `
+                                    <button onclick="openProductModal(null, '${escapeHTML(item.sku)}')" class="text-blue-600 hover:underline font-semibold flex items-center gap-0.5">
+                                        <i data-lucide="plus-circle" class="w-3 h-3"></i> Simpan ke Master
+                                    </button>
+                                ` : ''}
+                            </div>
+
+                            ${item.note ? `
+                                <div class="text-xs text-amber-700 bg-amber-50 border border-amber-200/60 px-2.5 py-1 rounded-lg inline-flex items-center gap-1.5 mt-1">
+                                    <i data-lucide="message-square" class="w-3 h-3 shrink-0"></i>
+                                    <span>${escapeHTML(item.note)}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div class="flex items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                            <div class="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200/80">
+                                <button onclick="updateCountItemQty('${escapeHTML(item.sku)}', -1)" class="w-8 h-8 rounded-lg bg-white hover:bg-slate-50 text-slate-700 font-bold shadow-2xs flex items-center justify-center transition active:scale-95">-</button>
+                                <button onclick="openEditItemModal('${escapeHTML(item.sku)}')" class="px-3 min-w-[3.2rem] text-center font-extrabold text-slate-900 text-sm sm:text-base hover:text-blue-600" title="Klik untuk edit angka & catatan">
+                                    ${item.countedQty}
+                                </button>
+                                <button onclick="updateCountItemQty('${escapeHTML(item.sku)}', 1)" class="w-8 h-8 rounded-lg bg-white hover:bg-slate-50 text-slate-700 font-bold shadow-2xs flex items-center justify-center transition active:scale-95">+</button>
+                            </div>
+
+                            <button onclick="openEditItemModal('${escapeHTML(item.sku)}')" class="p-2 rounded-xl bg-slate-100 hover:bg-blue-100 text-slate-600 hover:text-blue-600 transition" title="Edit Jumlah & Catatan">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+
+                            <button onclick="deleteCountItem('${escapeHTML(item.sku)}')" class="p-2 rounded-xl bg-slate-100 hover:bg-rose-100 text-slate-600 hover:text-rose-600 transition" title="Hapus Item">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            renderPaginationButtons(currentPage, totalPages);
+            lucide.createIcons();
+        }
+
+        function renderPaginationButtons(page, totalPages) {
+            const btnGroup = document.getElementById('pagination-buttons-group');
+            if (!btnGroup) return;
+
+            const prevDisabled = page <= 1 ? 'opacity-40 pointer-events-none' : '';
+            const nextDisabled = page >= totalPages ? 'opacity-40 pointer-events-none' : '';
+
+            // Hitung rentang nomor halaman yang ditampilkan (maksimal 5 tombol angka)
+            let startPage = Math.max(1, page - 2);
+            let endPage = Math.min(totalPages, startPage + 4);
+            if (endPage - startPage < 4) {
+                startPage = Math.max(1, endPage - 4);
+            }
+
+            let pageNumbersHtml = '';
+            for (let p = startPage; p <= endPage; p++) {
+                const activeClass = p === page
+                    ? 'bg-blue-600 text-white border-blue-600 shadow-2xs'
+                    : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-300';
+                pageNumbersHtml += `
+                    <button type="button" onclick="goToPage(${p})" class="min-w-[2rem] h-8 px-2 rounded-lg border text-xs font-bold transition ${activeClass}">
+                        ${p}
+                    </button>
+                `;
+            }
+
+            btnGroup.innerHTML = `
+                <button type="button" onclick="goToPage(1)" title="Halaman Pertama" class="h-8 px-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold transition ${prevDisabled}">
+                    &laquo;
+                </button>
+                <button type="button" onclick="goToPage(${page - 1})" class="h-8 px-2.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold transition ${prevDisabled}">
+                    &lsaquo; Prev
+                </button>
+                ${pageNumbersHtml}
+                <button type="button" onclick="goToPage(${page + 1})" class="h-8 px-2.5 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold transition ${nextDisabled}">
+                    Next &rsaquo;
+                </button>
+                <button type="button" onclick="goToPage(${totalPages})" title="Halaman Terakhir" class="h-8 px-2 rounded-lg bg-white hover:bg-slate-100 border border-slate-300 text-slate-700 font-semibold transition ${nextDisabled}">
+                    &raquo;
+                </button>
+            `;
+        }
+
+        function updateCountItemQty(sku, delta) {
+            const session = getActiveSession();
+            const item = session.items[sku];
+            if (!item) return;
+
+            const newQty = Number((item.countedQty + delta).toFixed(4));
+            if (newQty <= 0) {
+                deleteCountItem(sku);
+                return;
+            }
+
+            item.countedQty = newQty;
+            item.updatedAt = new Date().toISOString(); // Pindahkan ke paling atas saat diubah
+            session.syncedAt = null;
+            currentPage = 1;
+            triggerLatestHighlight(sku);
+            saveState();
+            updateSessionBadgeUI();
+            renderDashboardAndList();
+        }
+
+        function deleteCountItem(sku) {
+            const session = getActiveSession();
+            const item = session.items[sku];
+            if (!item) return;
+
+            showConfirm(
+                'Hapus Item Hitungan?',
+                `Hapus "${item.name}" dari daftar hasil hitungan sesi ini?`,
+                () => {
+                    delete session.items[sku];
+                    session.syncedAt = null;
+                    saveState();
+                    renderSessionSelector();
+                    renderDashboardAndList();
+                    showToast('Item dihapus dari sesi', 'info');
+                }
+            );
+        }
+
+        function confirmClearSessionItems() {
+            const session = getActiveSession();
+            if (Object.keys(session.items || {}).length === 0) {
+                showToast('Daftar hitungan sudah kosong', 'info');
+                return;
+            }
+            showConfirm(
+                'Reset Semua Hitungan Sesi Ini?',
+                `Semua hasil hitungan di sesi "${session.name}" akan dikosongkan. Master data produk tetap aman.`,
+                () => {
+                    session.items = {};
+                    session.syncedAt = null;
+                    currentPage = 1;
+                    saveState();
+                    renderSessionSelector();
+                    renderDashboardAndList();
+                    showToast('Hasil hitungan sesi di-reset', 'info');
+                }
+            );
+        }
+
+        function openEditItemModal(sku) {
+            const session = getActiveSession();
+            const item = session.items[sku];
+            if (!item) return;
+
+            document.getElementById('edit-item-sku').value = sku;
+            document.getElementById('edit-item-sku-label').textContent = item.sku;
+            document.getElementById('edit-item-name-label').textContent = item.name;
+            document.getElementById('edit-item-qty').value = item.countedQty;
+            document.getElementById('edit-item-note').value = item.note || '';
+
+            openModal('modal-edit-item');
+            setTimeout(() => {
+                const qtyEl = document.getElementById('edit-item-qty');
+                qtyEl.focus();
+                qtyEl.select();
+            }, 100);
+        }
+
+        function saveEditedCountItem(e) {
+            e.preventDefault();
+            const sku = document.getElementById('edit-item-sku').value;
+            const newQty = parseFloat(document.getElementById('edit-item-qty').value);
+            const note = document.getElementById('edit-item-note').value.trim();
+
+            const session = getActiveSession();
+            if (session.items[sku]) {
+                if (newQty <= 0) {
+                    delete session.items[sku];
+                } else {
+                    session.items[sku].countedQty = newQty;
+                    session.items[sku].note = note;
+                    session.items[sku].updatedAt = new Date().toISOString(); // Naik ke paling atas
+                    currentPage = 1;
+                    triggerLatestHighlight(sku);
+                }
+                session.syncedAt = null;
+                saveState();
+                renderSessionSelector();
+                renderDashboardAndList();
+                showToast('Detail item diperbarui', 'success');
+            }
+            closeModal('modal-edit-item');
+        }
+
+        // ==========================================
+        // 10. MASTER DATA PRODUK & CSV LOKAL
+        // ==========================================
+        function updateMasterBadge() {
+            const count = Object.keys(appState.masterProducts || {}).length;
+            document.getElementById('badge-master-count').textContent = count;
+        }
+
+        function renderMasterTable() {
+            updateMasterBadge();
+            const tbody = document.getElementById('master-table-body');
+            const query = document.getElementById('master-search-input').value.trim().toLowerCase();
+
+            let products = Object.values(appState.masterProducts || {});
+            if (query) {
+                products = products.filter(p => 
+                    p.sku.toLowerCase().includes(query) ||
+                    p.name.toLowerCase().includes(query) ||
+                    (p.category && p.category.toLowerCase().includes(query))
+                );
+            }
+
+            if (products.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-10 text-center text-slate-400 text-xs">
+                            Tidak ada data produk ditemukan. Klik "Sync Google Sheets" atau tambah produk manual.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            const sliced = products.slice(0, 250);
+            tbody.innerHTML = sliced.map(p => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="py-2.5 px-3.5 font-mono text-xs font-semibold text-slate-700">${escapeHTML(p.sku)}</td>
+                    <td class="py-2.5 px-3.5 font-medium text-slate-800">${escapeHTML(p.name)}</td>
+                    <td class="py-2.5 px-3.5 text-slate-500 hidden sm:table-cell">${escapeHTML(p.category || '-')}</td>
+                    <td class="py-2.5 px-3.5 text-center text-slate-600">${escapeHTML(p.unit || 'Pcs')}</td>
+                    <td class="py-2.5 px-3.5 text-right font-bold text-slate-800">${p.systemQty}</td>
+                    <td class="py-2.5 px-3.5 text-right">
+                        <div class="inline-flex items-center gap-1">
+                            <button onclick="openProductModal('${escapeHTML(p.sku)}')" class="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition" title="Edit Produk">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="deleteMasterProduct('${escapeHTML(p.sku)}')" class="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition" title="Hapus Produk">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('') + (products.length > 250 ? `
+                <tr><td colspan="6" class="py-3 text-center text-xs text-slate-400 bg-slate-50">Menampilkan 250 dari ${products.length} produk. Gunakan kotak pencarian untuk filter spesifik.</td></tr>
+            ` : '');
+
+            lucide.createIcons();
+        }
+
+        function openProductModal(sku = null, prefillSku = '') {
+            const title = document.getElementById('modal-product-title');
+            const origInput = document.getElementById('product-edit-original-sku');
+            const skuInput = document.getElementById('product-sku-input');
+            const nameInput = document.getElementById('product-name-input');
+            const catInput = document.getElementById('product-category-input');
+            const unitInput = document.getElementById('product-unit-input');
+            const sysInput = document.getElementById('product-sysqty-input');
+
+            if (sku && appState.masterProducts[sku]) {
+                const p = appState.masterProducts[sku];
+                title.textContent = 'Edit Produk Master';
+                origInput.value = p.sku;
+                skuInput.value = p.sku;
+                nameInput.value = p.name;
+                catInput.value = p.category || '';
+                unitInput.value = p.unit || 'Pcs';
+                sysInput.value = p.systemQty;
+            } else {
+                title.textContent = 'Tambah Produk ke Master';
+                origInput.value = '';
+                skuInput.value = prefillSku;
+                nameInput.value = '';
+                catInput.value = '';
+                unitInput.value = 'Pcs';
+                sysInput.value = 0;
+            }
+
+            openModal('modal-product');
+            setTimeout(() => (prefillSku ? nameInput : skuInput).focus(), 100);
+        }
+
+        function saveProductMaster(e) {
+            e.preventDefault();
+            const origSku = document.getElementById('product-edit-original-sku').value;
+            const sku = document.getElementById('product-sku-input').value.trim();
+            const name = document.getElementById('product-name-input').value.trim();
+            const category = document.getElementById('product-category-input').value.trim() || 'Umum';
+            const unit = document.getElementById('product-unit-input').value.trim() || 'Pcs';
+            const systemQty = parseFloat(document.getElementById('product-sysqty-input').value) || 0;
+
+            if (!sku || !name) return;
+
+            if (origSku && origSku !== sku) {
+                delete appState.masterProducts[origSku];
+            }
+
+            appState.masterProducts[sku] = { sku, name, category, unit, systemQty };
+
+            const session = getActiveSession();
+            if (session.items[sku]) {
+                session.items[sku].name = name;
+                session.items[sku].category = category;
+                session.items[sku].unit = unit;
+                session.items[sku].systemQty = systemQty;
+                session.items[sku].isRegistered = true;
+            }
+
+            saveState();
+            updateMasterBadge();
+            renderMasterTable();
+            renderDashboardAndList();
+            closeModal('modal-product');
+            showToast(`Produk "${name}" tersimpan`, 'success');
+        }
+
+        function deleteMasterProduct(sku) {
+            const p = appState.masterProducts[sku];
+            if (!p) return;
+            showConfirm(
+                'Hapus Produk dari Master?',
+                `Hapus "${p.name}" (${sku}) dari Master Data lokal?`,
+                () => {
+                    delete appState.masterProducts[sku];
+                    saveState();
+                    renderMasterTable();
+                    showToast('Produk dihapus', 'info');
+                }
+            );
+        }
+
+        function confirmClearMasterData() {
+            showConfirm(
+                'Kosongkan Semua Master Data Lokal?',
+                'Seluruh daftar produk di localStorage akan dihapus (Anda bisa menariknya kembali kapan saja via Sync Google Sheets). Lanjutkan?',
+                () => {
+                    appState.masterProducts = {};
+                    saveState();
+                    renderMasterTable();
+                    updateMasterSyncUI();
+                    showToast('Master Data dikosongkan', 'info');
+                }
+            );
+        }
+
+        function handleCSVImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const rows = parseCSVText(e.target.result);
+                if (rows.length < 2) {
+                    showToast('File CSV kosong atau format tidak sesuai.', 'error');
+                    return;
+                }
+
+                const map = detectHeaderMapping(rows[0]);
+                let importedCount = 0;
+
+                for (let i = 1; i < rows.length; i++) {
+                    const cols = rows[i];
+                    const sku = (cols[map.skuIdx] || '').trim();
+                    const name = (cols[map.nameIdx] || '').trim();
+                    if (!sku || !name) continue;
+
+                    const category = (cols[map.catIdx] || 'Umum').trim();
+                    const unit = (cols[map.unitIdx] || 'Pcs').trim();
+                    const systemQty = parseFloat((cols[map.qtyIdx] || '0').toString().replace(/[^0-9.-]/g, '')) || 0;
+
+                    appState.masterProducts[sku] = { sku, name, category, unit, systemQty };
+                    importedCount++;
+                }
+
+                saveState();
+                renderMasterTable();
+                renderDashboardAndList();
+                showToast(`Berhasil mengimpor ${importedCount} produk ke Master!`, 'success');
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // ==========================================
+        // 11. PENGATURAN CLOUD, BACKUP & RESTORE JSON
+        // ==========================================
+        function populateCloudConfigForm() {
+            document.getElementById('cfg-master-csv-url').value = appState.config.masterCsvUrl || DEFAULT_MASTER_CSV_URL;
+            document.getElementById('cfg-result-csv-url').value = appState.config.resultCsvUrl || DEFAULT_RESULT_CSV_URL;
+            document.getElementById('cfg-gas-webapp-url').value = appState.config.gasWebAppUrl || DEFAULT_GAS_WEBAPP_URL;
+            updateGasEndpointStatusBadge();
+        }
+
+        function updateGasEndpointStatusBadge() {
+            const badge = document.getElementById('gas-endpoint-badge');
+            const input = document.getElementById('cfg-gas-webapp-url');
+            if (!badge || !input) return;
+            const val = input.value.trim();
+            if (val && val.startsWith('https://script.google.com/')) {
+                badge.className = 'px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-600 text-white whitespace-nowrap shrink-0';
+                badge.textContent = 'Siap Kirim ke Sheets';
+            } else if (val) {
+                badge.className = 'px-2 py-0.5 rounded-lg text-[10px] font-bold bg-blue-600 text-white whitespace-nowrap shrink-0';
+                badge.textContent = 'Custom Endpoint';
+            } else {
+                badge.className = 'px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-500 text-white whitespace-nowrap shrink-0';
+                badge.textContent = 'URL Kosong';
+            }
+        }
+
+        function saveCloudConfig(e) {
+            e.preventDefault();
+            appState.config.masterCsvUrl = document.getElementById('cfg-master-csv-url').value.trim() || DEFAULT_MASTER_CSV_URL;
+            appState.config.resultCsvUrl = document.getElementById('cfg-result-csv-url').value.trim() || DEFAULT_RESULT_CSV_URL;
+            appState.config.gasWebAppUrl = document.getElementById('cfg-gas-webapp-url').value.trim() || DEFAULT_GAS_WEBAPP_URL;
+            saveState();
+            updateGasEndpointStatusBadge();
+            showToast('Pengaturan Cloud & Endpoint POST berhasil disimpan!', 'success');
+        }
+
+        function resetDefaultUrls() {
+            appState.config.masterCsvUrl = DEFAULT_MASTER_CSV_URL;
+            appState.config.resultCsvUrl = DEFAULT_RESULT_CSV_URL;
+            appState.config.gasWebAppUrl = DEFAULT_GAS_WEBAPP_URL;
+            saveState();
+            populateCloudConfigForm();
+            showToast('Semua URL dikembalikan ke default (termasuk Endpoint Web App).', 'info');
+        }
+
+        function saveCloudConfig(e) {
+            e.preventDefault();
+            appState.config.masterCsvUrl = document.getElementById('cfg-master-csv-url').value.trim();
+            appState.config.resultCsvUrl = document.getElementById('cfg-result-csv-url').value.trim();
+            appState.config.gasWebAppUrl = document.getElementById('cfg-gas-webapp-url').value.trim();
+            saveState();
+            showToast('Pengaturan Cloud & URL berhasil disimpan!', 'success');
+        }
+
+        function resetDefaultUrls() {
+            appState.config.masterCsvUrl = DEFAULT_MASTER_CSV_URL;
+            appState.config.resultCsvUrl = DEFAULT_RESULT_CSV_URL;
+            saveState();
+            populateCloudConfigForm();
+            showToast('URL Spreadsheet dikembalikan ke default.', 'info');
+        }
+
+        function copyGasScriptCode() {
+            const code = document.getElementById('gas-code-block').textContent;
+            const temp = document.createElement('textarea');
+            temp.value = code;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast('Kode Google Apps Script disalin ke Clipboard!', 'success');
+        }
+
+        function updateStorageStatsUI() {
+            try {
+                const raw = localStorage.getItem(STORAGE_KEY) || '';
+                const kb = (new Blob([raw]).size / 1024).toFixed(1);
+                const sizeEl = document.getElementById('storage-size-kb');
+                if (sizeEl) sizeEl.textContent = `${kb} KB`;
+                
+                const sessEl = document.getElementById('storage-sessions-count');
+                if (sessEl) sessEl.textContent = appState.sessions.length;
+
+                const mastEl = document.getElementById('storage-master-count');
+                if (mastEl) mastEl.textContent = Object.keys(appState.masterProducts || {}).length;
+
+                const logEl = document.getElementById('storage-logs-count');
+                if (logEl) logEl.textContent = (appState.syncLogs || []).length;
+            } catch (e) {}
+        }
+
+        function renderSyncLogs() {
+            const list = document.getElementById('sync-logs-list');
+            if (!list) return;
+            const logs = appState.syncLogs || [];
+            if (logs.length === 0) {
+                list.innerHTML = `<div class="text-slate-400 italic">Belum ada riwayat aktivitas sinkronisasi.</div>`;
+                return;
+            }
+            list.innerHTML = logs.map(l => {
+                const t = new Date(l.time).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
+                const badge = l.status === 'error'
+                    ? 'bg-rose-100 text-rose-700'
+                    : 'bg-emerald-100 text-emerald-700';
+                return `
+                    <div class="flex items-center justify-between gap-2 p-2 rounded-lg bg-slate-50 border border-slate-100">
+                        <div class="flex items-center gap-2 min-w-0">
+                            <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${badge} shrink-0">${escapeHTML(l.action)}</span>
+                            <span class="text-slate-700 truncate">${escapeHTML(l.detail)}</span>
+                        </div>
+                        <span class="text-[11px] text-slate-400 shrink-0">${t}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function exportFullBackupJSON() {
+            const jsonStr = JSON.stringify(appState, null, 2);
+            const filename = `Backup_StockCountPro_${new Date().toISOString().slice(0, 10)}.json`;
+            triggerDownload(jsonStr, filename, 'application/json');
+            showToast('File Backup JSON berhasil diunduh!', 'success');
+        }
+
+        function importFullBackupJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (!imported.sessions || !imported.masterProducts) {
+                        throw new Error('Format file backup tidak valid.');
+                    }
+                    appState = imported;
+                    currentPage = 1;
+                    saveState();
+                    applyTopCollapseUI();
+                    renderSessionSelector();
+                    updateMasterBadge();
+                    updateMasterSyncUI();
+                    renderDashboardAndList();
+                    renderMasterTable();
+                    populateCloudConfigForm();
+                    renderSyncLogs();
+                    showToast('Seluruh data berhasil dipulihkan dari Backup!', 'success');
+                } catch (err) {
+                    showToast(`Gagal restore: ${err.message}`, 'error');
+                }
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        function confirmFactoryReset() {
+            showConfirm(
+                'Reset Total LocalStorage?',
+                'Seluruh sesi hitungan, master lokal, dan pengaturan akan dihapus dari browser ini. Pastikan Anda sudah melakukan Backup atau Kirim ke Google Sheets.',
+                () => {
+                    localStorage.removeItem(STORAGE_KEY);
+                    location.reload();
+                }
+            );
+        }
+
+        // ==========================================
+        // 12. EXPORT CSV, CLIPBOARD & CETAK LAPORAN
+        // ==========================================
+        function exportSessionCSV() {
+            const session = getActiveSession();
+            const items = Object.values(session.items || {}).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            if (items.length === 0) {
+                showToast('Tidak ada data hitungan untuk di-export.', 'warning');
+                return;
+            }
+
+            const headers = [
+                'Waktu_Scan', 'Sesi_Lokasi', 'Petugas', 'Barcode_SKU', 'Nama_Produk',
+                'Kategori', 'Satuan', 'Stok_Sistem', 'Stok_Fisik', 'Selisih', 'Status', 'Catatan'
+            ];
+
+            const rows = items.map(item => {
+                const diff = item.countedQty - item.systemQty;
+                let status = 'Sesuai';
+                if (!item.isRegistered) status = 'Belum Terdaftar';
+                else if (diff > 0) status = 'Lebih';
+                else if (diff < 0) status = 'Kurang';
+
+                return [
+                    `"${new Date(item.updatedAt).toLocaleString('id-ID')}"`,
+                    `"${session.name.replace(/"/g, '""')}"`,
+                    `"${(session.pic || '').replace(/"/g, '""')}"`,
+                    `"${item.sku.replace(/"/g, '""')}"`,
+                    `"${item.name.replace(/"/g, '""')}"`,
+                    `"${(item.category || '').replace(/"/g, '""')}"`,
+                    `"${(item.unit || 'Pcs').replace(/"/g, '""')}"`,
+                    item.isRegistered ? item.systemQty : 0,
+                    item.countedQty,
+                    diff,
+                    `"${status}"`,
+                    `"${(item.note || '').replace(/"/g, '""')}"`
+                ].join(',');
+            });
+
+            const csvString = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+            const safeFilename = `Hasil_SO_${session.name.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0,10)}.csv`;
+            triggerDownload(csvString, safeFilename, 'text/csv;charset=utf-8;');
+            addSyncLog('Export CSV', `Unduh CSV sesi "${session.name}" (${items.length} SKU)`, 'success');
+            showToast('File CSV berhasil diunduh!', 'success');
+        }
+
+        function triggerDownload(content, filename, mimeType) {
+            const blob = new Blob([content], { type: mimeType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function copySummaryToClipboard() {
+            const session = getActiveSession();
+            const items = Object.values(session.items || {}).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            if (items.length === 0) {
+                showToast('Belum ada data hitungan untuk disalin.', 'warning');
+                return;
+            }
+
+            const totalQty = items.reduce((acc, i) => acc + i.countedQty, 0);
+            const dateStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+
+            let text = `*LAPORAN STOCK OPNAME*\n`;
+            text += `Lokasi: ${session.name}\n`;
+            if (session.pic) text += `Petugas: ${session.pic}\n`;
+            text += `Waktu: ${dateStr}\n`;
+            text += `Total SKU: ${items.length} | Total Fisik: ${totalQty}\n`;
+            text += `----------------------------\n`;
+
+            items.forEach((item, idx) => {
+                const diff = item.countedQty - item.systemQty;
+                const diffLabel = !item.isRegistered ? '(Baru)' : (diff === 0 ? '(OK)' : `(Selisih: ${diff > 0 ? '+' + diff : diff})`);
+                text += `${idx + 1}. ${item.name} [${item.sku}]\n`;
+                text += `   Fisik: ${item.countedQty} ${item.unit} | Sistem: ${item.isRegistered ? item.systemQty : '-'} ${diffLabel}\n`;
+                if (item.note) text += `   Catatan: ${item.note}\n`;
+            });
+
+            const tempInput = document.createElement('textarea');
+            tempInput.value = text;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+            showToast('Ringkasan laporan disalin ke Clipboard!', 'success');
+        }
+
+        function printReport() {
+            const session = getActiveSession();
+            const items = Object.values(session.items || {}).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            if (items.length === 0) {
+                showToast('Belum ada data untuk dicetak.', 'warning');
+                return;
+            }
+
+            const printArea = document.getElementById('print-area');
+            const totalQty = items.reduce((acc, i) => acc + i.countedQty, 0);
+            const dateStr = new Date().toLocaleString('id-ID', { dateStyle: 'full', timeStyle: 'short' });
+
+            printArea.innerHTML = `
+                <div style="font-family: Inter, sans-serif; color: #1e293b;">
+                    <div style="border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <h1 style="font-size: 20px; font-weight: 800; margin: 0;">LAPORAN HASIL STOCK OPNAME</h1>
+                            <p style="font-size: 13px; color: #475569; margin: 4px 0 0 0;">Lokasi / Sesi: <strong>${escapeHTML(session.name)}</strong> ${session.pic ? `| Petugas: ${escapeHTML(session.pic)}` : ''}</p>
+                        </div>
+                        <div style="text-align: right; font-size: 12px; color: #64748b;">
+                            <div>Dicetak: ${dateStr}</div>
+                            <div>Total SKU: <strong>${items.length}</strong> | Total Fisik: <strong>${totalQty}</strong></div>
+                        </div>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                        <thead>
+                            <tr style="background-color: #f1f5f9; border-bottom: 1px solid #cbd5e1;">
+                                <th style="padding: 8px; text-align: left;">No</th>
+                                <th style="padding: 8px; text-align: left;">Barcode / SKU</th>
+                                <th style="padding: 8px; text-align: left;">Nama Produk</th>
+                                <th style="padding: 8px; text-align: right;">Sistem</th>
+                                <th style="padding: 8px; text-align: right;">Fisik</th>
+                                <th style="padding: 8px; text-align: right;">Selisih</th>
+                                <th style="padding: 8px; text-align: left;">Catatan</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.map((item, i) => {
+                                const diff = item.countedQty - item.systemQty;
+                                return `
+                                    <tr style="border-bottom: 1px solid #e2e8f0;">
+                                        <td style="padding: 8px;">${i + 1}</td>
+                                        <td style="padding: 8px; font-family: monospace;">${escapeHTML(item.sku)}</td>
+                                        <td style="padding: 8px; font-weight: 600;">${escapeHTML(item.name)}</td>
+                                        <td style="padding: 8px; text-align: right;">${item.isRegistered ? item.systemQty : '-'}</td>
+                                        <td style="padding: 8px; text-align: right; font-weight: 700;">${item.countedQty}</td>
+                                        <td style="padding: 8px; text-align: right; font-weight: 700;">${!item.isRegistered ? 'Baru' : (diff > 0 ? '+' + diff : diff)}</td>
+                                        <td style="padding: 8px; color: #475569;">${escapeHTML(item.note || '-')}</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+
+                    <div style="margin-top: 40px; display: flex; justify-content: space-between; font-size: 12px;">
+                        <div style="text-align: center; width: 200px;">
+                            <p>Dihitung Oleh,</p>
+                            <div style="height: 50px;"></div>
+                            <p style="border-top: 1px solid #94a3b8; padding-top: 4px;">( ${escapeHTML(session.pic || 'Petugas Gudang')} )</p>
+                        </div>
+                        <div style="text-align: center; width: 200px;">
+                            <p>Diverifikasi Oleh,</p>
+                            <div style="height: 50px;"></div>
+                            <p style="border-top: 1px solid #94a3b8; padding-top: 4px;">( Supervisor / Auditor )</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            printArea.classList.remove('hidden');
+            window.print();
+            printArea.classList.add('hidden');
+        }
+
+        // ==========================================
+        // 13. NETWORK STATUS & INITIALIZATION
+        // ==========================================
+        function updateNetworkStatus() {
+            const dot = document.getElementById('network-status-dot');
+            const text = document.getElementById('network-status-text');
+            if (navigator.onLine) {
+                dot.className = 'w-2 h-2 rounded-full bg-emerald-400 shrink-0';
+                text.textContent = 'Online • Siap Kirim ke Sheets';
+            } else {
+                dot.className = 'w-2 h-2 rounded-full bg-amber-400 shrink-0';
+                text.textContent = 'Offline • Mode LocalStorage';
+            }
+        }
+
+        window.addEventListener('online', () => {
+            updateNetworkStatus();
+            showToast('Koneksi internet kembali aktif.', 'info');
+        });
+        window.addEventListener('offline', () => {
+            updateNetworkStatus();
+            showToast('Mode Offline: Data tetap aman tersimpan di LocalStorage.', 'warning');
+        });
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadState();
+            applyTopCollapseUI();
+            updateNetworkStatus();
+            updateSoundUI();
+            updateScanModeUI();
+            renderSessionSelector();
+            updateMasterBadge();
+            updateMasterSyncUI();
+            renderDashboardAndList();
+            lucide.createIcons();
+
+            if (navigator.onLine) {
+                syncMasterFromGoogleSheets(false);
+            }
+
+            if (window.innerWidth > 768) {
+                document.getElementById('barcode-input').focus();
+            }
+        });
+    </script>
+</body>
+</html>
