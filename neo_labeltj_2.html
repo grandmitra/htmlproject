@@ -12,6 +12,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Montserrat:wght@400;700;900&family=Oswald:wght@500;700&family=Poppins:wght@400;700;900&display=swap" rel="stylesheet">
     <!-- SheetJS (xlsx/csv) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- QRCode.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <!-- html2pdf.js untuk Export PDF Presisi Sesuai Ukuran Kertas -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     
@@ -107,6 +109,14 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+        }
+
+        .qr-sku-box img,
+        .qr-sku-box canvas {
+            display: block;
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: contain;
         }
     </style>
 </head>
@@ -324,13 +334,14 @@
                             <i class="fa-solid fa-eye"></i> Opsi Kolom Tampil pada Label
                         </label>
                         <div class="grid grid-cols-2 gap-2 text-xs font-semibold">
-                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColBadge" checked class="col-toggle"> Badge Promo</label>
-                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColSKU" checked class="col-toggle"> SKU Barang</label>
-                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColDate" checked class="col-toggle"> Tanggal Promo</label>
-                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColDesc" checked class="col-toggle"> Deskripsi / Nama</label>
-                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColReg" checked class="col-toggle"> Harga Reguler</label>
-                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColUnit" checked class="col-toggle"> Satuan</label>
-                            <label class="flex items-center gap-1.5"><input type="checkbox" id="showColPromo" checked class="col-toggle"> Harga Promo</label>
+                            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="showColBadge" checked class="col-toggle"> Badge Promo</label>
+                            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="showColSKU" checked class="col-toggle"> SKU Barang</label>
+                            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="showColQRCode" checked class="col-toggle"> QR Code SKU</label>
+                            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="showColDate" checked class="col-toggle"> Tanggal Promo</label>
+                            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="showColDesc" checked class="col-toggle"> Deskripsi / Nama</label>
+                            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="showColReg" checked class="col-toggle"> Harga Reguler</label>
+                            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="showColUnit" checked class="col-toggle"> Satuan</label>
+                            <label class="flex items-center gap-1.5 cursor-pointer"><input type="checkbox" id="showColPromo" checked class="col-toggle"> Harga Promo</label>
                         </div>
                     </div>
                 </div>
@@ -640,6 +651,63 @@
             updateDetailInfo();
             renderPreview();
             saveLocalStorageSettings();
+        }
+
+        // Render QR Code dari SKU ke dalam container elemen
+        function renderQRCodeIntoContainer(containerEl, skuText, pixelSize = 72) {
+            if (!containerEl) return;
+            const cleanSKU = String(skuText || '').trim();
+            containerEl.innerHTML = '';
+            if (!cleanSKU) return;
+
+            if (typeof QRCode !== 'undefined') {
+                try {
+                    const tempDiv = document.createElement('div');
+                    new QRCode(tempDiv, {
+                        text: cleanSKU,
+                        width: pixelSize,
+                        height: pixelSize,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+
+                    const canvas = tempDiv.querySelector('canvas');
+                    const img = tempDiv.querySelector('img');
+
+                    if (canvas) {
+                        const dataUrl = canvas.toDataURL('image/png');
+                        const outImg = document.createElement('img');
+                        outImg.src = dataUrl;
+                        outImg.alt = `QR ${cleanSKU}`;
+                        outImg.style.width = '100%';
+                        outImg.style.height = '100%';
+                        outImg.style.objectFit = 'contain';
+                        containerEl.appendChild(outImg);
+                        return;
+                    }
+
+                    if (img && img.src) {
+                        img.alt = `QR ${cleanSKU}`;
+                        img.style.width = '100%';
+                        img.style.height = '100%';
+                        img.style.objectFit = 'contain';
+                        containerEl.appendChild(img);
+                        return;
+                    }
+                } catch (err) {
+                    console.warn("QRCode.js render gagal, memakai fallback:", err);
+                }
+            }
+
+            // Fallback ringan jika QRCode.js tidak tersedia
+            const fallbackImg = document.createElement('img');
+            fallbackImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=${pixelSize}x${pixelSize}&margin=0&data=${encodeURIComponent(cleanSKU)}`;
+            fallbackImg.alt = `QR ${cleanSKU}`;
+            fallbackImg.style.width = '100%';
+            fallbackImg.style.height = '100%';
+            fallbackImg.style.objectFit = 'contain';
+            containerEl.appendChild(fallbackImg);
         }
 
         // Helper: Format Angka Indonesia dengan Titik Ribuan (e.g. 742.050)
@@ -1188,6 +1256,7 @@
 
             const showBadge = document.getElementById('showColBadge')?.checked ?? true;
             const showSKU = document.getElementById('showColSKU')?.checked ?? true;
+            const showQRCode = document.getElementById('showColQRCode')?.checked ?? true;
             const showDate = document.getElementById('showColDate')?.checked ?? true;
             const showDesc = document.getElementById('showColDesc')?.checked ?? true;
             const showReg = document.getElementById('showColReg')?.checked ?? true;
@@ -1216,6 +1285,9 @@
 
             const startIndex = pageIdx * slotsPerPage;
             const endIndex = startIndex + slotsPerPage;
+            const minDimMm = Math.min(label.width, label.height);
+            const qrSizeMm = Math.max(7, Math.min(13, minDimMm * 0.24));
+            const qrPx = Math.max(48, Math.round(qrSizeMm * 3.78));
 
             for (let i = startIndex; i < endIndex; i++) {
                 const card = document.createElement('div');
@@ -1242,6 +1314,11 @@
                         ? `<span class="font-mono text-[0.58em] text-gray-600 font-bold whitespace-nowrap">${p.sku}</span>` 
                         : '';
 
+                    const hasQR = showQRCode && String(p.sku || '').trim() !== '';
+                    const qrHtml = hasQR
+                        ? `<div class="qr-sku-box shrink-0 bg-white p-0.5 rounded border border-gray-200 flex items-center justify-center" style="width: ${qrSizeMm.toFixed(1)}mm; height: ${qrSizeMm.toFixed(1)}mm;" data-qr-sku="${String(p.sku).replace(/"/g, '&quot;')}"></div>`
+                        : '';
+
                     const unitText = (showUnit && p.unit) ? `/ ${p.unit}` : '';
                     const formattedRegPrice = formatNumberWithDots(p.regPrice);
                     const promoPriceFormatted = formatPromoPriceHTML(p.promoPrice);
@@ -1262,21 +1339,28 @@
                             </div>
                         ` : '<div></div>'}
 
-                        <div class="relative flex-1 flex flex-col justify-between min-h-0 pt-0.5">
-                            <div class="grid grid-cols-3 items-center text-black font-bold whitespace-nowrap" style="font-size: ${customRegSize}em;">
-                                <div class="text-left line-through">${showReg ? `Rp${formattedRegPrice}` : ''}</div>
-                                <div class="text-center">${unitText}</div>
-                                <div></div>
-                            </div>
-
-                            ${showPromo ? `
-                                <div class="text-red-600 font-black tracking-tighter flex items-baseline justify-center my-auto" style="font-size: ${customPromoSize}em;">
-                                    <span class="text-[0.32em] mr-1 font-bold">Rp</span>
-                                    ${promoPriceFormatted}
+                        <div class="relative flex-1 flex items-center justify-between gap-1.5 min-h-0 pt-0.5">
+                            <div class="flex-1 flex flex-col justify-between h-full min-w-0">
+                                <div class="grid grid-cols-2 items-center text-black font-bold whitespace-nowrap" style="font-size: ${customRegSize}em;">
+                                    <div class="text-left line-through">${showReg ? `Rp${formattedRegPrice}` : ''}</div>
+                                    <div class="text-center">${unitText}</div>
                                 </div>
-                            ` : '<div></div>'}
+
+                                ${showPromo ? `
+                                    <div class="text-red-600 font-black tracking-tighter flex items-baseline justify-center my-auto" style="font-size: ${customPromoSize}em;">
+                                        <span class="text-[0.32em] mr-1 font-bold">Rp</span>
+                                        ${promoPriceFormatted}
+                                    </div>
+                                ` : '<div></div>'}
+                            </div>
+                            ${qrHtml}
                         </div>
                     `;
+
+                    if (hasQR) {
+                        const qrContainer = card.querySelector('.qr-sku-box');
+                        renderQRCodeIntoContainer(qrContainer, p.sku, qrPx);
+                    }
                 } else {
                     card.classList.add('empty-slot');
                     if (!forExport) {
@@ -1501,6 +1585,7 @@
                     showThousandDot: document.getElementById('showThousandDot')?.checked,
                     showBadge: document.getElementById('showColBadge')?.checked,
                     showSKU: document.getElementById('showColSKU')?.checked,
+                    showQRCode: document.getElementById('showColQRCode')?.checked,
                     showDate: document.getElementById('showColDate')?.checked,
                     showDesc: document.getElementById('showColDesc')?.checked,
                     showReg: document.getElementById('showColReg')?.checked,
@@ -1572,6 +1657,7 @@
 
                 if (config.showBadge !== undefined && document.getElementById('showColBadge')) document.getElementById('showColBadge').checked = config.showBadge;
                 if (config.showSKU !== undefined && document.getElementById('showColSKU')) document.getElementById('showColSKU').checked = config.showSKU;
+                if (config.showQRCode !== undefined && document.getElementById('showColQRCode')) document.getElementById('showColQRCode').checked = config.showQRCode;
                 if (config.showDate !== undefined && document.getElementById('showColDate')) document.getElementById('showColDate').checked = config.showDate;
                 if (config.showDesc !== undefined && document.getElementById('showColDesc')) document.getElementById('showColDesc').checked = config.showDesc;
                 if (config.showReg !== undefined && document.getElementById('showColReg')) document.getElementById('showColReg').checked = config.showReg;
