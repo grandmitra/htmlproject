@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Omset & Target CAT JOTUN</title>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- PapaParse untuk parsing CSV / TSV -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+
+    <!-- Chart.js untuk Grafik Interaktif -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        jotun: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#2563eb',
+                            600: '#1d4ed8',
+                            700: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Glassmorphism & subtle UI enhancements */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .glass-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.25s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50/45 to-indigo-100/50 text-slate-800 font-sans antialiased selection:bg-blue-100 selection:text-blue-900">
+
+    <!-- Toast Notification Container (Pengganti alert) -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Modal Input Manual / Upload CSV atau TSV -->
+    <div id="manual-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl shadow-2xl max-w-2xl w-full p-6 border border-white/80 animate-fade-in">
+            <div class="flex items-center justify-between pb-3 border-b border-slate-200/70">
+                <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                    <i class="fa-solid fa-file-csv text-blue-600"></i> Input Manual / Upload CSV atau TSV
+                </h3>
+                <button id="close-manual-modal" type="button" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition" aria-label="Tutup modal">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="mt-4 space-y-4">
+                <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+                    Tempelkan data CSV atau hasil copy langsung dari Spreadsheet/TSV (dengan header maupun tanpa header). Urutan kolom standar:
+                    <span class="font-semibold text-slate-800">Kolom 1 = Tanggal</span>,
+                    <span class="font-semibold text-slate-800">Kolom 2 = Target</span>,
+                    <span class="font-semibold text-slate-800">Kolom 3 = Omset</span>,
+                    <span class="font-semibold text-slate-800">Kolom 4 = % Pencapaian</span>,
+                    <span class="font-semibold text-slate-800">Kolom 5 = Selisih</span>.
+                </p>
+
+                <div>
+                    <label for="csv-file-input" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Upload File CSV / TSV
+                    </label>
+                    <input type="file" id="csv-file-input" accept=".csv,.tsv,text/csv,text/tab-separated-values,text/plain" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-slate-200/90 bg-white/80 rounded-xl p-1.5">
+                </div>
+
+                <div>
+                    <label for="csv-paste-input" class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
+                        Atau Tempel Teks CSV / TSV Langsung
+                    </label>
+                    <textarea id="csv-paste-input" rows="7" placeholder="11/01/2026	5000000	0	0.00%	-5000000&#10;11/02/2026	5000000	372417	7.45%	-4627583" class="w-full rounded-xl border border-slate-200/90 bg-white/90 p-3 text-xs font-mono text-slate-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"></textarea>
+                </div>
+            </div>
+
+            <div class="mt-6 flex flex-wrap justify-end gap-2">
+                <button id="cancel-manual-btn" type="button" class="px-4 py-2 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-200/60 transition">Batal</button>
+                <button id="apply-manual-btn" type="button" class="px-5 py-2 rounded-xl text-sm font-semibold bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-600/20 transition">Proses Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Navigation Header -->
+    <header class="glass-header border-b border-white/70 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shadow-lg shadow-blue-600/25 shrink-0">
+                        <i class="fa-solid fa-paint-roller text-lg"></i>
+                    </div>
+                    <div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight leading-tight">Dashboard Omset & Target CAT JOTUN</h1>
+                            <span id="today-header-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600 text-white shadow-xs" title="Tanggal Hari Ini (TODAY)">
+                                <i class="fa-regular fa-calendar-day"></i>
+                                <span id="today-date-text">TODAY: Memuat...</span>
+                            </span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 text-xs text-slate-500 mt-0.5">
+                            <span id="connection-badge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-medium bg-amber-50 text-amber-700 border border-amber-200/70">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span> Menghubungkan ke Google Sheets...
+                            </span>
+                            <span id="last-updated-text" class="hidden sm:inline">• Memuat data...</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2">
+                    <button id="open-manual-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 bg-white/80 hover:bg-white border border-slate-200/80 shadow-xs transition" title="Input Manual / Paste TSV & CSV">
+                        <i class="fa-solid fa-upload text-slate-500"></i>
+                        <span>CSV Manual</span>
+                    </button>
+                    <button id="export-csv-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-emerald-700 bg-emerald-50/90 hover:bg-emerald-100 border border-emerald-200/80 transition">
+                        <i class="fa-solid fa-file-excel"></i>
+                        <span>Export CSV</span>
+                    </button>
+                    <button id="refresh-data-btn" type="button" class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-md shadow-blue-600/20 transition">
+                        <i id="refresh-icon" class="fa-solid fa-arrows-rotate"></i>
+                        <span>Refresh / Sync</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+        <!-- SECTION 1: SCORECARD NILAI -->
+        <section aria-label="Ringkasan Scorecard" class="animate-fade-in">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3.5">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h2 class="text-sm font-bold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+                        <i class="fa-solid fa-gauge-high text-blue-600"></i> Scorecard Performa
+                    </h2>
+                    <span id="scorecard-period-badge" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-50/90 text-blue-700 border border-blue-200/80">
+                        <i class="fa-regular fa-calendar-check"></i>
+                        <span id="scorecard-period-text">Current MTD: Memuat...</span>
+                    </span>
+                </div>
+
+                <span id="scorecard-source-indicator" class="text-xs font-medium text-slate-500 bg-white/75 px-3 py-1.5 rounded-xl border border-white/80 shadow-2xs">
+                    Sumber: Current MTD (Tgl 1 s/d Hari Ini)
+                </span>
+            </div>
+
+            <!-- 4 Kartu Scorecard -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <!-- Card 1: Total Omset -->
+                <div class="glass-panel rounded-2xl p-5 border border-white/80 shadow-sm hover:shadow-md transition relative overflow-hidden">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Omset</p>
+                            <h3 id="sc-omset" class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1.5 truncate" title="Rp 0">Rp 0</h3>
+                            <p id="sc-omset-sub" class="text-xs text-slate-500 mt-1.5 flex items-center gap-1">
+                                <span class="font-semibold text-slate-700">0</span> data tercatat pada periode ini
+                            </p>
+                        </div>
+                        <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 border border-blue-100">
+                            <i class="fa-solid fa-sack-dollar text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+                </div>
+
+                <!-- Card 2: Total Target -->
+                <div class="glass-panel rounded-2xl p-5 border border-white/80 shadow-sm hover:shadow-md transition relative overflow-hidden">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Target</p>
+                            <h3 id="sc-target" class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1.5 truncate" title="Rp 0">Rp 0</h3>
+                            <p id="sc-target-sub" class="text-xs text-slate-500 mt-1.5">
+                                Akumulasi target periode aktif
+                            </p>
+                        </div>
+                        <div class="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-100">
+                            <i class="fa-solid fa-bullseye text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 to-purple-500"></div>
+                </div>
+
+                <!-- Card 3: Rata-rata % (Achievement) -->
+                <div class="glass-panel rounded-2xl p-5 border border-white/80 shadow-sm hover:shadow-md transition relative overflow-hidden">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Rata-rata % (Ach)</p>
+                            <div class="flex items-baseline gap-2 mt-1.5">
+                                <h3 id="sc-persen" class="text-xl sm:text-2xl font-extrabold text-slate-900">0,00%</h3>
+                                <span id="sc-persen-badge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">-</span>
+                            </div>
+                            <div class="w-full bg-slate-200/80 rounded-full h-2 mt-2.5 overflow-hidden">
+                                <div id="sc-persen-bar" class="bg-blue-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="w-11 h-11 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0 border border-amber-100">
+                            <i class="fa-solid fa-percent text-lg"></i>
+                        </div>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 to-orange-500"></div>
+                </div>
+
+                <!-- Card 4: Total Selisih -->
+                <div class="glass-panel rounded-2xl p-5 border border-white/80 shadow-sm hover:shadow-md transition relative overflow-hidden">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="min-w-0 flex-1">
+                            <p class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Selisih</p>
+                            <h3 id="sc-selisih" class="text-xl sm:text-2xl font-extrabold text-slate-900 mt-1.5 truncate" title="Rp 0">Rp 0</h3>
+                            <p id="sc-selisih-sub" class="text-xs text-slate-500 mt-1.5 flex items-center gap-1">
+                                Omset dikurangi Target
+                            </p>
+                        </div>
+                        <div id="sc-selisih-icon-box" class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                            <i id="sc-selisih-icon" class="fa-solid fa-scale-balanced text-lg"></i>
+                        </div>
+                    </div>
+                    <div id="sc-selisih-accent" class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: FILTER TANGGAL (START DATE & END DATE) -->
+        <section aria-label="Filter Periode Tanggal" class="glass-panel rounded-2xl p-4 sm:p-5 border border-white/80 shadow-sm">
+            <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-4">
+                <!-- Input Start Date & End Date -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 flex-1 max-w-xl">
+                    <div>
+                        <label for="start-date" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                            <i class="fa-regular fa-calendar text-blue-600 mr-1"></i> Start Date
+                        </label>
+                        <input type="date" id="start-date" class="w-full rounded-xl border border-slate-300/90 bg-white/90 px-3.5 py-2 text-sm font-medium text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                    </div>
+                    <div>
+                        <label for="end-date" class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+                            <i class="fa-regular fa-calendar-check text-blue-600 mr-1"></i> End Date
+                        </label>
+                        <input type="date" id="end-date" class="w-full rounded-xl border border-slate-300/90 bg-white/90 px-3.5 py-2 text-sm font-medium text-slate-800 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                    </div>
+                </div>
+
+                <!-- Tombol Filter Cepat (Quick Presets) -->
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-medium text-slate-400 mr-1 hidden sm:inline">Preset:</span>
+                    <button type="button" data-preset="mtd" class="preset-btn px-3 py-2 rounded-xl text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition">
+                        Bulan Ini s/d Hari Ini
+                    </button>
+                    <button type="button" data-preset="month-full" class="preset-btn px-3 py-2 rounded-xl text-xs font-medium bg-white/80 text-slate-700 border border-slate-200/80 hover:bg-white transition">
+                        Bulan Ini Full
+                    </button>
+                    <button type="button" data-preset="last7" class="preset-btn px-3 py-2 rounded-xl text-xs font-medium bg-white/80 text-slate-700 border border-slate-200/80 hover:bg-white transition">
+                        7 Hari Terakhir
+                    </button>
+                    <button type="button" data-preset="all" class="preset-btn px-3 py-2 rounded-xl text-xs font-medium bg-white/80 text-slate-700 border border-slate-200/80 hover:bg-white transition">
+                        Semua Data
+                    </button>
+                    <button type="button" id="reset-filter-btn" class="px-3 py-2 rounded-xl text-xs font-medium text-rose-600 bg-rose-50/90 hover:bg-rose-100 border border-rose-200/80 transition" title="Reset ke Bulan Berjalan s/d Hari Ini">
+                        <i class="fa-solid fa-rotate-left mr-1"></i> Reset
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: VISUALISASI GRAFIK INTERAKTIF (CHART.JS) -->
+        <section aria-label="Grafik Omset vs Target" class="glass-panel rounded-2xl p-4 sm:p-6 border border-white/80 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-blue-600"></i> Grafik Perbandingan Omset vs Target
+                    </h2>
+                    <p id="chart-subtitle" class="text-xs text-slate-500 mt-0.5">Menampilkan tren harian berdasarkan rentang tanggal terpilih</p>
+                </div>
+
+                <!-- Pilihan Tipe Grafik -->
+                <div class="inline-flex rounded-xl bg-slate-200/70 p-1 self-start sm:self-auto" role="group" aria-label="Tipe Grafik">
+                    <button type="button" data-chart-type="combo" class="chart-type-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-600 shadow-xs transition">
+                        <i class="fa-solid fa-chart-line mr-1"></i> Combo + %
+                    </button>
+                    <button type="button" data-chart-type="bar" class="chart-type-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition">
+                        <i class="fa-solid fa-chart-simple mr-1"></i> Bar
+                    </button>
+                    <button type="button" data-chart-type="line" class="chart-type-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition">
+                        <i class="fa-solid fa-wave-square mr-1"></i> Line
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas Container -->
+            <div class="relative w-full h-72 sm:h-80 lg:h-96">
+                <canvas id="salesChart"></canvas>
+                <!-- Empty State Overlay -->
+                <div id="chart-empty-state" class="hidden absolute inset-0 flex flex-col items-center justify-center bg-white/75 rounded-xl text-center p-4">
+                    <i class="fa-regular fa-folder-open text-3xl text-slate-400 mb-2"></i>
+                    <p class="text-sm font-semibold text-slate-700">Tidak ada data pada rentang tanggal ini</p>
+                    <p class="text-xs text-slate-500 mt-1">Silakan ubah Start Date / End Date atau klik "Semua Data"</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: TABEL DATA RESPONSIF & LENGKAP -->
+        <section aria-label="Tabel Data Detail" class="glass-panel rounded-2xl border border-white/80 shadow-sm overflow-hidden">
+            <!-- Toolbar Tabel -->
+            <div class="p-4 sm:p-5 border-b border-slate-200/70 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                <div>
+                    <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                        <i class="fa-solid fa-table text-blue-600"></i> Rincian Data Harian
+                        <span id="table-count-badge" class="ml-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200/80 text-slate-700">0 baris</span>
+                    </h2>
+                    <p class="text-xs text-slate-500 mt-0.5">Tanggal terbaru (TODAY) berada di urutan paling atas • Klik header kolom untuk mengurutkan</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-2.5">
+                    <!-- Search Input dengan Tombol Clear (×) -->
+                    <div class="relative flex-1 sm:flex-initial sm:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" id="table-search" placeholder="Cari tanggal, nilai..." class="w-full pl-8 pr-8 py-2 rounded-xl border border-slate-300/90 bg-white/90 text-xs font-medium text-slate-800 placeholder-slate-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition">
+                        <button type="button" id="clear-search-btn" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-sm font-bold leading-none px-1" title="Hapus pencarian" aria-label="Hapus pencarian">&times;</button>
+                    </div>
+
+                    <!-- Page Size Selector -->
+                    <div class="flex items-center gap-1.5">
+                        <label for="page-size-select" class="text-xs text-slate-500 font-medium hidden sm:inline">Paging by:</label>
+                        <select id="page-size-select" class="rounded-xl border border-slate-300/90 bg-white/90 px-2.5 py-2 text-xs font-semibold text-slate-700 focus:border-blue-500 outline-none cursor-pointer">
+                            <option value="10">10</option>
+                            <option value="25" selected>25</option>
+                            <option value="50">50</option>
+                            <option value="all">Semua</option>
+                        </select>
+                    </div>
+
+                    <!-- View Toggle: Card View vs Table View (Default Card View di Mobile) -->
+                    <div class="inline-flex rounded-xl bg-slate-200/70 p-1" role="group" aria-label="Mode Tampilan Data">
+                        <button type="button" id="view-card-btn" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition" title="Tampilan Kartu">
+                            <i class="fa-solid fa-grip"></i>
+                            <span class="hidden sm:inline ml-1">Kartu</span>
+                        </button>
+                        <button type="button" id="view-table-btn" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold transition" title="Tampilan Tabel">
+                            <i class="fa-solid fa-table-list"></i>
+                            <span class="hidden sm:inline ml-1">Tabel</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kontainer Table View -->
+            <div id="table-view-container" class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead id="data-table-head" class="bg-slate-50/90 border-b border-slate-200/80 text-slate-600 text-[11px] font-bold uppercase tracking-wider select-none">
+                        <!-- Header dirender dinamis oleh JS -->
+                    </thead>
+                    <tbody id="data-table-body" class="divide-y divide-slate-100 text-xs sm:text-sm text-slate-700 bg-white/60">
+                        <!-- Baris data dirender dinamis oleh JS -->
+                    </tbody>
+                    <tfoot id="data-table-foot" class="bg-slate-100/90 border-t-2 border-slate-300 font-bold text-slate-900 text-xs sm:text-sm">
+                        <!-- Baris Total/Summary dirender dinamis oleh JS -->
+                    </tfoot>
+                </table>
+            </div>
+
+            <!-- Kontainer Card View -->
+            <div id="card-view-container" class="hidden p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 bg-slate-50/50">
+                <!-- Kartu data dirender dinamis oleh JS -->
+            </div>
+
+            <!-- Pagination Footer -->
+            <div class="px-4 sm:px-5 py-3.5 bg-white/70 border-t border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p id="pagination-info" class="text-xs text-slate-500">Menampilkan 0 - 0 dari 0 data</p>
+                <div id="pagination-controls" class="flex items-center gap-1.5 self-end sm:self-auto">
+                    <!-- Tombol halaman dirender dinamis -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-xs text-slate-400">
+        Dashboard Omset & Target CAT JOTUN • Terhubung otomatis dengan Google Sheets CSV
+    </footer>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        // =========================================================================
+        // 1. KONFIGURASI, SAMPLE FALLBACK & STATE GLOBAL
+        // =========================================================================
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQwXHpncK0o5ezgncU_vj_z8-Zk_aZfe9tqXpV-IBiZ6yaTHP3OqDbVwRcDCG3r2irlLlc4-iv72IJj/pub?gid=179565738&single=true&output=csv';
+        const STORAGE_KEY = 'dashboard_jotun_csv_cache_v1';
+
+        // Data cadangan bila fetch langsung & cache belum tersedia
+        const SAMPLE_FALLBACK_CSV = `Tanggal,Target,Omset,% Pencapaian,Selisih
+11/01/2026,5000000,0,0.00%,-5000000
+11/02/2026,5000000,372417,7.45%,-4627583
+11/03/2026,5000000,0,0.00%,-5000000
+11/04/2026,5000000,578048,11.56%,-4421952
+11/05/2026,5000000,827610,16.55%,-4172390
+11/06/2026,5000000,3121754,62.44%,-1878246
+11/07/2026,5000000,4175700,83.51%,-824300
+11/08/2026,5000000,706122,14.12%,-4293878
+11/09/2026,5000000,135995,2.72%,-4864005
+11/10/2026,5000000,924040,18.48%,-4075960
+11/11/2026,5000000,250500,5.01%,-4749500
+11/12/2026,5000000,409738,8.19%,-4590262
+11/13/2026,5000000,5916308,118.33%,916308
+11/14/2026,5000000,377900,7.56%,-4622100
+11/15/2026,5000000,146804,2.94%,-4853196
+11/16/2026,5000000,0,0.00%,-5000000
+11/17/2026,5000000,1068678,21.37%,-3931322
+11/18/2026,5000000,0,0.00%,-5000000
+11/19/2026,5000000,0,0.00%,-5000000
+11/20/2026,5000000,0,0.00%,-5000000`;
+
+        function isMobileViewport() {
+            return window.innerWidth < 640;
+        }
+
+        const state = {
+            rawRows: [],                  // Seluruh data yang sudah dinormalisasi
+            extraColumns: [],             // Kolom ekstra di luar 5 kolom standar
+            filteredRows: [],             // Data hasil filter Start Date, End Date & Search
+            startDate: '',                // YYYY-MM-DD
+            endDate: '',                  // YYYY-MM-DD
+            searchQuery: '',
+            sortCol: 'dateObj',           // Default urut berdasarkan tanggal
+            sortAsc: false,               // false = descending -> tanggal terbaru / TODAY di paling atas
+            pageSize: 25,
+            currentPage: 1,
+            viewMode: isMobileViewport() ? 'card' : 'table', // Default Card View di mobile, Table di desktop
+            chartType: 'combo',           // 'combo', 'bar', 'line'
+            scorecardFollowFilter: false, // false pada load awal = Current MTD (Tgl 1 s/d Today); berubah true saat filter/preset diubah
+            chartInstance: null
+        };
+
+        // =========================================================================
+        // 2. UTILITAS TANGGAL, DETEKSI FORMAT GLOBAL & FORMATTER RUPIAH
+        // =========================================================================
+        const BULAN_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        const HARI_ID = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+        const BULAN_MAP = {
+            'jan': 0, 'januari': 0, 'january': 0,
+            'feb': 1, 'februari': 1, 'february': 1,
+            'mar': 2, 'maret': 2, 'march': 2,
+            'apr': 3, 'april': 3,
+            'mei': 4, 'may': 4,
+            'jun': 5, 'juni': 5, 'june': 5,
+            'jul': 6, 'juli': 6, 'july': 6,
+            'agu': 7, 'agt': 7, 'agustus': 7, 'aug': 7, 'august': 7,
+            'sep': 8, 'sept': 8, 'september': 8,
+            'okt': 9, 'oktober': 9, 'oct': 9, 'october': 9,
+            'nov': 10, 'november': 10,
+            'des': 11, 'desember': 11, 'dec': 11, 'december': 11
+        };
+
+        function getTodayLocal() {
+            const now = new Date();
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        }
+
+        function toISODateString(date) {
+            if (!(date instanceof Date) || isNaN(date)) return '';
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatTanggalID(date) {
+            if (!(date instanceof Date) || isNaN(date)) return '-';
+            return `${date.getDate()} ${BULAN_ID[date.getMonth()]} ${date.getFullYear()}`;
+        }
+
+        function formatTanggalPendek(date) {
+            if (!(date instanceof Date) || isNaN(date)) return '-';
+            return `${date.getDate()} ${BULAN_ID[date.getMonth()]}`;
+        }
+
+        function renderTodayHeaderBadge() {
+            const today = getTodayLocal();
+            const el = document.getElementById('today-date-text');
+            if (el) {
+                el.textContent = `TODAY: ${HARI_ID[today.getDay()]}, ${formatTanggalID(today)}`;
+            }
+        }
+
+        /**
+         * Memindai seluruh dataset tanggal berformat slash/dash terlebih dahulu
+         * untuk menentukan secara global apakah formatnya MM/DD/YYYY ('MDY') atau DD/MM/YYYY ('DMY').
+         * Jika segmen kedua > 12 (misal 11/13/2026 s/d 11/20/2026), maka format global adalah MM/DD/YYYY,
+         * sehingga 11/01/2026 s/d 11/20/2026 konsisten terbaca sebagai 1 Nov – 20 Nov 2026.
+         */
+        function detectGlobalDateOrder(dateStrings) {
+            let mmddEvidence = 0;
+            let ddmmEvidence = 0;
+
+            dateStrings.forEach(raw => {
+                if (!raw) return;
+                const s = String(raw).trim();
+                const m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
+                if (!m) return;
+
+                const p1 = parseInt(m[1], 10);
+                const p2 = parseInt(m[2], 10);
+
+                if (p2 > 12 && p1 >= 1 && p1 <= 12) {
+                    mmddEvidence++;
+                } else if (p1 > 12 && p2 >= 1 && p2 <= 12) {
+                    ddmmEvidence++;
+                }
+            });
+
+            if (mmddEvidence > ddmmEvidence) return 'MDY';
+            if (ddmmEvidence > mmddEvidence) return 'DMY';
+            return 'MDY';
+        }
+
+        function parseFlexibleDate(val, globalOrder = 'MDY') {
+            if (!val) return null;
+            if (val instanceof Date && !isNaN(val)) {
+                return new Date(val.getFullYear(), val.getMonth(), val.getDate());
+            }
+            const str = String(val).trim();
+            if (!str) return null;
+
+            // 1. Format ISO: YYYY-MM-DD atau YYYY/MM/DD
+            let m = str.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/);
+            if (m) {
+                const d = new Date(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10));
+                if (!isNaN(d)) return d;
+            }
+
+            // 2. Format dua angka dengan slash/dash: A/B/YYYY atau A-B-YYYY
+            m = str.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2,4})/);
+            if (m) {
+                const p1 = parseInt(m[1], 10);
+                const p2 = parseInt(m[2], 10);
+                let year = parseInt(m[3], 10);
+                if (year < 100) year += 2000;
+
+                let monthIdx, day;
+                if (p2 > 12 && p1 >= 1 && p1 <= 12) {
+                    monthIdx = p1 - 1;
+                    day = p2;
+                } else if (p1 > 12 && p2 >= 1 && p2 <= 12) {
+                    day = p1;
+                    monthIdx = p2 - 1;
+                } else if (globalOrder === 'DMY') {
+                    day = p1;
+                    monthIdx = p2 - 1;
+                } else {
+                    monthIdx = p1 - 1;
+                    day = p2;
+                }
+
+                const d = new Date(year, monthIdx, day);
+                if (!isNaN(d) && d.getFullYear() === year && d.getMonth() === monthIdx && d.getDate() === day) {
+                    return d;
+                }
+            }
+
+            // 3. Format dengan nama bulan: 20 Nov 2026, Nov 20 2026
+            m = str.match(/^(\d{1,2})[\s\-\/]([a-zA-Z]+)[\s\-\/,]*(\d{2,4})/);
+            if (m) {
+                const day = parseInt(m[1], 10);
+                const monthKey = m[2].toLowerCase();
+                let year = parseInt(m[3], 10);
+                if (year < 100) year += 2000;
+                if (Object.prototype.hasOwnProperty.call(BULAN_MAP, monthKey)) {
+                    return new Date(year, BULAN_MAP[monthKey], day);
+                }
+            }
+
+            const fallback = new Date(str);
+            if (!isNaN(fallback)) {
+                return new Date(fallback.getFullYear(), fallback.getMonth(), fallback.getDate());
+            }
+            return null;
+        }
+
+        function parseFlexibleNumber(val) {
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
+            if (val === null || val === undefined) return 0;
+            let s = String(val).trim();
+            if (!s || s === '-' || s === '#DIV/0!' || s === '#N/A' || s === '#VALUE!') return 0;
+
+            let isNegative = false;
+            if (s.startsWith('(') && s.endsWith(')')) {
+                isNegative = true;
+                s = s.slice(1, -1);
+            }
+            if (s.startsWith('-')) {
+                isNegative = true;
+                s = s.slice(1);
+            }
+
+            s = s.replace(/[Rp$€£%\s]/gi, '');
+            if (!s) return 0;
+
+            const hasComma = s.includes(',');
+            const hasDot = s.includes('.');
+
+            if (hasComma && hasDot) {
+                if (s.lastIndexOf(',') > s.lastIndexOf('.')) {
+                    s = s.replace(/\./g, '').replace(',', '.');
+                } else {
+                    s = s.replace(/,/g, '');
+                }
+            } else if (hasComma) {
+                const parts = s.split(',');
+                if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3 && parts[0].length >= 1)) {
+                    s = s.replace(/,/g, '');
+                } else {
+                    s = s.replace(',', '.');
+                }
+            } else if (hasDot) {
+                const parts = s.split('.');
+                if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3 && parts[0].length >= 1)) {
+                    s = s.replace(/\./g, '');
+                }
+            }
+
+            const num = parseFloat(s);
+            if (isNaN(num)) return 0;
+            return isNegative ? -num : num;
+        }
+
+        function formatRupiah(angka) {
+            const num = Number(angka) || 0;
+            const sign = num < 0 ? '-' : '';
+            const absVal = Math.round(Math.abs(num));
+            return `${sign}Rp ${absVal.toLocaleString('id-ID')}`;
+        }
+
+        function formatRupiahSingkat(angka) {
+            const num = Number(angka) || 0;
+            const abs = Math.abs(num);
+            const sign = num < 0 ? '-' : '';
+            if (abs >= 1e9) return `${sign}Rp ${(abs / 1e9).toFixed(1).replace('.', ',')} M`;
+            if (abs >= 1e6) return `${sign}Rp ${(abs / 1e6).toFixed(1).replace('.', ',')} Jt`;
+            if (abs >= 1e3) return `${sign}Rp ${(abs / 1e3).toFixed(0)} Rb`;
+            return `${sign}Rp ${abs}`;
+        }
+
+        function formatPersen(angka) {
+            const num = Number(angka) || 0;
+            return `${num.toFixed(2).replace('.', ',')}%`;
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const colors = {
+                success: 'bg-emerald-600 text-white border-emerald-700',
+                error: 'bg-rose-600 text-white border-rose-700',
+                warning: 'bg-amber-500 text-white border-amber-600',
+                info: 'bg-slate-800 text-white border-slate-900'
+            };
+            const icons = {
+                success: 'fa-circle-check',
+                error: 'fa-circle-exclamation',
+                warning: 'fa-triangle-exclamation',
+                info: 'fa-circle-info'
+            };
+            const toast = document.createElement('div');
+            toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${colors[type] || colors.info}`;
+            toast.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} text-sm"></i><span class="flex-1">${message}</span>`;
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3800);
+        }
+
+        // =========================================================================
+        // 3. PENGAMBILAN DATA CSV (FETCH + FALLBACK + CACHE + SAMPLE FALLBACK)
+        // =========================================================================
+        function updateConnectionStatus(status, text) {
+            const badge = document.getElementById('connection-badge');
+            const styles = {
+                loading: 'bg-amber-50 text-amber-700 border-amber-200/70',
+                online: 'bg-emerald-50 text-emerald-700 border-emerald-200/70',
+                cache: 'bg-blue-50 text-blue-700 border-blue-200/70',
+                fallback: 'bg-amber-50 text-amber-800 border-amber-200/80'
+            };
+            const dots = {
+                loading: 'bg-amber-500 animate-pulse',
+                online: 'bg-emerald-500',
+                cache: 'bg-blue-500',
+                fallback: 'bg-amber-500'
+            };
+            badge.className = `inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-medium border ${styles[status] || styles.loading}`;
+            badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${dots[status] || dots.loading}"></span> ${text}`;
+        }
+
+        async function fetchCSVText() {
+            const cacheBuster = `&_t=${Date.now()}`;
+            const endpoints = [
+                CSV_URL + cacheBuster,
+                `https://api.allorigins.win/raw?url=${encodeURIComponent(CSV_URL)}`,
+                `https://corsproxy.io/?${encodeURIComponent(CSV_URL)}`
+            ];
+
+            let lastError = null;
+            for (const url of endpoints) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 8500);
+                    const response = await fetch(url, { signal: controller.signal, cache: 'no-store' });
+                    clearTimeout(timeoutId);
+
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    const text = await response.text();
+                    if (text && text.trim().length > 5 && !text.trim().startsWith('<!DOCTYPE') && !text.trim().startsWith('<html')) {
+                        return text;
+                    }
+                } catch (err) {
+                    lastError = err;
+                }
+            }
+            throw lastError || new Error('Gagal mengambil data CSV dari semua jalur.');
+        }
+
+        async function loadData(isManualRefresh = false) {
+            const refreshIcon = document.getElementById('refresh-icon');
+            refreshIcon.classList.add('fa-spin');
+            updateConnectionStatus('loading', 'Menyinkronkan data Google Sheets...');
+
+            try {
+                const csvText = await fetchCSVText();
+                localStorage.setItem(STORAGE_KEY, JSON.stringify({
+                    timestamp: new Date().toISOString(),
+                    csv: csvText
+                }));
+                processCSVContent(csvText, 'online', 'Terhubung • Google Sheets Live');
+                if (isManualRefresh) showToast('Data berhasil disinkronkan dari Google Sheets!', 'success');
+            } catch (error) {
+                console.warn('Fetch live gagal, mencoba cache localStorage:', error);
+                const cachedRaw = localStorage.getItem(STORAGE_KEY);
+                if (cachedRaw) {
+                    try {
+                        const parsedCache = JSON.parse(cachedRaw);
+                        processCSVContent(parsedCache.csv, 'cache', 'Mode Offline • Data Cache Tersimpan');
+                        showToast('Menggunakan data cache tersimpan karena koneksi terganggu.', 'warning');
+                        return;
+                    } catch (e) {
+                        // Lanjut ke sample fallback
+                    }
+                }
+                processCSVContent(SAMPLE_FALLBACK_CSV, 'fallback', 'Sample Data Aktif • Klik Refresh / CSV Manual');
+                showToast('Koneksi diblokir/offline: menampilkan data contoh bawaan. Anda dapat klik Refresh atau CSV Manual.', 'warning');
+            } finally {
+                refreshIcon.classList.remove('fa-spin');
+            }
+        }
+
+        // =========================================================================
+        // 4. PEMETAAN KOLOM AKURAT & NORMALISASI DATA (CSV / TSV / TANPA HEADER)
+        // =========================================================================
+        function resolveColumnMapping(headers, sampleRows) {
+            const clean = (h) => String(h || '').toLowerCase().trim();
+
+            let dateCol = headers[0] || null;
+            let targetCol = headers[1] || null;
+            let omsetCol = headers[2] || null;
+            let persenCol = headers[3] || null;
+            let selisihCol = headers[4] || null;
+
+            const looksLikeDateHeader = headers.length > 0 && Boolean(parseFlexibleDate(headers[0]));
+            const looksLikeNumberHeader = headers.length > 1 && !Number.isNaN(parseFlexibleNumber(headers[1])) && String(headers[1]).trim() !== '';
+
+            if (looksLikeDateHeader && looksLikeNumberHeader) {
+                return {
+                    dateCol: headers[0] ?? null,
+                    targetCol: headers[1] ?? null,
+                    omsetCol: headers[2] ?? null,
+                    persenCol: headers[3] ?? null,
+                    selisihCol: headers[4] ?? null,
+                    isHeaderlessDataRow: true
+                };
+            }
+
+            const findByKw = (keywords, exclude = []) => {
+                for (const kw of keywords) {
+                    const h = headers.find(col => clean(col) === kw);
+                    if (h) return h;
+                }
+                for (const kw of keywords) {
+                    const h = headers.find(col => {
+                        const c = clean(col);
+                        return !exclude.some(ex => c.includes(ex)) && c.includes(kw);
+                    });
+                    if (h) return h;
+                }
+                return null;
+            };
+
+            const namedDate = findByKw(['tanggal', 'date', 'tgl', 'hari', 'periode', 'waktu']);
+            const namedTarget = findByKw(['target', 'budget', 'plan', 'rencana', 'quota'], ['omset', '%', 'persen', 'selisih']);
+            const namedOmset = findByKw(['omset', 'omzet', 'sales', 'aktual', 'actual', 'realisasi', 'pendapatan'], ['target', '%', 'persen', 'selisih']);
+            const namedPersen = findByKw(['%', 'persen', 'persentase', 'ach', 'achievement', 'pencapaian']);
+            const namedSelisih = findByKw(['selisih', 'gap', 'variance', 'diff', 'deviasi']);
+
+            if (namedDate) dateCol = namedDate;
+            if (namedTarget) targetCol = namedTarget;
+            if (namedOmset) omsetCol = namedOmset;
+            if (namedPersen) persenCol = namedPersen;
+            if (namedSelisih) selisihCol = namedSelisih;
+
+            if (!dateCol && sampleRows.length > 0) {
+                for (const h of headers) {
+                    if (parseFlexibleDate(sampleRows[0][h])) {
+                        dateCol = h;
+                        break;
+                    }
+                }
+            }
+
+            return { dateCol, targetCol, omsetCol, persenCol, selisihCol, isHeaderlessDataRow: false };
+        }
+
+        function processCSVContent(csvText, statusType = 'online', statusLabel = 'Terhubung • Google Sheets Live') {
+            const firstLines = csvText.split(/\r?\n/).slice(0, 5).join('\n');
+            const tabCount = (firstLines.match(/\t/g) || []).length;
+            const delimiter = tabCount > 0 ? '\t' : '';
+
+            const parsed = Papa.parse(csvText, {
+                header: true,
+                delimiter: delimiter || undefined,
+                skipEmptyLines: 'greedy',
+                transformHeader: (h) => h.trim()
+            });
+
+            let rows = parsed.data || [];
+            if (rows.length === 0) {
+                showToast('Data CSV/TSV kosong atau tidak terbaca.', 'warning');
+                return;
+            }
+
+            let headers = parsed.meta.fields || Object.keys(rows[0]);
+            const colMap = resolveColumnMapping(headers, rows);
+
+            let finalRows = rows;
+            let finalHeaders = headers;
+            let activeMap = colMap;
+
+            if (colMap.isHeaderlessDataRow) {
+                const rawParsed = Papa.parse(csvText, {
+                    header: false,
+                    delimiter: delimiter || undefined,
+                    skipEmptyLines: 'greedy'
+                });
+                const matrix = rawParsed.data || [];
+                const maxCols = matrix.reduce((max, r) => Math.max(max, r.length), 0);
+                finalHeaders = [];
+                for (let c = 0; c < maxCols; c++) {
+                    if (c === 0) finalHeaders.push('Tanggal');
+                    else if (c === 1) finalHeaders.push('Target');
+                    else if (c === 2) finalHeaders.push('Omset');
+                    else if (c === 3) finalHeaders.push('% Pencapaian');
+                    else if (c === 4) finalHeaders.push('Selisih');
+                    else finalHeaders.push(`Kolom ${c + 1}`);
+                }
+
+                finalRows = matrix.map(arr => {
+                    const obj = {};
+                    finalHeaders.forEach((h, idx) => {
+                        obj[h] = arr[idx] !== undefined ? String(arr[idx]).trim() : '';
+                    });
+                    return obj;
+                });
+
+                activeMap = {
+                    dateCol: finalHeaders[0] || null,
+                    targetCol: finalHeaders[1] || null,
+                    omsetCol: finalHeaders[2] || null,
+                    persenCol: finalHeaders[3] || null,
+                    selisihCol: finalHeaders[4] || null
+                };
+            }
+
+            // Deteksi format tanggal secara global di seluruh dataset terlebih dahulu
+            const allRawDateValues = finalRows.map(r => (activeMap.dateCol ? r[activeMap.dateCol] : ''));
+            const globalDateOrder = detectGlobalDateOrder(allRawDateValues);
+
+            const mappedSet = new Set([
+                activeMap.dateCol,
+                activeMap.targetCol,
+                activeMap.omsetCol,
+                activeMap.persenCol,
+                activeMap.selisihCol
+            ].filter(Boolean));
+            state.extraColumns = finalHeaders.filter(h => h && !mappedSet.has(h));
+
+            const normalized = [];
+            finalRows.forEach((rawRow, idx) => {
+                const firstCellVal = String(Object.values(rawRow)[0] || '').toLowerCase().trim();
+                if (firstCellVal === 'total' || firstCellVal === 'grand total' || firstCellVal === 'jumlah' || firstCellVal === 'rata-rata') {
+                    return;
+                }
+
+                const rawDateStr = activeMap.dateCol ? rawRow[activeMap.dateCol] : '';
+                const dateObj = parseFlexibleDate(rawDateStr, globalDateOrder);
+
+                const target = activeMap.targetCol ? parseFlexibleNumber(rawRow[activeMap.targetCol]) : 0;
+                const omset = activeMap.omsetCol ? parseFlexibleNumber(rawRow[activeMap.omsetCol]) : 0;
+
+                let selisih = omset - target;
+                if (activeMap.selisihCol && rawRow[activeMap.selisihCol] !== undefined && String(rawRow[activeMap.selisihCol]).trim() !== '') {
+                    selisih = parseFlexibleNumber(rawRow[activeMap.selisihCol]);
+                }
+
+                let persen = target > 0 ? (omset / target) * 100 : (omset > 0 ? 100 : 0);
+                if (activeMap.persenCol && rawRow[activeMap.persenCol] !== undefined && String(rawRow[activeMap.persenCol]).trim() !== '') {
+                    const rawPctStr = String(rawRow[activeMap.persenCol]).trim();
+                    let parsedPct = parseFlexibleNumber(rawPctStr);
+                    if (parsedPct > 0 && parsedPct <= 2 && !rawPctStr.includes('%') && target > 0 && Math.abs((omset / target) - parsedPct) < 0.05) {
+                        parsedPct = parsedPct * 100;
+                    }
+                    persen = parsedPct;
+                }
+
+                const extras = {};
+                state.extraColumns.forEach(col => {
+                    extras[col] = rawRow[col] !== undefined ? String(rawRow[col]).trim() : '';
+                });
+
+                if (dateObj || omset !== 0 || target !== 0) {
+                    normalized.push({
+                        id: idx + 1,
+                        dateObj,
+                        dateISO: dateObj ? toISODateString(dateObj) : '',
+                        dateDisplay: dateObj ? formatTanggalID(dateObj) : (rawDateStr || `Baris ${idx + 1}`),
+                        omset,
+                        target,
+                        selisih,
+                        persen,
+                        extras
+                    });
+                }
+            });
+
+            // Urutkan descending agar tanggal terbaru / TODAY ada di atas
+            normalized.sort((a, b) => {
+                if (!a.dateObj && !b.dateObj) return a.id - b.id;
+                if (!a.dateObj) return 1;
+                if (!b.dateObj) return -1;
+                return b.dateObj - a.dateObj;
+            });
+
+            state.rawRows = normalized;
+
+            updateConnectionStatus(statusType, statusLabel);
+            const now = new Date();
+            document.getElementById('last-updated-text').textContent = `• Diperbarui ${now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB (${normalized.length} baris • ${globalDateOrder === 'MDY' ? 'MM/DD/YYYY' : 'DD/MM/YYYY'})`;
+
+            if (!state.startDate || !state.endDate) {
+                state.scorecardFollowFilter = false;
+                applyDatePreset('mtd', false);
+            }
+
+            renderAll();
+        }
+
+        // =========================================================================
+        // 5. LOGIKA FILTER TANGGAL & PRESET
+        // =========================================================================
+        function applyDatePreset(preset, triggerRender = true, markFollowFilter = false) {
+            const today = getTodayLocal();
+            const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+            const lastOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+            if (preset === 'mtd') {
+                state.startDate = toISODateString(firstOfMonth);
+                state.endDate = toISODateString(today);
+            } else if (preset === 'month-full') {
+                state.startDate = toISODateString(firstOfMonth);
+                state.endDate = toISODateString(lastOfMonth);
+            } else if (preset === 'last7') {
+                const sevenDaysAgo = new Date(today);
+                sevenDaysAgo.setDate(today.getDate() - 6);
+                state.startDate = toISODateString(sevenDaysAgo);
+                state.endDate = toISODateString(today);
+            } else if (preset === 'all') {
+                const validDates = state.rawRows.map(r => r.dateObj).filter(Boolean);
+                if (validDates.length > 0) {
+                    const minD = new Date(Math.min(...validDates));
+                    const maxD = new Date(Math.max(...validDates));
+                    state.startDate = toISODateString(minD);
+                    state.endDate = toISODateString(maxD);
+                } else {
+                    state.startDate = '';
+                    state.endDate = '';
+                }
+            }
+
+            if (markFollowFilter) {
+                state.scorecardFollowFilter = true;
+            }
+
+            document.getElementById('start-date').value = state.startDate;
+            document.getElementById('end-date').value = state.endDate;
+
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                if (btn.dataset.preset === preset) {
+                    btn.className = 'preset-btn px-3 py-2 rounded-xl text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition';
+                } else {
+                    btn.className = 'preset-btn px-3 py-2 rounded-xl text-xs font-medium bg-white/80 text-slate-700 border border-slate-200/80 hover:bg-white transition';
+                }
+            });
+
+            state.currentPage = 1;
+            if (triggerRender) renderAll();
+        }
+
+        function computeFilteredData() {
+            const start = state.startDate ? parseFlexibleDate(state.startDate, 'MDY') : null;
+            const end = state.endDate ? parseFlexibleDate(state.endDate, 'MDY') : null;
+            const q = state.searchQuery.toLowerCase().trim();
+
+            state.filteredRows = state.rawRows.filter(row => {
+                if (row.dateObj) {
+                    if (start && row.dateObj < start) return false;
+                    if (end && row.dateObj > end) return false;
+                }
+                if (q) {
+                    const extraText = Object.values(row.extras).join(' ').toLowerCase();
+                    const searchable = `${row.dateDisplay.toLowerCase()} ${row.dateISO} ${row.omset} ${row.target} ${row.selisih} ${extraText}`;
+                    if (!searchable.includes(q)) return false;
+                }
+                return true;
+            });
+
+            state.filteredRows.sort((a, b) => {
+                let valA, valB;
+                if (state.sortCol === 'dateObj') {
+                    valA = a.dateObj ? a.dateObj.getTime() : 0;
+                    valB = b.dateObj ? b.dateObj.getTime() : 0;
+                } else if (['omset', 'target', 'selisih', 'persen'].includes(state.sortCol)) {
+                    valA = a[state.sortCol];
+                    valB = b[state.sortCol];
+                } else {
+                    valA = String(a.extras[state.sortCol] || '').toLowerCase();
+                    valB = String(b.extras[state.sortCol] || '').toLowerCase();
+                }
+
+                if (valA < valB) return state.sortAsc ? -1 : 1;
+                if (valA > valB) return state.sortAsc ? 1 : -1;
+                return 0;
+            });
+        }
+
+        // =========================================================================
+        // 6. RENDER SCORECARD (CURRENT MTD PADA AWAL, MENGIKUTI FILTER SAAT DIUBAH)
+        // =========================================================================
+        function renderScorecards() {
+            const today = getTodayLocal();
+            const firstOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+
+            let targetDataset = [];
+            let periodText = '';
+            let sourceText = '';
+
+            if (!state.scorecardFollowFilter) {
+                // Default awal: Current Month-to-Date (Tanggal 1 bulan berjalan s/d tanggal hari ini)
+                targetDataset = state.rawRows.filter(row => {
+                    if (!row.dateObj) return false;
+                    return row.dateObj >= firstOfMonth && row.dateObj <= today;
+                });
+                periodText = `Current MTD: ${formatTanggalID(firstOfMonth)} – ${formatTanggalID(today)}`;
+                sourceText = 'Sumber: Current MTD (Tgl 1 s/d Hari Ini)';
+            } else {
+                // Mengikuti perubahan Start Date, End Date, atau Preset yang dipilih
+                targetDataset = state.filteredRows;
+                const sLabel = state.startDate ? formatTanggalID(parseFlexibleDate(state.startDate, 'MDY')) : 'Awal';
+                const eLabel = state.endDate ? formatTanggalID(parseFlexibleDate(state.endDate, 'MDY')) : 'Akhir';
+                periodText = `Rentang Filter: ${sLabel} – ${eLabel}`;
+                sourceText = 'Sumber: Mengikuti Filter Tanggal Aktif';
+            }
+
+            document.getElementById('scorecard-period-text').textContent = periodText;
+            document.getElementById('scorecard-source-indicator').textContent = sourceText;
+
+            const totalOmset = targetDataset.reduce((acc, r) => acc + r.omset, 0);
+            const totalTarget = targetDataset.reduce((acc, r) => acc + r.target, 0);
+            const totalSelisih = totalOmset - totalTarget;
+
+            let avgPersen = 0;
+            if (totalTarget > 0) {
+                avgPersen = (totalOmset / totalTarget) * 100;
+            } else if (targetDataset.length > 0) {
+                avgPersen = targetDataset.reduce((acc, r) => acc + r.persen, 0) / targetDataset.length;
+            }
+
+            // Card 1: Total Omset
+            const elOmset = document.getElementById('sc-omset');
+            elOmset.textContent = formatRupiah(totalOmset);
+            elOmset.title = formatRupiah(totalOmset);
+            document.getElementById('sc-omset-sub').innerHTML = `<span class="font-semibold text-slate-700">${targetDataset.length}</span> data tercatat pada periode ini`;
+
+            // Card 2: Total Target
+            const elTarget = document.getElementById('sc-target');
+            elTarget.textContent = formatRupiah(totalTarget);
+            elTarget.title = formatRupiah(totalTarget);
+            document.getElementById('sc-target-sub').textContent = totalTarget > 0 ? 'Akumulasi target periode aktif' : 'Belum ada nilai target pada periode ini';
+
+            // Card 3: Rata-rata %
+            document.getElementById('sc-persen').textContent = formatPersen(avgPersen);
+            const clampedBar = Math.min(Math.max(avgPersen, 0), 100);
+            const barEl = document.getElementById('sc-persen-bar');
+            const badgeEl = document.getElementById('sc-persen-badge');
+            barEl.style.width = `${clampedBar}%`;
+
+            if (avgPersen >= 100) {
+                barEl.className = 'bg-emerald-500 h-2 rounded-full transition-all duration-500';
+                badgeEl.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200';
+                badgeEl.textContent = 'Tercapai';
+            } else if (avgPersen >= 80) {
+                barEl.className = 'bg-blue-600 h-2 rounded-full transition-all duration-500';
+                badgeEl.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200';
+                badgeEl.textContent = 'On Track';
+            } else {
+                barEl.className = 'bg-amber-500 h-2 rounded-full transition-all duration-500';
+                badgeEl.className = 'text-[11px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200';
+                badgeEl.textContent = 'Perlu Dorongan';
+            }
+
+            // Card 4: Total Selisih
+            const elSelisih = document.getElementById('sc-selisih');
+            const elSelisihSub = document.getElementById('sc-selisih-sub');
+            const elSelisihIconBox = document.getElementById('sc-selisih-icon-box');
+            const elSelisihIcon = document.getElementById('sc-selisih-icon');
+            const elSelisihAccent = document.getElementById('sc-selisih-accent');
+
+            const prefixPlus = totalSelisih > 0 ? '+' : '';
+            elSelisih.textContent = `${prefixPlus}${formatRupiah(totalSelisih)}`;
+            elSelisih.title = `${prefixPlus}${formatRupiah(totalSelisih)}`;
+
+            if (totalSelisih >= 0) {
+                elSelisih.className = 'text-xl sm:text-2xl font-extrabold text-emerald-600 mt-1.5 truncate';
+                elSelisihSub.innerHTML = `<span class="text-emerald-600 font-semibold"><i class="fa-solid fa-arrow-trend-up mr-1"></i>Surplus</span> di atas target`;
+                elSelisihIconBox.className = 'w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100';
+                elSelisihIcon.className = 'fa-solid fa-arrow-trend-up text-lg';
+                elSelisihAccent.className = 'absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-500';
+            } else {
+                elSelisih.className = 'text-xl sm:text-2xl font-extrabold text-rose-600 mt-1.5 truncate';
+                elSelisihSub.innerHTML = `<span class="text-rose-600 font-semibold"><i class="fa-solid fa-arrow-trend-down mr-1"></i>Defisit</span> dari target`;
+                elSelisihIconBox.className = 'w-11 h-11 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0 border border-rose-100';
+                elSelisihIcon.className = 'fa-solid fa-arrow-trend-down text-lg';
+                elSelisihAccent.className = 'absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-rose-500 to-orange-500';
+            }
+        }
+
+        // =========================================================================
+        // 7. RENDER GRAFIK INTERAKTIF (CHART.JS)
+        // =========================================================================
+        function renderChart() {
+            const emptyState = document.getElementById('chart-empty-state');
+            const subtitleEl = document.getElementById('chart-subtitle');
+
+            const sLabel = state.startDate ? formatTanggalID(parseFlexibleDate(state.startDate, 'MDY')) : 'Awal';
+            const eLabel = state.endDate ? formatTanggalID(parseFlexibleDate(state.endDate, 'MDY')) : 'Akhir';
+            subtitleEl.textContent = `Periode: ${sLabel} s/d ${eLabel} (${state.filteredRows.length} data)`;
+
+            if (state.filteredRows.length === 0) {
+                emptyState.classList.remove('hidden');
+                if (state.chartInstance) {
+                    state.chartInstance.destroy();
+                    state.chartInstance = null;
+                }
+                return;
+            }
+            emptyState.classList.add('hidden');
+
+            const groupedMap = new Map();
+            const chronoRows = [...state.filteredRows].sort((a, b) => {
+                if (!a.dateObj || !b.dateObj) return a.id - b.id;
+                return a.dateObj - b.dateObj;
+            });
+
+            chronoRows.forEach(r => {
+                const key = r.dateISO || r.dateDisplay;
+                if (!groupedMap.has(key)) {
+                    groupedMap.set(key, {
+                        label: r.dateObj ? formatTanggalPendek(r.dateObj) : r.dateDisplay,
+                        fullDate: r.dateDisplay,
+                        omset: 0,
+                        target: 0
+                    });
+                }
+                const entry = groupedMap.get(key);
+                entry.omset += r.omset;
+                entry.target += r.target;
+            });
+
+            const chartItems = Array.from(groupedMap.values()).map(item => {
+                const selisih = item.omset - item.target;
+                const persen = item.target > 0 ? (item.omset / item.target) * 100 : (item.omset > 0 ? 100 : 0);
+                return { ...item, selisih, persen };
+            });
+
+            const labels = chartItems.map(i => i.label);
+            const omsetData = chartItems.map(i => i.omset);
+            const targetData = chartItems.map(i => i.target);
+            const persenData = chartItems.map(i => Number(i.persen.toFixed(2)));
+
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            if (state.chartInstance) {
+                state.chartInstance.destroy();
+            }
+
+            const isLine = state.chartType === 'line';
+            const isCombo = state.chartType === 'combo';
+
+            const datasets = [
+                {
+                    label: 'Omset',
+                    data: omsetData,
+                    type: isLine ? 'line' : 'bar',
+                    backgroundColor: isLine ? 'rgba(37, 99, 235, 0.15)' : 'rgba(37, 99, 235, 0.88)',
+                    borderColor: '#2563eb',
+                    borderWidth: 2,
+                    borderRadius: isLine ? 0 : 6,
+                    tension: 0.35,
+                    fill: isLine,
+                    yAxisID: 'y',
+                    order: 2
+                },
+                {
+                    label: 'Target',
+                    data: targetData,
+                    type: isLine ? 'line' : 'bar',
+                    backgroundColor: isLine ? 'rgba(148, 163, 184, 0.15)' : 'rgba(148, 163, 184, 0.72)',
+                    borderColor: '#64748b',
+                    borderWidth: 2,
+                    borderDash: isLine ? [5, 5] : [],
+                    borderRadius: isLine ? 0 : 6,
+                    tension: 0.35,
+                    fill: false,
+                    yAxisID: 'y',
+                    order: 3
+                }
+            ];
+
+            if (isCombo) {
+                datasets.push({
+                    label: '% Pencapaian',
+                    data: persenData,
+                    type: 'line',
+                    borderColor: '#f59e0b',
+                    backgroundColor: '#f59e0b',
+                    borderWidth: 2.5,
+                    pointRadius: 3.5,
+                    pointHoverRadius: 6,
+                    tension: 0.3,
+                    yAxisID: 'y1',
+                    order: 1
+                });
+            }
+
+            const scalesConfig = {
+                x: {
+                    grid: { display: false },
+                    ticks: {
+                        font: { family: 'Inter', size: 11 },
+                        color: '#64748b',
+                        maxRotation: 45
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    position: 'left',
+                    beginAtZero: true,
+                    grid: { color: 'rgba(203, 213, 225, 0.35)' },
+                    ticks: {
+                        font: { family: 'Inter', size: 11 },
+                        color: '#64748b',
+                        callback: (value) => formatRupiahSingkat(value)
+                    }
+                }
+            };
+
+            if (isCombo) {
+                scalesConfig.y1 = {
+                    type: 'linear',
+                    position: 'right',
+                    beginAtZero: true,
+                    grid: { drawOnChartArea: false },
+                    ticks: {
+                        font: { family: 'Inter', size: 11 },
+                        color: '#d97706',
+                        callback: (value) => `${value}%`
+                    }
+                };
+            }
+
+            state.chartInstance = new Chart(ctx, {
+                type: isLine ? 'line' : 'bar',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                usePointStyle: true,
+                                boxWidth: 8,
+                                font: { family: 'Inter', size: 12, weight: '600' },
+                                color: '#334155'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+                            titleFont: { family: 'Inter', size: 13, weight: '700' },
+                            bodyFont: { family: 'Inter', size: 12 },
+                            padding: 12,
+                            cornerRadius: 10,
+                            callbacks: {
+                                title: (items) => {
+                                    const idx = items[0].dataIndex;
+                                    return `Tanggal: ${chartItems[idx].fullDate}`;
+                                },
+                                label: (context) => {
+                                    const label = context.dataset.label || '';
+                                    const val = context.parsed.y;
+                                    if (context.dataset.yAxisID === 'y1') {
+                                        return ` ${label}: ${formatPersen(val)}`;
+                                    }
+                                    return ` ${label}: ${formatRupiah(val)}`;
+                                },
+                                afterBody: (items) => {
+                                    const idx = items[0].dataIndex;
+                                    const item = chartItems[idx];
+                                    const sign = item.selisih > 0 ? '+' : '';
+                                    const lines = [`──────────────────────`, ` Selisih: ${sign}${formatRupiah(item.selisih)}`];
+                                    if (!isCombo) {
+                                        lines.push(` % Pencapaian: ${formatPersen(item.persen)}`);
+                                    }
+                                    return lines;
+                                }
+                            }
+                        }
+                    },
+                    scales: scalesConfig
+                }
+            });
+        }
+
+        // =========================================================================
+        // 8. RENDER TABEL DATA, CARD VIEW, PAGINATION & SUMMARY FOOTER
+        // =========================================================================
+        function syncViewModeUI() {
+            const viewTableBtn = document.getElementById('view-table-btn');
+            const viewCardBtn = document.getElementById('view-card-btn');
+            const tableContainer = document.getElementById('table-view-container');
+            const cardContainer = document.getElementById('card-view-container');
+
+            if (state.viewMode === 'card') {
+                viewCardBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-600 shadow-xs transition';
+                viewTableBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition';
+                cardContainer.classList.remove('hidden');
+                tableContainer.classList.add('hidden');
+            } else {
+                viewTableBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-600 shadow-xs transition';
+                viewCardBtn.className = 'px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition';
+                tableContainer.classList.remove('hidden');
+                cardContainer.classList.add('hidden');
+            }
+        }
+
+        function renderTableAndCards() {
+            syncViewModeUI();
+
+            const totalRows = state.filteredRows.length;
+            document.getElementById('table-count-badge').textContent = `${totalRows} baris`;
+
+            const isAll = state.pageSize === 'all';
+            const pageSizeNum = isAll ? (totalRows || 1) : parseInt(state.pageSize, 10);
+            const totalPages = Math.max(1, Math.ceil(totalRows / pageSizeNum));
+            if (state.currentPage > totalPages) state.currentPage = totalPages;
+
+            const startIdx = isAll ? 0 : (state.currentPage - 1) * pageSizeNum;
+            const endIdx = isAll ? totalRows : Math.min(startIdx + pageSizeNum, totalRows);
+            const pageRows = state.filteredRows.slice(startIdx, endIdx);
+
+            const todayISO = toISODateString(getTodayLocal());
+
+            const thead = document.getElementById('data-table-head');
+            const getSortIcon = (colKey) => {
+                if (state.sortCol !== colKey) return '<i class="fa-solid fa-sort text-slate-300 ml-1"></i>';
+                return state.sortAsc
+                    ? '<i class="fa-solid fa-sort-up text-blue-600 ml-1"></i>'
+                    : '<i class="fa-solid fa-sort-down text-blue-600 ml-1"></i>';
+            };
+
+            let extraThHtml = '';
+            state.extraColumns.forEach(col => {
+                extraThHtml += `<th data-sort="${col}" class="px-4 py-3.5 cursor-pointer hover:bg-slate-100 transition whitespace-nowrap">${col} ${getSortIcon(col)}</th>`;
+            });
+
+            thead.innerHTML = `
+                <tr>
+                    <th class="px-4 py-3.5 w-12 text-center">#</th>
+                    <th data-sort="dateObj" class="px-4 py-3.5 cursor-pointer hover:bg-slate-100 transition whitespace-nowrap">Tanggal ${getSortIcon('dateObj')}</th>
+                    ${extraThHtml}
+                    <th data-sort="target" class="px-4 py-3.5 text-right cursor-pointer hover:bg-slate-100 transition whitespace-nowrap">Target ${getSortIcon('target')}</th>
+                    <th data-sort="omset" class="px-4 py-3.5 text-right cursor-pointer hover:bg-slate-100 transition whitespace-nowrap">Omset ${getSortIcon('omset')}</th>
+                    <th data-sort="persen" class="px-4 py-3.5 text-right cursor-pointer hover:bg-slate-100 transition whitespace-nowrap">% Pencapaian ${getSortIcon('persen')}</th>
+                    <th data-sort="selisih" class="px-4 py-3.5 text-right cursor-pointer hover:bg-slate-100 transition whitespace-nowrap">Selisih ${getSortIcon('selisih')}</th>
+                </tr>
+            `;
+
+            thead.querySelectorAll('th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const col = th.dataset.sort;
+                    if (state.sortCol === col) {
+                        state.sortAsc = !state.sortAsc;
+                    } else {
+                        state.sortCol = col;
+                        state.sortAsc = col !== 'dateObj';
+                    }
+                    renderAll();
+                });
+            });
+
+            const tbody = document.getElementById('data-table-body');
+            const cardContainer = document.getElementById('card-view-container');
+
+            if (pageRows.length === 0) {
+                const colSpan = 6 + state.extraColumns.length;
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="${colSpan}" class="px-4 py-10 text-center text-slate-500">
+                            <i class="fa-regular fa-folder-open text-2xl text-slate-300 mb-2 block"></i>
+                            Tidak ada data yang cocok dengan filter atau pencarian Anda.
+                        </td>
+                    </tr>
+                `;
+                cardContainer.innerHTML = `
+                    <div class="col-span-full py-10 text-center text-slate-500">
+                        <i class="fa-regular fa-folder-open text-2xl text-slate-300 mb-2 block"></i>
+                        Tidak ada data yang cocok dengan filter atau pencarian Anda.
+                    </div>
+                `;
+            } else {
+                // Table Rows
+                tbody.innerHTML = pageRows.map((row, idx) => {
+                    const rowNum = startIdx + idx + 1;
+                    const isToday = row.dateISO === todayISO;
+                    const isSurplus = row.selisih >= 0;
+                    const selisihColor = isSurplus ? 'text-emerald-600' : 'text-rose-600';
+                    const sign = row.selisih > 0 ? '+' : '';
+
+                    let badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                    if (row.persen >= 100) badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    else if (row.persen >= 80) badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+
+                    let extraTdHtml = '';
+                    state.extraColumns.forEach(col => {
+                        extraTdHtml += `<td class="px-4 py-3 whitespace-nowrap text-slate-600">${row.extras[col] || '-'}</td>`;
+                    });
+
+                    const todayTag = isToday
+                        ? `<span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white">TODAY</span>`
+                        : '';
+
+                    return `
+                        <tr class="${isToday ? 'bg-blue-50/60' : 'hover:bg-blue-50/40'} transition">
+                            <td class="px-4 py-3 text-center text-slate-400 font-mono text-xs">${rowNum}</td>
+                            <td class="px-4 py-3 font-semibold text-slate-800 whitespace-nowrap">${row.dateDisplay}${todayTag}</td>
+                            ${extraTdHtml}
+                            <td class="px-4 py-3 text-right text-slate-600 whitespace-nowrap">${formatRupiah(row.target)}</td>
+                            <td class="px-4 py-3 text-right font-semibold text-slate-900 whitespace-nowrap">${formatRupiah(row.omset)}</td>
+                            <td class="px-4 py-3 text-right whitespace-nowrap">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeClass}">
+                                    ${formatPersen(row.persen)}
+                                </span>
+                            </td>
+                            <td class="px-4 py-3 text-right font-semibold ${selisihColor} whitespace-nowrap">${sign}${formatRupiah(row.selisih)}</td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Card View
+                cardContainer.innerHTML = pageRows.map((row) => {
+                    const isToday = row.dateISO === todayISO;
+                    const isSurplus = row.selisih >= 0;
+                    const selisihColor = isSurplus ? 'text-emerald-600' : 'text-rose-600';
+                    const sign = row.selisih > 0 ? '+' : '';
+
+                    let badgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                    if (row.persen >= 100) badgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+                    else if (row.persen >= 80) badgeClass = 'bg-blue-50 text-blue-700 border-blue-200';
+
+                    const extraBadges = state.extraColumns
+                        .filter(col => row.extras[col])
+                        .map(col => `<span class="text-[11px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md">${col}: <b>${row.extras[col]}</b></span>`)
+                        .join(' ');
+
+                    const todayTag = isToday
+                        ? `<span class="ml-1.5 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-blue-600 text-white">TODAY</span>`
+                        : '';
+
+                    return `
+                        <div class="glass-panel rounded-xl p-4 border ${isToday ? 'border-blue-300 ring-1 ring-blue-200' : 'border-white/90'} shadow-xs flex flex-col justify-between gap-3">
+                            <div class="flex items-start justify-between gap-2 border-b border-slate-200/60 pb-2.5">
+                                <div>
+                                    <span class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                                        <i class="fa-regular fa-calendar text-blue-600"></i> ${row.dateDisplay}${todayTag}
+                                    </span>
+                                    ${extraBadges ? `<div class="flex flex-wrap gap-1 mt-1.5">${extraBadges}</div>` : ''}
+                                </div>
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeClass}">
+                                    ${formatPersen(row.persen)}
+                                </span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2 text-xs">
+                                <div class="bg-white/80 p-2 rounded-lg border border-slate-100">
+                                    <span class="text-[10px] uppercase tracking-wider text-slate-400 block">Target</span>
+                                    <span class="font-semibold text-slate-700">${formatRupiah(row.target)}</span>
+                                </div>
+                                <div class="bg-white/80 p-2 rounded-lg border border-slate-100">
+                                    <span class="text-[10px] uppercase tracking-wider text-slate-400 block">Omset</span>
+                                    <span class="font-bold text-slate-900">${formatRupiah(row.omset)}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between text-xs pt-0.5">
+                                <span class="text-slate-500">Selisih:</span>
+                                <span class="font-bold ${selisihColor}">${sign}${formatRupiah(row.selisih)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            // Total Row di Footer Tabel
+            const tfoot = document.getElementById('data-table-foot');
+            if (totalRows > 0) {
+                const sumTarget = state.filteredRows.reduce((acc, r) => acc + r.target, 0);
+                const sumOmset = state.filteredRows.reduce((acc, r) => acc + r.omset, 0);
+                const sumSelisih = sumOmset - sumTarget;
+                const sumPersen = sumTarget > 0 ? (sumOmset / sumTarget) * 100 : 0;
+                const sign = sumSelisih > 0 ? '+' : '';
+                const selisihColor = sumSelisih >= 0 ? 'text-emerald-700' : 'text-rose-700';
+
+                let emptyExtraTd = '';
+                state.extraColumns.forEach(() => { emptyExtraTd += `<td class="px-4 py-3.5"></td>`; });
+
+                tfoot.innerHTML = `
+                    <tr>
+                        <td colspan="2" class="px-4 py-3.5 uppercase text-xs tracking-wider text-slate-700">Total (${totalRows} Data)</td>
+                        ${emptyExtraTd}
+                        <td class="px-4 py-3.5 text-right text-slate-800 whitespace-nowrap">${formatRupiah(sumTarget)}</td>
+                        <td class="px-4 py-3.5 text-right text-slate-900 whitespace-nowrap">${formatRupiah(sumOmset)}</td>
+                        <td class="px-4 py-3.5 text-right text-blue-700 whitespace-nowrap">${formatPersen(sumPersen)}</td>
+                        <td class="px-4 py-3.5 text-right ${selisihColor} whitespace-nowrap">${sign}${formatRupiah(sumSelisih)}</td>
+                    </tr>
+                `;
+            } else {
+                tfoot.innerHTML = '';
+            }
+
+            // Pagination Controls
+            document.getElementById('pagination-info').textContent = totalRows === 0
+                ? 'Menampilkan 0 data'
+                : `Menampilkan ${startIdx + 1} – ${endIdx} dari ${totalRows} data`;
+
+            const paginationControls = document.getElementById('pagination-controls');
+            if (isAll || totalPages <= 1) {
+                paginationControls.innerHTML = '';
+            } else {
+                let btns = '';
+                btns += `<button type="button" data-page="${state.currentPage - 1}" ${state.currentPage === 1 ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition"><i class="fa-solid fa-chevron-left"></i></button>`;
+
+                let startPage = Math.max(1, state.currentPage - 2);
+                let endPage = Math.min(totalPages, startPage + 4);
+                if (endPage - startPage < 4) startPage = Math.max(1, endPage - 4);
+
+                for (let p = startPage; p <= endPage; p++) {
+                    const activeClass = p === state.currentPage
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50';
+                    btns += `<button type="button" data-page="${p}" class="px-3 py-1.5 rounded-lg text-xs font-semibold border ${activeClass} transition">${p}</button>`;
+                }
+
+                btns += `<button type="button" data-page="${state.currentPage + 1}" ${state.currentPage === totalPages ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition"><i class="fa-solid fa-chevron-right"></i></button>`;
+
+                paginationControls.innerHTML = btns;
+                paginationControls.querySelectorAll('button[data-page]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const targetP = parseInt(btn.dataset.page, 10);
+                        if (targetP >= 1 && targetP <= totalPages) {
+                            state.currentPage = targetP;
+                            renderTableAndCards();
+                        }
+                    });
+                });
+            }
+        }
+
+        function renderAll() {
+            computeFilteredData();
+            renderScorecards();
+            renderChart();
+            renderTableAndCards();
+        }
+
+        // =========================================================================
+        // 9. EXPORT CSV & EVENT LISTENERS
+        // =========================================================================
+        function exportFilteredCSV() {
+            if (state.filteredRows.length === 0) {
+                showToast('Tidak ada data untuk diexport.', 'warning');
+                return;
+            }
+            const exportData = state.filteredRows.map(r => {
+                const obj = { Tanggal: r.dateDisplay };
+                state.extraColumns.forEach(c => { obj[c] = r.extras[c] || ''; });
+                obj['Target'] = r.target;
+                obj['Omset'] = r.omset;
+                obj['% Pencapaian'] = r.persen.toFixed(2);
+                obj['Selisih'] = r.selisih;
+                return obj;
+            });
+
+            const csv = Papa.unparse(exportData);
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Laporan_Omset_Target_CAT_JOTUN_${state.startDate || 'all'}_sd_${state.endDate || 'all'}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            showToast('File CSV berhasil diunduh!', 'success');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderTodayHeaderBadge();
+            syncViewModeUI();
+
+            document.getElementById('refresh-data-btn').addEventListener('click', () => loadData(true));
+            document.getElementById('export-csv-btn').addEventListener('click', exportFilteredCSV);
+
+            // Saat Start Date atau End Date diubah, Scorecard otomatis mengikuti filter tanggal aktif
+            document.getElementById('start-date').addEventListener('change', (e) => {
+                state.startDate = e.target.value;
+                state.scorecardFollowFilter = true;
+                state.currentPage = 1;
+                document.querySelectorAll('.preset-btn').forEach(b => b.className = 'preset-btn px-3 py-2 rounded-xl text-xs font-medium bg-white/80 text-slate-700 border border-slate-200/80 hover:bg-white transition');
+                renderAll();
+            });
+
+            document.getElementById('end-date').addEventListener('change', (e) => {
+                state.endDate = e.target.value;
+                state.scorecardFollowFilter = true;
+                state.currentPage = 1;
+                document.querySelectorAll('.preset-btn').forEach(b => b.className = 'preset-btn px-3 py-2 rounded-xl text-xs font-medium bg-white/80 text-slate-700 border border-slate-200/80 hover:bg-white transition');
+                renderAll();
+            });
+
+            // Saat tombol preset diklik, Scorecard mengikuti rentang preset aktif
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => applyDatePreset(btn.dataset.preset, true, true));
+            });
+
+            document.getElementById('reset-filter-btn').addEventListener('click', () => {
+                state.searchQuery = '';
+                document.getElementById('table-search').value = '';
+                document.getElementById('clear-search-btn').classList.add('hidden');
+                state.scorecardFollowFilter = false;
+                applyDatePreset('mtd', true, false);
+                showToast('Filter direset ke Current MTD (Bulan Berjalan s/d Hari Ini).', 'info');
+            });
+
+            // Pilihan Tipe Grafik
+            document.querySelectorAll('.chart-type-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state.chartType = btn.dataset.chartType;
+                    document.querySelectorAll('.chart-type-btn').forEach(b => {
+                        if (b.dataset.chartType === state.chartType) {
+                            b.className = 'chart-type-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-white text-blue-600 shadow-xs transition';
+                        } else {
+                            b.className = 'chart-type-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 hover:text-slate-900 transition';
+                        }
+                    });
+                    renderChart();
+                });
+            });
+
+            // Pencarian Tabel & Tombol Clear (×)
+            const searchInput = document.getElementById('table-search');
+            const clearSearchBtn = document.getElementById('clear-search-btn');
+
+            searchInput.addEventListener('input', (e) => {
+                state.searchQuery = e.target.value;
+                state.currentPage = 1;
+                if (state.searchQuery.length > 0) {
+                    clearSearchBtn.classList.remove('hidden');
+                } else {
+                    clearSearchBtn.classList.add('hidden');
+                }
+                renderAll();
+            });
+
+            clearSearchBtn.addEventListener('click', () => {
+                state.searchQuery = '';
+                searchInput.value = '';
+                clearSearchBtn.classList.add('hidden');
+                state.currentPage = 1;
+                renderAll();
+            });
+
+            document.getElementById('page-size-select').addEventListener('change', (e) => {
+                state.pageSize = e.target.value;
+                state.currentPage = 1;
+                renderTableAndCards();
+            });
+
+            document.getElementById('view-card-btn').addEventListener('click', () => {
+                state.viewMode = 'card';
+                syncViewModeUI();
+            });
+
+            document.getElementById('view-table-btn').addEventListener('click', () => {
+                state.viewMode = 'table';
+                syncViewModeUI();
+            });
+
+            // Modal Manual CSV / TSV
+            const manualModal = document.getElementById('manual-modal');
+            const openModal = () => { manualModal.classList.remove('hidden'); manualModal.classList.add('flex'); };
+            const closeModal = () => { manualModal.classList.add('hidden'); manualModal.classList.remove('flex'); };
+
+            document.getElementById('open-manual-btn').addEventListener('click', openModal);
+            document.getElementById('close-manual-modal').addEventListener('click', closeModal);
+            document.getElementById('cancel-manual-btn').addEventListener('click', closeModal);
+
+            document.getElementById('csv-file-input').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    document.getElementById('csv-paste-input').value = ev.target.result;
+                };
+                reader.readAsText(file);
+            });
+
+            document.getElementById('apply-manual-btn').addEventListener('click', () => {
+                const text = document.getElementById('csv-paste-input').value.trim();
+                if (!text) {
+                    showToast('Silakan pilih file CSV/TSV atau tempelkan teks terlebih dahulu.', 'warning');
+                    return;
+                }
+                state.startDate = '';
+                state.endDate = '';
+                processCSVContent(text, 'cache', 'Data Manual CSV/TSV Dimuat');
+                closeModal();
+                showToast('Data manual berhasil diproses!', 'success');
+            });
+
+            loadData(false);
+        });
+    </script>
+</body>
+</html>
