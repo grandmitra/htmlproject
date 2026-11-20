@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Laporan Komparasi Inventory per Departemen (2 Okt vs 20 Nov 2026)</title>
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f8fafc;
+      color: #0f172a;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Sticky kolom pertama pada tabel responsif */
+    .sticky-col {
+      position: sticky;
+      left: 0;
+      z-index: 10;
+    }
+
+    /* Custom scrollbar halus untuk tabel di layar mobile */
+    .table-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+    .table-scroll::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 9999px;
+    }
+    .table-scroll::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 9999px;
+    }
+    .table-scroll::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    /* Aturan Cetak (Print / Save as PDF) */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 10mm;
+      }
+      body {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        font-size: 10px !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-break-inside {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .print-page-break {
+        break-before: page;
+        page-break-before: always;
+      }
+      .shadow-sm, .shadow, .shadow-md {
+        box-shadow: none !important;
+      }
+      .table-scroll {
+        overflow: visible !important;
+      }
+      table {
+        width: 100% !important;
+        font-size: 8.5px !important;
+      }
+      th, td {
+        padding: 4px 5px !important;
+      }
+      .sticky-col {
+        position: static !important;
+      }
+      canvas {
+        max-height: 220px !important;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Header Bar -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            Inventory Analytics
+          </span>
+          <span class="text-xs text-slate-400">Periode: 2 Okt 2026 vs 20 Nov 2026</span>
+        </div>
+        <h1 class="text-lg sm:text-2xl font-bold tracking-tight text-white mt-1">
+          Laporan Komparasi Inventory per Departemen
+        </h1>
+        <p class="text-xs sm:text-sm text-slate-300">
+          Evaluasi Penurunan Stok Kategori <span class="font-semibold text-amber-300">SLOWDEAD</span> &amp; <span class="font-semibold text-sky-300">FASTSLOW</span> (GROUP_NAME1)
+        </p>
+      </div>
+
+      <!-- Tombol Cetak -->
+      <div class="flex items-center gap-2 no-print self-start sm:self-center">
+        <button
+          onclick="window.print()"
+          class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-sm px-4 py-2.5 rounded-xl shadow-sm transition cursor-pointer"
+          title="Cetak Laporan atau Simpan sebagai PDF"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          <span>Cetak Laporan / PDF</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- 1. KPI Summary Cards -->
+    <section aria-label="Ringkasan KPI" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 print-break-inside">
+      <!-- Card 1: Total Inventory Gabungan -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Inventory Gabungan</span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              ▼ 14,23%
+            </span>
+          </div>
+          <p class="text-2xl font-extrabold text-slate-900 mt-2">Rp 7,90 Miliar</p>
+          <p class="text-xs text-slate-500 mt-0.5">20 Nov 2026 (Rp 7.899.660.486)</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          <span class="text-slate-500">2 Okt: <strong class="text-slate-700">Rp 9,21 M</strong></span>
+          <span class="font-semibold text-emerald-600">-Rp 1,31 M</span>
+        </div>
+      </div>
+
+      <!-- Card 2: Kategori SLOWDEAD -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-amber-700">Kategori SLOWDEAD</span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              ▼ 14,97%
+            </span>
+          </div>
+          <p class="text-2xl font-extrabold text-slate-900 mt-2">Rp 4,21 Miliar</p>
+          <p class="text-xs text-slate-500 mt-0.5">20 Nov: 2.512 SKU (<span class="text-emerald-600 font-medium">-19,07% SKU</span>)</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          <span class="text-slate-500">2 Okt: <strong class="text-slate-700">Rp 4,95 M</strong></span>
+          <span class="font-semibold text-emerald-600">-Rp 741,75 Jt</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Kategori FASTSLOW -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-sky-700">Kategori FASTSLOW</span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              ▼ 13,37%
+            </span>
+          </div>
+          <p class="text-2xl font-extrabold text-slate-900 mt-2">Rp 3,69 Miliar</p>
+          <p class="text-xs text-slate-500 mt-0.5">20 Nov: 3.521 SKU (<span class="text-emerald-600 font-medium">-22,80% SKU</span>)</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          <span class="text-slate-500">2 Okt: <strong class="text-slate-700">Rp 4,26 M</strong></span>
+          <span class="font-semibold text-emerald-600">-Rp 568,97 Jt</span>
+        </div>
+      </div>
+
+      <!-- Card 4: Efisiensi Total SKU -->
+      <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Aktif SKU</span>
+            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              ▼ 21,29%
+            </span>
+          </div>
+          <p class="text-2xl font-extrabold text-slate-900 mt-2">6.033 SKU</p>
+          <p class="text-xs text-slate-500 mt-0.5">Berkurang <strong class="text-emerald-600">1.632 SKU</strong> dari 2 Okt</p>
+        </div>
+        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+          <span class="text-slate-500">2 Okt: <strong class="text-slate-700">7.665 SKU</strong></span>
+          <span class="font-semibold text-slate-600">Proporsi: 53,3% SD / 46,7% FS</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Executive Insight & Analisa -->
+    <section aria-label="Insight dan Analisa" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-5 sm:p-6 print-break-inside">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-slate-900">Executive Insight &amp; Analisa Penurunan Inventory</h2>
+            <p class="text-xs text-slate-500">Ringkasan kinerja pengurangan stok lambat/mati berdasarkan data aktual 2 Okt vs 20 Nov 2026</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
+        <!-- Insight 1: Ringkasan Makro -->
+        <div class="bg-slate-50 rounded-xl p-4 border border-slate-200/80">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+            <h3 class="text-sm font-bold text-slate-800">1. Capaian Penurunan Keseluruhan</h3>
+          </div>
+          <ul class="text-xs sm:text-sm text-slate-600 space-y-2 leading-relaxed">
+            <li>
+              • Total nilai inventory gabungan turun <strong class="text-emerald-700">14,23% (-Rp 1,31 Miliar)</strong> dari Rp 9,21 M menjadi Rp 7,90 M dalam kurun waktu ~7 minggu.
+            </li>
+            <li>
+              • Penurunan terbesar terjadi pada kategori <strong class="text-slate-800">SLOWDEAD sebesar 14,97%</strong> (-Rp 741,75 Jt), diikuti <strong class="text-slate-800">FASTSLOW sebesar 13,37%</strong> (-Rp 568,97 Jt).
+            </li>
+            <li>
+              • Secara kuantitas item, <strong class="text-slate-800">1.632 SKU (-21,29%)</strong> berhasil dibersihkan dari daftar slow/dead stock.
+            </li>
+          </ul>
+        </div>
+
+        <!-- Insight 2: Top Performers (Penurunan Terbesar) -->
+        <div class="bg-emerald-50/60 rounded-xl p-4 border border-emerald-200/80">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span>
+            <h3 class="text-sm font-bold text-emerald-900">2. Departemen Penurunan Terbaik</h3>
+          </div>
+          <ul class="text-xs sm:text-sm text-slate-700 space-y-2 leading-relaxed">
+            <li>
+              • <strong>APPLIANCE (-87,80% / -Rp 415,58 Jt):</strong> Performa terbaik; Slowdead anjlok <strong>-90,23%</strong> dan Fastslow turun <strong>-82,54%</strong>.
+            </li>
+            <li>
+              • <strong>FLOORING &amp; WALL (-43,16% / -Rp 466,75 Jt):</strong> Penyumbang pengurangan nilai rupiah terbesar, terutama Fastslow yang susut <strong>-63,42%</strong>.
+            </li>
+            <li>
+              • <strong>PLUMBING (-35,59% / -Rp 325,93 Jt):</strong> Berhasil menekan Slowdead -29,14% dan Fastslow -52,28%.
+            </li>
+            <li>
+              • <strong>SANITARY (Kontributor Terbesar):</strong> Slowdead turun <strong>-13,06% (-Rp 200,02 Jt)</strong>, namun Fastslow naik +37,40% (+Rp 208,67 Jt) — mengindikasikan pergeseran status SKU dari Slowdead menjadi bergerak (Fastslow).
+            </li>
+          </ul>
+        </div>
+
+        <!-- Insight 3: Watchlist (Kenaikan Stok) -->
+        <div class="bg-rose-50/60 rounded-xl p-4 border border-rose-200/80">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-rose-600"></span>
+            <h3 class="text-sm font-bold text-rose-900">3. Departemen Perlu Perhatian (Naik)</h3>
+          </div>
+          <ul class="text-xs sm:text-sm text-slate-700 space-y-2 leading-relaxed">
+            <li>
+              • <strong>MBC (+83,06% / +Rp 49,48 Jt):</strong> Nilai Slowdead melonjak dari Rp 3,65 Jt menjadi <strong>Rp 58,86 Jt</strong> meski jumlah SKU turun dari 106 ke 42 (konsentrasi stok bernilai tinggi).
+            </li>
+            <li>
+              • <strong>HOUSEWARE (+38,36% / +Rp 126,58 Jt):</strong> Mengalami kenaikan nilai di kedua kategori (Slowdead +39,13%, Fastslow +37,50%).
+            </li>
+            <li>
+              • <strong>TOOLS (+12,13% / +Rp 90,94 Jt):</strong> Slowdead bertambah +Rp 73,68 Jt (+23,67%).
+            </li>
+            <li>
+              • <strong>HARDWARE (+19,54% / +Rp 77,16 Jt):</strong> Slowdead stagnan (+0,32%), namun Fastslow meningkat +69,19%.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Grafik Visualisasi Interaktif -->
+    <section aria-label="Grafik Komparasi" class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <!-- Chart Kiri: Komparasi Nilai Rupiah per Departemen (dengan Tab Switcher) -->
+      <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col print-break-inside">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 class="text-base font-bold text-slate-900" id="barChartTitle">Komparasi Nilai Inventory: SLOWDEAD (Rp Juta)</h2>
+            <p class="text-xs text-slate-500">Perbandingan 2 Okt 2026 vs 20 Nov 2026 per Departemen</p>
+          </div>
+          <!-- Tab Buttons -->
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 self-start no-print" role="tablist">
+            <button
+              type="button"
+              onclick="switchBarChart('slowdead')"
+              id="tab-slowdead"
+              class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-white text-slate-900 shadow-sm transition cursor-pointer"
+            >
+              SLOWDEAD
+            </button>
+            <button
+              type="button"
+              onclick="switchBarChart('fastslow')"
+              id="tab-fastslow"
+              class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer"
+            >
+              FASTSLOW
+            </button>
+            <button
+              type="button"
+              onclick="switchBarChart('combined')"
+              id="tab-combined"
+              class="px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer"
+            >
+              TOTAL GABUNGAN
+            </button>
+          </div>
+        </div>
+        <div class="relative w-full h-80 sm:h-96">
+          <canvas id="deptAmountChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Chart Kanan: Persentase Perubahan (% Turun / Naik) per Departemen -->
+      <div class="lg:col-span-5 bg-white rounded-2xl border border-slate-200 shadow-sm p-5 flex flex-col print-break-inside">
+        <div class="mb-4">
+          <h2 class="text-base font-bold text-slate-900">% Perubahan Total Inventory per Departemen</h2>
+          <p class="text-xs text-slate-500">
+            <span class="text-emerald-600 font-semibold">Hijau (-)</span> = Inventory Turun &nbsp;|&nbsp;
+            <span class="text-rose-600 font-semibold">Merah (+)</span> = Inventory Naik
+          </p>
+        </div>
+        <div class="relative w-full h-80 sm:h-96">
+          <canvas id="pctChangeChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Tabel Detail Komparasi per Departemen -->
+    <section aria-label="Tabel Detail Komparasi" class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print-page-break">
+      <!-- Table Header & Controls -->
+      <div class="p-5 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-base sm:text-lg font-bold text-slate-900">Detail Komparasi per Departemen (GROUP_NAME1)</h2>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Geser tabel ke samping pada layar HP. Nilai dalam Rupiah penuh; persentase negatif (<span class="text-emerald-600 font-semibold">-%</span>) menunjukkan penurunan stok.
+          </p>
+        </div>
+
+        <!-- Search & Filter Controls -->
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 no-print">
+          <div class="relative">
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Cari departemen..."
+              class="w-full sm:w-48 pl-9 pr-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          <select
+            id="statusFilter"
+            class="px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="all">Semua Departemen (16)</option>
+            <option value="down">Hanya Total Turun (▼)</option>
+            <option value="up">Hanya Total Naik (▲)</option>
+          </select>
+
+          <select
+            id="sortSelect"
+            class="px-3 py-2 text-xs sm:text-sm border border-slate-300 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="totalNovDesc">Urut: Total 20 Nov (Terbesar)</option>
+            <option value="pctTotalAsc">Urut: % Penurunan Total Terbesar</option>
+            <option value="pctSdAsc">Urut: % Penurunan Slowdead Terbesar</option>
+            <option value="pctFsAsc">Urut: % Penurunan Fastslow Terbesar</option>
+            <option value="nameAsc">Urut: Nama Departemen (A-Z)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Responsive Scrollable Table -->
+      <div class="overflow-x-auto table-scroll">
+        <table class="w-full text-left border-collapse whitespace-nowrap">
+          <thead>
+            <!-- Group Header Row -->
+            <tr class="bg-slate-800 text-white text-[11px] uppercase tracking-wider">
+              <th rowspan="2" class="sticky-col bg-slate-800 px-4 py-3 font-bold border-r border-slate-700">
+                GROUP_NAME1 (Departemen)
+              </th>
+              <th colspan="4" class="px-3 py-2 text-center font-bold bg-amber-900/60 border-r border-slate-700 text-amber-200">
+                KATEGORI SLOWDEAD
+              </th>
+              <th colspan="4" class="px-3 py-2 text-center font-bold bg-sky-900/60 border-r border-slate-700 text-sky-200">
+                KATEGORI FASTSLOW
+              </th>
+              <th colspan="3" class="px-3 py-2 text-center font-bold bg-slate-900 text-emerald-300">
+                TOTAL GABUNGAN (SD + FS)
+              </th>
+            </tr>
+            <!-- Sub Header Row -->
+            <tr class="bg-slate-100 text-slate-700 text-[11px] font-bold border-b border-slate-300">
+              <!-- Slowdead -->
+              <th class="px-3 py-2.5 text-right">2 Okt (Rp)</th>
+              <th class="px-3 py-2.5 text-right">20 Nov (Rp)</th>
+              <th class="px-3 py-2.5 text-right">Selisih (Rp)</th>
+              <th class="px-3 py-2.5 text-right border-r border-slate-300">% &amp; SKU</th>
+              <!-- Fastslow -->
+              <th class="px-3 py-2.5 text-right">2 Okt (Rp)</th>
+              <th class="px-3 py-2.5 text-right">20 Nov (Rp)</th>
+              <th class="px-3 py-2.5 text-right">Selisih (Rp)</th>
+              <th class="px-3 py-2.5 text-right border-r border-slate-300">% &amp; SKU</th>
+              <!-- Total -->
+              <th class="px-3 py-2.5 text-right">2 Okt (Rp)</th>
+              <th class="px-3 py-2.5 text-right">20 Nov (Rp)</th>
+              <th class="px-3 py-2.5 text-right">% Perubahan</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody" class="divide-y divide-slate-200 text-xs sm:text-[13px]">
+            <!-- Diisi otomatis via JavaScript -->
+          </tbody>
+          <tfoot class="bg-slate-900 text-white font-bold text-xs sm:text-[13px]">
+            <tr>
+              <td class="sticky-col bg-slate-900 px-4 py-3.5 border-r border-slate-700">GRAND TOTAL</td>
+              <!-- Slowdead Grand Total -->
+              <td class="px-3 py-3.5 text-right">4.954.393.754</td>
+              <td class="px-3 py-3.5 text-right">4.212.647.217</td>
+              <td class="px-3 py-3.5 text-right text-emerald-400">-741.746.537</td>
+              <td class="px-3 py-3.5 text-right border-r border-slate-700">
+                <span class="inline-block px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">-14,97%</span>
+                <div class="text-[10px] text-slate-400 font-normal">3.104 → 2.512 (-592)</div>
+              </td>
+              <!-- Fastslow Grand Total -->
+              <td class="px-3 py-3.5 text-right">4.255.980.345</td>
+              <td class="px-3 py-3.5 text-right">3.687.013.269</td>
+              <td class="px-3 py-3.5 text-right text-emerald-400">-568.967.076</td>
+              <td class="px-3 py-3.5 text-right border-r border-slate-700">
+                <span class="inline-block px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-bold">-13,37%</span>
+                <div class="text-[10px] text-slate-400 font-normal">4.561 → 3.521 (-1.040)</div>
+              </td>
+              <!-- Combined Grand Total -->
+              <td class="px-3 py-3.5 text-right">9.210.374.099</td>
+              <td class="px-3 py-3.5 text-right">7.899.660.486</td>
+              <td class="px-3 py-3.5 text-right">
+                <span class="inline-block px-2 py-0.5 rounded bg-emerald-500 text-slate-950 font-extrabold">-14,23%</span>
+                <div class="text-[10px] text-emerald-300 font-normal">-Rp 1,31 M</div>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <!-- Catatan Kaki Data -->
+      <div class="px-5 py-3 bg-slate-50 border-t border-slate-200 text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <p>
+          *Catatan: Departemen <strong>[NONE]</strong> memiliki nilai Rp 16 (2 SKU) pada kategori Slowdead per 2 Okt 2026 dan Rp 0 per 20 Nov 2026. Departemen <strong>KITCHEN</strong> bernilai Rp 0 pada kedua tanggal (hanya tercatat 1 SKU pada kategori <em>NO ORDER</em> per 2 Okt).
+        </p>
+        <p class="shrink-0 font-medium text-slate-600">Sumber Data: Laporan Inventory 2 Okt &amp; 20 Nov 2026</p>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // =========================================================================
+    // 1. DATASET AKTUAL (2 OKTOBER 2026 vs 20 NOVEMBER 2026)
+    // =========================================================================
+    const rawInventoryData = [
+      {
+        dept: 'SANITARY',
+        sdOkt: 1531081600, sdSkuOkt: 624,
+        sdNov: 1331061800, sdSkuNov: 469,
+        fsOkt: 557925000,  fsSkuOkt: 562,
+        fsNov: 766597700,  fsSkuNov: 456
+      },
+      {
+        dept: 'PAINT & SUNDRIES',
+        sdOkt: 657701844,  sdSkuOkt: 746,
+        sdNov: 578810973,  sdSkuNov: 538,
+        fsOkt: 620313961,  fsSkuOkt: 876,
+        fsNov: 628536742,  fsSkuNov: 833
+      },
+      {
+        dept: 'ELECTRICAL & LIGHTING',
+        sdOkt: 437430500,  sdSkuOkt: 451,
+        sdNov: 335168600,  sdSkuNov: 359,
+        fsOkt: 505478500,  fsSkuOkt: 674,
+        fsNov: 522868033,  fsSkuNov: 557
+      },
+      {
+        dept: 'TOOLS',
+        sdOkt: 311278500,  sdSkuOkt: 158,
+        sdNov: 384963150,  sdSkuNov: 175,
+        fsOkt: 438763600,  fsSkuOkt: 575,
+        fsNov: 456021318,  fsSkuNov: 480
+      },
+      {
+        dept: 'BUILDING MATERIAL',
+        sdOkt: 331070615,  sdSkuOkt: 154,
+        sdNov: 277081000,  sdSkuNov: 173,
+        fsOkt: 515657585,  fsSkuOkt: 393,
+        fsNov: 338110120,  fsSkuNov: 255
+      },
+      {
+        dept: 'FLOORING & WALL',
+        sdOkt: 481668500,  sdSkuOkt: 106,
+        sdNov: 395132841,  sdSkuNov: 107,
+        fsOkt: 599507000,  fsSkuOkt: 362,
+        fsNov: 219291620,  fsSkuNov: 134
+      },
+      {
+        dept: 'PLUMBING',
+        sdOkt: 385382699,  sdSkuOkt: 181,
+        sdNov: 273075420,  sdSkuNov: 191,
+        fsOkt: 530987899,  fsSkuOkt: 383,
+        fsNov: 253362567,  fsSkuNov: 226
+      },
+      {
+        dept: 'HARDWARE',
+        sdOkt: 284519000,  sdSkuOkt: 283,
+        sdNov: 285419000,  sdSkuNov: 224,
+        fsOkt: 110206500,  fsSkuOkt: 167,
+        fsNov: 186461500,  fsSkuNov: 214
+      },
+      {
+        dept: 'HOUSEWARE',
+        sdOkt: 174518500,  sdSkuOkt: 245,
+        sdNov: 242801433,  sdSkuNov: 205,
+        fsOkt: 155483500,  fsSkuOkt: 252,
+        fsNov: 213780669,  fsSkuNov: 231
+      },
+      {
+        dept: 'MBC',
+        sdOkt: 3646000,    sdSkuOkt: 106,
+        sdNov: 58857500,   sdSkuNov: 42,
+        fsOkt: 55913900,   fsSkuOkt: 248,
+        fsNov: 50184000,   fsSkuNov: 79
+      },
+      {
+        dept: 'APPLIANCE',
+        sdOkt: 324507780,  sdSkuOkt: 37,
+        sdNov: 31688500,   sdSkuNov: 19,
+        fsOkt: 148726500,  fsSkuOkt: 27,
+        fsNov: 25962000,   fsSkuNov: 37
+      },
+      {
+        dept: 'FOOD & BEVERAGE',
+        sdOkt: 0,          sdSkuOkt: 0,
+        sdNov: 0,          sdSkuNov: 0,
+        fsOkt: 3602000,    fsSkuOkt: 32,
+        fsNov: 18769000,   fsSkuNov: 14
+      },
+      {
+        dept: 'DOORS & WINDOWS',
+        sdOkt: 8145000,    sdSkuOkt: 5,
+        sdNov: 7490000,    sdSkuNov: 5,
+        fsOkt: 5600000,    fsSkuOkt: 5,
+        fsNov: 2827500,    fsSkuNov: 3
+      },
+      {
+        dept: 'FURNITURE',
+        sdOkt: 23443200,   sdSkuOkt: 6,
+        sdNov: 10017000,   sdSkuNov: 4,
+        fsOkt: 7814400,    fsSkuOkt: 5,
+        fsNov: 195000,     fsSkuNov: 1
+      },
+      {
+        dept: '[NONE]',
+        sdOkt: 16,         sdSkuOkt: 2,
+        sdNov: 0,          sdSkuNov: 0,
+        fsOkt: 0,          fsSkuOkt: 0,
+        fsNov: 0,          fsSkuNov: 0
+      },
+      {
+        dept: 'KITCHEN',
+        sdOkt: 0,          sdSkuOkt: 0,
+        sdNov: 0,          sdSkuNov: 0,
+        fsOkt: 0,          fsSkuOkt: 0,
+        fsNov: 0,          fsSkuNov: 0
+      }
+    ];
+
+    // Perkaya data dengan kalkulasi selisih dan persentase
+    const inventoryData = rawInventoryData.map(item => {
+      const sdDiff = item.sdNov - item.sdOkt;
+      const sdPct = item.sdOkt > 0 ? (sdDiff / item.sdOkt) * 100 : (item.sdNov > 0 ? 100 : 0);
+      const sdSkuDiff = item.sdSkuNov - item.sdSkuOkt;
+
+      const fsDiff = item.fsNov - item.fsOkt;
+      const fsPct = item.fsOkt > 0 ? (fsDiff / item.fsOkt) * 100 : (item.fsNov > 0 ? 100 : 0);
+      const fsSkuDiff = item.fsSkuNov - item.fsSkuOkt;
+
+      const totalOkt = item.sdOkt + item.fsOkt;
+      const totalNov = item.sdNov + item.fsNov;
+      const totalDiff = totalNov - totalOkt;
+      const totalPct = totalOkt > 0 ? (totalDiff / totalOkt) * 100 : (totalNov > 0 ? 100 : 0);
+
+      return {
+        ...item,
+        sdDiff, sdPct, sdSkuDiff,
+        fsDiff, fsPct, fsSkuDiff,
+        totalOkt, totalNov, totalDiff, totalPct
+      };
+    });
+
+    // =========================================================================
+    // 2. FORMATTER HELPER (BAHASA INDONESIA)
+    // =========================================================================
+    const fmtRp = (num) => {
+      if (num === 0) return '0';
+      return new Intl.NumberFormat('id-ID').format(Math.round(num));
+    };
+
+    const fmtSignedRp = (num) => {
+      if (num === 0) return '0';
+      const formatted = new Intl.NumberFormat('id-ID').format(Math.abs(Math.round(num)));
+      return num < 0 ? `-${formatted}` : `+${formatted}`;
+    };
+
+    const fmtPct = (num, hasBase = true) => {
+      if (!hasBase && num === 0) return '0,00%';
+      const sign = num > 0 ? '+' : '';
+      return `${sign}${num.toFixed(2).replace('.', ',')}%`;
+    };
+
+    const getBadgeHtml = (pct, hasBase = true) => {
+      if (!hasBase && pct === 0) {
+        return `<span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-medium text-[11px]">0,00%</span>`;
+      }
+      if (pct < 0) {
+        return `<span class="inline-block px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-bold text-[11px]">${fmtPct(pct)}</span>`;
+      }
+      if (pct > 0) {
+        return `<span class="inline-block px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-bold text-[11px]">${fmtPct(pct)}</span>`;
+      }
+      return `<span class="inline-block px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-semibold text-[11px]">0,00%</span>`;
+    };
+
+    // =========================================================================
+    // 3. RENDER TABEL INTERAKTIF
+    // =========================================================================
+    const tableBody = document.getElementById('tableBody');
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const sortSelect = document.getElementById('sortSelect');
+
+    function renderTable() {
+      const query = searchInput.value.trim().toLowerCase();
+      const status = statusFilter.value;
+      const sortBy = sortSelect.value;
+
+      let filtered = inventoryData.filter(d => {
+        const matchesName = d.dept.toLowerCase().includes(query);
+        if (!matchesName) return false;
+        if (status === 'down') return d.totalDiff < 0;
+        if (status === 'up') return d.totalDiff > 0;
+        return true;
+      });
+
+      filtered.sort((a, b) => {
+        switch (sortBy) {
+          case 'pctTotalAsc':
+            return a.totalPct - b.totalPct;
+          case 'pctSdAsc':
+            return a.sdPct - b.sdPct;
+          case 'pctFsAsc':
+            return a.fsPct - b.fsPct;
+          case 'nameAsc':
+            return a.dept.localeCompare(b.dept);
+          case 'totalNovDesc':
+          default:
+            return b.totalNov - a.totalNov;
+        }
+      });
+
+      if (filtered.length === 0) {
+        tableBody.innerHTML = `
+          <tr>
+            <td colspan="12" class="px-4 py-8 text-center text-slate-500">
+              Tidak ada departemen yang sesuai dengan filter pencarian.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tableBody.innerHTML = filtered.map((row, idx) => {
+        const rowBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/60';
+        const stickyBg = idx % 2 === 0 ? 'bg-white' : 'bg-slate-50';
+
+        const sdDiffColor = row.sdDiff < 0 ? 'text-emerald-600 font-semibold' : (row.sdDiff > 0 ? 'text-rose-600 font-semibold' : 'text-slate-400');
+        const fsDiffColor = row.fsDiff < 0 ? 'text-emerald-600 font-semibold' : (row.fsDiff > 0 ? 'text-rose-600 font-semibold' : 'text-slate-400');
+
+        const sdSkuLabel = `${row.sdSkuOkt} → ${row.sdSkuNov} (${row.sdSkuDiff > 0 ? '+' + row.sdSkuDiff : row.sdSkuDiff})`;
+        const fsSkuLabel = `${row.fsSkuOkt} → ${row.fsSkuNov} (${row.fsSkuDiff > 0 ? '+' + row.fsSkuDiff : row.fsSkuDiff})`;
+
+        return `
+          <tr class="${rowBg} hover:bg-indigo-50/40 transition">
+            <td class="sticky-col ${stickyBg} px-4 py-3 font-bold text-slate-800 border-r border-slate-200">
+              ${row.dept}
+            </td>
+            <!-- Slowdead -->
+            <td class="px-3 py-3 text-right text-slate-600">${fmtRp(row.sdOkt)}</td>
+            <td class="px-3 py-3 text-right font-medium text-slate-900">${fmtRp(row.sdNov)}</td>
+            <td class="px-3 py-3 text-right ${sdDiffColor}">${fmtSignedRp(row.sdDiff)}</td>
+            <td class="px-3 py-3 text-right border-r border-slate-200">
+              ${getBadgeHtml(row.sdPct, row.sdOkt > 0 || row.sdNov > 0)}
+              <div class="text-[10px] text-slate-400 mt-0.5">${sdSkuLabel}</div>
+            </td>
+            <!-- Fastslow -->
+            <td class="px-3 py-3 text-right text-slate-600">${fmtRp(row.fsOkt)}</td>
+            <td class="px-3 py-3 text-right font-medium text-slate-900">${fmtRp(row.fsNov)}</td>
+            <td class="px-3 py-3 text-right ${fsDiffColor}">${fmtSignedRp(row.fsDiff)}</td>
+            <td class="px-3 py-3 text-right border-r border-slate-200">
+              ${getBadgeHtml(row.fsPct, row.fsOkt > 0 || row.fsNov > 0)}
+              <div class="text-[10px] text-slate-400 mt-0.5">${fsSkuLabel}</div>
+            </td>
+            <!-- Total Gabungan -->
+            <td class="px-3 py-3 text-right text-slate-600">${fmtRp(row.totalOkt)}</td>
+            <td class="px-3 py-3 text-right font-bold text-slate-900">${fmtRp(row.totalNov)}</td>
+            <td class="px-3 py-3 text-right">
+              ${getBadgeHtml(row.totalPct, row.totalOkt > 0 || row.totalNov > 0)}
+              <div class="text-[10px] ${row.totalDiff < 0 ? 'text-emerald-600' : (row.totalDiff > 0 ? 'text-rose-600' : 'text-slate-400')} mt-0.5 font-medium">
+                ${fmtSignedRp(row.totalDiff)}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    searchInput.addEventListener('input', renderTable);
+    statusFilter.addEventListener('change', renderTable);
+    sortSelect.addEventListener('change', renderTable);
+
+    // =========================================================================
+    // 4. GRAFIK CHART.JS
+    // =========================================================================
+    // Ambil 14 departemen utama yang memiliki nilai signifikan untuk grafik agar bersih
+    const activeDepts = inventoryData.filter(d => d.totalOkt > 0 || d.totalNov > 0);
+    const labelsDept = activeDepts.map(d => d.dept);
+
+    let barChartInstance = null;
+    let pctChartInstance = null;
+
+    function initCharts() {
+      const ctxBar = document.getElementById('deptAmountChart').getContext('2d');
+      barChartInstance = new Chart(ctxBar, {
+        type: 'bar',
+        data: {
+          labels: labelsDept,
+          datasets: [
+            {
+              label: '2 Okt 2026 (Rp Juta)',
+              data: activeDepts.map(d => +(d.sdOkt / 1e6).toFixed(2)),
+              backgroundColor: 'rgba(148, 163, 184, 0.85)',
+              borderRadius: 4,
+            },
+            {
+              label: '20 Nov 2026 (Rp Juta)',
+              data: activeDepts.map(d => +(d.sdNov / 1e6).toFixed(2)),
+              backgroundColor: 'rgba(217, 119, 6, 0.9)',
+              borderRadius: 4,
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { font: { family: 'Inter', size: 11, weight: '600' } }
+            },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: Rp ${ctx.parsed.y.toLocaleString('id-ID')} Jt`
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                font: { family: 'Inter', size: 10 },
+                maxRotation: 45,
+                minRotation: 35
+              },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                font: { family: 'Inter', size: 10 },
+                callback: (val) => `Rp ${val} Jt`
+              },
+              grid: { color: '#f1f5f9' }
+            }
+          }
+        }
+      });
+
+      // Horizontal Bar Chart untuk % Perubahan Total Inventory
+      const sortedByPct = [...activeDepts].sort((a, b) => a.totalPct - b.totalPct);
+      const ctxPct = document.getElementById('pctChangeChart').getContext('2d');
+      pctChartInstance = new Chart(ctxPct, {
+        type: 'bar',
+        data: {
+          labels: sortedByPct.map(d => d.dept),
+          datasets: [
+            {
+              label: '% Perubahan Total Inventory',
+              data: sortedByPct.map(d => +d.totalPct.toFixed(2)),
+              backgroundColor: sortedByPct.map(d =>
+                d.totalPct < 0 ? 'rgba(16, 185, 129, 0.85)' : 'rgba(244, 63, 94, 0.85)'
+              ),
+              borderRadius: 4,
+            }
+          ]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: (ctx) => {
+                  const val = ctx.parsed.x;
+                  const sign = val > 0 ? '+' : '';
+                  return `Perubahan: ${sign}${val.toFixed(2).replace('.', ',')}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: {
+                font: { family: 'Inter', size: 10 },
+                callback: (val) => `${val}%`
+              },
+              grid: { color: '#f1f5f9' }
+            },
+            y: {
+              ticks: {
+                font: { family: 'Inter', size: 10, weight: '600' }
+              },
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    // Fungsi Switch Tab pada Bar Chart
+    window.switchBarChart = function (mode) {
+      const tabs = ['slowdead', 'fastslow', 'combined'];
+      tabs.forEach(t => {
+        const btn = document.getElementById(`tab-${t}`);
+        if (t === mode) {
+          btn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg bg-white text-slate-900 shadow-sm transition cursor-pointer';
+        } else {
+          btn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer';
+        }
+      });
+
+      const titleEl = document.getElementById('barChartTitle');
+
+      if (mode === 'slowdead') {
+        titleEl.textContent = 'Komparasi Nilai Inventory: SLOWDEAD (Rp Juta)';
+        barChartInstance.data.datasets[0].data = activeDepts.map(d => +(d.sdOkt / 1e6).toFixed(2));
+        barChartInstance.data.datasets[1].data = activeDepts.map(d => +(d.sdNov / 1e6).toFixed(2));
+        barChartInstance.data.datasets[1].backgroundColor = 'rgba(217, 119, 6, 0.9)';
+      } else if (mode === 'fastslow') {
+        titleEl.textContent = 'Komparasi Nilai Inventory: FASTSLOW (Rp Juta)';
+        barChartInstance.data.datasets[0].data = activeDepts.map(d => +(d.fsOkt / 1e6).toFixed(2));
+        barChartInstance.data.datasets[1].data = activeDepts.map(d => +(d.fsNov / 1e6).toFixed(2));
+        barChartInstance.data.datasets[1].backgroundColor = 'rgba(2, 132, 199, 0.9)';
+      } else {
+        titleEl.textContent = 'Komparasi Nilai Inventory: TOTAL GABUNGAN (Rp Juta)';
+        barChartInstance.data.datasets[0].data = activeDepts.map(d => +(d.totalOkt / 1e6).toFixed(2));
+        barChartInstance.data.datasets[1].data = activeDepts.map(d => +(d.totalNov / 1e6).toFixed(2));
+        barChartInstance.data.datasets[1].backgroundColor = 'rgba(79, 70, 229, 0.9)';
+      }
+
+      barChartInstance.update();
+    };
+
+    // Inisialisasi saat halaman dimuat
+    window.addEventListener('DOMContentLoaded', () => {
+      renderTable();
+      initCharts();
+    });
+  </script>
+</body>
+</html>
