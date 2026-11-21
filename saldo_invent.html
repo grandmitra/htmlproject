@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Analisis Inventaris & Saldo 2026</title>
+    <!-- Tailwind CSS untuk styling responsif dan modern -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PapaParse untuk parsing CSV yang akurat -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Chart.js untuk visualisasi grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Transisi Sidebar Kiri */
+        .left-sidebar-transition {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- Top Header Bar -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-full mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
+            <!-- Kiri: Tombol Hide/Unhide Left Filter Sidebar + Brand & Info -->
+            <div class="flex items-center space-x-3 min-w-0">
+                <!-- Tombol Hide / Unhide Left Filter Sidebar -->
+                <button id="btnToggleLeftNav" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-1.5 shadow-sm shrink-0">
+                    <i id="toggleLeftNavIcon" class="fa-solid fa-sliders"></i>
+                    <span id="toggleLeftNavText" class="hidden sm:inline">Tutup Filter</span>
+                </button>
+
+                <div class="bg-slate-800 p-2 rounded-lg shrink-0 hidden sm:flex border border-slate-700">
+                    <i class="fa-solid fa-boxes-stacked text-lg text-indigo-400"></i>
+                </div>
+                <div class="truncate">
+                    <h1 class="text-sm sm:text-lg font-bold tracking-tight truncate">Inventory & Balance 2026</h1>
+                    <p id="lastUpdatedText" class="text-[11px] sm:text-xs text-slate-400 truncate">Memuat data...</p>
+                </div>
+            </div>
+
+            <!-- Navigasi Tab Utama (Dashboard vs Komparasi) -->
+            <div class="hidden md:flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700">
+                <button id="tabBtnDashboard" onclick="switchView('dashboard')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 bg-indigo-600 text-white shadow">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard Bulanan</span>
+                </button>
+                <button id="tabBtnCompare" onclick="switchView('compare')" class="px-4 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-code-compare"></i>
+                    <span>Komparasi Bulan</span>
+                </button>
+            </div>
+
+            <!-- Aksi Kanan: Sync -->
+            <div class="flex items-center space-x-2 shrink-0">
+                <button id="btnRefreshData" title="Sinkronkan Data dari Google Sheets" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-1.5 border border-slate-700">
+                    <i id="refreshIcon" class="fa-solid fa-rotate"></i>
+                    <span class="hidden sm:inline">Sync</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Tab Switcher Bar -->
+        <div class="md:hidden bg-slate-800 px-4 py-2 border-t border-slate-700 flex gap-2">
+            <button id="tabBtnDashboardMobile" onclick="switchView('dashboard')" class="flex-1 py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1.5 bg-indigo-600 text-white">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Dashboard Bulanan</span>
+            </button>
+            <button id="tabBtnCompareMobile" onclick="switchView('compare')" class="flex-1 py-1.5 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1.5 text-slate-300 hover:text-white">
+                <i class="fa-solid fa-code-compare"></i>
+                <span>Komparasi Bulan</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Layout Wrapper: Left Collapsible Sidebar + Main Content -->
+    <div class="flex-grow flex relative">
+
+        <!-- Backdrop Overlay untuk Mobile saat Left Sidebar Terbuka -->
+        <div id="leftSidebarBackdrop" onclick="toggleLeftSidebar(false)" class="fixed inset-0 bg-slate-900/50 z-40 hidden lg:hidden backdrop-blur-xs"></div>
+
+        <!-- ========================================================= -->
+        <!-- LEFT COLLAPSIBLE FILTER SIDEBAR (NAVBAR DI SISI KIRI)     -->
+        <!-- ========================================================= -->
+        <aside id="leftFilterSidebar" class="fixed lg:sticky top-16 left-0 z-50 lg:z-30 h-[calc(100vh-4rem)] w-80 sm:w-96 bg-white border-r border-slate-200 shadow-2xl lg:shadow-none flex flex-col left-sidebar-transition shrink-0">
+            
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-filter text-indigo-600"></i>
+                    <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Filter & Pencarian</h2>
+                </div>
+                <button onclick="toggleLeftSidebar(false)" title="Sembunyikan Panel Filter" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Sidebar Scrollable Content -->
+            <div class="flex-grow overflow-y-auto p-4 space-y-4">
+                
+                <!-- 1. Pilih Bulan Inventory (12 Bulan 2026) -->
+                <div class="bg-indigo-50/60 p-3.5 rounded-xl border border-indigo-100 space-y-1.5">
+                    <label for="sidebarMonthSelect" class="block text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                        <i class="fa-regular fa-calendar mr-1"></i> Bulan Inventory (2026)
+                    </label>
+                    <select id="sidebarMonthSelect" class="w-full border border-indigo-200 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+                        <!-- Diisi otomatis oleh JS -->
+                    </select>
+                </div>
+
+                <!-- 2. Pencarian Global dengan Clear Text -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider">Pencarian Cepat</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+                        </div>
+                        <input type="text" id="globalSearchInput" 
+                            placeholder="Ketik nama barang, kode, grup..." 
+                            class="block w-full pl-9 pr-9 py-2 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none">
+                        <button id="btnClearSearch" type="button" title="Hapus Pencarian" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-rose-500 transition">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <hr class="border-slate-100">
+
+                <!-- 3. Searchable Dropdown Filters (Bisa diketik & scroll) -->
+                <div class="space-y-3" id="searchableFiltersContainer">
+                    <!-- Komponen Searchable Dropdown akan dirender di sini oleh JS -->
+                </div>
+
+            </div>
+
+            <!-- Sidebar Footer: Reset Button -->
+            <div class="p-4 border-t border-slate-200 bg-slate-50">
+                <button id="btnResetAll" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-eraser"></i>
+                    <span>Reset Semua Filter</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN WORKSPACE AREA -->
+        <main id="mainContentArea" class="flex-grow min-w-0 px-4 sm:px-6 lg:px-8 py-6 space-y-6 transition-all duration-300">
+
+            <!-- Notifikasi Status / Error Message Box -->
+            <div id="statusBanner" class="hidden rounded-xl p-4 text-sm flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i id="statusIcon" class="fa-solid fa-circle-info text-lg"></i>
+                    <span id="statusMessage">Pesan status...</span>
+                </div>
+                <button onclick="document.getElementById('statusBanner').classList.add('hidden')" class="text-current opacity-70 hover:opacity-100">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- VIEW 1: DASHBOARD BULANAN                                 -->
+            <!-- ========================================================= -->
+            <div id="viewDashboard" class="space-y-6">
+
+                <!-- Header Info Bulan Aktif -->
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shrink-0">
+                            <i class="fa-regular fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Periode Data Aktif</span>
+                            <h2 id="activeMonthBadge" class="text-lg sm:text-xl font-bold text-slate-900">JANUARY 2026</h2>
+                        </div>
+                    </div>
+
+                    <!-- Quick Month Selector di Main Area juga agar mudah diakses -->
+                    <div class="flex items-center space-x-2">
+                        <label for="quickMonthSelect" class="text-xs font-semibold text-slate-500 whitespace-nowrap">Pilih Bulan:</label>
+                        <select id="quickMonthSelect" class="border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-indigo-700 bg-indigo-50/50 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+                            <!-- Diisi otomatis oleh JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- SCORECARDS -->
+                <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    <!-- Scorecard 1: BALANCE_VALUE -->
+                    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm flex items-center justify-between hover:shadow-md transition">
+                        <div class="min-w-0 pr-2">
+                            <p class="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Balance Value</p>
+                            <h2 id="scoreBalanceValue" class="text-xl sm:text-2xl xl:text-3xl font-bold text-slate-900 mt-1 truncate">Rp 0</h2>
+                            <p class="text-xs text-emerald-600 font-medium mt-1.5 flex items-center">
+                                <i class="fa-solid fa-wallet mr-1.5"></i> Akumulasi Nilai Saldo
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </div>
+                    </div>
+
+                    <!-- Scorecard 2: INVENT -->
+                    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm flex items-center justify-between hover:shadow-md transition">
+                        <div class="min-w-0 pr-2">
+                            <p class="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Invent (Stok)</p>
+                            <h2 id="scoreInvent" class="text-xl sm:text-2xl xl:text-3xl font-bold text-slate-900 mt-1 truncate">0</h2>
+                            <p class="text-xs text-indigo-600 font-medium mt-1.5 flex items-center">
+                                <i class="fa-solid fa-cubes mr-1.5"></i> Total Kuantitas Inventaris
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                            <i class="fa-solid fa-boxes-packing"></i>
+                        </div>
+                    </div>
+
+                    <!-- Scorecard 3: Jumlah Item Terfilter -->
+                    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm flex items-center justify-between hover:shadow-md transition sm:col-span-2 lg:col-span-1">
+                        <div class="min-w-0 pr-2">
+                            <p class="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Baris Data</p>
+                            <h2 id="scoreTotalItems" class="text-xl sm:text-2xl xl:text-3xl font-bold text-slate-900 mt-1">0</h2>
+                            <p id="scoreFilterInfo" class="text-xs text-amber-600 font-medium mt-1.5 flex items-center">
+                                <i class="fa-solid fa-database mr-1.5"></i> Menampilkan seluruh data
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- GRAFIK GROUP_NAME1 - GROUP_NAME4 BY BALANCE_VALUE, INVENT, KATEGORI -->
+                <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-5">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Visualisasi Analisis Grup</h3>
+                            <p class="text-xs sm:text-sm text-slate-500">Perbandingan Balance Value & Invent berdasarkan pengelompokan dan kategori</p>
+                        </div>
+
+                        <!-- Kontrol Dimensi & Metrik Grafik -->
+                        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                            <div class="flex items-center space-x-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                                <span class="text-xs font-semibold text-slate-500">Grup:</span>
+                                <select id="chartGroupDimension" class="bg-transparent text-xs sm:text-sm font-semibold text-indigo-600 focus:outline-none cursor-pointer">
+                                    <option value="GROUP_NAME1">GROUP_NAME1</option>
+                                    <option value="GROUP_NAME2">GROUP_NAME2</option>
+                                    <option value="GROUP_NAME3">GROUP_NAME3</option>
+                                    <option value="GROUP_NAME4">GROUP_NAME4</option>
+                                </select>
+                            </div>
+
+                            <div class="flex items-center space-x-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                                <span class="text-xs font-semibold text-slate-500">Metrik:</span>
+                                <select id="chartMetric" class="bg-transparent text-xs sm:text-sm font-semibold text-emerald-600 focus:outline-none cursor-pointer">
+                                    <option value="BALANCE_VALUE">BALANCE_VALUE</option>
+                                    <option value="INVENT">INVENT</option>
+                                </select>
+                            </div>
+
+                            <label class="flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 cursor-pointer select-none">
+                                <input type="checkbox" id="chartStackKategori" checked class="rounded text-indigo-600 focus:ring-indigo-500">
+                                <span class="text-xs sm:text-sm font-medium text-slate-700">Pecah per KATEGORI</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Grid Canvas Grafik -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-slate-50/50 rounded-xl p-4 border border-slate-100">
+                            <h4 id="mainChartTitle" class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Grafik Batang per Group & Kategori</h4>
+                            <div class="relative h-72 sm:h-80 w-full">
+                                <canvas id="mainGroupChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50/50 rounded-xl p-4 border border-slate-100">
+                            <h4 id="kategoriChartTitle" class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Proporsi per KATEGORI</h4>
+                            <div class="relative h-72 sm:h-80 w-full flex items-center justify-center">
+                                <canvas id="kategoriDoughnutChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TABEL DETAIL DATA BARANG DENGAN PAGING -->
+                <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-5 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Detail Data Barang</h3>
+                            <p class="text-xs sm:text-sm text-slate-500">Daftar lengkap item berdasarkan bulan & filter aktif</p>
+                        </div>
+
+                        <div class="flex items-center space-x-3 self-start sm:self-auto">
+                            <label for="rowsPerPage" class="text-xs sm:text-sm text-slate-600 font-medium">Tampilkan:</label>
+                            <select id="rowsPerPage" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                                <option value="10">10 baris</option>
+                                <option value="25" selected>25 baris</option>
+                                <option value="50">50 baris</option>
+                                <option value="100">100 baris</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto w-full">
+                        <table class="min-w-full divide-y divide-slate-200 text-left border-collapse">
+                            <thead id="tableHead" class="bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider"></thead>
+                            <tbody id="tableBody" class="divide-y divide-slate-100 text-xs sm:text-sm text-slate-700 bg-white">
+                                <tr>
+                                    <td colspan="10" class="px-6 py-12 text-center text-slate-400">
+                                        <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-indigo-500"></i>
+                                        <p>Sedang mengambil data dari Google Sheets...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Footer Tabel: Kontrol Pagination -->
+                    <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div id="paginationInfo" class="text-xs sm:text-sm text-slate-600">
+                            Menampilkan 0 - 0 dari 0 data
+                        </div>
+
+                        <div class="flex items-center space-x-1.5">
+                            <button id="btnFirstPage" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none text-xs font-medium transition">
+                                <i class="fa-solid fa-angles-left"></i>
+                            </button>
+                            <button id="btnPrevPage" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none text-xs font-medium transition flex items-center space-x-1">
+                                <i class="fa-solid fa-chevron-left"></i>
+                                <span>Prev</span>
+                            </button>
+                            
+                            <span id="pageIndicator" class="px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg">
+                                Hal 1 / 1
+                            </span>
+
+                            <button id="btnNextPage" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none text-xs font-medium transition flex items-center space-x-1">
+                                <span>Next</span>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                            <button id="btnLastPage" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none text-xs font-medium transition">
+                                <i class="fa-solid fa-angles-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- VIEW 2: HALAMAN KOMPARASI ANTAR BULAN                     -->
+            <!-- ========================================================= -->
+            <div id="viewCompare" class="hidden space-y-6">
+                
+                <!-- Panel Kontrol Pemilih 2 Bulan untuk Dikomparasi -->
+                <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center space-x-2">
+                                <i class="fa-solid fa-scale-balanced text-indigo-600"></i>
+                                <span>Komparasi Inventaris & Saldo Antar Bulan</span>
+                            </h2>
+                            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Bandingkan performa stok dan nilai saldo antara dua bulan pilihan (filter sidebar tetap berlaku)</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                        <!-- Bulan A (Pembanding Awal) -->
+                        <div class="lg:col-span-2">
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Bulan Awal (Base)</label>
+                            <select id="compareMonthA" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"></select>
+                        </div>
+
+                        <!-- Bulan B (Pembanding Target) -->
+                        <div class="lg:col-span-2">
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Bulan Pembanding (Target)</label>
+                            <select id="compareMonthB" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"></select>
+                        </div>
+
+                        <!-- Tombol Eksekusi Komparasi -->
+                        <div>
+                            <button id="btnRunCompare" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center space-x-2 shadow-sm">
+                                <i id="compareSpinner" class="fa-solid fa-arrows-rotate"></i>
+                                <span>Bandingkan</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Scorecard Hasil Komparasi -->
+                <section class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    <!-- Komparasi BALANCE_VALUE -->
+                    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Perbandingan Balance Value</span>
+                            <span id="compBalanceBadge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">0%</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 pt-1">
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                <p id="compLabelMonthA1" class="text-xs text-slate-500 font-medium">SEPTEMBER</p>
+                                <p id="compValBalanceA" class="text-base sm:text-lg font-bold text-slate-800 mt-0.5 truncate">Rp 0</p>
+                            </div>
+                            <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                                <p id="compLabelMonthB1" class="text-xs text-indigo-600 font-medium">OCTOBER</p>
+                                <p id="compValBalanceB" class="text-base sm:text-lg font-bold text-indigo-900 mt-0.5 truncate">Rp 0</p>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm">
+                            <span class="text-slate-500 font-medium">Selisih (B - A):</span>
+                            <span id="compDiffBalance" class="font-bold text-slate-800">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <!-- Komparasi INVENT -->
+                    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Perbandingan Invent (Stok)</span>
+                            <span id="compInventBadge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">0%</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 pt-1">
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                <p id="compLabelMonthA2" class="text-xs text-slate-500 font-medium">SEPTEMBER</p>
+                                <p id="compValInventA" class="text-base sm:text-lg font-bold text-slate-800 mt-0.5 truncate">0</p>
+                            </div>
+                            <div class="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
+                                <p id="compLabelMonthB2" class="text-xs text-emerald-600 font-medium">OCTOBER</p>
+                                <p id="compValInventB" class="text-base sm:text-lg font-bold text-emerald-900 mt-0.5 truncate">0</p>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm">
+                            <span class="text-slate-500 font-medium">Selisih (B - A):</span>
+                            <span id="compDiffInvent" class="font-bold text-slate-800">0</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Grafik Komparasi Antar Bulan -->
+                <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Grafik Komparasi per Grup</h3>
+                            <p class="text-xs text-slate-500">Perbandingan berdampingan antara dua bulan terpilih</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select id="compGroupDim" class="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-slate-50 outline-none">
+                                <option value="GROUP_NAME1">GROUP_NAME1</option>
+                                <option value="GROUP_NAME2">GROUP_NAME2</option>
+                                <option value="GROUP_NAME3">GROUP_NAME3</option>
+                                <option value="GROUP_NAME4">GROUP_NAME4</option>
+                                <option value="KATEGORI">KATEGORI</option>
+                            </select>
+                            <select id="compMetricDim" class="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-emerald-600 bg-slate-50 outline-none">
+                                <option value="BALANCE_VALUE">BALANCE_VALUE</option>
+                                <option value="INVENT">INVENT</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="relative h-80 w-full">
+                        <canvas id="compareBarChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- Tabel Rincian Komparasi per Grup -->
+                <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-200">
+                        <h3 class="text-base font-bold text-slate-900">Tabel Rincian Selisih per Grup</h3>
+                        <p class="text-xs text-slate-500">Detail perubahan nilai dan kuantitas berdasarkan dimensi yang dipilih di atas</p>
+                    </div>
+                    <div class="overflow-x-auto w-full">
+                        <table class="min-w-full divide-y divide-slate-200 text-left border-collapse">
+                            <thead id="compareTableHead" class="bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider"></thead>
+                            <tbody id="compareTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm text-slate-700 bg-white"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+        <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <p>Dashboard Inventaris & Saldo 2026 &bull; Multi-Month & Komparasi</p>
+            <p class="flex items-center space-x-1">
+                <i class="fa-solid fa-hard-drive text-indigo-500"></i>
+                <span>Local Storage Aktif (Cache & Filter Tersimpan)</span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        // ==========================================
+        // KONFIGURASI 12 BULAN LINK INVENT (2026)
+        // ==========================================
+        const MONTHLY_LINKS = [
+            { id: 'JANUARY_2026', bulan: 'JANUARY', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGhg9MQAv4JMusNXHFAXRxxGA-rjENGsPGn1zjbLGnqHYcnSo0LQcpoYNmz0r-pQ/pub?gid=113512134&single=true&output=csv' },
+            { id: 'FEBRUARY_2026', bulan: 'FEBRUARY', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-d5ALnPWrrAl4Zr1v_ZJ_Rmceco8k0uXaLtUO65utATAR2SWoxfIGoFznINeBCQ/pub?gid=633035985&single=true&output=csv' },
+            { id: 'MARCH_2026', bulan: 'MARCH', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjDjoziwJ7Zn0Akhg6-FoAGfYBO1ha5rqgrLMfexUeDYnVlWfaQZZy-BE1CyztmA/pub?gid=1557079405&single=true&output=csv' },
+            { id: 'APRIL_2026', bulan: 'APRIL', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSp2cz81K6AJz2FXTEzm2rRurJRMl7iJN-D7rlEf59FJGizDYeq7L-jpHhtMSIzaw/pub?gid=1835326720&single=true&output=csv' },
+            { id: 'MAY_2026', bulan: 'MAY', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTy9aiPgEiR_g30yOec21ElvHnbIuB0mzJsQ0A5q6l12pyk53A8U_2mIc-hkiStrQ/pub?gid=1905215716&single=true&output=csv' },
+            { id: 'JUNE_2026', bulan: 'JUNE', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7CrYEMskjSGtT6bC4B-Zw1SiSH0NbQv_iBNAgx0_7qComdAikvNOJHv9M9JDcYQ/pub?gid=1084920233&single=true&output=csv' },
+            { id: 'JULY_2026', bulan: 'JULY', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRu3grwvd9ZIOcQrhOnrkX2IfJfzBZNRgzlmLDAqi0xPxGAd3h2jQJL5FTXgPhzdQ/pub?gid=183146099&single=true&output=csv' },
+            { id: 'AUGUST_2026', bulan: 'AUGUST', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT0W_mYUXawVeYNZDm1t3Sh7mo-25jub9CB4XXBD0216PNnqXk6ije7W26o2dLKTQ/pub?gid=1314408077&single=true&output=csv' },
+            { id: 'SEPTEMBER_2026', bulan: 'SEPTEMBER', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQPDn5AqJSl6GKuMHIVpZ7BoGOMJlbbOO5C6YNhWPPJ8Tu2uf3JiyqzNBu5HDAeNg/pub?gid=1468437747&single=true&output=csv' },
+            { id: 'OCTOBER_2026', bulan: 'OCTOBER', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2fL96K-msMPz1vJN76eAPQrShAJyLPX8S_uP_rBnW96huOzz0OD0VNT3gRcbxqQ/pub?gid=2054420418&single=true&output=csv' },
+            { id: 'NOVEMBER_2026', bulan: 'NOVEMBER', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSAZ2NGYr1pF47z7UK_f5XjKv3uppRvahPsFr4_mkReUYL2krgkRq5nWRwKN9GxzQ/pub?gid=352193826&single=true&output=csv' },
+            { id: 'DECEMBER_2026', bulan: 'DECEMBER', tahun: '2026', url: '' }
+        ];
+
+        // Konfigurasi Filter Kolom Searchable
+        const FILTER_FIELDS = [
+            { col: 'GROUP_NAME1', label: 'Group Name 1', placeholder: 'Semua Group 1' },
+            { col: 'GROUP_NAME2', label: 'Group Name 2', placeholder: 'Semua Group 2' },
+            { col: 'GROUP_NAME3', label: 'Group Name 3', placeholder: 'Semua Group 3' },
+            { col: 'GROUP_NAME4', label: 'Group Name 4', placeholder: 'Semua Group 4' },
+            { col: 'VENDOR_NAME', label: 'Vendor Name', placeholder: 'Semua Vendor' },
+            { col: 'KATEGORI', label: 'Kategori', placeholder: 'Semua Kategori' }
+        ];
+
+        // Kunci Local Storage
+        const LS_KEYS = {
+            CACHE_PREFIX: 'inv_dash_2026_cache_',
+            TIME_PREFIX: 'inv_dash_2026_time_',
+            STATE: 'inv_dash_2026_ui_state_v2'
+        };
+
+        // State Memori Aplikasi
+        let memoryDataCache = {}; 
+        let rawData = [];
+        let filteredData = [];
+        let tableColumns = [];
+        let filterOptionsMap = {}; 
+
+        // Instance Chart.js
+        let mainChartInstance = null;
+        let kategoriChartInstance = null;
+        let compareChartInstance = null;
+
+        // Default UI State
+        let uiState = {
+            activeView: 'dashboard',
+            selectedMonthId: 'JANUARY_2026',
+            compareMonthA: 'SEPTEMBER_2026',
+            compareMonthB: 'OCTOBER_2026',
+            search: '',
+            filters: {
+                GROUP_NAME1: '',
+                GROUP_NAME2: '',
+                GROUP_NAME3: '',
+                GROUP_NAME4: '',
+                VENDOR_NAME: '',
+                KATEGORI: ''
+            },
+            leftSidebarOpen: window.innerWidth >= 1024,
+            chartGroupDimension: 'GROUP_NAME1',
+            chartMetric: 'BALANCE_VALUE',
+            chartStackKategori: true,
+            compGroupDim: 'GROUP_NAME1',
+            compMetricDim: 'BALANCE_VALUE',
+            rowsPerPage: 25,
+            currentPage: 1
+        };
+
+        const CHART_COLORS = [
+            '#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+            '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1',
+            '#14b8a6', '#eab308', '#d946ef', '#3b82f6', '#64748b'
+        ];
+
+        // ==========================================
+        // 1. INISIALISASI & LOCAL STORAGE
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStateFromLocalStorage();
+            initMonthSelectors();
+            buildSearchableFilterUI();
+            setupEventListeners();
+            applyLeftSidebarState();
+            switchView(uiState.activeView, false);
+            loadMonthData(uiState.selectedMonthId, false);
+        });
+
+        function loadStateFromLocalStorage() {
+            try {
+                const saved = localStorage.getItem(LS_KEYS.STATE);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    uiState = { ...uiState, ...parsed };
+                    uiState.filters = { ...uiState.filters, ...(parsed.filters || {}) };
+                }
+            } catch (e) {
+                console.warn('Gagal membaca state Local Storage:', e);
+            }
+
+            document.getElementById('globalSearchInput').value = uiState.search || '';
+            toggleClearSearchButton();
+            document.getElementById('chartGroupDimension').value = uiState.chartGroupDimension;
+            document.getElementById('chartMetric').value = uiState.chartMetric;
+            document.getElementById('chartStackKategori').checked = uiState.chartStackKategori;
+            document.getElementById('compGroupDim').value = uiState.compGroupDim;
+            document.getElementById('compMetricDim').value = uiState.compMetricDim;
+            document.getElementById('rowsPerPage').value = uiState.rowsPerPage;
+        }
+
+        function saveStateToLocalStorage() {
+            try {
+                localStorage.setItem(LS_KEYS.STATE, JSON.stringify(uiState));
+            } catch (e) {
+                console.warn('Gagal menyimpan state Local Storage:', e);
+            }
+        }
+
+        // ==========================================
+        // 2. INISIALISASI DROPDOWN BULAN (12 BULAN)
+        // ==========================================
+        function initMonthSelectors() {
+            const selectors = [
+                document.getElementById('sidebarMonthSelect'),
+                document.getElementById('quickMonthSelect'),
+                document.getElementById('compareMonthA'),
+                document.getElementById('compareMonthB')
+            ];
+
+            selectors.forEach(sel => {
+                if (!sel) return;
+                sel.innerHTML = '';
+                MONTHLY_LINKS.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m.id;
+                    opt.textContent = m.url ? `${m.bulan} ${m.tahun}` : `${m.bulan} ${m.tahun} (Belum Tersedia)`;
+                    if (!m.url) opt.disabled = true;
+                    sel.appendChild(opt);
+                });
+            });
+
+            document.getElementById('sidebarMonthSelect').value = uiState.selectedMonthId;
+            document.getElementById('quickMonthSelect').value = uiState.selectedMonthId;
+            document.getElementById('compareMonthA').value = uiState.compareMonthA;
+            document.getElementById('compareMonthB').value = uiState.compareMonthB;
+        }
+
+        // ==========================================
+        // 3. FETCH & PARSE CSV MULTI-BULAN
+        // ==========================================
+        function fetchMonthDataset(monthId, forceRefresh = false) {
+            return new Promise((resolve, reject) => {
+                const monthObj = MONTHLY_LINKS.find(m => m.id === monthId);
+                if (!monthObj || !monthObj.url) {
+                    reject(new Error(`Link CSV untuk bulan ${monthId.replace('_', ' ')} belum tersedia.`));
+                    return;
+                }
+
+                // Cek memory cache
+                if (!forceRefresh && memoryDataCache[monthId] && memoryDataCache[monthId].length > 0) {
+                    resolve({ data: memoryDataCache[monthId], source: 'memory' });
+                    return;
+                }
+
+                // Cek Local Storage cache
+                const cacheKey = LS_KEYS.CACHE_PREFIX + monthId;
+                const timeKey = LS_KEYS.TIME_PREFIX + monthId;
+                if (!forceRefresh) {
+                    try {
+                        const cachedStr = localStorage.getItem(cacheKey);
+                        if (cachedStr) {
+                            const parsedCache = JSON.parse(cachedStr);
+                            if (Array.isArray(parsedCache) && parsedCache.length > 0) {
+                                memoryDataCache[monthId] = parsedCache;
+                                resolve({ data: parsedCache, source: 'localstorage', time: localStorage.getItem(timeKey) });
+                                return;
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Cache Local Storage dilewati:', e);
+                    }
+                }
+
+                // Fetch dari Google Sheets CSV
+                const cacheBusterUrl = `${monthObj.url}&_t=${Date.now()}`;
+                Papa.parse(cacheBusterUrl, {
+                    download: true,
+                    header: true,
+                    skipEmptyLines: true,
+                    complete: function(results) {
+                        if (results.data && results.data.length > 0) {
+                            // Normalisasi nama kolom (trim spasi)
+                            const cleaned = results.data.map(row => {
+                                const cleanRow = {};
+                                Object.keys(row).forEach(k => {
+                                    cleanRow[k.trim()] = row[k] !== null && row[k] !== undefined ? String(row[k]).trim() : '';
+                                });
+                                return cleanRow;
+                            });
+
+                            memoryDataCache[monthId] = cleaned;
+                            const nowStr = new Date().toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
+
+                            try {
+                                localStorage.setItem(cacheKey, JSON.stringify(cleaned));
+                                localStorage.setItem(timeKey, nowStr);
+                            } catch (storageErr) {
+                                // Jika quota penuh, bersihkan cache bulan lama
+                                clearOldMonthCaches(monthId);
+                                try {
+                                    localStorage.setItem(cacheKey, JSON.stringify(cleaned));
+                                    localStorage.setItem(timeKey, nowStr);
+                                } catch (e2) {}
+                            }
+
+                            resolve({ data: cleaned, source: 'network', time: nowStr });
+                        } else {
+                            reject(new Error(`Data CSV untuk ${monthObj.bulan} ${monthObj.tahun} kosong.`));
+                        }
+                    },
+                    error: function(err) {
+                        reject(new Error(`Gagal mengunduh CSV ${monthObj.bulan} ${monthObj.tahun}: ${err.message || 'Koneksi terputus'}`));
+                    }
+                });
+            });
+        }
+
+        function clearOldMonthCaches(keepMonthId) {
+            try {
+                Object.keys(localStorage).forEach(key => {
+                    if (key.startsWith(LS_KEYS.CACHE_PREFIX) && !key.endsWith(keepMonthId)) {
+                        localStorage.removeItem(key);
+                    }
+                });
+            } catch (e) {}
+        }
+
+        async function loadMonthData(monthId, forceRefresh = false) {
+            const monthObj = MONTHLY_LINKS.find(m => m.id === monthId) || MONTHLY_LINKS[0];
+            uiState.selectedMonthId = monthObj.id;
+            saveStateToLocalStorage();
+
+            document.getElementById('sidebarMonthSelect').value = monthObj.id;
+            document.getElementById('quickMonthSelect').value = monthObj.id;
+            document.getElementById('activeMonthBadge').textContent = `${monthObj.bulan} ${monthObj.tahun}`;
+
+            const refreshIcon = document.getElementById('refreshIcon');
+            refreshIcon.classList.add('fa-spin');
+            document.getElementById('lastUpdatedText').textContent = `Memuat ${monthObj.bulan} ${monthObj.tahun}...`;
+
+            try {
+                const res = await fetchMonthDataset(monthObj.id, forceRefresh);
+                rawData = res.data;
+                tableColumns = Object.keys(rawData[0] || {});
+
+                const timeLabel = res.time || localStorage.getItem(LS_KEYS.TIME_PREFIX + monthObj.id) || 'Baru saja';
+                document.getElementById('lastUpdatedText').textContent = `${monthObj.bulan} ${monthObj.tahun} • Update: ${timeLabel}`;
+
+                populateSearchableOptions();
+                renderTableHeader();
+                applyFiltersAndRender();
+
+                if (forceRefresh) {
+                    showStatus(`Data ${monthObj.bulan} ${monthObj.tahun} berhasil disinkronkan (${rawData.length.toLocaleString('id-ID')} baris).`, 'success');
+                }
+            } catch (err) {
+                console.error(err);
+                showStatus(err.message, 'error');
+                document.getElementById('lastUpdatedText').textContent = 'Gagal memuat data';
+                document.getElementById('tableBody').innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-6 py-10 text-center text-rose-500">
+                            <i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i>
+                            <p>${escapeHtml(err.message)}</p>
+                        </td>
+                    </tr>`;
+            } finally {
+                refreshIcon.classList.remove('fa-spin');
+            }
+        }
+
+        // ==========================================
+        // 4. SEARCHABLE DROPDOWN FILTERS
+        // ==========================================
+        function buildSearchableFilterUI() {
+            const container = document.getElementById('searchableFiltersContainer');
+            container.innerHTML = '';
+
+            FILTER_FIELDS.forEach(field => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative space-y-1';
+                wrapper.id = `filterWrapper_${field.col}`;
+
+                wrapper.innerHTML = `
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider">${field.label}</label>
+                    <div class="relative">
+                        <input type="text" id="searchInput_${field.col}" 
+                            placeholder="${field.placeholder}" 
+                            autocomplete="off"
+                            class="w-full pl-3 pr-14 py-2 border border-slate-300 rounded-xl text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-2.5 space-x-1.5">
+                            <button type="button" id="clearBtn_${field.col}" title="Hapus Filter" class="hidden text-slate-400 hover:text-rose-500 text-xs transition">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            </button>
+                            <button type="button" id="dropBtn_${field.col}" title="Buka Pilihan" class="text-slate-400 hover:text-indigo-600 text-xs transition">
+                                <i class="fa-solid fa-chevron-down"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="dropdownList_${field.col}" class="hidden absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-xl max-h-52 overflow-y-auto py-1 text-xs sm:text-sm">
+                    </div>
+                `;
+                container.appendChild(wrapper);
+
+                const inputEl = document.getElementById(`searchInput_${field.col}`);
+                const clearEl = document.getElementById(`clearBtn_${field.col}`);
+                const dropBtnEl = document.getElementById(`dropBtn_${field.col}`);
+                const listEl = document.getElementById(`dropdownList_${field.col}`);
+
+                // Buka dropdown saat fokus atau klik tombol panah
+                inputEl.addEventListener('focus', () => {
+                    closeAllFilterDropdowns(field.col);
+                    renderFilterDropdownOptions(field.col, inputEl.value);
+                    listEl.classList.remove('hidden');
+                });
+
+                dropBtnEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isHidden = listEl.classList.contains('hidden');
+                    closeAllFilterDropdowns(field.col);
+                    if (isHidden) {
+                        renderFilterDropdownOptions(field.col, '');
+                        listEl.classList.remove('hidden');
+                        inputEl.focus();
+                    } else {
+                        listEl.classList.add('hidden');
+                    }
+                });
+
+                // Filter opsi saat mengetik
+                inputEl.addEventListener('input', (e) => {
+                    const typed = e.target.value;
+                    uiState.filters[field.col] = typed;
+                    uiState.currentPage = 1;
+                    clearEl.classList.toggle('hidden', !typed);
+                    renderFilterDropdownOptions(field.col, typed);
+                    listEl.classList.remove('hidden');
+                    applyFiltersAndRender();
+                    if (uiState.activeView === 'compare') runComparison();
+                });
+
+                // Clear tombol X per filter
+                clearEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    inputEl.value = '';
+                    uiState.filters[field.col] = '';
+                    uiState.currentPage = 1;
+                    clearEl.classList.add('hidden');
+                    listEl.classList.add('hidden');
+                    applyFiltersAndRender();
+                    if (uiState.activeView === 'compare') runComparison();
+                });
+            });
+
+            // Tutup dropdown saat klik di luar
+            document.addEventListener('click', (e) => {
+                FILTER_FIELDS.forEach(f => {
+                    const wrap = document.getElementById(`filterWrapper_${f.col}`);
+                    const list = document.getElementById(`dropdownList_${f.col}`);
+                    if (wrap && list && !wrap.contains(e.target)) {
+                        list.classList.add('hidden');
+                    }
+                });
+            });
+        }
+
+        function closeAllFilterDropdowns(exceptCol = '') {
+            FILTER_FIELDS.forEach(f => {
+                if (f.col !== exceptCol) {
+                    const list = document.getElementById(`dropdownList_${f.col}`);
+                    if (list) list.classList.add('hidden');
+                }
+            });
+        }
+
+        function populateSearchableOptions() {
+            FILTER_FIELDS.forEach(f => {
+                const uniqueSet = new Set();
+                rawData.forEach(row => {
+                    const val = (row[f.col] || '').trim();
+                    if (val !== '') uniqueSet.add(val);
+                });
+                filterOptionsMap[f.col] = Array.from(uniqueSet).sort((a, b) => a.localeCompare(b));
+
+                // Sinkronkan tampilan input dengan state yang tersimpan
+                const inputEl = document.getElementById(`searchInput_${f.col}`);
+                const clearEl = document.getElementById(`clearBtn_${f.col}`);
+                const savedVal = uiState.filters[f.col] || '';
+                if (inputEl) inputEl.value = savedVal;
+                if (clearEl) clearEl.classList.toggle('hidden', !savedVal);
+            });
+        }
+
+        function renderFilterDropdownOptions(col, queryText = '') {
+            const listEl = document.getElementById(`dropdownList_${col}`);
+            const fieldMeta = FILTER_FIELDS.find(f => f.col === col);
+            if (!listEl || !fieldMeta) return;
+
+            const options = filterOptionsMap[col] || [];
+            const q = queryText.toLowerCase().trim();
+            const matched = q ? options.filter(opt => opt.toLowerCase().includes(q)) : options;
+
+            listEl.innerHTML = '';
+
+            // Opsi default "Semua ..."
+            const allItem = document.createElement('div');
+            allItem.className = 'px-3 py-2 cursor-pointer hover:bg-indigo-50 text-slate-500 font-medium border-b border-slate-100 flex items-center justify-between';
+            allItem.innerHTML = `<span>${fieldMeta.placeholder}</span><span class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded">${options.length}</span>`;
+            allItem.addEventListener('click', () => {
+                selectFilterOption(col, '');
+            });
+            listEl.appendChild(allItem);
+
+            if (matched.length === 0) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'px-3 py-2.5 text-slate-400 italic text-center';
+                emptyDiv.textContent = 'Tidak ada pilihan cocok';
+                listEl.appendChild(emptyDiv);
+                return;
+            }
+
+            matched.forEach(optVal => {
+                const item = document.createElement('div');
+                const isSelected = (uiState.filters[col] || '').toLowerCase() === optVal.toLowerCase();
+                item.className = `px-3 py-2 cursor-pointer transition flex items-center justify-between ${isSelected ? 'bg-indigo-600 text-white font-semibold' : 'text-slate-700 hover:bg-indigo-50'}`;
+                item.textContent = optVal;
+                item.addEventListener('click', () => {
+                    selectFilterOption(col, optVal);
+                });
+                listEl.appendChild(item);
+            });
+        }
+
+        function selectFilterOption(col, value) {
+            uiState.filters[col] = value;
+            uiState.currentPage = 1;
+
+            const inputEl = document.getElementById(`searchInput_${col}`);
+            const clearEl = document.getElementById(`clearBtn_${col}`);
+            const listEl = document.getElementById(`dropdownList_${col}`);
+
+            if (inputEl) inputEl.value = value;
+            if (clearEl) clearEl.classList.toggle('hidden', !value);
+            if (listEl) listEl.classList.add('hidden');
+
+            applyFiltersAndRender();
+            if (uiState.activeView === 'compare') runComparison();
+        }
+
+        // ==========================================
+        // 5. FILTERING DATA & HELPER ANGKA
+        // ==========================================
+        function parseNumeric(val) {
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
+            if (!val) return 0;
+            let str = String(val).trim();
+            // Tangani format angka Indonesia atau Internasional
+            str = str.replace(/[^0-9.,-]/g, '');
+            if (!str) return 0;
+
+            const lastComma = str.lastIndexOf(',');
+            const lastDot = str.lastIndexOf('.');
+
+            if (lastComma > lastDot) {
+                // Contoh: 1.250.000,50 -> 1250000.50
+                str = str.replace(/\./g, '').replace(',', '.');
+            } else if (lastDot > lastComma && lastComma !== -1) {
+                // Contoh: 1,250,000.50 -> 1250000.50
+                str = str.replace(/,/g, '');
+            } else if (lastComma !== -1 && lastDot === -1) {
+                // Jika hanya ada koma, cek apakah ribuan atau desimal
+                const parts = str.split(',');
+                if (parts.length === 2 && parts[1].length !== 3) {
+                    str = str.replace(',', '.');
+                } else {
+                    str = str.replace(/,/g, '');
+                }
+            } else if (lastDot !== -1 && lastComma === -1) {
+                const parts = str.split('.');
+                if (parts.length > 2 || (parts.length === 2 && parts[1].length === 3)) {
+                    str = str.replace(/\./g, '');
+                }
+            }
+
+            const num = parseFloat(str);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function filterDatasetWithActiveFilters(dataset) {
+            const searchQuery = (uiState.search || '').toLowerCase().trim();
+
+            return dataset.filter(row => {
+                // Cek filter spesifik tiap kolom (mendukung exact match maupun partial match saat diketik)
+                for (const f of FILTER_FIELDS) {
+                    const filterVal = (uiState.filters[f.col] || '').toLowerCase().trim();
+                    if (filterVal) {
+                        const cellVal = (row[f.col] || '').toLowerCase();
+                        if (!cellVal.includes(filterVal)) return false;
+                    }
+                }
+
+                // Cek pencarian global
+                if (searchQuery) {
+                    const matchAny = Object.values(row).some(v => String(v).toLowerCase().includes(searchQuery));
+                    if (!matchAny) return false;
+                }
+
+                return true;
+            });
+        }
+
+        function applyFiltersAndRender() {
+            filteredData = filterDatasetWithActiveFilters(rawData);
+            saveStateToLocalStorage();
+            updateScorecards();
+            updateCharts();
+            renderTableBody();
+        }
+
+        // ==========================================
+        // 6. SCORECARDS (BALANCE_VALUE & INVENT)
+        // ==========================================
+        function formatRupiah(num) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                maximumFractionDigits: 0
+            }).format(num);
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID', {
+                maximumFractionDigits: 2
+            }).format(num);
+        }
+
+        function updateScorecards() {
+            let totalBalance = 0;
+            let totalInvent = 0;
+
+            filteredData.forEach(row => {
+                totalBalance += parseNumeric(row['BALANCE_VALUE']);
+                totalInvent += parseNumeric(row['INVENT']);
+            });
+
+            document.getElementById('scoreBalanceValue').textContent = formatRupiah(totalBalance);
+            document.getElementById('scoreInvent').textContent = formatNumber(totalInvent);
+            document.getElementById('scoreTotalItems').textContent = filteredData.length.toLocaleString('id-ID');
+
+            const isFiltered = filteredData.length !== rawData.length;
+            const infoEl = document.getElementById('scoreFilterInfo');
+            if (isFiltered) {
+                infoEl.innerHTML = `<i class="fa-solid fa-filter mr-1.5"></i> Terfilter dari ${rawData.length.toLocaleString('id-ID')} baris`;
+            } else {
+                infoEl.innerHTML = `<i class="fa-solid fa-database mr-1.5"></i> Menampilkan seluruh data`;
+            }
+        }
+
+        // ==========================================
+        // 7. VISUALISASI GRAFIK (CHART.JS)
+        // ==========================================
+        function updateCharts() {
+            const groupCol = uiState.chartGroupDimension || 'GROUP_NAME1';
+            const metricCol = uiState.chartMetric || 'BALANCE_VALUE';
+            const stackByKategori = uiState.chartStackKategori;
+
+            document.getElementById('mainChartTitle').textContent =
+                `${metricCol} berdasarkan ${groupCol}${stackByKategori ? ' & KATEGORI' : ''}`;
+            document.getElementById('kategoriChartTitle').textContent =
+                `Proporsi ${metricCol} per KATEGORI`;
+
+            // Agregasi data per group dan kategori
+            const groupTotals = {};
+            const kategoriTotals = {};
+            const groupKategoriMatrix = {};
+            const allKategoris = new Set();
+
+            filteredData.forEach(row => {
+                const grp = (row[groupCol] || 'Tanpa Grup').trim() || 'Tanpa Grup';
+                const kat = (row['KATEGORI'] || 'Lainnya').trim() || 'Lainnya';
+                const val = parseNumeric(row[metricCol]);
+
+                groupTotals[grp] = (groupTotals[grp] || 0) + val;
+                kategoriTotals[kat] = (kategoriTotals[kat] || 0) + val;
+                allKategoris.add(kat);
+
+                if (!groupKategoriMatrix[grp]) groupKategoriMatrix[grp] = {};
+                groupKategoriMatrix[grp][kat] = (groupKategoriMatrix[grp][kat] || 0) + val;
+            });
+
+            // Urutkan grup berdasarkan nilai terbesar (Top 15 agar grafik tetap rapi & terbaca)
+            const sortedGroups = Object.keys(groupTotals)
+                .sort((a, b) => groupTotals[b] - groupTotals[a])
+                .slice(0, 15);
+
+            const sortedKategoris = Array.from(allKategoris).sort((a, b) => (kategoriTotals[b] || 0) - (kategoriTotals[a] || 0));
+
+            let datasets = [];
+            if (stackByKategori) {
+                datasets = sortedKategoris.map((kat, idx) => ({
+                    label: kat,
+                    data: sortedGroups.map(grp => (groupKategoriMatrix[grp] && groupKategoriMatrix[grp][kat]) || 0),
+                    backgroundColor: CHART_COLORS[idx % CHART_COLORS.length],
+                    borderRadius: 4
+                }));
+            } else {
+                datasets = [{
+                    label: metricCol,
+                    data: sortedGroups.map(grp => groupTotals[grp] || 0),
+                    backgroundColor: metricCol === 'BALANCE_VALUE' ? '#10b981' : '#4f46e5',
+                    borderRadius: 6
+                }];
+            }
+
+            // Render Bar Chart Utama
+            const ctxMain = document.getElementById('mainGroupChart').getContext('2d');
+            if (mainChartInstance) mainChartInstance.destroy();
+
+            mainChartInstance = new Chart(ctxMain, {
+                type: 'bar',
+                data: {
+                    labels: sortedGroups,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: stackByKategori,
+                            position: 'bottom',
+                            labels: { boxWidth: 12, font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    const v = ctx.raw || 0;
+                                    return `${ctx.dataset.label}: ${metricCol === 'BALANCE_VALUE' ? formatRupiah(v) : formatNumber(v)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { stacked: stackByKategori, ticks: { font: { size: 11 } } },
+                        y: {
+                            stacked: stackByKategori,
+                            beginAtZero: true,
+                            ticks: {
+                                font: { size: 11 },
+                                callback: val => val >= 1e9 ? (val / 1e9).toFixed(1) + 'M' : val >= 1e6 ? (val / 1e6).toFixed(1) + 'Jt' : val >= 1e3 ? (val / 1e3).toFixed(0) + 'rb' : val
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Render Doughnut Chart Kategori
+            const ctxKat = document.getElementById('kategoriDoughnutChart').getContext('2d');
+            if (kategoriChartInstance) kategoriChartInstance.destroy();
+
+            kategoriChartInstance = new Chart(ctxKat, {
+                type: 'doughnut',
+                data: {
+                    labels: sortedKategoris,
+                    datasets: [{
+                        data: sortedKategoris.map(k => kategoriTotals[k] || 0),
+                        backgroundColor: sortedKategoris.map((_, i) => CHART_COLORS[i % CHART_COLORS.length]),
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '60%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(ctx) {
+                                    const v = ctx.raw || 0;
+                                    return `${ctx.label}: ${metricCol === 'BALANCE_VALUE' ? formatRupiah(v) : formatNumber(v)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // 8. TABEL DETAIL DATA BARANG + PAGING
+        // ==========================================
+        function renderTableHeader() {
+            const thead = document.getElementById('tableHead');
+            if (!tableColumns || tableColumns.length === 0) {
+                thead.innerHTML = '';
+                return;
+            }
+
+            let html = '<tr><th class="px-4 py-3.5 whitespace-nowrap">No</th>';
+            tableColumns.forEach(col => {
+                const isNumericCol = col === 'BALANCE_VALUE' || col === 'INVENT';
+                html += `<th class="px-4 py-3.5 whitespace-nowrap ${isNumericCol ? 'text-right' : ''}">${escapeHtml(col)}</th>`;
+            });
+            html += '</tr>';
+            thead.innerHTML = html;
+        }
+
+        function renderTableBody() {
+            const tbody = document.getElementById('tableBody');
+            const totalRows = filteredData.length;
+            const perPage = uiState.rowsPerPage;
+            const totalPages = Math.max(1, Math.ceil(totalRows / perPage));
+
+            if (uiState.currentPage > totalPages) uiState.currentPage = totalPages;
+            if (uiState.currentPage < 1) uiState.currentPage = 1;
+
+            const startIdx = (uiState.currentPage - 1) * perPage;
+            const endIdx = Math.min(startIdx + perPage, totalRows);
+            const pageSlice = filteredData.slice(startIdx, endIdx);
+
+            // Update info pagination
+            document.getElementById('paginationInfo').textContent =
+                totalRows === 0
+                    ? 'Menampilkan 0 - 0 dari 0 data'
+                    : `Menampilkan ${(startIdx + 1).toLocaleString('id-ID')} - ${endIdx.toLocaleString('id-ID')} dari ${totalRows.toLocaleString('id-ID')} data`;
+
+            document.getElementById('pageIndicator').textContent = `Hal ${uiState.currentPage} / ${totalPages}`;
+
+            document.getElementById('btnFirstPage').disabled = uiState.currentPage <= 1;
+            document.getElementById('btnPrevPage').disabled = uiState.currentPage <= 1;
+            document.getElementById('btnNextPage').disabled = uiState.currentPage >= totalPages;
+            document.getElementById('btnLastPage').disabled = uiState.currentPage >= totalPages;
+
+            if (pageSlice.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="${tableColumns.length + 1}" class="px-6 py-10 text-center text-slate-400">
+                            <i class="fa-solid fa-folder-open text-2xl mb-2"></i>
+                            <p>Tidak ada data yang sesuai dengan kriteria filter Anda.</p>
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            let rowsHtml = '';
+            pageSlice.forEach((row, idx) => {
+                const rowNumber = startIdx + idx + 1;
+                rowsHtml += `<tr class="hover:bg-indigo-50/40 transition">`;
+                rowsHtml += `<td class="px-4 py-3 whitespace-nowrap text-slate-400 font-medium">${rowNumber}</td>`;
+
+                tableColumns.forEach(col => {
+                    const rawVal = row[col] !== undefined ? row[col] : '';
+                    if (col === 'BALANCE_VALUE') {
+                        rowsHtml += `<td class="px-4 py-3 whitespace-nowrap text-right font-semibold text-emerald-700">${formatRupiah(parseNumeric(rawVal))}</td>`;
+                    } else if (col === 'INVENT') {
+                        rowsHtml += `<td class="px-4 py-3 whitespace-nowrap text-right font-semibold text-indigo-700">${formatNumber(parseNumeric(rawVal))}</td>`;
+                    } else if (col === 'KATEGORI') {
+                        rowsHtml += `<td class="px-4 py-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-700">${escapeHtml(rawVal)}</span></td>`;
+                    } else {
+                        rowsHtml += `<td class="px-4 py-3 whitespace-nowrap">${escapeHtml(rawVal)}</td>`;
+                    }
+                });
+
+                rowsHtml += `</tr>`;
+            });
+
+            tbody.innerHTML = rowsHtml;
+        }
+
+        // ==========================================
+        // 9. HALAMAN KOMPARASI ANTAR BULAN
+        // ==========================================
+        async function runComparison() {
+            const monthAId = document.getElementById('compareMonthA').value;
+            const monthBId = document.getElementById('compareMonthB').value;
+            uiState.compareMonthA = monthAId;
+            uiState.compareMonthB = monthBId;
+            saveStateToLocalStorage();
+
+            const metaA = MONTHLY_LINKS.find(m => m.id === monthAId);
+            const metaB = MONTHLY_LINKS.find(m => m.id === monthBId);
+            const labelA = metaA ? `${metaA.bulan} ${metaA.tahun}` : monthAId;
+            const labelB = metaB ? `${metaB.bulan} ${metaB.tahun}` : monthBId;
+
+            document.getElementById('compLabelMonthA1').textContent = labelA;
+            document.getElementById('compLabelMonthA2').textContent = labelA;
+            document.getElementById('compLabelMonthB1').textContent = labelB;
+            document.getElementById('compLabelMonthB2').textContent = labelB;
+
+            const spinner = document.getElementById('compareSpinner');
+            spinner.classList.add('fa-spin');
+
+            try {
+                const [resA, resB] = await Promise.all([
+                    fetchMonthDataset(monthAId, false),
+                    fetchMonthDataset(monthBId, false)
+                ]);
+
+                const dataA = filterDatasetWithActiveFilters(resA.data);
+                const dataB = filterDatasetWithActiveFilters(resB.data);
+
+                let balA = 0, invA = 0;
+                dataA.forEach(r => {
+                    balA += parseNumeric(r['BALANCE_VALUE']);
+                    invA += parseNumeric(r['INVENT']);
+                });
+
+                let balB = 0, invB = 0;
+                dataB.forEach(r => {
+                    balB += parseNumeric(r['BALANCE_VALUE']);
+                    invB += parseNumeric(r['INVENT']);
+                });
+
+                const diffBal = balB - balA;
+                const diffInv = invB - invA;
+                const pctBal = balA !== 0 ? ((diffBal / balA) * 100) : (balB > 0 ? 100 : 0);
+                const pctInv = invA !== 0 ? ((diffInv / invA) * 100) : (invB > 0 ? 100 : 0);
+
+                document.getElementById('compValBalanceA').textContent = formatRupiah(balA);
+                document.getElementById('compValBalanceB').textContent = formatRupiah(balB);
+                document.getElementById('compDiffBalance').textContent = `${diffBal >= 0 ? '+' : ''}${formatRupiah(diffBal)}`;
+                document.getElementById('compDiffBalance').className = `font-bold ${diffBal >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+
+                const balBadge = document.getElementById('compBalanceBadge');
+                balBadge.textContent = `${pctBal >= 0 ? '+' : ''}${pctBal.toFixed(1)}%`;
+                balBadge.className = `px-2.5 py-1 rounded-full text-xs font-bold ${pctBal >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`;
+
+                document.getElementById('compValInventA').textContent = formatNumber(invA);
+                document.getElementById('compValInventB').textContent = formatNumber(invB);
+                document.getElementById('compDiffInvent').textContent = `${diffInv >= 0 ? '+' : ''}${formatNumber(diffInv)}`;
+                document.getElementById('compDiffInvent').className = `font-bold ${diffInv >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+
+                const invBadge = document.getElementById('compInventBadge');
+                invBadge.textContent = `${pctInv >= 0 ? '+' : ''}${pctInv.toFixed(1)}%`;
+                invBadge.className = `px-2.5 py-1 rounded-full text-xs font-bold ${pctInv >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`;
+
+                renderCompareChartAndTable(dataA, dataB, labelA, labelB);
+            } catch (err) {
+                showStatus(err.message, 'error');
+            } finally {
+                spinner.classList.remove('fa-spin');
+            }
+        }
+
+        function renderCompareChartAndTable(dataA, dataB, labelA, labelB) {
+            const dimCol = uiState.compGroupDim || 'GROUP_NAME1';
+            const metricCol = uiState.compMetricDim || 'BALANCE_VALUE';
+
+            const mapA = {};
+            const mapB = {};
+            const allKeys = new Set();
+
+            dataA.forEach(r => {
+                const k = (r[dimCol] || 'Tanpa Grup').trim() || 'Tanpa Grup';
+                mapA[k] = (mapA[k] || 0) + parseNumeric(r[metricCol]);
+                allKeys.add(k);
+            });
+
+            dataB.forEach(r => {
+                const k = (r[dimCol] || 'Tanpa Grup').trim() || 'Tanpa Grup';
+                mapB[k] = (mapB[k] || 0) + parseNumeric(r[metricCol]);
+                allKeys.add(k);
+            });
+
+            const sortedKeys = Array.from(allKeys).sort((a, b) => ((mapB[b] || 0) + (mapA[b] || 0)) - ((mapB[a] || 0) + (mapA[a] || 0)));
+            const topChartKeys = sortedKeys.slice(0, 15);
+
+            // Render Grafik Komparasi
+            const ctx = document.getElementById('compareBarChart').getContext('2d');
+            if (compareChartInstance) compareChartInstance.destroy();
+
+            compareChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: topChartKeys,
+                    datasets: [
+                        {
+                            label: labelA,
+                            data: topChartKeys.map(k => mapA[k] || 0),
+                            backgroundColor: '#94a3b8',
+                            borderRadius: 5
+                        },
+                        {
+                            label: labelB,
+                            data: topChartKeys.map(k => mapB[k] || 0),
+                            backgroundColor: '#4f46e5',
+                            borderRadius: 5
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        tooltip: {
+                            callbacks: {
+                                label: ctx => `${ctx.dataset.label}: ${metricCol === 'BALANCE_VALUE' ? formatRupiah(ctx.raw || 0) : formatNumber(ctx.raw || 0)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: val => val >= 1e9 ? (val / 1e9).toFixed(1) + 'M' : val >= 1e6 ? (val / 1e6).toFixed(1) + 'Jt' : val >= 1e3 ? (val / 1e3).toFixed(0) + 'rb' : val
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Render Tabel Rincian Selisih
+            document.getElementById('compareTableHead').innerHTML = `
+                <tr>
+                    <th class="px-4 py-3.5">${escapeHtml(dimCol)}</th>
+                    <th class="px-4 py-3.5 text-right">${escapeHtml(labelA)}</th>
+                    <th class="px-4 py-3.5 text-right">${escapeHtml(labelB)}</th>
+                    <th class="px-4 py-3.5 text-right">Selisih (B - A)</th>
+                    <th class="px-4 py-3.5 text-right">% Perubahan</th>
+                </tr>
+            `;
+
+            const tbody = document.getElementById('compareTableBody');
+            if (sortedKeys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">Tidak ada data untuk dikomparasi.</td></tr>`;
+                return;
+            }
+
+            let html = '';
+            sortedKeys.forEach(k => {
+                const vA = mapA[k] || 0;
+                const vB = mapB[k] || 0;
+                const diff = vB - vA;
+                const pct = vA !== 0 ? ((diff / vA) * 100) : (vB > 0 ? 100 : 0);
+                const fmt = val => metricCol === 'BALANCE_VALUE' ? formatRupiah(val) : formatNumber(val);
+
+                html += `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="px-4 py-3 font-medium text-slate-800">${escapeHtml(k)}</td>
+                        <td class="px-4 py-3 text-right text-slate-600">${fmt(vA)}</td>
+                        <td class="px-4 py-3 text-right font-semibold text-indigo-700">${fmt(vB)}</td>
+                        <td class="px-4 py-3 text-right font-semibold ${diff >= 0 ? 'text-emerald-600' : 'text-rose-600'}">${diff >= 0 ? '+' : ''}${fmt(diff)}</td>
+                        <td class="px-4 py-3 text-right">
+                            <span class="px-2 py-0.5 rounded-full text-xs font-bold ${pct >= 0 ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">
+                                ${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // ==========================================
+        // 10. NAVIGASI TAB & LEFT SIDEBAR CONTROL
+        // ==========================================
+        function switchView(viewName, triggerCompare = true) {
+            uiState.activeView = viewName;
+            saveStateToLocalStorage();
+
+            const vDash = document.getElementById('viewDashboard');
+            const vComp = document.getElementById('viewCompare');
+
+            const btnsDash = [document.getElementById('tabBtnDashboard'), document.getElementById('tabBtnDashboardMobile')];
+            const btnsComp = [document.getElementById('tabBtnCompare'), document.getElementById('tabBtnCompareMobile')];
+
+            if (viewName === 'compare') {
+                vDash.classList.add('hidden');
+                vComp.classList.remove('hidden');
+
+                btnsComp.forEach(b => { if(b) b.className = b.className.replace('text-slate-300 hover:text-white', 'bg-indigo-600 text-white shadow'); });
+                btnsDash.forEach(b => { if(b) b.className = b.className.replace('bg-indigo-600 text-white shadow', 'text-slate-300 hover:text-white'); });
+
+                if (triggerCompare) runComparison();
+            } else {
+                vComp.classList.add('hidden');
+                vDash.classList.remove('hidden');
+
+                btnsDash.forEach(b => { if(b) b.className = b.className.replace('text-slate-300 hover:text-white', 'bg-indigo-600 text-white shadow'); });
+                btnsComp.forEach(b => { if(b) b.className = b.className.replace('bg-indigo-600 text-white shadow', 'text-slate-300 hover:text-white'); });
+            }
+        }
+
+        function toggleLeftSidebar(forceState = null) {
+            uiState.leftSidebarOpen = forceState !== null ? forceState : !uiState.leftSidebarOpen;
+            applyLeftSidebarState();
+            saveStateToLocalStorage();
+        }
+
+        function applyLeftSidebarState() {
+            const sidebar = document.getElementById('leftFilterSidebar');
+            const backdrop = document.getElementById('leftSidebarBackdrop');
+            const toggleText = document.getElementById('toggleLeftNavText');
+
+            if (uiState.leftSidebarOpen) {
+                sidebar.classList.remove('-translate-x-full', 'lg:hidden');
+                sidebar.classList.add('translate-x-0');
+                backdrop.classList.remove('hidden');
+                if (toggleText) toggleText.textContent = 'Tutup Filter';
+            } else {
+                sidebar.classList.add('-translate-x-full', 'lg:hidden');
+                sidebar.classList.remove('translate-x-0');
+                backdrop.classList.add('hidden');
+                if (toggleText) toggleText.textContent = 'Filter';
+            }
+        }
+
+        // ==========================================
+        // 11. EVENT LISTENERS
+        // ==========================================
+        function setupEventListeners() {
+            document.getElementById('btnToggleLeftNav').addEventListener('click', () => toggleLeftSidebar());
+
+            document.getElementById('sidebarMonthSelect').addEventListener('change', (e) => {
+                loadMonthData(e.target.value, false);
+            });
+            document.getElementById('quickMonthSelect').addEventListener('change', (e) => {
+                loadMonthData(e.target.value, false);
+            });
+
+            document.getElementById('btnRefreshData').addEventListener('click', () => {
+                if (uiState.activeView === 'compare') {
+                    const mA = document.getElementById('compareMonthA').value;
+                    const mB = document.getElementById('compareMonthB').value;
+                    Promise.all([fetchMonthDataset(mA, true), fetchMonthDataset(mB, true)])
+                        .then(() => {
+                            runComparison();
+                            showStatus('Data komparasi berhasil disinkronkan ulang.', 'success');
+                        });
+                } else {
+                    loadMonthData(uiState.selectedMonthId, true);
+                }
+            });
+
+            const searchInput = document.getElementById('globalSearchInput');
+            searchInput.addEventListener('input', (e) => {
+                uiState.search = e.target.value;
+                uiState.currentPage = 1;
+                toggleClearSearchButton();
+                applyFiltersAndRender();
+                if (uiState.activeView === 'compare') runComparison();
+            });
+
+            document.getElementById('btnClearSearch').addEventListener('click', () => {
+                searchInput.value = '';
+                uiState.search = '';
+                uiState.currentPage = 1;
+                toggleClearSearchButton();
+                applyFiltersAndRender();
+                if (uiState.activeView === 'compare') runComparison();
+                searchInput.focus();
+            });
+
+            document.getElementById('btnResetAll').addEventListener('click', () => {
+                searchInput.value = '';
+                uiState.search = '';
+                toggleClearSearchButton();
+
+                FILTER_FIELDS.forEach(f => {
+                    uiState.filters[f.col] = '';
+                    const inp = document.getElementById(`searchInput_${f.col}`);
+                    const clr = document.getElementById(`clearBtn_${f.col}`);
+                    if (inp) inp.value = '';
+                    if (clr) clr.classList.add('hidden');
+                });
+
+                uiState.currentPage = 1;
+                applyFiltersAndRender();
+                if (uiState.activeView === 'compare') runComparison();
+                showStatus('Semua filter dan pencarian telah direset.', 'info');
+            });
+
+            document.getElementById('chartGroupDimension').addEventListener('change', (e) => {
+                uiState.chartGroupDimension = e.target.value;
+                saveStateToLocalStorage();
+                updateCharts();
+            });
+            document.getElementById('chartMetric').addEventListener('change', (e) => {
+                uiState.chartMetric = e.target.value;
+                saveStateToLocalStorage();
+                updateCharts();
+            });
+            document.getElementById('chartStackKategori').addEventListener('change', (e) => {
+                uiState.chartStackKategori = e.target.checked;
+                saveStateToLocalStorage();
+                updateCharts();
+            });
+
+            document.getElementById('btnRunCompare').addEventListener('click', () => runComparison());
+            document.getElementById('compareMonthA').addEventListener('change', () => runComparison());
+            document.getElementById('compareMonthB').addEventListener('change', () => runComparison());
+            document.getElementById('compGroupDim').addEventListener('change', (e) => {
+                uiState.compGroupDim = e.target.value;
+                saveStateToLocalStorage();
+                runComparison();
+            });
+            document.getElementById('compMetricDim').addEventListener('change', (e) => {
+                uiState.compMetricDim = e.target.value;
+                saveStateToLocalStorage();
+                runComparison();
+            });
+
+            document.getElementById('rowsPerPage').addEventListener('change', (e) => {
+                uiState.rowsPerPage = parseInt(e.target.value, 10);
+                uiState.currentPage = 1;
+                saveStateToLocalStorage();
+                renderTableBody();
+            });
+            document.getElementById('btnFirstPage').addEventListener('click', () => {
+                uiState.currentPage = 1;
+                saveStateToLocalStorage();
+                renderTableBody();
+            });
+            document.getElementById('btnPrevPage').addEventListener('click', () => {
+                if (uiState.currentPage > 1) {
+                    uiState.currentPage--;
+                    saveStateToLocalStorage();
+                    renderTableBody();
+                }
+            });
+            document.getElementById('btnNextPage').addEventListener('click', () => {
+                const totalPages = Math.ceil(filteredData.length / uiState.rowsPerPage);
+                if (uiState.currentPage < totalPages) {
+                    uiState.currentPage++;
+                    saveStateToLocalStorage();
+                    renderTableBody();
+                }
+            });
+            document.getElementById('btnLastPage').addEventListener('click', () => {
+                uiState.currentPage = Math.max(1, Math.ceil(filteredData.length / uiState.rowsPerPage));
+                saveStateToLocalStorage();
+                renderTableBody();
+            });
+        }
+
+        function toggleClearSearchButton() {
+            const val = document.getElementById('globalSearchInput').value;
+            const clearBtn = document.getElementById('btnClearSearch');
+            if (val && val.length > 0) clearBtn.classList.remove('hidden');
+            else clearBtn.classList.add('hidden');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showStatus(msg, type = 'info') {
+            const banner = document.getElementById('statusBanner');
+            const icon = document.getElementById('statusIcon');
+            const text = document.getElementById('statusMessage');
+
+            banner.classList.remove('hidden', 'bg-indigo-50', 'text-indigo-700', 'bg-emerald-50', 'text-emerald-700', 'bg-rose-50', 'text-rose-700');
+
+            if (type === 'success') {
+                banner.classList.add('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
+                icon.className = 'fa-solid fa-circle-check text-lg';
+            } else if (type === 'error') {
+                banner.classList.add('bg-rose-50', 'text-rose-700', 'border', 'border-rose-200');
+                icon.className = 'fa-solid fa-circle-exclamation text-lg';
+            } else {
+                banner.classList.add('bg-indigo-50', 'text-indigo-700', 'border', 'border-indigo-200');
+                icon.className = 'fa-solid fa-circle-info text-lg';
+            }
+
+            text.textContent = msg;
+            if (type !== 'error') {
+                setTimeout(() => banner.classList.add('hidden'), 4000);
+            }
+        }
+    </script>
+</body>
+</html>
