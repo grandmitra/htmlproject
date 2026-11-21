@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Analitik Penjualan & Promo</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js untuk Grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- PapaParse untuk Parsing CSV Cepat & Akurat -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Font Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom Scrollbar untuk kenyamanan navigasi filter & tabel */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Transisi Sidebar */
+        .sidebar-transition {
+            transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased overflow-x-hidden">
+
+    <!-- Toast / Notification Banner (Pengganti alert) -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- Main Wrapper -->
+    <div class="flex h-screen overflow-hidden relative">
+
+        <!-- Overlay Mobile saat Sidebar terbuka -->
+        <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 z-20 hidden lg:hidden backdrop-blur-xs transition-opacity"></div>
+
+        <!-- 1. LEFT SIDEBAR NAVBAR (FILTER DATA) -->
+        <aside id="sidebar" class="sidebar-transition fixed lg:static inset-y-0 left-0 z-30 w-80 bg-white border-r border-slate-200 flex flex-col h-full shadow-lg lg:shadow-none transform -translate-x-full lg:translate-x-0">
+            <!-- Header Sidebar -->
+            <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-900 text-white">
+                <div class="flex items-center gap-2">
+                    <svg class="w-5 h-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
+                    </svg>
+                    <h2 class="font-semibold text-base tracking-wide">Filter Data</h2>
+                </div>
+                <button onclick="toggleSidebar()" class="p-1.5 rounded-lg hover:bg-slate-800 text-slate-300 hover:text-white transition" title="Sembunyikan Filter">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Action Buttons Filter -->
+            <div class="p-3 bg-slate-100 border-b border-slate-200 flex gap-2">
+                <button onclick="applyFilters()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2.5 px-3 rounded-lg shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    Terapkan Filter
+                </button>
+                <button onclick="resetFilters()" class="bg-white hover:bg-slate-200 text-slate-700 border border-slate-300 text-xs font-semibold py-2.5 px-3 rounded-lg transition cursor-pointer" title="Reset Semua Filter">
+                    Reset
+                </button>
+            </div>
+
+            <!-- Scrollable Filter Controls -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4 text-sm" id="filter-container">
+                
+                <!-- Fokus PROMO vs REGULER (DISCOUNT_NO) -->
+                <div class="p-3 bg-indigo-50/70 border border-indigo-100 rounded-xl space-y-2">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-indigo-900">Tipe Transaksi (DISCOUNT_NO)</label>
+                    <select id="filter-tipe-promo" onchange="applyFilters()" class="w-full bg-white border border-indigo-200 rounded-lg px-3 py-2 text-slate-700 font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="ALL">Semua Transaksi (Promo & Reguler)</option>
+                        <option value="PROMO">Hanya PROMO (DISCOUNT_NO Terisi)</option>
+                        <option value="REGULER">Hanya REGULER (DISCOUNT_NO Kosong)</option>
+                    </select>
+                </div>
+
+                <!-- Tanggal Start & End -->
+                <div class="space-y-2 border-b border-slate-100 pb-3">
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500">Rentang Tanggal (TGL)</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <span class="text-[11px] text-slate-400 block mb-1">Dari Tanggal</span>
+                            <input type="date" id="filter-tgl-start" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <span class="text-[11px] text-slate-400 block mb-1">Sampai Tanggal</span>
+                            <input type="date" id="filter-tgl-end" class="w-full bg-slate-50 border border-slate-300 rounded-lg px-2 py-1.5 text-xs focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Searchable Dropdowns akan di-render di sini -->
+                <div id="dynamic-filters" class="space-y-3"></div>
+
+            </div>
+
+            <!-- Storage & Incremental Load Info Footer -->
+            <div class="p-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-500 space-y-2">
+                <div class="flex justify-between items-center">
+                    <span>Data di Memori/Cache:</span>
+                    <span id="cache-count-badge" class="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">0 baris</span>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div id="load-progress-bar" class="bg-indigo-600 h-1.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <div class="flex gap-2 pt-1">
+                    <button onclick="loadMoreChunks(5000)" id="btn-load-more" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white py-1.5 px-2 rounded-lg text-[11px] font-medium transition cursor-pointer disabled:opacity-50">
+                        + Muat Bertahap
+                    </button>
+                    <button onclick="clearLocalCache()" class="bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 py-1.5 px-2 rounded-lg text-[11px] font-medium transition cursor-pointer" title="Hapus Local Storage & Muat Ulang">
+                        Hapus Cache
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden w-full">
+            
+            <!-- Top Header Bar -->
+            <header class="bg-white border-b border-slate-200 px-4 py-3 flex flex-wrap items-center justify-between gap-3 z-10">
+                <div class="flex items-center gap-3">
+                    <!-- Tombol Unhide/Toggle Sidebar -->
+                    <button id="btn-open-sidebar" onclick="toggleSidebar()" class="p-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-2 cursor-pointer" title="Tampilkan / Sembunyikan Filter">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                        <span class="text-xs font-semibold hidden sm:inline">Filter</span>
+                    </button>
+                    <div>
+                        <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">Laporan Penjualan, Promo & Stok</h1>
+                        <p class="text-xs text-slate-500 hidden sm:block">Integrasi Google Sheets CSV • Penyimpanan Lokal Bertahap</p>
+                    </div>
+                </div>
+
+                <!-- Status & Tombol Refresh -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <div id="sync-status" class="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-ping"></span>
+                        <span>Memuat data...</span>
+                    </div>
+                    <button onclick="forceRefreshCSV()" class="p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg border border-slate-200 transition cursor-pointer" title="Sinkronisasi Ulang dari Google Sheets">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Scrollable Dashboard Body -->
+            <main class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
+
+                <!-- 2. SCORE CARDS SECTION (7 CARDS: QTY_PCS, GROSS, VAT, NET, MARGIN, Qty_Stok, Value_Stok) -->
+                <section class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3.5">
+                    <!-- QTY_PCS -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">QTY_PCS</span>
+                            <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+                            </div>
+                        </div>
+                        <div id="card-qty" class="text-lg sm:text-xl font-bold text-slate-900">0</div>
+                        <div id="card-qty-sub" class="text-[11px] text-slate-500 mt-1">0 transaksi</div>
+                    </div>
+
+                    <!-- GROSS_AMOUNT -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">GROSS_AMOUNT</span>
+                            <div class="p-1.5 bg-indigo-50 text-indigo-600 rounded-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            </div>
+                        </div>
+                        <div id="card-gross" class="text-lg sm:text-xl font-bold text-slate-900">Rp 0</div>
+                        <div class="text-[11px] text-slate-500 mt-1">Penjualan kotor</div>
+                    </div>
+
+                    <!-- VAT_AMOUNT -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">VAT_AMOUNT</span>
+                            <div class="p-1.5 bg-amber-50 text-amber-600 rounded-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z"></path></svg>
+                            </div>
+                        </div>
+                        <div id="card-vat" class="text-lg sm:text-xl font-bold text-slate-900">Rp 0</div>
+                        <div class="text-[11px] text-slate-500 mt-1">Total pajak (PPN)</div>
+                    </div>
+
+                    <!-- NET_AMOUNT -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">NET_AMOUNT</span>
+                            <div class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                            </div>
+                        </div>
+                        <div id="card-net" class="text-lg sm:text-xl font-bold text-emerald-600">Rp 0</div>
+                        <div id="card-net-split" class="text-[11px] text-slate-500 mt-1">Promo: 0% | Reg: 0%</div>
+                    </div>
+
+                    <!-- MARGIN -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">MARGIN</span>
+                            <div class="p-1.5 bg-purple-50 text-purple-600 rounded-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                            </div>
+                        </div>
+                        <div id="card-margin" class="text-lg sm:text-xl font-bold text-purple-600">Rp 0</div>
+                        <div id="card-margin-pct" class="text-[11px] text-slate-500 mt-1">Ratio: 0%</div>
+                    </div>
+
+                    <!-- Qty_Stok -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Qty_Stok</span>
+                            <div class="p-1.5 bg-cyan-50 text-cyan-600 rounded-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                            </div>
+                        </div>
+                        <div id="card-qty-stok" class="text-lg sm:text-xl font-bold text-cyan-700">0</div>
+                        <div class="text-[11px] text-slate-500 mt-1">Total kuantitas stok</div>
+                    </div>
+
+                    <!-- Value_Stok -->
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs hover:shadow-md transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-[11px] font-bold uppercase tracking-wider text-slate-400">Value_Stok</span>
+                            <div class="p-1.5 bg-teal-50 text-teal-600 rounded-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                            </div>
+                        </div>
+                        <div id="card-value-stok" class="text-lg sm:text-xl font-bold text-teal-700">Rp 0</div>
+                        <div class="text-[11px] text-slate-500 mt-1">Total nilai stok</div>
+                    </div>
+                </section>
+
+                <!-- 3. CHARTS SECTION ROW 1 (Komposisi Promo vs Reguler & Analisis Dimensi / Bulan Terurut) -->
+                <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Grafik Perbandingan Promo vs Reguler (DISCOUNT_NO) -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col">
+                        <div class="mb-4">
+                            <h3 class="font-bold text-slate-800 text-sm">Komposisi Promo vs Reguler</h3>
+                            <p class="text-xs text-slate-500">Berdasarkan kolom DISCOUNT_NO (Net Amount)</p>
+                        </div>
+                        <div class="relative flex-1 min-h-[240px] flex items-center justify-center">
+                            <canvas id="promoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Grafik Tren / Top Kategori (Urutan Bulan January s/d November/December) -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs lg:col-span-2 flex flex-col">
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm">Analisis Penjualan: Promo vs Reguler</h3>
+                                <p class="text-xs text-slate-500">Perbandingan Net Amount berdasarkan dimensi terpilih</p>
+                            </div>
+                            <select id="chart-dimension" onchange="updateCharts()" class="bg-slate-50 border border-slate-300 text-xs font-medium rounded-lg px-3 py-1.5 text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="BLN" selected>Per Bulan (January - November)</option>
+                                <option value="DEPT">Per Departemen (DEPT)</option>
+                                <option value="DIV">Per Divisi (DIV)</option>
+                                <option value="KAT">Per Kategori (KAT)</option>
+                                <option value="BRAND">Top 10 Brand (BRAND)</option>
+                                <option value="MEMBER">Per Tipe Member (MEMBER)</option>
+                                <option value="CUSTOMER_NAME">Top 10 Customer (CUSTOMER_NAME)</option>
+                                <option value="PROMO">Top 10 Kode Promo (DISCOUNT_NO)</option>
+                            </select>
+                        </div>
+                        <div class="relative flex-1 min-h-[240px]">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 3B. CHARTS SECTION ROW 2 (Grafik Berdasarkan WEEK dan JAM) -->
+                <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Grafik By WEEK -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm">Analisis Penjualan per Minggu (WEEK)</h3>
+                                <p class="text-xs text-slate-500">Distribusi Net Amount Promo vs Reguler berdasarkan minggu</p>
+                            </div>
+                            <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600">By WEEK</span>
+                        </div>
+                        <div class="relative flex-1 min-h-[240px]">
+                            <canvas id="weekChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Grafik By JAM -->
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="font-bold text-slate-800 text-sm">Analisis Penjualan per Jam (JAM)</h3>
+                                <p class="text-xs text-slate-500">Pola transaksi Promo vs Reguler berdasarkan jam operasional</p>
+                            </div>
+                            <span class="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-600">By JAM</span>
+                        </div>
+                        <div class="relative flex-1 min-h-[240px]">
+                            <canvas id="jamChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. DATA TABLE WITH PAGING BY -->
+                <section class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+                    <!-- Table Controls Header -->
+                    <div class="p-4 border-b border-slate-200 flex flex-wrap items-center justify-between gap-4 bg-slate-50/50">
+                        <div class="flex items-center gap-3">
+                            <h3 class="font-bold text-slate-800 text-sm">Rincian Transaksi & Stok</h3>
+                            <span id="table-total-badge" class="text-xs font-semibold bg-slate-200 text-slate-700 px-2.5 py-0.5 rounded-full">0 baris</span>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-3">
+                            <!-- Pencarian Cepat dalam Tabel -->
+                            <div class="relative">
+                                <input type="text" id="table-quick-search" oninput="handleTableSearch()" placeholder="Cari di tabel..." class="bg-white border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs w-44 sm:w-56 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <svg class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+
+                            <!-- Paging By Selector -->
+                            <div class="flex items-center gap-1.5 text-xs text-slate-600">
+                                <span>Tampilkan:</span>
+                                <select id="page-size" onchange="changePageSize()" class="bg-white border border-slate-300 rounded-lg px-2 py-1.5 font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="10">10</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Responsive Table Wrapper -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr id="table-head" class="bg-slate-100 text-slate-600 text-[11px] uppercase tracking-wider border-b border-slate-200">
+                                    <!-- Header di-generate dinamis -->
+                                </tr>
+                            </thead>
+                            <tbody id="table-body" class="divide-y divide-slate-100 text-xs text-slate-700">
+                                <tr>
+                                    <td colspan="22" class="p-8 text-center text-slate-400">Memuat data dari Google Sheets...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination Controls Footer -->
+                    <div class="p-4 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3 text-xs">
+                        <div id="pagination-info" class="text-slate-500">
+                            Menampilkan 0 - 0 dari 0 data
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="goToPage(1)" id="btn-first-page" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 cursor-pointer">«</button>
+                            <button onclick="goToPage(currentPage - 1)" id="btn-prev-page" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 cursor-pointer">Sebelumnya</button>
+                            <span id="page-indicator" class="px-3 py-1.5 font-semibold text-slate-700">Hal 1 / 1</span>
+                            <button onclick="goToPage(currentPage + 1)" id="btn-next-page" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 cursor-pointer">Berikutnya</button>
+                            <button onclick="goToPage(totalPages)" id="btn-last-page" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-100 disabled:opacity-40 cursor-pointer">»</button>
+                        </div>
+                    </div>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * KONFIGURASI & VARIABEL GLOBAL
+         */
+        const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRsjVEPwiAtAVwLSYYGK0UY5eMOzPNGDJblnnjoB4B6N6L3z8E_DCJ2GVnd9g-iH1Yd3OuQwBxA5kAr/pub?gid=250157354&single=true&output=csv';
+        const STORAGE_META_KEY = 'sales_dash_meta_v2';
+        const STORAGE_CHUNK_PREFIX = 'sales_dash_chunk_v2_';
+        const CHUNK_SIZE = 2500;
+        const INITIAL_LOAD_LIMIT = 5000;
+
+        // Urutan kalender bulan untuk pengurutan grafik BLN (January s/d December)
+        const MONTH_ORDER_MAP = {
+            'january': 1, 'jan': 1, 'januari': 1, '01': 1, '1': 1,
+            'february': 2, 'feb': 2, 'februari': 2, '02': 2, '2': 2,
+            'march': 3, 'mar': 3, 'maret': 3, '03': 3, '3': 3,
+            'april': 4, 'apr': 4, '04': 4, '4': 4,
+            'may': 5, 'mei': 5, '05': 5, '5': 5,
+            'june': 6, 'jun': 6, 'juni': 6, '06': 6, '6': 6,
+            'july': 7, 'jul': 7, 'juli': 7, '07': 7, '7': 7,
+            'august': 8, 'aug': 8, 'agustus': 8, 'agu': 8, '08': 8, '8': 8,
+            'september': 9, 'sep': 9, 'sept': 9, '09': 9, '9': 9,
+            'october': 10, 'oct': 10, 'oktober': 10, 'okt': 10, '10': 10,
+            'november': 11, 'nov': 11, '11': 11,
+            'december': 12, 'dec': 12, 'desember': 12, 'des': 12, '12': 12
+        };
+
+        // Daftar kolom filter dengan dropdown + search box (Termasuk CUSTOMER_NAME, MEMBER, STATUS)
+        const DROPDOWN_FILTERS = [
+            { key: 'BLN', label: 'Bulan (BLN)' },
+            { key: 'CASHIER', label: 'Kasir (CASHIER)' },
+            { key: 'CUSTOMER_NAME', label: 'Customer (CUSTOMER_NAME)' },
+            { key: 'MEMBER', label: 'Member (MEMBER)' },
+            { key: 'DEPT', label: 'Departemen (DEPT)' },
+            { key: 'DIV', label: 'Divisi (DIV)' },
+            { key: 'KAT', label: 'Kategori (KAT)' },
+            { key: 'BRAND', label: 'Brand (BRAND)' },
+            { key: 'VENDOR', label: 'Vendor (VENDOR)' },
+            { key: 'PROMO', label: 'Promo / Discount No' },
+            { key: 'SALESMAN_NAME', label: 'Salesman (SALESMAN_NAME)' },
+            { key: 'STATUS', label: 'Status (STATUS)' }
+        ];
+
+        // State Aplikasi
+        let rawDataBuffer = [];
+        let activeDataset = [];
+        let filteredData = [];
+        let tableSearchData = [];
+        let selectedFilters = {};
+        let isSidebarOpen = window.innerWidth >= 1024;
+        let isStreamingComplete = false;
+        let totalServerRows = 0;
+
+        // Pagination State
+        let currentPage = 1;
+        let pageSize = 25;
+        let totalPages = 1;
+
+        // Chart Instances
+        let promoChartInstance = null;
+        let trendChartInstance = null;
+        let weekChartInstance = null;
+        let jamChartInstance = null;
+
+        /**
+         * INISIALISASI SAAT HALAMAN DIMUAT
+         */
+        window.addEventListener('DOMContentLoaded', () => {
+            initFilterUI();
+            setupOutsideClickDropdowns();
+            loadDataPipeline();
+        });
+
+        /**
+         * SISTEM NOTIFIKASI (TOAST)
+         */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const colors = {
+                info: 'bg-slate-800 text-white border-slate-700',
+                success: 'bg-emerald-600 text-white border-emerald-500',
+                warning: 'bg-amber-600 text-white border-amber-500',
+                error: 'bg-rose-600 text-white border-rose-500'
+            };
+
+            toast.className = `${colors[type] || colors.info} border px-4 py-3 rounded-xl shadow-lg text-xs font-medium flex items-center justify-between gap-3 pointer-events-auto transition-all duration-300 transform translate-y-0 opacity-100`;
+            toast.innerHTML = `
+                <span>${message}</span>
+                <button onclick="this.parentElement.remove()" class="text-white/80 hover:text-white font-bold">✕</button>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        /**
+         * TOGGLE SIDEBAR (HIDE / UNHIDE)
+         */
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            isSidebarOpen = !isSidebarOpen;
+
+            if (window.innerWidth < 1024) {
+                if (isSidebarOpen) {
+                    sidebar.classList.remove('-translate-x-full');
+                    overlay.classList.remove('hidden');
+                } else {
+                    sidebar.classList.add('-translate-x-full');
+                    overlay.classList.add('hidden');
+                }
+            } else {
+                if (isSidebarOpen) {
+                    sidebar.classList.remove('hidden', '-translate-x-full');
+                    sidebar.classList.add('flex');
+                } else {
+                    sidebar.classList.add('hidden');
+                    sidebar.classList.remove('flex');
+                }
+            }
+
+            setTimeout(() => {
+                if (promoChartInstance) promoChartInstance.resize();
+                if (trendChartInstance) trendChartInstance.resize();
+                if (weekChartInstance) weekChartInstance.resize();
+                if (jamChartInstance) jamChartInstance.resize();
+            }, 320);
+        }
+
+        /**
+         * MEMBANGUN KOMPONEN FILTER DROPDOWN DENGAN KOLOM PENCARIAN
+         */
+        function initFilterUI() {
+            const container = document.getElementById('dynamic-filters');
+            container.innerHTML = '';
+
+            DROPDOWN_FILTERS.forEach(filter => {
+                selectedFilters[filter.key] = 'ALL';
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative filter-dropdown-wrapper';
+                wrapper.innerHTML = `
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">${filter.label}</label>
+                    <button type="button" onclick="toggleDropdown('${filter.key}')" id="btn-dd-${filter.key}"
+                        class="w-full bg-white border border-slate-300 hover:border-indigo-400 rounded-lg px-3 py-2 text-left text-xs flex items-center justify-between transition focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <span id="label-dd-${filter.key}" class="truncate text-slate-700 font-medium">Semua ${filter.key}</span>
+                        <svg class="w-4 h-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown Panel dengan Search Input -->
+                    <div id="panel-dd-${filter.key}" class="hidden absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-40 overflow-hidden">
+                        <div class="p-2 border-b border-slate-100 bg-slate-50">
+                            <input type="text" id="search-dd-${filter.key}" oninput="filterDropdownOptions('${filter.key}')"
+                                placeholder="Cari ${filter.key}..."
+                                class="w-full bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <ul id="list-dd-${filter.key}" class="max-h-48 overflow-y-auto divide-y divide-slate-50 text-xs">
+                            <li onclick="selectDropdownOption('${filter.key}', 'ALL', 'Semua ${filter.key}')" class="px-3 py-2 hover:bg-indigo-50 cursor-pointer font-semibold text-indigo-600">
+                                Semua ${filter.key}
+                            </li>
+                        </ul>
+                    </div>
+                `;
+                container.appendChild(wrapper);
+            });
+        }
+
+        function toggleDropdown(key) {
+            const panel = document.getElementById(`panel-dd-${key}`);
+            const isHidden = panel.classList.contains('hidden');
+
+            document.querySelectorAll('[id^="panel-dd-"]').forEach(el => el.classList.add('hidden'));
+
+            if (isHidden) {
+                panel.classList.remove('hidden');
+                const searchInput = document.getElementById(`search-dd-${key}`);
+                searchInput.value = '';
+                filterDropdownOptions(key);
+                searchInput.focus();
+            }
+        }
+
+        function setupOutsideClickDropdowns() {
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.filter-dropdown-wrapper')) {
+                    document.querySelectorAll('[id^="panel-dd-"]').forEach(el => el.classList.add('hidden'));
+                }
+            });
+        }
+
+        function filterDropdownOptions(key) {
+            const query = document.getElementById(`search-dd-${key}`).value.toLowerCase();
+            const listEl = document.getElementById(`list-dd-${key}`);
+            const items = listEl.querySelectorAll('li[data-val]');
+
+            items.forEach(li => {
+                const text = li.textContent.toLowerCase();
+                li.style.display = text.includes(query) ? 'block' : 'none';
+            });
+        }
+
+        function selectDropdownOption(key, value, label) {
+            selectedFilters[key] = value;
+            document.getElementById(`label-dd-${key}`).textContent = label;
+            document.getElementById(`panel-dd-${key}`).classList.add('hidden');
+            
+            const btn = document.getElementById(`btn-dd-${key}`);
+            if (value !== 'ALL') {
+                btn.classList.add('border-indigo-500', 'bg-indigo-50/40');
+            } else {
+                btn.classList.remove('border-indigo-500', 'bg-indigo-50/40');
+            }
+        }
+
+        /**
+         * POPULASI OPSI DROPDOWN DARI DATA YANG SUDAH DIMUAT
+         */
+        function populateDropdownOptions(data) {
+            DROPDOWN_FILTERS.forEach(filter => {
+                const key = filter.key;
+                const uniqueVals = new Set();
+
+                data.forEach(row => {
+                    let val = row[key];
+                    if (key === 'PROMO' && (!val || val.trim() === '')) {
+                        val = row['DISCOUNT_NO'];
+                    }
+                    if (val !== undefined && val !== null && String(val).trim() !== '') {
+                        uniqueVals.add(String(val).trim());
+                    }
+                });
+
+                let sortedVals = Array.from(uniqueVals);
+                if (key === 'BLN') {
+                    sortedVals.sort((a, b) => getMonthRank(a) - getMonthRank(b));
+                } else {
+                    sortedVals.sort();
+                }
+
+                const listEl = document.getElementById(`list-dd-${key}`);
+                let html = `<li onclick="selectDropdownOption('${key}', 'ALL', 'Semua ${key}')" class="px-3 py-2 hover:bg-indigo-50 cursor-pointer font-semibold text-indigo-600">Semua ${key}</li>`;
+                sortedVals.forEach(val => {
+                    const safeVal = val.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                    html += `<li data-val="${safeVal}" onclick="selectDropdownOption('${key}', '${safeVal}', '${safeVal}')" class="px-3 py-2 hover:bg-slate-100 cursor-pointer text-slate-700 truncate">${val}</li>`;
+                });
+                listEl.innerHTML = html;
+            });
+        }
+
+        /**
+         * HELPER PENGURUTAN BULAN (JANUARY S/D NOVEMBER/DECEMBER)
+         */
+        function getMonthRank(monthStr) {
+            if (!monthStr) return 99;
+            const clean = String(monthStr).trim().toLowerCase();
+            if (MONTH_ORDER_MAP[clean] !== undefined) {
+                return MONTH_ORDER_MAP[clean];
+            }
+            // Cek jika formatnya mengandung nama bulan (misal: "January 2026" atau "01 - January")
+            for (const [name, rank] of Object.entries(MONTH_ORDER_MAP)) {
+                if (name.length >= 3 && clean.includes(name)) {
+                    return rank;
+                }
+            }
+            return 99;
+        }
+
+        /**
+         * 5. MANAJEMEN LOCAL STORAGE & PEMUATAN DATA BERTAHAP
+         */
+        function loadDataPipeline() {
+            const cachedMeta = localStorage.getItem(STORAGE_META_KEY);
+            
+            if (cachedMeta) {
+                try {
+                    const meta = JSON.parse(cachedMeta);
+                    if (meta && meta.chunksCount > 0) {
+                        updateSyncStatus('Memuat dari LocalStorage...', 'info');
+                        loadChunksFromLocalStorage(meta);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn('Cache rusak, mengunduh ulang...', e);
+                }
+            }
+
+            streamCSVFromGoogleSheets();
+        }
+
+        function loadChunksFromLocalStorage(meta) {
+            activeDataset = [];
+
+            for (let i = 0; i < meta.chunksCount; i++) {
+                const chunkStr = localStorage.getItem(STORAGE_CHUNK_PREFIX + i);
+                if (chunkStr) {
+                    const parsedChunk = JSON.parse(chunkStr);
+                    activeDataset = activeDataset.concat(parsedChunk);
+                }
+            }
+
+            totalServerRows = meta.totalRows || activeDataset.length;
+            isStreamingComplete = meta.isComplete || false;
+
+            updateCacheUI();
+            populateDropdownOptions(activeDataset);
+            applyFilters();
+
+            if (!isStreamingComplete) {
+                updateSyncStatus(`Tersimpan ${activeDataset.length.toLocaleString('id-ID')} baris (Bertahap)`, 'warning');
+                showToast(`Memuat ${activeDataset.length.toLocaleString('id-ID')} baris dari LocalStorage. Klik "+ Muat Bertahap" untuk mengambil sisa data.`, 'info');
+            } else {
+                updateSyncStatus(`Siap (${activeDataset.length.toLocaleString('id-ID')} baris)`, 'success');
+            }
+        }
+
+        function saveToLocalStorageChunked(dataArray, isCompleteFlag) {
+            try {
+                clearLocalStorageKeysOnly();
+
+                const totalChunks = Math.ceil(dataArray.length / CHUNK_SIZE);
+                let savedChunks = 0;
+
+                for (let i = 0; i < totalChunks; i++) {
+                    const slice = dataArray.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+                    try {
+                        localStorage.setItem(STORAGE_CHUNK_PREFIX + i, JSON.stringify(slice));
+                        savedChunks++;
+                    } catch (quotaErr) {
+                        console.warn(`Kuota LocalStorage penuh pada chunk ${i}.`);
+                        showToast(`Kuota browser penuh. Tersimpan ${(savedChunks * CHUNK_SIZE).toLocaleString('id-ID')} baris di LocalStorage.`, 'warning');
+                        break;
+                    }
+                }
+
+                const meta = {
+                    timestamp: Date.now(),
+                    chunksCount: savedChunks,
+                    totalRows: totalServerRows || dataArray.length,
+                    isComplete: isCompleteFlag && (savedChunks === totalChunks)
+                };
+                localStorage.setItem(STORAGE_META_KEY, JSON.stringify(meta));
+            } catch (err) {
+                console.error('Gagal menyimpan ke LocalStorage:', err);
+            }
+        }
+
+        function clearLocalStorageKeysOnly() {
+            const keysToRemove = [];
+            for (let i = 0; i < localStorage.length; i++) {
+                const k = localStorage.key(i);
+                if (k && (k.startsWith(STORAGE_CHUNK_PREFIX) || k === STORAGE_META_KEY)) {
+                    keysToRemove.push(k);
+                }
+            }
+            keysToRemove.forEach(k => localStorage.removeItem(k));
+        }
+
+        function clearLocalCache() {
+            clearLocalStorageKeysOnly();
+            activeDataset = [];
+            rawDataBuffer = [];
+            isStreamingComplete = false;
+            showToast('Cache LocalStorage dihapus. Mengambil data segar...', 'info');
+            streamCSVFromGoogleSheets();
+        }
+
+        function forceRefreshCSV() {
+            clearLocalCache();
+        }
+
+        /**
+         * STREAMING PARSING CSV DENGAN PAPAPARSE
+         */
+        function streamCSVFromGoogleSheets() {
+            updateSyncStatus('Mengunduh CSV...', 'info');
+            rawDataBuffer = [];
+            activeDataset = [];
+            isStreamingComplete = false;
+            let initialRendered = false;
+
+            Papa.parse(CSV_URL, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                chunkSize: 1024 * 256,
+                chunk: function(results) {
+                    const normalizedRows = results.data.map(normalizeRow);
+                    rawDataBuffer = rawDataBuffer.concat(normalizedRows);
+                    totalServerRows = rawDataBuffer.length;
+
+                    if (!initialRendered && rawDataBuffer.length >= INITIAL_LOAD_LIMIT) {
+                        initialRendered = true;
+                        activeDataset = rawDataBuffer.slice(0, INITIAL_LOAD_LIMIT);
+                        updateCacheUI();
+                        populateDropdownOptions(activeDataset);
+                        applyFilters();
+                        saveToLocalStorageChunked(activeDataset, false);
+                        updateSyncStatus(`Dimuat ${activeDataset.length.toLocaleString('id-ID')} baris awal...`, 'warning');
+                    }
+                },
+                complete: function() {
+                    isStreamingComplete = true;
+                    totalServerRows = rawDataBuffer.length;
+
+                    if (!initialRendered) {
+                        activeDataset = [...rawDataBuffer];
+                        populateDropdownOptions(activeDataset);
+                        applyFilters();
+                        saveToLocalStorageChunked(activeDataset, true);
+                    } else {
+                        updateCacheUI();
+                    }
+
+                    updateSyncStatus(`Tersedia ${totalServerRows.toLocaleString('id-ID')} baris`, 'success');
+                    showToast(`Sinkronisasi selesai! ${activeDataset.length.toLocaleString('id-ID')} dari ${totalServerRows.toLocaleString('id-ID')} baris aktif.`, 'success');
+                },
+                error: function(err) {
+                    console.error('Error PapaParse:', err);
+                    updateSyncStatus('Gagal memuat CSV', 'error');
+                    showToast('Gagal mengambil data CSV. Periksa koneksi internet Anda.', 'error');
+                }
+            });
+        }
+
+        function loadMoreChunks(batchSize = 5000) {
+            if (rawDataBuffer.length > activeDataset.length) {
+                const nextLimit = Math.min(activeDataset.length + batchSize, rawDataBuffer.length);
+                activeDataset = rawDataBuffer.slice(0, nextLimit);
+                
+                const isAllLoaded = activeDataset.length >= rawDataBuffer.length;
+                saveToLocalStorageChunked(activeDataset, isAllLoaded);
+                updateCacheUI();
+                populateDropdownOptions(activeDataset);
+                applyFilters();
+
+                showToast(`Berhasil memuat hingga ${activeDataset.length.toLocaleString('id-ID')} baris.`, 'success');
+            } else if (!isStreamingComplete) {
+                showToast('Sedang mengunduh sisa data dari server, silakan tunggu sebentar...', 'info');
+            } else {
+                showToast('Seluruh data dari Google Sheets sudah dimuat ke dalam aplikasi.', 'info');
+            }
+        }
+
+        function updateCacheUI() {
+            const badge = document.getElementById('cache-count-badge');
+            const bar = document.getElementById('load-progress-bar');
+            const btnMore = document.getElementById('btn-load-more');
+
+            const total = Math.max(totalServerRows, activeDataset.length, 1);
+            const pct = Math.min(100, Math.round((activeDataset.length / total) * 100));
+
+            badge.textContent = `${activeDataset.length.toLocaleString('id-ID')} / ${totalServerRows.toLocaleString('id-ID')}`;
+            bar.style.width = `${pct}%`;
+
+            if (isStreamingComplete && activeDataset.length >= totalServerRows) {
+                btnMore.disabled = true;
+                btnMore.textContent = 'Semua Data Dimuat';
+            } else {
+                btnMore.disabled = false;
+                btnMore.textContent = `+ Muat Bertahap (${Math.min(5000, Math.max(0, totalServerRows - activeDataset.length)).toLocaleString('id-ID')})`;
+            }
+        }
+
+        function updateSyncStatus(text, type) {
+            const el = document.getElementById('sync-status');
+            const styles = {
+                info: 'bg-blue-50 text-blue-700 border-blue-200',
+                warning: 'bg-amber-50 text-amber-700 border-amber-200',
+                success: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                error: 'bg-rose-50 text-rose-700 border-rose-200'
+            };
+            const dotColors = {
+                info: 'bg-blue-500 animate-ping',
+                warning: 'bg-amber-500',
+                success: 'bg-emerald-500',
+                error: 'bg-rose-500'
+            };
+
+            el.className = `flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full border ${styles[type] || styles.info}`;
+            el.innerHTML = `<span class="w-2 h-2 rounded-full ${dotColors[type]}"></span><span>${text}</span>`;
+        }
+
+        /**
+         * NORMALISASI BARIS DATA & PENANGANAN ANGKA / TANGGAL / STOK / WEEK / JAM
+         */
+        function parseNumber(val) {
+            if (typeof val === 'number') return val;
+            if (!val) return 0;
+            const cleaned = String(val).replace(/[^0-9.-]+/g, '');
+            const num = parseFloat(cleaned);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function normalizeDateISO(tglStr) {
+            if (!tglStr) return '';
+            const s = String(tglStr).trim();
+            if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+            const parts = s.split(/[\/\-]/);
+            if (parts.length === 3 && parts[2].length === 4) {
+                return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+            return s;
+        }
+
+        // Ambil nilai kolom dengan pencocokan nama fleksibel (case-insensitive)
+        function getColValue(row, candidates) {
+            for (const key of candidates) {
+                if (row[key] !== undefined && row[key] !== '') return row[key];
+            }
+            const lowerKeys = Object.keys(row);
+            for (const cand of candidates) {
+                const found = lowerKeys.find(k => k.toLowerCase() === cand.toLowerCase());
+                if (found && row[found] !== undefined && row[found] !== '') return row[found];
+            }
+            return '';
+        }
+
+        function normalizeRow(raw) {
+            const row = {};
+            for (const k in raw) {
+                row[k.trim()] = raw[k] !== undefined && raw[k] !== null ? String(raw[k]).trim() : '';
+            }
+
+            // Fokus DISCOUNT_NO: Terisi = PROMO, Kosong = REGULER
+            const discountNo = row['DISCOUNT_NO'] || '';
+            const isPromo = discountNo !== '' && discountNo !== '-' && discountNo.toLowerCase() !== 'null';
+
+            // Normalisasi nilai stok (Qty_Stok & Value_Stok)
+            const qtyStokRaw = getColValue(row, ['Qty_Stok', 'QTY_STOK', 'qty_stok', 'STOK_QTY']);
+            const valStokRaw = getColValue(row, ['Value_Stok', 'VALUE_STOK', 'value_stok', 'STOK_VALUE']);
+
+            // Normalisasi WEEK dan JAM
+            const weekVal = getColValue(row, ['WEEK', 'Week', 'week', 'MINGGU']);
+            const jamVal = getColValue(row, ['JAM', 'Jam', 'jam', 'HOUR', 'WAKTU']);
+
+            return {
+                ...row,
+                CUSTOMER_NAME: getColValue(row, ['CUSTOMER_NAME', 'Customer_Name', 'CUSTOMER']),
+                MEMBER: getColValue(row, ['MEMBER', 'Member', 'MEMBER_TYPE']),
+                STATUS: getColValue(row, ['STATUS', 'Status']),
+                WEEK: weekVal,
+                JAM: jamVal,
+                _ISO_TGL: normalizeDateISO(row['TGL']),
+                _IS_PROMO: isPromo,
+                _TIPE_TRANSAKSI: isPromo ? 'PROMO' : 'REGULER',
+                _QTY_PCS: parseNumber(row['QTY_PCS']),
+                _GROSS_AMOUNT: parseNumber(row['GROSS_AMOUNT']),
+                _VAT_AMOUNT: parseNumber(row['VAT_AMOUNT']),
+                _NET_AMOUNT: parseNumber(row['NET_AMOUNT']),
+                _MARGIN: parseNumber(row['MARGIN']),
+                _QTY_STOK: parseNumber(qtyStokRaw),
+                _VALUE_STOK: parseNumber(valStokRaw)
+            };
+        }
+
+        /**
+         * PENERAPAN FILTER DATA
+         */
+        function applyFilters() {
+            const tipePromo = document.getElementById('filter-tipe-promo').value;
+            const tglStart = document.getElementById('filter-tgl-start').value;
+            const tglEnd = document.getElementById('filter-tgl-end').value;
+
+            filteredData = activeDataset.filter(row => {
+                if (tipePromo === 'PROMO' && !row._IS_PROMO) return false;
+                if (tipePromo === 'REGULER' && row._IS_PROMO) return false;
+
+                if (tglStart && row._ISO_TGL && row._ISO_TGL < tglStart) return false;
+                if (tglEnd && row._ISO_TGL && row._ISO_TGL > tglEnd) return false;
+
+                for (const filter of DROPDOWN_FILTERS) {
+                    const key = filter.key;
+                    const selectedVal = selectedFilters[key];
+                    if (selectedVal && selectedVal !== 'ALL') {
+                        let rowVal = row[key];
+                        if (key === 'PROMO' && (!rowVal || rowVal === '')) {
+                            rowVal = row['DISCOUNT_NO'];
+                        }
+                        if (String(rowVal).trim() !== selectedVal) {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
+            });
+
+            if (filteredData.length === 0 && rawDataBuffer.length > activeDataset.length) {
+                showToast('Data tidak ditemukan pada batch saat ini. Coba klik "+ Muat Bertahap" di sidebar kiri.', 'warning');
+            }
+
+            updateScoreCards();
+            updateCharts();
+            
+            document.getElementById('table-quick-search').value = '';
+            tableSearchData = [...filteredData];
+            currentPage = 1;
+            renderTable();
+        }
+
+        function resetFilters() {
+            document.getElementById('filter-tipe-promo').value = 'ALL';
+            document.getElementById('filter-tgl-start').value = '';
+            document.getElementById('filter-tgl-end').value = '';
+
+            DROPDOWN_FILTERS.forEach(filter => {
+                selectDropdownOption(filter.key, 'ALL', `Semua ${filter.key}`);
+            });
+
+            applyFilters();
+            showToast('Semua filter telah direset.', 'info');
+        }
+
+        /**
+         * 2. UPDATE SCORE CARDS (QTY_PCS, GROSS, VAT, NET, MARGIN, Qty_Stok, Value_Stok)
+         */
+        function formatRupiah(num) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                maximumFractionDigits: 0
+            }).format(num);
+        }
+
+        function formatCompactNumber(num) {
+            if (Math.abs(num) >= 1e9) return 'Rp ' + (num / 1e9).toFixed(2) + ' M';
+            if (Math.abs(num) >= 1e6) return 'Rp ' + (num / 1e6).toFixed(2) + ' Jt';
+            return formatRupiah(num);
+        }
+
+        function updateScoreCards() {
+            let totalQty = 0;
+            let totalGross = 0;
+            let totalVat = 0;
+            let totalNet = 0;
+            let totalMargin = 0;
+            let totalQtyStok = 0;
+            let totalValueStok = 0;
+            let promoNet = 0;
+            let regulerNet = 0;
+
+            for (let i = 0; i < filteredData.length; i++) {
+                const r = filteredData[i];
+                totalQty += r._QTY_PCS;
+                totalGross += r._GROSS_AMOUNT;
+                totalVat += r._VAT_AMOUNT;
+                totalNet += r._NET_AMOUNT;
+                totalMargin += r._MARGIN;
+                totalQtyStok += r._QTY_STOK;
+                totalValueStok += r._VALUE_STOK;
+
+                if (r._IS_PROMO) {
+                    promoNet += r._NET_AMOUNT;
+                } else {
+                    regulerNet += r._NET_AMOUNT;
+                }
+            }
+
+            document.getElementById('card-qty').textContent = totalQty.toLocaleString('id-ID');
+            document.getElementById('card-qty-sub').textContent = `${filteredData.length.toLocaleString('id-ID')} baris transaksi`;
+
+            document.getElementById('card-gross').textContent = formatCompactNumber(totalGross);
+            document.getElementById('card-gross').title = formatRupiah(totalGross);
+
+            document.getElementById('card-vat').textContent = formatCompactNumber(totalVat);
+            document.getElementById('card-vat').title = formatRupiah(totalVat);
+
+            document.getElementById('card-net').textContent = formatCompactNumber(totalNet);
+            document.getElementById('card-net').title = formatRupiah(totalNet);
+
+            const promoPct = totalNet > 0 ? ((promoNet / totalNet) * 100).toFixed(1) : 0;
+            const regPct = totalNet > 0 ? ((regulerNet / totalNet) * 100).toFixed(1) : 0;
+            document.getElementById('card-net-split').textContent = `Promo: ${promoPct}% | Reg: ${regPct}%`;
+
+            document.getElementById('card-margin').textContent = formatCompactNumber(totalMargin);
+            document.getElementById('card-margin').title = formatRupiah(totalMargin);
+
+            const marginRatio = totalNet > 0 ? ((totalMargin / totalNet) * 100).toFixed(1) : 0;
+            document.getElementById('card-margin-pct').textContent = `Ratio: ${marginRatio}%`;
+
+            // Score Cards Baru: Qty_Stok & Value_Stok
+            document.getElementById('card-qty-stok').textContent = totalQtyStok.toLocaleString('id-ID');
+            document.getElementById('card-qty-stok').title = totalQtyStok.toLocaleString('id-ID') + ' unit';
+
+            document.getElementById('card-value-stok').textContent = formatCompactNumber(totalValueStok);
+            document.getElementById('card-value-stok').title = formatRupiah(totalValueStok);
+        }
+
+        /**
+         * 3. RENDER & UPDATE GRAFIK (CHART.JS)
+         */
+        function updateCharts() {
+            renderPromoDoughnutChart();
+            renderDimensionBarChart();
+            renderWeekChart();
+            renderJamChart();
+        }
+
+        function renderPromoDoughnutChart() {
+            let promoNet = 0;
+            let regulerNet = 0;
+
+            filteredData.forEach(r => {
+                if (r._IS_PROMO) promoNet += r._NET_AMOUNT;
+                else regulerNet += r._NET_AMOUNT;
+            });
+
+            const ctx = document.getElementById('promoChart').getContext('2d');
+            if (promoChartInstance) promoChartInstance.destroy();
+
+            promoChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Promo (DISCOUNT_NO Terisi)', 'Reguler (DISCOUNT_NO Kosong)'],
+                    datasets: [{
+                        data: [promoNet, regulerNet],
+                        backgroundColor: ['#4f46e5', '#10b981'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '65%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { family: 'Inter', size: 11 },
+                                padding: 14,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const val = context.raw || 0;
+                                    const total = promoNet + regulerNet;
+                                    const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                    return ` ${formatRupiah(val)} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderDimensionBarChart() {
+            const dim = document.getElementById('chart-dimension').value;
+            const grouped = {};
+
+            filteredData.forEach(r => {
+                let key = dim === 'PROMO' ? (r['DISCOUNT_NO'] || 'REGULER') : (r[dim] || 'Lainnya');
+                if (!grouped[key]) {
+                    grouped[key] = { promo: 0, reguler: 0, total: 0 };
+                }
+                if (r._IS_PROMO) {
+                    grouped[key].promo += r._NET_AMOUNT;
+                } else {
+                    grouped[key].reguler += r._NET_AMOUNT;
+                }
+                grouped[key].total += r._NET_AMOUNT;
+            });
+
+            let entries = Object.entries(grouped);
+
+            if (dim === 'BLN') {
+                // Urutkan bulan secara kronologis dari January (1) s/d November (11) / December (12)
+                entries.sort((a, b) => {
+                    const rankA = getMonthRank(a[0]);
+                    const rankB = getMonthRank(b[0]);
+                    if (rankA !== rankB) return rankA - rankB;
+                    return a[0].localeCompare(b[0]);
+                });
+            } else {
+                entries.sort((a, b) => b[1].total - a[1].total);
+                entries = entries.slice(0, 10);
+            }
+
+            const labels = entries.map(e => e[0]);
+            const promoSeries = entries.map(e => e[1].promo);
+            const regulerSeries = entries.map(e => e[1].reguler);
+
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            if (trendChartInstance) trendChartInstance.destroy();
+
+            trendChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Penjualan Promo',
+                            data: promoSeries,
+                            backgroundColor: '#4f46e5',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Penjualan Reguler',
+                            data: regulerSeries,
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: getStackedBarOptions()
+            });
+        }
+
+        /**
+         * GRAFIK BY WEEK
+         */
+        function renderWeekChart() {
+            const grouped = {};
+
+            filteredData.forEach(r => {
+                const key = r['WEEK'] || 'Tidak Ada Week';
+                if (!grouped[key]) {
+                    grouped[key] = { promo: 0, reguler: 0 };
+                }
+                if (r._IS_PROMO) {
+                    grouped[key].promo += r._NET_AMOUNT;
+                } else {
+                    grouped[key].reguler += r._NET_AMOUNT;
+                }
+            });
+
+            // Urutkan WEEK secara natural / numerik (misal: W1, W2, ... atau Week 1, Week 2, ...)
+            const entries = Object.entries(grouped).sort((a, b) => {
+                return a[0].localeCompare(b[0], undefined, { numeric: true, sensitivity: 'base' });
+            });
+
+            const labels = entries.map(e => e[0]);
+            const promoSeries = entries.map(e => e[1].promo);
+            const regulerSeries = entries.map(e => e[1].reguler);
+
+            const ctx = document.getElementById('weekChart').getContext('2d');
+            if (weekChartInstance) weekChartInstance.destroy();
+
+            weekChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Penjualan Promo',
+                            data: promoSeries,
+                            backgroundColor: '#4f46e5',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Penjualan Reguler',
+                            data: regulerSeries,
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: getStackedBarOptions()
+            });
+        }
+
+        /**
+         * GRAFIK BY JAM
+         */
+        function renderJamChart() {
+            const grouped = {};
+
+            filteredData.forEach(r => {
+                let rawJam = r['JAM'] || 'N/A';
+                // Jika format waktu seperti "14:35:00", ambil jam-nya atau tampilkan apa adanya terurut
+                const key = rawJam;
+                if (!grouped[key]) {
+                    grouped[key] = { promo: 0, reguler: 0 };
+                }
+                if (r._IS_PROMO) {
+                    grouped[key].promo += r._NET_AMOUNT;
+                } else {
+                    grouped[key].reguler += r._NET_AMOUNT;
+                }
+            });
+
+            // Urutkan JAM secara natural (08, 09, 10, ..., 22)
+            const entries = Object.entries(grouped).sort((a, b) => {
+                return a[0].localeCompare(b[0], undefined, { numeric: true, sensitivity: 'base' });
+            });
+
+            const labels = entries.map(e => e[0]);
+            const promoSeries = entries.map(e => e[1].promo);
+            const regulerSeries = entries.map(e => e[1].reguler);
+
+            const ctx = document.getElementById('jamChart').getContext('2d');
+            if (jamChartInstance) jamChartInstance.destroy();
+
+            jamChartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Penjualan Promo',
+                            data: promoSeries,
+                            borderColor: '#4f46e5',
+                            backgroundColor: 'rgba(79, 70, 229, 0.12)',
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 3
+                        },
+                        {
+                            label: 'Penjualan Reguler',
+                            data: regulerSeries,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                            fill: true,
+                            tension: 0.35,
+                            pointRadius: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { family: 'Inter', size: 11 } }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: { family: 'Inter', size: 11 },
+                                callback: function(value) {
+                                    if (value >= 1e9) return (value / 1e9).toFixed(1) + 'M';
+                                    if (value >= 1e6) return (value / 1e6).toFixed(0) + 'Jt';
+                                    if (value >= 1e3) return (value / 1e3).toFixed(0) + 'Rb';
+                                    return value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            align: 'end',
+                            labels: {
+                                font: { family: 'Inter', size: 11 },
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.dataset.label}: ${formatRupiah(context.raw || 0)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function getStackedBarOptions() {
+            return {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: { display: false },
+                        ticks: { font: { family: 'Inter', size: 11 } }
+                    },
+                    y: {
+                        stacked: true,
+                        ticks: {
+                            font: { family: 'Inter', size: 11 },
+                            callback: function(value) {
+                                if (value >= 1e9) return (value / 1e9).toFixed(1) + 'M';
+                                if (value >= 1e6) return (value / 1e6).toFixed(0) + 'Jt';
+                                if (value >= 1e3) return (value / 1e3).toFixed(0) + 'Rb';
+                                return value;
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        align: 'end',
+                        labels: {
+                            font: { family: 'Inter', size: 11 },
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` ${context.dataset.label}: ${formatRupiah(context.raw || 0)}`;
+                            }
+                        }
+                    }
+                }
+            };
+        }
+
+        /**
+         * 4. TABEL DATA DENGAN PAGING BY
+         */
+        const TABLE_COLUMNS = [
+            { key: '_TIPE_TRANSAKSI', label: 'TIPE', isBadge: true },
+            { key: 'DISCOUNT_NO', label: 'DISCOUNT_NO' },
+            { key: 'BLN', label: 'BLN' },
+            { key: 'WEEK', label: 'WEEK' },
+            { key: 'TGL', label: 'TGL' },
+            { key: 'JAM', label: 'JAM' },
+            { key: 'CASHIER', label: 'CASHIER' },
+            { key: 'CUSTOMER_NAME', label: 'CUSTOMER_NAME' },
+            { key: 'MEMBER', label: 'MEMBER' },
+            { key: 'DEPT', label: 'DEPT' },
+            { key: 'DIV', label: 'DIV' },
+            { key: 'KAT', label: 'KAT' },
+            { key: 'BRAND', label: 'BRAND' },
+            { key: 'VENDOR', label: 'VENDOR' },
+            { key: 'SALESMAN_NAME', label: 'SALESMAN' },
+            { key: 'STATUS', label: 'STATUS' },
+            { key: '_QTY_PCS', label: 'QTY_PCS', isNum: true },
+            { key: '_GROSS_AMOUNT', label: 'GROSS', isCurr: true },
+            { key: '_VAT_AMOUNT', label: 'VAT', isCurr: true },
+            { key: '_NET_AMOUNT', label: 'NET_AMOUNT', isCurr: true },
+            { key: '_MARGIN', label: 'MARGIN', isCurr: true },
+            { key: '_QTY_STOK', label: 'Qty_Stok', isNum: true },
+            { key: '_VALUE_STOK', label: 'Value_Stok', isCurr: true }
+        ];
+
+        function handleTableSearch() {
+            const q = document.getElementById('table-quick-search').value.toLowerCase().trim();
+            if (!q) {
+                tableSearchData = [...filteredData];
+            } else {
+                tableSearchData = filteredData.filter(row => {
+                    return TABLE_COLUMNS.some(col => {
+                        const val = row[col.key];
+                        return val !== undefined && String(val).toLowerCase().includes(q);
+                    });
+                });
+            }
+            currentPage = 1;
+            renderTable();
+        }
+
+        function changePageSize() {
+            pageSize = parseInt(document.getElementById('page-size').value, 10) || 25;
+            currentPage = 1;
+            renderTable();
+        }
+
+        function goToPage(page) {
+            if (page < 1) page = 1;
+            if (page > totalPages) page = totalPages;
+            currentPage = page;
+            renderTable();
+        }
+
+        function renderTable() {
+            const thead = document.getElementById('table-head');
+            const tbody = document.getElementById('table-body');
+            const totalItems = tableSearchData.length;
+
+            document.getElementById('table-total-badge').textContent = `${totalItems.toLocaleString('id-ID')} baris`;
+
+            // Render Header
+            thead.innerHTML = TABLE_COLUMNS.map(col => {
+                const align = (col.isNum || col.isCurr) ? 'text-right' : 'text-left';
+                return `<th class="py-3 px-3 font-semibold whitespace-nowrap ${align}">${col.label}</th>`;
+            }).join('');
+
+            // Hitung Pagination
+            totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+            if (currentPage > totalPages) currentPage = totalPages;
+
+            const startIdx = (currentPage - 1) * pageSize;
+            const endIdx = Math.min(startIdx + pageSize, totalItems);
+            const pageSlice = tableSearchData.slice(startIdx, endIdx);
+
+            // Update Info Pagination
+            document.getElementById('pagination-info').textContent = totalItems === 0
+                ? 'Menampilkan 0 - 0 dari 0 data'
+                : `Menampilkan ${(startIdx + 1).toLocaleString('id-ID')} - ${endIdx.toLocaleString('id-ID')} dari ${totalItems.toLocaleString('id-ID')} data`;
+            
+            document.getElementById('page-indicator').textContent = `Hal ${currentPage} / ${totalPages}`;
+            document.getElementById('btn-first-page').disabled = currentPage <= 1;
+            document.getElementById('btn-prev-page').disabled = currentPage <= 1;
+            document.getElementById('btn-next-page').disabled = currentPage >= totalPages;
+            document.getElementById('btn-last-page').disabled = currentPage >= totalPages;
+
+            // Render Rows
+            if (pageSlice.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="${TABLE_COLUMNS.length}" class="p-8 text-center text-slate-400">Tidak ada data yang cocok dengan kriteria filter saat ini.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = pageSlice.map(row => {
+                const cells = TABLE_COLUMNS.map(col => {
+                    const val = row[col.key];
+
+                    if (col.isBadge) {
+                        const badgeStyle = val === 'PROMO'
+                            ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                            : 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                        return `<td class="py-2.5 px-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeStyle}">${val}</span></td>`;
+                    }
+                    if (col.isNum) {
+                        return `<td class="py-2.5 px-3 text-right font-medium whitespace-nowrap">${Number(val).toLocaleString('id-ID')}</td>`;
+                    }
+                    if (col.isCurr) {
+                        return `<td class="py-2.5 px-3 text-right font-medium whitespace-nowrap">${formatRupiah(val)}</td>`;
+                    }
+                    return `<td class="py-2.5 px-3 whitespace-nowrap text-slate-600">${val || '-'}</td>`;
+                }).join('');
+
+                return `<tr class="hover:bg-slate-50/90 transition">${cells}</tr>`;
+            }).join('');
+        }
+    </script>
+</body>
+</html>
