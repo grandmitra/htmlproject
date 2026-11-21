@@ -267,12 +267,12 @@
                     </div>
                 </section>
 
-                <!-- GRAFIK GROUP_NAME1 - GROUP_NAME4 & AR BY BALANCE_VALUE, INVENT, KATEGORI -->
+                <!-- GRAFIK GROUP_NAME1 - GROUP_NAME4 & PIC BY BALANCE_VALUE, INVENT, KATEGORI -->
                 <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-5">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                         <div>
-                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Visualisasi Analisis Grup & PIC (AR)</h3>
-                            <p class="text-xs sm:text-sm text-slate-500">Perbandingan Balance Value & Invent berdasarkan pengelompokan, PIC (AR), dan kategori</p>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Visualisasi Analisis Grup & PIC</h3>
+                            <p class="text-xs sm:text-sm text-slate-500">Perbandingan Balance Value & Invent berdasarkan pengelompokan, PIC, dan kategori</p>
                         </div>
 
                         <!-- Kontrol Dimensi & Metrik Grafik -->
@@ -284,7 +284,7 @@
                                     <option value="GROUP_NAME2">GROUP_NAME2</option>
                                     <option value="GROUP_NAME3">GROUP_NAME3</option>
                                     <option value="GROUP_NAME4">GROUP_NAME4</option>
-                                    <option value="AR">AR (PIC)</option>
+                                    <option value="PIC">PIC</option>
                                 </select>
                             </div>
 
@@ -612,7 +612,7 @@
                 <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                         <div>
-                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Grafik Komparasi per Grup & PIC (AR)</h3>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Grafik Komparasi per Grup & PIC</h3>
                             <p class="text-xs text-slate-500">Perbandingan berdampingan antara dua bulan terpilih</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
@@ -621,7 +621,7 @@
                                 <option value="GROUP_NAME2">GROUP_NAME2</option>
                                 <option value="GROUP_NAME3">GROUP_NAME3</option>
                                 <option value="GROUP_NAME4">GROUP_NAME4</option>
-                                <option value="AR">AR (PIC)</option>
+                                <option value="PIC">PIC</option>
                                 <option value="KATEGORI">KATEGORI</option>
                             </select>
                             <select id="compMetricDim" class="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-emerald-600 bg-slate-50 outline-none">
@@ -821,7 +821,7 @@
         ];
 
         const FILTER_FIELDS = [
-            { col: 'AR', label: 'PIC (AR)', placeholder: 'Semua PIC (AR)' },
+            { col: 'PIC', label: 'PIC', placeholder: 'Semua PIC' },
             { col: 'GROUP_NAME1', label: 'Group Name 1', placeholder: 'Semua Group 1' },
             { col: 'GROUP_NAME2', label: 'Group Name 2', placeholder: 'Semua Group 2' },
             { col: 'GROUP_NAME3', label: 'Group Name 3', placeholder: 'Semua Group 3' },
@@ -831,12 +831,12 @@
         ];
 
         const LS_KEYS = {
-            CACHE_PREFIX: 'inv_dash_2026_cache_v3_',
-            TIME_PREFIX: 'inv_dash_2026_time_v3_',
-            STATE: 'inv_dash_2026_ui_state_v3',
-            LINKS: 'inv_dash_2026_links_v3',
-            MASTER_URL: 'inv_dash_2026_master_url_v3',
-            CRUD_TARGET_URL: 'inv_dash_2026_crud_target_url_v3'
+            CACHE_PREFIX: 'inv_dash_2026_cache_v4_',
+            TIME_PREFIX: 'inv_dash_2026_time_v4_',
+            STATE: 'inv_dash_2026_ui_state_v4',
+            LINKS: 'inv_dash_2026_links_v4',
+            MASTER_URL: 'inv_dash_2026_master_url_v4',
+            CRUD_TARGET_URL: 'inv_dash_2026_crud_target_url_v4'
         };
 
         // State Memori Aplikasi
@@ -864,7 +864,7 @@
             compareMonthB: 'OCTOBER_2026',
             search: '',
             filters: {
-                AR: '',
+                PIC: '',
                 GROUP_NAME1: '',
                 GROUP_NAME2: '',
                 GROUP_NAME3: '',
@@ -1292,8 +1292,9 @@
                     colSet.add(cleanKey);
                     obj[cleanKey] = row[rawKey];
                 });
-                if (obj.AR === undefined && obj.ar !== undefined) {
-                    obj.AR = obj.ar;
+                // Pastikan kolom PIC selalu terisi (baik header CSV bernama PIC, pic, maupun AR)
+                if (obj.PIC === undefined || String(obj.PIC).trim() === '') {
+                    obj.PIC = obj.pic ?? obj.AR ?? obj.ar ?? '';
                 }
                 obj._BALANCE_NUM = parseNumericValue(obj.BALANCE_VALUE ?? obj.balance_value ?? obj['BALANCE VALUE'] ?? 0);
                 obj._INVENT_NUM = parseNumericValue(obj.INVENT ?? obj.invent ?? obj.STOCK ?? 0);
