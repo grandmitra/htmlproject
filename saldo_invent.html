@@ -156,7 +156,7 @@
                             <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
                         </div>
                         <input type="text" id="globalSearchInput" 
-                            placeholder="Ketik nama barang, kode, grup..." 
+                            placeholder="Ketik nama barang, kode, grup, PIC..." 
                             class="block w-full pl-9 pr-9 py-2 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none">
                         <button id="btnClearSearch" type="button" title="Hapus Pencarian" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-rose-500 transition">
                             <i class="fa-solid fa-circle-xmark"></i>
@@ -267,12 +267,12 @@
                     </div>
                 </section>
 
-                <!-- GRAFIK GROUP_NAME1 - GROUP_NAME4 BY BALANCE_VALUE, INVENT, KATEGORI -->
+                <!-- GRAFIK GROUP_NAME1 - GROUP_NAME4 & AR BY BALANCE_VALUE, INVENT, KATEGORI -->
                 <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-5">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
                         <div>
-                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Visualisasi Analisis Grup</h3>
-                            <p class="text-xs sm:text-sm text-slate-500">Perbandingan Balance Value & Invent berdasarkan pengelompokan dan kategori</p>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Visualisasi Analisis Grup & PIC (AR)</h3>
+                            <p class="text-xs sm:text-sm text-slate-500">Perbandingan Balance Value & Invent berdasarkan pengelompokan, PIC (AR), dan kategori</p>
                         </div>
 
                         <!-- Kontrol Dimensi & Metrik Grafik -->
@@ -284,6 +284,7 @@
                                     <option value="GROUP_NAME2">GROUP_NAME2</option>
                                     <option value="GROUP_NAME3">GROUP_NAME3</option>
                                     <option value="GROUP_NAME4">GROUP_NAME4</option>
+                                    <option value="AR">AR (PIC)</option>
                                 </select>
                             </div>
 
@@ -320,7 +321,7 @@
                     </div>
                 </section>
 
-                <!-- TABEL DETAIL DATA BARANG DENGAN PAGING -->
+                <!-- TABEL DETAIL DATA BARANG DENGAN PAGING & DOWNLOAD EXCEL -->
                 <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                     <div class="p-5 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
@@ -328,14 +329,21 @@
                             <p class="text-xs sm:text-sm text-slate-500">Daftar lengkap item berdasarkan bulan & filter aktif</p>
                         </div>
 
-                        <div class="flex items-center space-x-3 self-start sm:self-auto">
-                            <label for="rowsPerPage" class="text-xs sm:text-sm text-slate-600 font-medium">Tampilkan:</label>
-                            <select id="rowsPerPage" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
-                                <option value="10">10 baris</option>
-                                <option value="25" selected>25 baris</option>
-                                <option value="50">50 baris</option>
-                                <option value="100">100 baris</option>
-                            </select>
+                        <div class="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+                            <button id="btnDownloadExcelMonthly" type="button" title="Unduh data terfilter ke format Excel (.xls)" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Download Excel</span>
+                            </button>
+
+                            <div class="flex items-center space-x-2">
+                                <label for="rowsPerPage" class="text-xs sm:text-sm text-slate-600 font-medium">Tampilkan:</label>
+                                <select id="rowsPerPage" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                                    <option value="10">10 baris</option>
+                                    <option value="25" selected>25 baris</option>
+                                    <option value="50">50 baris</option>
+                                    <option value="100">100 baris</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -476,13 +484,20 @@
                             <h3 class="text-base sm:text-lg font-bold text-slate-900">Tabel Ringkasan GROUP_NAME1 (Gabungan)</h3>
                             <p class="text-xs sm:text-sm text-slate-500">Hanya menampilkan agregasi per <code class="bg-slate-100 px-1.5 py-0.5 rounded">GROUP_NAME1</code> agar proses rendering jauh lebih cepat</p>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <label for="combSortBy" class="text-xs font-semibold text-slate-500">Urutkan:</label>
-                            <select id="combSortBy" class="border border-slate-300 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-semibold text-indigo-700 bg-slate-50 outline-none">
-                                <option value="balance_desc">Balance Value (Tertinggi)</option>
-                                <option value="invent_desc">Invent (Tertinggi)</option>
-                                <option value="name_asc">Nama GROUP_NAME1 (A-Z)</option>
-                            </select>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button id="btnDownloadExcelCombined" type="button" title="Unduh ringkasan GROUP_NAME1 gabungan ke format Excel (.xls)" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Download Excel</span>
+                            </button>
+
+                            <div class="flex items-center space-x-2">
+                                <label for="combSortBy" class="text-xs font-semibold text-slate-500">Urutkan:</label>
+                                <select id="combSortBy" class="border border-slate-300 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-semibold text-indigo-700 bg-slate-50 outline-none">
+                                    <option value="balance_desc">Balance Value (Tertinggi)</option>
+                                    <option value="invent_desc">Invent (Tertinggi)</option>
+                                    <option value="name_asc">Nama GROUP_NAME1 (A-Z)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -597,7 +612,7 @@
                 <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
                         <div>
-                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Grafik Komparasi per Grup</h3>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Grafik Komparasi per Grup & PIC (AR)</h3>
                             <p class="text-xs text-slate-500">Perbandingan berdampingan antara dua bulan terpilih</p>
                         </div>
                         <div class="flex flex-wrap items-center gap-2">
@@ -606,6 +621,7 @@
                                 <option value="GROUP_NAME2">GROUP_NAME2</option>
                                 <option value="GROUP_NAME3">GROUP_NAME3</option>
                                 <option value="GROUP_NAME4">GROUP_NAME4</option>
+                                <option value="AR">AR (PIC)</option>
                                 <option value="KATEGORI">KATEGORI</option>
                             </select>
                             <select id="compMetricDim" class="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-emerald-600 bg-slate-50 outline-none">
@@ -805,6 +821,7 @@
         ];
 
         const FILTER_FIELDS = [
+            { col: 'AR', label: 'PIC (AR)', placeholder: 'Semua PIC (AR)' },
             { col: 'GROUP_NAME1', label: 'Group Name 1', placeholder: 'Semua Group 1' },
             { col: 'GROUP_NAME2', label: 'Group Name 2', placeholder: 'Semua Group 2' },
             { col: 'GROUP_NAME3', label: 'Group Name 3', placeholder: 'Semua Group 3' },
@@ -828,6 +845,7 @@
         let memoryDataCache = {}; // Menyimpan data bulanan yang sudah dimuat
         let rawData = [];
         let filteredData = [];
+        let combinedExportRows = [];
         let tableColumns = [];
         let filterOptionsMap = {};
 
@@ -846,6 +864,7 @@
             compareMonthB: 'OCTOBER_2026',
             search: '',
             filters: {
+                AR: '',
                 GROUP_NAME1: '',
                 GROUP_NAME2: '',
                 GROUP_NAME3: '',
@@ -1273,6 +1292,9 @@
                     colSet.add(cleanKey);
                     obj[cleanKey] = row[rawKey];
                 });
+                if (obj.AR === undefined && obj.ar !== undefined) {
+                    obj.AR = obj.ar;
+                }
                 obj._BALANCE_NUM = parseNumericValue(obj.BALANCE_VALUE ?? obj.balance_value ?? obj['BALANCE VALUE'] ?? 0);
                 obj._INVENT_NUM = parseNumericValue(obj.INVENT ?? obj.invent ?? obj.STOCK ?? 0);
                 return obj;
@@ -1692,6 +1714,89 @@
         }
 
         // ==========================================
+        // 6B. EKSPOR EXCEL (.XLS)
+        // ==========================================
+        function triggerExcelDownload(sheetName, headers, rowsMatrix, fileBaseName) {
+            if (!rowsMatrix || rowsMatrix.length === 0) {
+                showStatus('Tidak ada data untuk diunduh ke Excel.', 'error');
+                return;
+            }
+
+            const escapeXml = (val) => String(val ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+
+            const headerXml = `<Row>${headers.map(h => `<Cell><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join('')}</Row>`;
+            const bodyXml = rowsMatrix.map(r => {
+                const cells = r.map(v => {
+                    if (typeof v === 'number' && !isNaN(v)) {
+                        return `<Cell><Data ss:Type="Number">${v}</Data></Cell>`;
+                    }
+                    return `<Cell><Data ss:Type="String">${escapeXml(v)}</Data></Cell>`;
+                }).join('');
+                return `<Row>${cells}</Row>`;
+            }).join('');
+
+            const workbookXml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Worksheet ss:Name="${escapeXml(sheetName.slice(0, 31))}">
+    <Table>
+      ${headerXml}
+      ${bodyXml}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+            const blob = new Blob([workbookXml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const stamp = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `${fileBaseName}_${stamp}.xls`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showStatus(`File Excel "${a.download}" (${rowsMatrix.length} baris) berhasil diunduh.`, 'success');
+        }
+
+        function downloadMonthlyExcel() {
+            const cols = tableColumns && tableColumns.length > 0 ? tableColumns : Object.keys(filteredData[0] || {}).filter(k => !k.startsWith('_'));
+            const matrix = filteredData.map(row => cols.map(col => {
+                const rawVal = row[col] ?? '';
+                const upper = col.toUpperCase();
+                if (upper.includes('BALANCE') || upper === 'INVENT' || upper.includes('STOCK') || upper.includes('QTY')) {
+                    const num = upper.includes('BALANCE') && row._BALANCE_NUM !== undefined
+                        ? row._BALANCE_NUM
+                        : (upper === 'INVENT' && row._INVENT_NUM !== undefined ? row._INVENT_NUM : parseNumericValue(rawVal));
+                    return num;
+                }
+                return String(rawVal);
+            }));
+
+            const monthCfg = monthlyLinks.find(m => m.id === uiState.selectedMonthId);
+            const label = monthCfg ? `${monthCfg.bulan}_${monthCfg.tahun}` : 'Inventaris';
+            triggerExcelDownload(`Inventaris_${label}`, cols, matrix, `Inventaris_${label}`);
+        }
+
+        function downloadCombinedExcel() {
+            const headers = ['#', 'GROUP_NAME1', 'Total Balance Value', 'Total Invent', 'Kontribusi Saldo (%)', 'Jumlah Baris'];
+            const matrix = combinedExportRows.map((item, idx) => [
+                idx + 1,
+                item.group1,
+                item.balance,
+                item.invent,
+                Number(item.sharePct || 0),
+                item.count
+            ]);
+            triggerExcelDownload('Gabungan_GROUP_NAME1', headers, matrix, 'Gabungan_GROUP_NAME1');
+        }
+
+        // ==========================================
         // 7. DASHBOARD GABUNGAN (GROUP_NAME1 CEPAT)
         // ==========================================
         async function buildCombinedDashboard(forceRefresh = false) {
@@ -1792,6 +1897,11 @@
                 group1List.sort((a, b) => b.balance - a.balance);
             }
 
+            combinedExportRows = group1List.map(item => ({
+                ...item,
+                sharePct: grandBalance > 0 ? ((item.balance / grandBalance) * 100).toFixed(1) : '0.0'
+            }));
+
             document.getElementById('combScoreBalance').textContent = formatCurrencyIDR(grandBalance);
             document.getElementById('combScoreInvent').textContent = formatNumber(grandInvent);
             document.getElementById('combScoreGroup1Count').textContent = formatNumber(group1List.length);
@@ -1809,15 +1919,14 @@
                     </tr>
                 `;
             } else {
-                tbody.innerHTML = group1List.map((item, idx) => {
-                    const sharePct = grandBalance > 0 ? ((item.balance / grandBalance) * 100).toFixed(1) : '0.0';
+                tbody.innerHTML = combinedExportRows.map((item, idx) => {
                     return `
                         <tr class="hover:bg-slate-50 transition">
                             <td class="px-4 py-3 text-xs font-semibold text-slate-400">${idx + 1}</td>
                             <td class="px-4 py-3 font-semibold text-slate-800">${escapeHtml(item.group1)}</td>
                             <td class="px-4 py-3 text-right font-semibold text-emerald-700 whitespace-nowrap">${formatCurrencyIDR(item.balance)}</td>
                             <td class="px-4 py-3 text-right font-medium text-indigo-700 whitespace-nowrap">${formatNumber(item.invent)}</td>
-                            <td class="px-4 py-3 text-right text-xs font-semibold text-slate-600">${sharePct}%</td>
+                            <td class="px-4 py-3 text-right text-xs font-semibold text-slate-600">${item.sharePct}%</td>
                             <td class="px-4 py-3 text-center text-xs text-slate-500">${formatNumber(item.count)}</td>
                         </tr>
                     `;
@@ -2359,6 +2468,9 @@
                     await loadMonthData(uiState.selectedMonthId, true);
                 }
             });
+
+            document.getElementById('btnDownloadExcelMonthly').addEventListener('click', downloadMonthlyExcel);
+            document.getElementById('btnDownloadExcelCombined').addEventListener('click', downloadCombinedExcel);
 
             const searchInput = document.getElementById('globalSearchInput');
             searchInput.addEventListener('input', (e) => {

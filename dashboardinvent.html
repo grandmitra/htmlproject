@@ -1,0 +1,2632 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Analisis Inventaris & Saldo 2026</title>
+    <!-- Tailwind CSS untuk styling responsif dan modern -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome untuk Ikon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PapaParse untuk parsing CSV yang akurat -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Chart.js untuk visualisasi grafik -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        /* Transisi Sidebar Kiri */
+        .left-sidebar-transition {
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="antialiased min-h-screen flex flex-col overflow-x-hidden">
+
+    <!-- Top Header Bar -->
+    <header class="bg-slate-900 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-full mx-auto px-3 sm:px-6 min-h-16 py-2 flex flex-wrap items-center justify-between gap-2">
+            <!-- Kiri: Tombol Hide/Unhide Left Filter Sidebar + Brand & Info -->
+            <div class="flex items-center space-x-2 sm:space-x-3 min-w-0">
+                <button id="btnToggleLeftNav" type="button" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-1.5 shadow-sm shrink-0">
+                    <i id="toggleLeftNavIcon" class="fa-solid fa-sliders"></i>
+                    <span id="toggleLeftNavText" class="hidden sm:inline">Tutup Filter</span>
+                </button>
+
+                <div class="bg-slate-800 p-2 rounded-lg shrink-0 hidden sm:flex border border-slate-700">
+                    <i class="fa-solid fa-boxes-stacked text-lg text-indigo-400"></i>
+                </div>
+                <div class="truncate">
+                    <h1 class="text-sm sm:text-lg font-bold tracking-tight truncate">Inventory & Balance 2026</h1>
+                    <p id="lastUpdatedText" class="text-[11px] sm:text-xs text-slate-400 truncate">Mengambil daftar link CSV...</p>
+                </div>
+            </div>
+
+            <!-- Navigasi Tab Utama (Desktop) -->
+            <nav class="hidden xl:flex items-center bg-slate-800 p-1 rounded-xl border border-slate-700 gap-1">
+                <button id="tabBtnDashboard" type="button" onclick="switchView('dashboard')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 bg-indigo-600 text-white shadow">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard Bulanan</span>
+                </button>
+                <button id="tabBtnCombined" type="button" onclick="switchView('combined')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-layer-group"></i>
+                    <span>Dashboard Gabungan</span>
+                </button>
+                <button id="tabBtnCompare" type="button" onclick="switchView('compare')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-code-compare"></i>
+                    <span>Komparasi Bulan</span>
+                </button>
+                <button id="tabBtnLinks" type="button" onclick="switchView('links')" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1.5 text-slate-300 hover:text-white">
+                    <i class="fa-solid fa-link"></i>
+                    <span>CRUD Link CSV</span>
+                </button>
+            </nav>
+
+            <!-- Aksi Kanan: Sync -->
+            <div class="flex items-center space-x-2 shrink-0">
+                <button id="btnRefreshData" type="button" title="Sinkronkan Master Link & Data dari Google Sheets" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center space-x-1.5 border border-slate-700">
+                    <i id="refreshIcon" class="fa-solid fa-rotate"></i>
+                    <span class="hidden sm:inline">Sync</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile / Tablet Tab Switcher Bar -->
+        <div class="xl:hidden bg-slate-800 px-3 py-2 border-t border-slate-700 grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            <button id="tabBtnDashboardMobile" type="button" onclick="switchView('dashboard')" class="py-1.5 px-2 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 bg-indigo-600 text-white">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span class="truncate">Bulanan</span>
+            </button>
+            <button id="tabBtnCombinedMobile" type="button" onclick="switchView('combined')" class="py-1.5 px-2 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 text-slate-300 hover:text-white">
+                <i class="fa-solid fa-layer-group"></i>
+                <span class="truncate">Gabungan</span>
+            </button>
+            <button id="tabBtnCompareMobile" type="button" onclick="switchView('compare')" class="py-1.5 px-2 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 text-slate-300 hover:text-white">
+                <i class="fa-solid fa-code-compare"></i>
+                <span class="truncate">Komparasi</span>
+            </button>
+            <button id="tabBtnLinksMobile" type="button" onclick="switchView('links')" class="py-1.5 px-2 rounded-lg text-xs font-semibold transition flex items-center justify-center space-x-1 text-slate-300 hover:text-white">
+                <i class="fa-solid fa-link"></i>
+                <span class="truncate">CRUD Link</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Layout Wrapper: Left Collapsible Sidebar + Main Content -->
+    <div class="flex-grow flex relative">
+
+        <!-- Backdrop Overlay untuk Mobile saat Left Sidebar Terbuka -->
+        <div id="leftSidebarBackdrop" onclick="toggleLeftSidebar(false)" class="fixed inset-0 bg-slate-900/50 z-40 hidden lg:hidden backdrop-blur-xs"></div>
+
+        <!-- ========================================================= -->
+        <!-- LEFT COLLAPSIBLE FILTER SIDEBAR (NAVBAR DI SISI KIRI)     -->
+        <!-- ========================================================= -->
+        <aside id="leftFilterSidebar" class="fixed lg:sticky top-28 sm:top-24 xl:top-16 left-0 z-50 lg:z-30 h-[calc(100vh-7rem)] sm:h-[calc(100vh-6rem)] xl:h-[calc(100vh-4rem)] w-80 sm:w-96 bg-white border-r border-slate-200 shadow-2xl lg:shadow-none flex flex-col left-sidebar-transition shrink-0">
+            
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-solid fa-filter text-indigo-600"></i>
+                    <h2 class="text-sm font-bold text-slate-800 uppercase tracking-wider">Filter & Pencarian</h2>
+                </div>
+                <button type="button" onclick="toggleLeftSidebar(false)" title="Sembunyikan Panel Filter" class="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition">
+                    <i class="fa-solid fa-xmark text-base"></i>
+                </button>
+            </div>
+
+            <!-- Sidebar Scrollable Content -->
+            <div class="flex-grow overflow-y-auto p-4 space-y-4">
+                
+                <!-- 1. Pilih Bulan Inventory (Dari Master CSV Link) -->
+                <div class="bg-indigo-50/60 p-3.5 rounded-xl border border-indigo-100 space-y-1.5">
+                    <label for="sidebarMonthSelect" class="block text-xs font-bold text-indigo-900 uppercase tracking-wider">
+                        <i class="fa-regular fa-calendar mr-1"></i> Periode Inventory
+                    </label>
+                    <select id="sidebarMonthSelect" class="w-full border border-indigo-200 rounded-lg px-3 py-2 text-sm font-semibold text-slate-800 bg-white focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+                        <!-- Diisi otomatis oleh JS dari Master CSV -->
+                    </select>
+                </div>
+
+                <!-- 2. Pencarian Global dengan Clear Text -->
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider">Pencarian Cepat</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fa-solid fa-magnifying-glass text-slate-400 text-xs"></i>
+                        </div>
+                        <input type="text" id="globalSearchInput" 
+                            placeholder="Ketik nama barang, kode, grup, PIC..." 
+                            class="block w-full pl-9 pr-9 py-2 border border-slate-300 rounded-xl text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition outline-none">
+                        <button id="btnClearSearch" type="button" title="Hapus Pencarian" class="hidden absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-rose-500 transition">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <hr class="border-slate-100">
+
+                <!-- 3. Searchable Dropdown Filters (Bisa diketik & scroll) -->
+                <div class="space-y-3" id="searchableFiltersContainer">
+                    <!-- Komponen Searchable Dropdown akan dirender di sini oleh JS -->
+                </div>
+
+            </div>
+
+            <!-- Sidebar Footer: Reset Button -->
+            <div class="p-4 border-t border-slate-200 bg-slate-50">
+                <button id="btnResetAll" type="button" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-eraser"></i>
+                    <span>Reset Semua Filter</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- MAIN WORKSPACE AREA -->
+        <main id="mainContentArea" class="flex-grow min-w-0 px-4 sm:px-6 lg:px-8 py-6 space-y-6 transition-all duration-300">
+
+            <!-- Notifikasi Status / Error Message Box -->
+            <div id="statusBanner" class="hidden rounded-xl p-4 text-sm flex items-center justify-between shadow-sm">
+                <div class="flex items-center space-x-3">
+                    <i id="statusIcon" class="fa-solid fa-circle-info text-lg shrink-0"></i>
+                    <span id="statusMessage">Pesan status...</span>
+                </div>
+                <button type="button" onclick="document.getElementById('statusBanner').classList.add('hidden')" class="text-current opacity-70 hover:opacity-100 ml-3">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- VIEW 1: DASHBOARD BULANAN                                 -->
+            <!-- ========================================================= -->
+            <div id="viewDashboard" class="space-y-6">
+
+                <!-- Header Info Bulan Aktif -->
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shrink-0">
+                            <i class="fa-regular fa-calendar-check"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Periode Data Aktif</span>
+                            <h2 id="activeMonthBadge" class="text-lg sm:text-xl font-bold text-slate-900">Memuat...</h2>
+                        </div>
+                    </div>
+
+                    <!-- Quick Month Selector di Main Area -->
+                    <div class="flex items-center space-x-2">
+                        <label for="quickMonthSelect" class="text-xs font-semibold text-slate-500 whitespace-nowrap">Pilih Bulan:</label>
+                        <select id="quickMonthSelect" class="border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-indigo-700 bg-indigo-50/50 focus:ring-2 focus:ring-indigo-500 outline-none cursor-pointer">
+                            <!-- Diisi otomatis oleh JS -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- SCORECARDS -->
+                <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    <!-- Scorecard 1: BALANCE_VALUE -->
+                    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm flex items-center justify-between hover:shadow-md transition">
+                        <div class="min-w-0 pr-2">
+                            <p class="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Balance Value</p>
+                            <h2 id="scoreBalanceValue" class="text-xl sm:text-2xl xl:text-3xl font-bold text-slate-900 mt-1 truncate">Rp 0</h2>
+                            <p class="text-xs text-emerald-600 font-medium mt-1.5 flex items-center">
+                                <i class="fa-solid fa-wallet mr-1.5"></i> Akumulasi Nilai Saldo
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                            <i class="fa-solid fa-sack-dollar"></i>
+                        </div>
+                    </div>
+
+                    <!-- Scorecard 2: INVENT -->
+                    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm flex items-center justify-between hover:shadow-md transition">
+                        <div class="min-w-0 pr-2">
+                            <p class="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Invent (Stok)</p>
+                            <h2 id="scoreInvent" class="text-xl sm:text-2xl xl:text-3xl font-bold text-slate-900 mt-1 truncate">0</h2>
+                            <p class="text-xs text-indigo-600 font-medium mt-1.5 flex items-center">
+                                <i class="fa-solid fa-cubes mr-1.5"></i> Total Kuantitas Inventaris
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                            <i class="fa-solid fa-boxes-packing"></i>
+                        </div>
+                    </div>
+
+                    <!-- Scorecard 3: Jumlah Item Terfilter -->
+                    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm flex items-center justify-between hover:shadow-md transition sm:col-span-2 lg:col-span-1">
+                        <div class="min-w-0 pr-2">
+                            <p class="text-xs sm:text-sm font-semibold text-slate-500 uppercase tracking-wider">Total Baris Data</p>
+                            <h2 id="scoreTotalItems" class="text-xl sm:text-2xl xl:text-3xl font-bold text-slate-900 mt-1">0</h2>
+                            <p id="scoreFilterInfo" class="text-xs text-amber-600 font-medium mt-1.5 flex items-center">
+                                <i class="fa-solid fa-database mr-1.5"></i> Menampilkan seluruh data
+                            </p>
+                        </div>
+                        <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl sm:text-2xl shrink-0">
+                            <i class="fa-solid fa-list-check"></i>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- GRAFIK GROUP_NAME1 - GROUP_NAME4 & AR BY BALANCE_VALUE, INVENT, KATEGORI -->
+                <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-5">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Visualisasi Analisis Grup & PIC (AR)</h3>
+                            <p class="text-xs sm:text-sm text-slate-500">Perbandingan Balance Value & Invent berdasarkan pengelompokan, PIC (AR), dan kategori</p>
+                        </div>
+
+                        <!-- Kontrol Dimensi & Metrik Grafik -->
+                        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                            <div class="flex items-center space-x-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                                <span class="text-xs font-semibold text-slate-500">Grup:</span>
+                                <select id="chartGroupDimension" class="bg-transparent text-xs sm:text-sm font-semibold text-indigo-600 focus:outline-none cursor-pointer">
+                                    <option value="GROUP_NAME1">GROUP_NAME1</option>
+                                    <option value="GROUP_NAME2">GROUP_NAME2</option>
+                                    <option value="GROUP_NAME3">GROUP_NAME3</option>
+                                    <option value="GROUP_NAME4">GROUP_NAME4</option>
+                                    <option value="AR">AR (PIC)</option>
+                                </select>
+                            </div>
+
+                            <div class="flex items-center space-x-1.5 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+                                <span class="text-xs font-semibold text-slate-500">Metrik:</span>
+                                <select id="chartMetric" class="bg-transparent text-xs sm:text-sm font-semibold text-emerald-600 focus:outline-none cursor-pointer">
+                                    <option value="BALANCE_VALUE">BALANCE_VALUE</option>
+                                    <option value="INVENT">INVENT</option>
+                                </select>
+                            </div>
+
+                            <label class="flex items-center space-x-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200 cursor-pointer select-none">
+                                <input type="checkbox" id="chartStackKategori" checked class="rounded text-indigo-600 focus:ring-indigo-500">
+                                <span class="text-xs sm:text-sm font-medium text-slate-700">Pecah per KATEGORI</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Grid Canvas Grafik -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-slate-50/50 rounded-xl p-4 border border-slate-100">
+                            <h4 id="mainChartTitle" class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Grafik Batang per Group & Kategori</h4>
+                            <div class="relative h-72 sm:h-80 w-full">
+                                <canvas id="mainGroupChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50/50 rounded-xl p-4 border border-slate-100">
+                            <h4 id="kategoriChartTitle" class="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Proporsi per KATEGORI</h4>
+                            <div class="relative h-72 sm:h-80 w-full flex items-center justify-center">
+                                <canvas id="kategoriDoughnutChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- TABEL DETAIL DATA BARANG DENGAN PAGING & DOWNLOAD EXCEL -->
+                <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-5 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Detail Data Barang</h3>
+                            <p class="text-xs sm:text-sm text-slate-500">Daftar lengkap item berdasarkan bulan & filter aktif</p>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-3 self-start sm:self-auto">
+                            <button id="btnDownloadExcelMonthly" type="button" title="Unduh data terfilter ke format Excel (.xls)" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Download Excel</span>
+                            </button>
+
+                            <div class="flex items-center space-x-2">
+                                <label for="rowsPerPage" class="text-xs sm:text-sm text-slate-600 font-medium">Tampilkan:</label>
+                                <select id="rowsPerPage" class="border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                                    <option value="10">10 baris</option>
+                                    <option value="25" selected>25 baris</option>
+                                    <option value="50">50 baris</option>
+                                    <option value="100">100 baris</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto w-full">
+                        <table class="min-w-full divide-y divide-slate-200 text-left border-collapse">
+                            <thead id="tableHead" class="bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider"></thead>
+                            <tbody id="tableBody" class="divide-y divide-slate-100 text-xs sm:text-sm text-slate-700 bg-white">
+                                <tr>
+                                    <td colspan="10" class="px-6 py-12 text-center text-slate-400">
+                                        <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-indigo-500"></i>
+                                        <p>Sedang mengambil data dari Google Sheets...</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Footer Tabel: Kontrol Pagination -->
+                    <div class="px-5 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div id="paginationInfo" class="text-xs sm:text-sm text-slate-600">
+                            Menampilkan 0 - 0 dari 0 data
+                        </div>
+
+                        <div class="flex items-center space-x-1.5">
+                            <button id="btnFirstPage" type="button" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none text-xs font-medium transition">
+                                <i class="fa-solid fa-angles-left"></i>
+                            </button>
+                            <button id="btnPrevPage" type="button" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none text-xs font-medium transition flex items-center space-x-1">
+                                <i class="fa-solid fa-chevron-left"></i>
+                                <span>Prev</span>
+                            </button>
+                            
+                            <span id="pageIndicator" class="px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg">
+                                Hal 1 / 1
+                            </span>
+
+                            <button id="btnNextPage" type="button" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none text-xs font-medium transition flex items-center space-x-1">
+                                <span>Next</span>
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                            <button id="btnLastPage" type="button" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:pointer-events-none text-xs font-medium transition">
+                                <i class="fa-solid fa-angles-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- VIEW 2: DASHBOARD GABUNGAN (RINGKAS & CEPAT BY GROUP_NAME1) -->
+            <!-- ========================================================= -->
+            <div id="viewCombined" class="hidden space-y-6">
+
+                <!-- Header & Progress Loader Gabungan -->
+                <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center space-x-2">
+                                <i class="fa-solid fa-layer-group text-indigo-600"></i>
+                                <span>Dashboard Gabungan Multi-Bulan (GROUP_NAME1)</span>
+                            </h2>
+                            <p id="combinedSubtitle" class="text-xs sm:text-sm text-slate-500 mt-0.5">Agregasi cepat seluruh link CSV aktif dengan tabel ringkas khusus GROUP_NAME1</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button id="btnLoadAllCombined" type="button" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center space-x-2 shadow-sm">
+                                <i id="combinedSpinner" class="fa-solid fa-bolt"></i>
+                                <span>Muat Ulang Semua Link</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar Gabungan -->
+                    <div id="combinedProgressWrap" class="hidden space-y-1.5">
+                        <div class="flex justify-between text-xs font-semibold text-slate-600">
+                            <span id="combinedProgressText">Memuat link CSV...</span>
+                            <span id="combinedProgressPct">0%</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200">
+                            <div id="combinedProgressBar" class="bg-indigo-600 h-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Scorecard Gabungan (4 Kartu) -->
+                <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Akumulasi Balance Value</p>
+                        <h3 id="combScoreBalance" class="text-xl sm:text-2xl font-bold text-slate-900 mt-1 truncate">Rp 0</h3>
+                        <p id="combScoreMonthsCount" class="text-xs text-emerald-600 font-medium mt-1.5">Dari 0 periode aktif</p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Akumulasi Invent (Stok)</p>
+                        <h3 id="combScoreInvent" class="text-xl sm:text-2xl font-bold text-slate-900 mt-1 truncate">0</h3>
+                        <p class="text-xs text-indigo-600 font-medium mt-1.5">Total kuantitas gabungan</p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Jumlah GROUP_NAME1</p>
+                        <h3 id="combScoreGroup1Count" class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">0</h3>
+                        <p class="text-xs text-amber-600 font-medium mt-1.5">Kelompok utama unik</p>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Baris Diproses</p>
+                        <h3 id="combScoreRowsCount" class="text-xl sm:text-2xl font-bold text-slate-900 mt-1">0</h3>
+                        <p class="text-xs text-slate-500 font-medium mt-1.5">Agregasi memori cepat</p>
+                    </div>
+                </section>
+
+                <!-- Grafik Gabungan: Tren Bulanan & Top GROUP_NAME1 -->
+                <section class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm sm:text-base font-bold text-slate-900">Tren Bulanan (Balance Value & Invent)</h3>
+                            <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-indigo-50 text-indigo-600">Time Series</span>
+                        </div>
+                        <div class="relative h-72 w-full">
+                            <canvas id="combinedTrendChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm space-y-3">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-sm sm:text-base font-bold text-slate-900">Top GROUP_NAME1 (Balance Value)</h3>
+                            <span class="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-600">GROUP_NAME1</span>
+                        </div>
+                        <div class="relative h-72 w-full">
+                            <canvas id="combinedGroup1Chart"></canvas>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Tabel Ringkas Khusus GROUP_NAME1 Saja (Cepat & Ringan) -->
+                <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Tabel Ringkasan GROUP_NAME1 (Gabungan)</h3>
+                            <p class="text-xs sm:text-sm text-slate-500">Hanya menampilkan agregasi per <code class="bg-slate-100 px-1.5 py-0.5 rounded">GROUP_NAME1</code> agar proses rendering jauh lebih cepat</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button id="btnDownloadExcelCombined" type="button" title="Unduh ringkasan GROUP_NAME1 gabungan ke format Excel (.xls)" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                                <i class="fa-solid fa-file-excel"></i>
+                                <span>Download Excel</span>
+                            </button>
+
+                            <div class="flex items-center space-x-2">
+                                <label for="combSortBy" class="text-xs font-semibold text-slate-500">Urutkan:</label>
+                                <select id="combSortBy" class="border border-slate-300 rounded-xl px-3 py-1.5 text-xs sm:text-sm font-semibold text-indigo-700 bg-slate-50 outline-none">
+                                    <option value="balance_desc">Balance Value (Tertinggi)</option>
+                                    <option value="invent_desc">Invent (Tertinggi)</option>
+                                    <option value="name_asc">Nama GROUP_NAME1 (A-Z)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto w-full">
+                        <table class="min-w-full divide-y divide-slate-200 text-left border-collapse">
+                            <thead class="bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-3.5">#</th>
+                                    <th class="px-4 py-3.5">GROUP_NAME1</th>
+                                    <th class="px-4 py-3.5 text-right">Total Balance Value</th>
+                                    <th class="px-4 py-3.5 text-right">Total Invent</th>
+                                    <th class="px-4 py-3.5 text-right">Kontribusi Saldo</th>
+                                    <th class="px-4 py-3.5 text-center">Jumlah Baris</th>
+                                </tr>
+                            </thead>
+                            <tbody id="combinedGroup1TableBody" class="divide-y divide-slate-100 text-xs sm:text-sm text-slate-700 bg-white">
+                                <tr>
+                                    <td colspan="6" class="px-6 py-10 text-center text-slate-400">
+                                        Buka tab ini atau klik "Muat Ulang Semua Link" untuk memproses agregasi GROUP_NAME1.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- VIEW 3: HALAMAN KOMPARASI ANTAR BULAN                     -->
+            <!-- ========================================================= -->
+            <div id="viewCompare" class="hidden space-y-6">
+                
+                <!-- Panel Kontrol Pemilih 2 Bulan untuk Dikomparasi -->
+                <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center space-x-2">
+                                <i class="fa-solid fa-scale-balanced text-indigo-600"></i>
+                                <span>Komparasi Inventaris & Saldo Antar Bulan</span>
+                            </h2>
+                            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">Bandingkan performa stok dan nilai saldo antara dua bulan pilihan (filter sidebar tetap berlaku)</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                        <div class="lg:col-span-2">
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Bulan Awal (Base)</label>
+                            <select id="compareMonthA" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"></select>
+                        </div>
+
+                        <div class="lg:col-span-2">
+                            <label class="block text-xs font-bold text-slate-600 uppercase tracking-wider mb-1.5">Bulan Pembanding (Target)</label>
+                            <select id="compareMonthB" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none"></select>
+                        </div>
+
+                        <div>
+                            <button id="btnRunCompare" type="button" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition flex items-center justify-center space-x-2 shadow-sm">
+                                <i id="compareSpinner" class="fa-solid fa-arrows-rotate"></i>
+                                <span>Bandingkan</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Scorecard Hasil Komparasi -->
+                <section class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Perbandingan Balance Value</span>
+                            <span id="compBalanceBadge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">0%</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 pt-1">
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                <p id="compLabelMonthA1" class="text-xs text-slate-500 font-medium">BULAN A</p>
+                                <p id="compValBalanceA" class="text-base sm:text-lg font-bold text-slate-800 mt-0.5 truncate">Rp 0</p>
+                            </div>
+                            <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100">
+                                <p id="compLabelMonthB1" class="text-xs text-indigo-600 font-medium">BULAN B</p>
+                                <p id="compValBalanceB" class="text-base sm:text-lg font-bold text-indigo-900 mt-0.5 truncate">Rp 0</p>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm">
+                            <span class="text-slate-500 font-medium">Selisih (B - A):</span>
+                            <span id="compDiffBalance" class="font-bold text-slate-800">Rp 0</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Perbandingan Invent (Stok)</span>
+                            <span id="compInventBadge" class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-600">0%</span>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4 pt-1">
+                            <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                <p id="compLabelMonthA2" class="text-xs text-slate-500 font-medium">BULAN A</p>
+                                <p id="compValInventA" class="text-base sm:text-lg font-bold text-slate-800 mt-0.5 truncate">0</p>
+                            </div>
+                            <div class="bg-emerald-50/50 p-3 rounded-xl border border-emerald-100">
+                                <p id="compLabelMonthB2" class="text-xs text-emerald-600 font-medium">BULAN B</p>
+                                <p id="compValInventB" class="text-base sm:text-lg font-bold text-emerald-900 mt-0.5 truncate">0</p>
+                            </div>
+                        </div>
+                        <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs sm:text-sm">
+                            <span class="text-slate-500 font-medium">Selisih (B - A):</span>
+                            <span id="compDiffInvent" class="font-bold text-slate-800">0</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Grafik Komparasi Antar Bulan -->
+                <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Grafik Komparasi per Grup & PIC (AR)</h3>
+                            <p class="text-xs text-slate-500">Perbandingan berdampingan antara dua bulan terpilih</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <select id="compGroupDim" class="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-slate-50 outline-none">
+                                <option value="GROUP_NAME1">GROUP_NAME1</option>
+                                <option value="GROUP_NAME2">GROUP_NAME2</option>
+                                <option value="GROUP_NAME3">GROUP_NAME3</option>
+                                <option value="GROUP_NAME4">GROUP_NAME4</option>
+                                <option value="AR">AR (PIC)</option>
+                                <option value="KATEGORI">KATEGORI</option>
+                            </select>
+                            <select id="compMetricDim" class="border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-emerald-600 bg-slate-50 outline-none">
+                                <option value="BALANCE_VALUE">BALANCE_VALUE</option>
+                                <option value="INVENT">INVENT</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="relative h-80 w-full">
+                        <canvas id="compareBarChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- Tabel Rincian Komparasi per Grup -->
+                <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-200">
+                        <h3 class="text-base font-bold text-slate-900">Tabel Rincian Selisih per Grup</h3>
+                        <p class="text-xs text-slate-500">Detail perubahan nilai dan kuantitas berdasarkan dimensi yang dipilih di atas</p>
+                    </div>
+                    <div class="overflow-x-auto w-full">
+                        <table class="min-w-full divide-y divide-slate-200 text-left border-collapse">
+                            <thead id="compareTableHead" class="bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider"></thead>
+                            <tbody id="compareTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm text-slate-700 bg-white"></tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            <!-- ========================================================= -->
+            <!-- VIEW 4: MODUL CRUD LINK CSV (SUMBER MASTER CSV & KIRIM)   -->
+            <!-- ========================================================= -->
+            <div id="viewLinks" class="hidden space-y-6">
+
+                <!-- Pengaturan Master CSV & Target Endpoint Kirim CRUD -->
+                <section class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm space-y-5">
+                    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                        <div>
+                            <h2 class="text-lg sm:text-xl font-bold text-slate-900 flex items-center space-x-2">
+                                <i class="fa-solid fa-database text-indigo-600"></i>
+                                <span>Manajemen CRUD Link CSV Bulanan</span>
+                            </h2>
+                            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                                Daftar link diambil otomatis dari CSV Master. Perubahan CRUD disimpan di Local Storage dan dapat dikirim ke URL tujuan (Apps Script / Webhook / Master CSV Endpoint).
+                            </p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button id="btnReloadMasterCsv" type="button" class="bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center space-x-1.5 border border-slate-300">
+                                <i class="fa-solid fa-cloud-arrow-down"></i>
+                                <span>Ambil Ulang dari CSV Master</span>
+                            </button>
+                            <button id="btnSendCrudToTarget" type="button" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center space-x-1.5 shadow-sm">
+                                <i id="sendCrudIcon" class="fa-solid fa-paper-plane"></i>
+                                <span>Kirim CRUD ke Link Tujuan</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Konfigurasi Link Master CSV & Link Kirim CRUD -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div>
+                            <label for="masterCsvUrlInput" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                Sumber CSV Kumpulan Link (Read)
+                            </label>
+                            <input type="url" id="masterCsvUrlInput" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                            <p class="text-[11px] text-slate-400 mt-1">Default: CSV kumpulan link Google Sheets Anda.</p>
+                        </div>
+                        <div>
+                            <label for="crudTargetUrlInput" class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                                Link Tujuan Kirim Data CRUD (Write / POST)
+                            </label>
+                            <input type="url" id="crudTargetUrlInput" placeholder="https://script.google.com/macros/s/.../exec atau URL endpoint" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs sm:text-sm bg-white focus:ring-2 focus:ring-emerald-500 outline-none">
+                            <p class="text-[11px] text-slate-400 mt-1">Catatan: CSV <code class="bg-slate-200 px-1 rounded">output=csv</code> bersifat *read-only* (GET). Jika link tujuan adalah Web App/API (POST), payload JSON CRUD akan dikirim otomatis; jika berupa link CSV, sistem akan memvalidasi & mengunduh/menyalin payload CSV/JSON.</p>
+                        </div>
+                    </div>
+
+                    <!-- Form Tambah / Edit Link Bulan & Tahun -->
+                    <form id="crudLinkForm" class="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-4 sm:p-5 space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h3 id="crudFormTitle" class="text-sm font-bold text-indigo-950 uppercase tracking-wider">
+                                <i class="fa-solid fa-plus-circle mr-1 text-indigo-600"></i> Tambah Periode & Link CSV Baru
+                            </h3>
+                            <button id="btnCancelEditLink" type="button" onclick="resetCrudForm()" class="hidden text-xs font-semibold text-slate-500 hover:text-slate-800 underline">
+                                Batal Edit
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+                            <div class="lg:col-span-3">
+                                <label for="crudBulanInput" class="block text-xs font-bold text-slate-600 mb-1">Bulan</label>
+                                <select id="crudBulanInput" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-medium bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                                    <option value="JANUARY">JANUARY</option>
+                                    <option value="FEBRUARY">FEBRUARY</option>
+                                    <option value="MARCH">MARCH</option>
+                                    <option value="APRIL">APRIL</option>
+                                    <option value="MAY">MAY</option>
+                                    <option value="JUNE">JUNE</option>
+                                    <option value="JULY">JULY</option>
+                                    <option value="AUGUST">AUGUST</option>
+                                    <option value="SEPTEMBER">SEPTEMBER</option>
+                                    <option value="OCTOBER">OCTOBER</option>
+                                    <option value="NOVEMBER">NOVEMBER</option>
+                                    <option value="DECEMBER" selected>DECEMBER</option>
+                                </select>
+                            </div>
+
+                            <div class="lg:col-span-2">
+                                <label for="crudTahunInput" class="block text-xs font-bold text-slate-600 mb-1">Tahun</label>
+                                <input type="number" id="crudTahunInput" value="2026" min="2020" max="2099" required class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-medium bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                            </div>
+
+                            <div class="lg:col-span-5">
+                                <label for="crudUrlInput" class="block text-xs font-bold text-slate-600 mb-1">Link CSV Inventaris</label>
+                                <input type="url" id="crudUrlInput" required placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?output=csv" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                            </div>
+
+                            <div class="lg:col-span-2">
+                                <button id="btnSaveCrudLink" type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2 px-4 rounded-xl text-sm transition flex items-center justify-center space-x-1.5 shadow-sm">
+                                    <i id="saveCrudSpinner" class="fa-solid fa-floppy-disk"></i>
+                                    <span id="saveCrudBtnText">Simpan</span>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Status Loading CRUD -->
+                    <div id="crudLoadingBox" class="hidden bg-amber-50 border border-amber-200 text-amber-800 rounded-xl p-3.5 text-xs sm:text-sm flex items-center space-x-3">
+                        <i class="fa-solid fa-circle-notch fa-spin text-amber-600 text-base"></i>
+                        <span id="crudLoadingText">Menyimpan dan memproses link CSV...</span>
+                    </div>
+                </section>
+
+                <!-- Tabel Daftar Link CSV Bulanan (CRUD Table) -->
+                <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                    <div class="p-5 border-b border-slate-200 flex items-center justify-between">
+                        <div>
+                            <h3 class="text-base sm:text-lg font-bold text-slate-900">Daftar Link Inventaris Terdaftar</h3>
+                            <p id="crudLinkCountInfo" class="text-xs text-slate-500">0 periode link tersimpan</p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto w-full">
+                        <table class="min-w-full divide-y divide-slate-200 text-left border-collapse">
+                            <thead class="bg-slate-50 text-slate-600 text-xs font-bold uppercase tracking-wider">
+                                <tr>
+                                    <th class="px-4 py-3.5">No</th>
+                                    <th class="px-4 py-3.5">Bulan</th>
+                                    <th class="px-4 py-3.5">Tahun</th>
+                                    <th class="px-4 py-3.5">Link CSV</th>
+                                    <th class="px-4 py-3.5 text-center">Aksi CRUD</th>
+                                </tr>
+                            </thead>
+                            <tbody id="crudLinksTableBody" class="divide-y divide-slate-100 text-xs sm:text-sm text-slate-700 bg-white">
+                                <!-- Diisi otomatis oleh JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+            </div>
+
+        </main>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+        <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-2">
+            <p>Dashboard Inventaris & Saldo 2026 &bull; Master CSV, Gabungan GROUP_NAME1, Komparasi & CRUD</p>
+            <p class="flex items-center space-x-1">
+                <i class="fa-solid fa-hard-drive text-indigo-500"></i>
+                <span>Local Storage Aktif (Cache, Link & Filter Tersimpan)</span>
+            </p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        // ==========================================
+        // KONFIGURASI DEFAULT & SUMBER MASTER CSV LINK
+        // ==========================================
+        const DEFAULT_MASTER_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSHagY8BoSFPOVI-7k-RMZPrjUtn3S3_9-EJ5Iz4AdB0lUIeC_kCLPepUhrmH_u6VwvVcgmx6S3Al7X/pub?gid=0&single=true&output=csv';
+
+        // Fallback awal bila master CSV belum sempat terambil pertama kali
+        const FALLBACK_MONTHLY_LINKS = [
+            { id: 'JANUARY_2026', bulan: 'JANUARY', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSGhg9MQAv4JMusNXHFAXRxxGA-rjENGsPGn1zjbLGnqHYcnSo0LQcpoYNmz0r-pQ/pub?gid=113512134&single=true&output=csv' },
+            { id: 'FEBRUARY_2026', bulan: 'FEBRUARY', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS-d5ALnPWrrAl4Zr1v_ZJ_Rmceco8k0uXaLtUO65utATAR2SWoxfIGoFznINeBCQ/pub?gid=633035985&single=true&output=csv' },
+            { id: 'MARCH_2026', bulan: 'MARCH', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSjDjoziwJ7Zn0Akhg6-FoAGfYBO1ha5rqgrLMfexUeDYnVlWfaQZZy-BE1CyztmA/pub?gid=1557079405&single=true&output=csv' },
+            { id: 'APRIL_2026', bulan: 'APRIL', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSp2cz81K6AJz2FXTEzm2rRurJRMl7iJN-D7rlEf59FJGizDYeq7L-jpHhtMSIzaw/pub?gid=1835326720&single=true&output=csv' },
+            { id: 'MAY_2026', bulan: 'MAY', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTy9aiPgEiR_g30yOec21ElvHnbIuB0mzJsQ0A5q6l12pyk53A8U_2mIc-hkiStrQ/pub?gid=1905215716&single=true&output=csv' },
+            { id: 'JUNE_2026', bulan: 'JUNE', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS7CrYEMskjSGtT6bC4B-Zw1SiSH0NbQv_iBNAgx0_7qComdAikvNOJHv9M9JDcYQ/pub?gid=1084920233&single=true&output=csv' },
+            { id: 'JULY_2026', bulan: 'JULY', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRu3grwvd9ZIOcQrhOnrkX2IfJfzBZNRgzlmLDAqi0xPxGAd3h2jQJL5FTXgPhzdQ/pub?gid=183146099&single=true&output=csv' },
+            { id: 'AUGUST_2026', bulan: 'AUGUST', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT0W_mYUXawVeYNZDm1t3Sh7mo-25jub9CB4XXBD0216PNnqXk6ije7W26o2dLKTQ/pub?gid=1314408077&single=true&output=csv' },
+            { id: 'SEPTEMBER_2026', bulan: 'SEPTEMBER', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQPDn5AqJSl6GKuMHIVpZ7BoGOMJlbbOO5C6YNhWPPJ8Tu2uf3JiyqzNBu5HDAeNg/pub?gid=1468437747&single=true&output=csv' },
+            { id: 'OCTOBER_2026', bulan: 'OCTOBER', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vS2fL96K-msMPz1vJN76eAPQrShAJyLPX8S_uP_rBnW96huOzz0OD0VNT3gRcbxqQ/pub?gid=2054420418&single=true&output=csv' },
+            { id: 'NOVEMBER_2026', bulan: 'NOVEMBER', tahun: '2026', url: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSAZ2NGYr1pF47z7UK_f5XjKv3uppRvahPsFr4_mkReUYL2krgkRq5nWRwKN9GxzQ/pub?gid=352193826&single=true&output=csv' }
+        ];
+
+        const FILTER_FIELDS = [
+            { col: 'AR', label: 'PIC (AR)', placeholder: 'Semua PIC (AR)' },
+            { col: 'GROUP_NAME1', label: 'Group Name 1', placeholder: 'Semua Group 1' },
+            { col: 'GROUP_NAME2', label: 'Group Name 2', placeholder: 'Semua Group 2' },
+            { col: 'GROUP_NAME3', label: 'Group Name 3', placeholder: 'Semua Group 3' },
+            { col: 'GROUP_NAME4', label: 'Group Name 4', placeholder: 'Semua Group 4' },
+            { col: 'VENDOR_NAME', label: 'Vendor Name', placeholder: 'Semua Vendor' },
+            { col: 'KATEGORI', label: 'Kategori', placeholder: 'Semua Kategori' }
+        ];
+
+        const LS_KEYS = {
+            CACHE_PREFIX: 'inv_dash_2026_cache_v3_',
+            TIME_PREFIX: 'inv_dash_2026_time_v3_',
+            STATE: 'inv_dash_2026_ui_state_v3',
+            LINKS: 'inv_dash_2026_links_v3',
+            MASTER_URL: 'inv_dash_2026_master_url_v3',
+            CRUD_TARGET_URL: 'inv_dash_2026_crud_target_url_v3'
+        };
+
+        // State Memori Aplikasi
+        let monthlyLinks = [...FALLBACK_MONTHLY_LINKS];
+        let editingLinkId = null;
+        let memoryDataCache = {}; // Menyimpan data bulanan yang sudah dimuat
+        let rawData = [];
+        let filteredData = [];
+        let combinedExportRows = [];
+        let tableColumns = [];
+        let filterOptionsMap = {};
+
+        // Chart Instances
+        let mainChartInstance = null;
+        let kategoriChartInstance = null;
+        let compareChartInstance = null;
+        let combinedTrendChartInstance = null;
+        let combinedGroup1ChartInstance = null;
+
+        // UI State
+        let uiState = {
+            activeView: 'dashboard', // 'dashboard' | 'combined' | 'compare' | 'links'
+            selectedMonthId: 'JANUARY_2026',
+            compareMonthA: 'SEPTEMBER_2026',
+            compareMonthB: 'OCTOBER_2026',
+            search: '',
+            filters: {
+                AR: '',
+                GROUP_NAME1: '',
+                GROUP_NAME2: '',
+                GROUP_NAME3: '',
+                GROUP_NAME4: '',
+                VENDOR_NAME: '',
+                KATEGORI: ''
+            },
+            leftSidebarOpen: window.innerWidth >= 1024,
+            chartGroupDimension: 'GROUP_NAME1',
+            chartMetric: 'BALANCE_VALUE',
+            chartStackKategori: true,
+            compGroupDim: 'GROUP_NAME1',
+            compMetricDim: 'BALANCE_VALUE',
+            combSortBy: 'balance_desc',
+            rowsPerPage: 25,
+            currentPage: 1
+        };
+
+        const CHART_COLORS = [
+            '#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
+            '#06b6d4', '#ec4899', '#84cc16', '#f97316', '#6366f1',
+            '#14b8a6', '#eab308', '#d946ef', '#3b82f6', '#64748b'
+        ];
+
+        // ==========================================
+        // 1. INISIALISASI & LOCAL STORAGE
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            loadStateFromLocalStorage();
+            buildSearchableFilterUI();
+            setupEventListeners();
+            applyLeftSidebarState();
+            switchView(uiState.activeView, false);
+
+            // Muat daftar link dari master CSV (dengan fallback ke LocalStorage / default)
+            await fetchMasterLinksFromCsv(false);
+            initMonthSelectors();
+            renderCrudLinksTable();
+
+            // Pastikan selectedMonthId valid
+            if (!monthlyLinks.some(m => m.id === uiState.selectedMonthId) && monthlyLinks.length > 0) {
+                uiState.selectedMonthId = monthlyLinks[0].id;
+            }
+
+            await loadMonthData(uiState.selectedMonthId, false);
+
+            if (uiState.activeView === 'combined') {
+                await buildCombinedDashboard(false);
+            } else if (uiState.activeView === 'compare') {
+                await runComparison();
+            }
+        });
+
+        function loadStateFromLocalStorage() {
+            try {
+                const saved = localStorage.getItem(LS_KEYS.STATE);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    uiState = { ...uiState, ...parsed };
+                    uiState.filters = { ...uiState.filters, ...(parsed.filters || {}) };
+                }
+
+                const savedLinks = localStorage.getItem(LS_KEYS.LINKS);
+                if (savedLinks) {
+                    const parsedLinks = JSON.parse(savedLinks);
+                    if (Array.isArray(parsedLinks) && parsedLinks.length > 0) {
+                        monthlyLinks = parsedLinks;
+                    }
+                }
+
+                const savedMasterUrl = localStorage.getItem(LS_KEYS.MASTER_URL);
+                document.getElementById('masterCsvUrlInput').value = savedMasterUrl || DEFAULT_MASTER_CSV_URL;
+
+                const savedCrudTarget = localStorage.getItem(LS_KEYS.CRUD_TARGET_URL);
+                document.getElementById('crudTargetUrlInput').value = savedCrudTarget || (savedMasterUrl || DEFAULT_MASTER_CSV_URL);
+            } catch (e) {
+                console.warn('Gagal membaca Local Storage:', e);
+            }
+
+            document.getElementById('globalSearchInput').value = uiState.search || '';
+            toggleClearSearchButton();
+            document.getElementById('chartGroupDimension').value = uiState.chartGroupDimension;
+            document.getElementById('chartMetric').value = uiState.chartMetric;
+            document.getElementById('chartStackKategori').checked = uiState.chartStackKategori;
+            document.getElementById('compGroupDim').value = uiState.compGroupDim;
+            document.getElementById('compMetricDim').value = uiState.compMetricDim;
+            document.getElementById('combSortBy').value = uiState.combSortBy;
+            document.getElementById('rowsPerPage').value = uiState.rowsPerPage;
+        }
+
+        function saveStateToLocalStorage() {
+            try {
+                localStorage.setItem(LS_KEYS.STATE, JSON.stringify(uiState));
+            } catch (e) {
+                console.warn('Gagal menyimpan state Local Storage:', e);
+            }
+        }
+
+        function saveLinksToLocalStorage() {
+            try {
+                localStorage.setItem(LS_KEYS.LINKS, JSON.stringify(monthlyLinks));
+            } catch (e) {
+                console.warn('Gagal menyimpan daftar link Local Storage:', e);
+            }
+        }
+
+        // ==========================================
+        // 2. AMBIL KUMPULAN LINK DARI MASTER CSV
+        // ==========================================
+        function normalizeKeyName(key) {
+            return String(key || '').trim().toUpperCase().replace(/\s+/g, '_');
+        }
+
+        async function fetchMasterLinksFromCsv(forceNetwork = false) {
+            const masterUrl = (document.getElementById('masterCsvUrlInput').value || DEFAULT_MASTER_CSV_URL).trim();
+            localStorage.setItem(LS_KEYS.MASTER_URL, masterUrl);
+
+            if (!masterUrl) return monthlyLinks;
+
+            try {
+                const fetchUrl = forceNetwork
+                    ? `${masterUrl}${masterUrl.includes('?') ? '&' : '?'}_t=${Date.now()}`
+                    : masterUrl;
+
+                const response = await fetch(fetchUrl);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const csvText = await response.text();
+
+                const parsed = Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true
+                });
+
+                if (parsed.data && parsed.data.length > 0) {
+                    const extracted = [];
+                    parsed.data.forEach((row, idx) => {
+                        const normRow = {};
+                        Object.keys(row).forEach(k => {
+                            normRow[normalizeKeyName(k)] = String(row[k] ?? '').trim();
+                        });
+
+                        const bulan = (normRow.BULAN || normRow.MONTH || '').toUpperCase();
+                        const tahun = (normRow.TAHUN || normRow.YEAR || '2026').trim();
+                        const url = (normRow.LINK_INVENT || normRow.LINK || normRow.URL || normRow.CSV || '').trim();
+
+                        if (bulan || url) {
+                            const safeBulan = bulan || `PERIODE_${idx + 1}`;
+                            const safeTahun = tahun || '2026';
+                            const id = `${safeBulan}_${safeTahun}`.replace(/[^A-Z0-9_]/g, '_');
+                            extracted.push({
+                                id,
+                                bulan: safeBulan,
+                                tahun: safeTahun,
+                                url
+                            });
+                        }
+                    });
+
+                    if (extracted.length > 0) {
+                        monthlyLinks = extracted;
+                        saveLinksToLocalStorage();
+                        showStatus(`Berhasil memuat ${extracted.length} link inventaris dari CSV Master.`, 'success');
+                    }
+                }
+            } catch (err) {
+                console.warn('Gagal mengambil CSV Master, memakai cache/fallback:', err);
+                if (forceNetwork) {
+                    showStatus(`Gagal memuat CSV Master (${err.message}). Menggunakan daftar link lokal.`, 'error');
+                }
+            }
+
+            return monthlyLinks;
+        }
+
+        // ==========================================
+        // 3. SELECTOR BULAN DINAMIS
+        // ==========================================
+        function initMonthSelectors() {
+            const sideSel = document.getElementById('sidebarMonthSelect');
+            const quickSel = document.getElementById('quickMonthSelect');
+            const compA = document.getElementById('compareMonthA');
+            const compB = document.getElementById('compareMonthB');
+
+            const buildOptions = (withAvailabilityFlag = false) => {
+                return monthlyLinks.map(m => {
+                    const hasUrl = Boolean(m.url && m.url.trim().length > 0);
+                    const suffix = withAvailabilityFlag && !hasUrl ? ' (Link Kosong)' : '';
+                    return `<option value="${escapeHtml(m.id)}">${escapeHtml(m.bulan)} ${escapeHtml(m.tahun)}${suffix}</option>`;
+                }).join('');
+            };
+
+            const opts = buildOptions(true);
+            sideSel.innerHTML = opts;
+            quickSel.innerHTML = opts;
+            compA.innerHTML = buildOptions(false);
+            compB.innerHTML = buildOptions(false);
+
+            if (!monthlyLinks.some(m => m.id === uiState.selectedMonthId) && monthlyLinks.length > 0) {
+                uiState.selectedMonthId = monthlyLinks[0].id;
+            }
+            sideSel.value = uiState.selectedMonthId;
+            quickSel.value = uiState.selectedMonthId;
+
+            const defaultA = monthlyLinks.some(m => m.id === uiState.compareMonthA)
+                ? uiState.compareMonthA
+                : (monthlyLinks[0]?.id || '');
+            const defaultB = monthlyLinks.some(m => m.id === uiState.compareMonthB)
+                ? uiState.compareMonthB
+                : (monthlyLinks[1]?.id || defaultA);
+
+            compA.value = defaultA;
+            compB.value = defaultB;
+        }
+
+        // ==========================================
+        // 4. SEARCHABLE FILTER DROPDOWNS
+        // ==========================================
+        function buildSearchableFilterUI() {
+            const container = document.getElementById('searchableFiltersContainer');
+            container.innerHTML = '';
+
+            FILTER_FIELDS.forEach(field => {
+                const wrapper = document.createElement('div');
+                wrapper.className = 'relative space-y-1';
+
+                const currentVal = uiState.filters[field.col] || '';
+
+                wrapper.innerHTML = `
+                    <label for="searchInput_${field.col}" class="block text-xs font-bold text-slate-600 uppercase tracking-wider">
+                        ${escapeHtml(field.label)}
+                    </label>
+                    <div class="relative">
+                        <input type="text"
+                            id="searchInput_${field.col}"
+                            value="${escapeHtml(currentVal)}"
+                            placeholder="${escapeHtml(field.placeholder)}"
+                            autocomplete="off"
+                            class="w-full pl-3 pr-14 py-2 border border-slate-300 rounded-xl text-xs sm:text-sm bg-slate-50 focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition">
+                        <button type="button"
+                            id="clearBtn_${field.col}"
+                            title="Hapus filter ${escapeHtml(field.label)}"
+                            class="${currentVal ? '' : 'hidden'} absolute inset-y-0 right-7 pr-1.5 flex items-center text-slate-400 hover:text-rose-500">
+                            <i class="fa-solid fa-xmark text-xs"></i>
+                        </button>
+                        <button type="button"
+                            id="toggleListBtn_${field.col}"
+                            title="Buka/Tutup daftar opsi"
+                            class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-indigo-600">
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </button>
+                    </div>
+                    <div id="dropdownList_${field.col}"
+                        class="hidden absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-xl shadow-lg z-40 divide-y divide-slate-50">
+                    </div>
+                `;
+
+                container.appendChild(wrapper);
+
+                const inputEl = document.getElementById(`searchInput_${field.col}`);
+                const clearEl = document.getElementById(`clearBtn_${field.col}`);
+                const toggleEl = document.getElementById(`toggleListBtn_${field.col}`);
+                const listEl = document.getElementById(`dropdownList_${field.col}`);
+
+                const openAndRenderOptions = () => {
+                    renderFilterOptionList(field.col, inputEl.value);
+                    listEl.classList.remove('hidden');
+                };
+
+                inputEl.addEventListener('focus', openAndRenderOptions);
+                toggleEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (listEl.classList.contains('hidden')) {
+                        openAndRenderOptions();
+                    } else {
+                        listEl.classList.add('hidden');
+                    }
+                });
+
+                inputEl.addEventListener('input', () => {
+                    const val = inputEl.value;
+                    uiState.filters[field.col] = val;
+                    uiState.currentPage = 1;
+                    if (val.trim()) clearEl.classList.remove('hidden');
+                    else clearEl.classList.add('hidden');
+
+                    renderFilterOptionList(field.col, val);
+                    listEl.classList.remove('hidden');
+                    applyFiltersAndRender();
+                    if (uiState.activeView === 'compare') runComparison();
+                    if (uiState.activeView === 'combined') renderCombinedFromMemory();
+                });
+
+                clearEl.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    inputEl.value = '';
+                    uiState.filters[field.col] = '';
+                    uiState.currentPage = 1;
+                    clearEl.classList.add('hidden');
+                    renderFilterOptionList(field.col, '');
+                    applyFiltersAndRender();
+                    if (uiState.activeView === 'compare') runComparison();
+                    if (uiState.activeView === 'combined') renderCombinedFromMemory();
+                });
+
+                document.addEventListener('click', (e) => {
+                    if (!wrapper.contains(e.target)) {
+                        listEl.classList.add('hidden');
+                    }
+                });
+            });
+        }
+
+        function populateFilterOptions() {
+            FILTER_FIELDS.forEach(field => {
+                const uniqueSet = new Set();
+                rawData.forEach(row => {
+                    const v = row[field.col];
+                    if (v !== undefined && v !== null && String(v).trim() !== '') {
+                        uniqueSet.add(String(v).trim());
+                    }
+                });
+                filterOptionsMap[field.col] = Array.from(uniqueSet).sort((a, b) => a.localeCompare(b, 'id'));
+                renderFilterOptionList(field.col, uiState.filters[field.col] || '');
+            });
+        }
+
+        function renderFilterOptionList(col, queryText) {
+            const listEl = document.getElementById(`dropdownList_${col}`);
+            const inputEl = document.getElementById(`searchInput_${col}`);
+            const clearEl = document.getElementById(`clearBtn_${col}`);
+            if (!listEl || !inputEl) return;
+
+            const q = (queryText || '').trim().toLowerCase();
+            const allOpts = filterOptionsMap[col] || [];
+            const matches = q ? allOpts.filter(opt => opt.toLowerCase().includes(q)) : allOpts;
+
+            let html = `
+                <button type="button" data-val="" class="w-full text-left px-3 py-2 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 flex items-center justify-between">
+                    <span>Semua (${FILTER_FIELDS.find(f => f.col === col)?.label || col})</span>
+                    <i class="fa-solid fa-rotate-left text-[10px]"></i>
+                </button>
+            `;
+
+            if (matches.length === 0) {
+                html += `<div class="px-3 py-2.5 text-xs text-slate-400 italic">Tidak ada opsi cocok dengan "${escapeHtml(queryText)}"</div>`;
+            } else {
+                matches.slice(0, 150).forEach(opt => {
+                    const isSelected = uiState.filters[col] === opt;
+                    html += `
+                        <button type="button" data-val="${escapeHtml(opt)}" class="w-full text-left px-3 py-2 text-xs ${isSelected ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-700 hover:bg-slate-50'} truncate">
+                            ${escapeHtml(opt)}
+                        </button>
+                    `;
+                });
+            }
+
+            listEl.innerHTML = html;
+
+            listEl.querySelectorAll('button[data-val]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const chosen = btn.getAttribute('data-val');
+                    inputEl.value = chosen;
+                    uiState.filters[col] = chosen;
+                    uiState.currentPage = 1;
+                    if (chosen) clearEl.classList.remove('hidden');
+                    else clearEl.classList.add('hidden');
+                    listEl.classList.add('hidden');
+                    applyFiltersAndRender();
+                    if (uiState.activeView === 'compare') runComparison();
+                    if (uiState.activeView === 'combined') renderCombinedFromMemory();
+                });
+            });
+        }
+
+        // ==========================================
+        // 5. FETCH & PARSE DATA CSV BULANAN
+        // ==========================================
+        function parseNumericValue(val) {
+            if (typeof val === 'number') return isNaN(val) ? 0 : val;
+            if (!val) return 0;
+            let str = String(val).trim();
+            if (!str || str === '-') return 0;
+            str = str.replace(/[^0-9.,-]/g, '');
+            if (str.includes(',') && str.includes('.')) {
+                if (str.lastIndexOf(',') > str.lastIndexOf('.')) {
+                    str = str.replace(/\./g, '').replace(',', '.');
+                } else {
+                    str = str.replace(/,/g, '');
+                }
+            } else if (str.includes(',')) {
+                const parts = str.split(',');
+                if (parts[parts.length - 1].length === 3 && parts.length === 2) {
+                    str = str.replace(/,/g, '');
+                } else {
+                    str = str.replace(',', '.');
+                }
+            }
+            const num = parseFloat(str);
+            return isNaN(num) ? 0 : num;
+        }
+
+        function formatCurrencyIDR(num) {
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(num || 0);
+        }
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('id-ID', {
+                maximumFractionDigits: 2
+            }).format(num || 0);
+        }
+
+        function normalizeCsvRows(rows) {
+            const colSet = new Set();
+            const normalized = rows.map(row => {
+                const obj = {};
+                Object.keys(row).forEach(rawKey => {
+                    const cleanKey = rawKey.trim();
+                    if (!cleanKey) return;
+                    colSet.add(cleanKey);
+                    obj[cleanKey] = row[rawKey];
+                });
+                if (obj.AR === undefined && obj.ar !== undefined) {
+                    obj.AR = obj.ar;
+                }
+                obj._BALANCE_NUM = parseNumericValue(obj.BALANCE_VALUE ?? obj.balance_value ?? obj['BALANCE VALUE'] ?? 0);
+                obj._INVENT_NUM = parseNumericValue(obj.INVENT ?? obj.invent ?? obj.STOCK ?? 0);
+                return obj;
+            });
+            return { normalized, columns: Array.from(colSet) };
+        }
+
+        async function fetchMonthDataset(monthId, forceRefresh = false) {
+            const monthCfg = monthlyLinks.find(m => m.id === monthId);
+            if (!monthCfg) {
+                throw new Error(`Konfigurasi bulan ${monthId} tidak ditemukan.`);
+            }
+            if (!monthCfg.url || !monthCfg.url.trim()) {
+                throw new Error(`Link CSV untuk ${monthCfg.bulan} ${monthCfg.tahun} belum tersedia.`);
+            }
+
+            if (!forceRefresh && memoryDataCache[monthId]) {
+                return memoryDataCache[monthId];
+            }
+
+            const cacheKey = LS_KEYS.CACHE_PREFIX + monthId;
+            const timeKey = LS_KEYS.TIME_PREFIX + monthId;
+
+            if (!forceRefresh) {
+                try {
+                    const cachedRaw = localStorage.getItem(cacheKey);
+                    const cachedTime = localStorage.getItem(timeKey);
+                    if (cachedRaw) {
+                        const parsedCache = JSON.parse(cachedRaw);
+                        if (Array.isArray(parsedCache.rows) && parsedCache.rows.length > 0) {
+                            const bundle = {
+                                monthCfg,
+                                rows: parsedCache.rows,
+                                columns: parsedCache.columns || [],
+                                updatedAt: cachedTime || new Date().toLocaleString('id-ID'),
+                                fromCache: true
+                            };
+                            memoryDataCache[monthId] = bundle;
+                            return bundle;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Cache Local Storage korup untuk', monthId);
+                }
+            }
+
+            const urlWithBust = `${monthCfg.url}${monthCfg.url.includes('?') ? '&' : '?'}_t=${Date.now()}`;
+            const response = await fetch(urlWithBust);
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status} saat mengambil data ${monthCfg.bulan} ${monthCfg.tahun}`);
+            }
+
+            const csvText = await response.text();
+            const parsed = Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true
+            });
+
+            if (parsed.errors && parsed.errors.length > 0 && (!parsed.data || parsed.data.length === 0)) {
+                throw new Error(parsed.errors[0].message || 'Gagal parsing CSV');
+            }
+
+            const { normalized, columns } = normalizeCsvRows(parsed.data || []);
+            const nowStr = new Date().toLocaleString('id-ID', {
+                day: '2-digit', month: 'short', year: 'numeric',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+
+            try {
+                localStorage.setItem(cacheKey, JSON.stringify({ rows: normalized, columns }));
+                localStorage.setItem(timeKey, nowStr);
+            } catch (e) {
+                console.warn('LocalStorage penuh saat caching', monthId);
+            }
+
+            const bundle = {
+                monthCfg,
+                rows: normalized,
+                columns,
+                updatedAt: nowStr,
+                fromCache: false
+            };
+            memoryDataCache[monthId] = bundle;
+            return bundle;
+        }
+
+        async function loadMonthData(monthId, forceRefresh = false) {
+            const monthCfg = monthlyLinks.find(m => m.id === monthId) || monthlyLinks[0];
+            if (!monthCfg) return;
+
+            uiState.selectedMonthId = monthCfg.id;
+            saveStateToLocalStorage();
+
+            document.getElementById('sidebarMonthSelect').value = monthCfg.id;
+            document.getElementById('quickMonthSelect').value = monthCfg.id;
+            document.getElementById('activeMonthBadge').textContent = `${monthCfg.bulan} ${monthCfg.tahun}`;
+
+            const refreshIcon = document.getElementById('refreshIcon');
+            refreshIcon.classList.add('fa-spin');
+
+            if (!monthCfg.url || !monthCfg.url.trim()) {
+                refreshIcon.classList.remove('fa-spin');
+                rawData = [];
+                filteredData = [];
+                tableColumns = [];
+                populateFilterOptions();
+                updateScorecards();
+                updateCharts();
+                renderTableHeader();
+                renderTableBody();
+                document.getElementById('lastUpdatedText').textContent = `${monthCfg.bulan} ${monthCfg.tahun}: Link CSV kosong`;
+                showStatus(`Link CSV untuk ${monthCfg.bulan} ${monthCfg.tahun} belum diisi. Silakan tambahkan di tab CRUD Link CSV.`, 'error');
+                return;
+            }
+
+            document.getElementById('tableBody').innerHTML = `
+                <tr>
+                    <td colspan="10" class="px-6 py-12 text-center text-slate-400">
+                        <i class="fa-solid fa-spinner fa-spin text-2xl mb-2 text-indigo-500"></i>
+                        <p>Memuat data ${escapeHtml(monthCfg.bulan)} ${escapeHtml(monthCfg.tahun)}...</p>
+                    </td>
+                </tr>
+            `;
+
+            try {
+                const bundle = await fetchMonthDataset(monthCfg.id, forceRefresh);
+                rawData = bundle.rows;
+                tableColumns = bundle.columns;
+
+                document.getElementById('lastUpdatedText').textContent =
+                    `${monthCfg.bulan} ${monthCfg.tahun} • ${bundle.fromCache ? 'Cache' : 'Live'}: ${bundle.updatedAt}`;
+
+                populateFilterOptions();
+                applyFiltersAndRender();
+
+                if (forceRefresh) {
+                    showStatus(`Data ${monthCfg.bulan} ${monthCfg.tahun} berhasil disinkronkan (${rawData.length} baris).`, 'success');
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('lastUpdatedText').textContent = `Gagal memuat ${monthCfg.bulan} ${monthCfg.tahun}`;
+                showStatus(`Gagal memuat data ${monthCfg.bulan} ${monthCfg.tahun}: ${err.message}`, 'error');
+                document.getElementById('tableBody').innerHTML = `
+                    <tr>
+                        <td colspan="10" class="px-6 py-10 text-center text-rose-500">
+                            <i class="fa-solid fa-triangle-exclamation text-2xl mb-2"></i>
+                            <p class="font-medium">Gagal memuat data CSV</p>
+                            <p class="text-xs text-slate-500 mt-1">${escapeHtml(err.message)}</p>
+                        </td>
+                    </tr>
+                `;
+            } finally {
+                refreshIcon.classList.remove('fa-spin');
+            }
+        }
+
+        // ==========================================
+        // 6. FILTER, SCORECARD, GRAFIK & TABEL BULANAN
+        // ==========================================
+        function rowMatchesActiveFilters(row) {
+            const searchQuery = (uiState.search || '').trim().toLowerCase();
+            if (searchQuery) {
+                const combinedText = Object.values(row)
+                    .filter(v => typeof v !== 'object' && v !== null)
+                    .join(' ')
+                    .toLowerCase();
+                if (!combinedText.includes(searchQuery)) return false;
+            }
+
+            for (const f of FILTER_FIELDS) {
+                const filterVal = (uiState.filters[f.col] || '').trim().toLowerCase();
+                if (filterVal) {
+                    const rowVal = String(row[f.col] ?? '').trim().toLowerCase();
+                    if (!rowVal.includes(filterVal)) return false;
+                }
+            }
+            return true;
+        }
+
+        function applyFiltersAndRender() {
+            filteredData = rawData.filter(rowMatchesActiveFilters);
+            saveStateToLocalStorage();
+            updateScorecards();
+            updateCharts();
+            renderTableHeader();
+            renderTableBody();
+        }
+
+        function updateScorecards() {
+            let totalBalance = 0;
+            let totalInvent = 0;
+
+            for (let i = 0; i < filteredData.length; i++) {
+                totalBalance += filteredData[i]._BALANCE_NUM;
+                totalInvent += filteredData[i]._INVENT_NUM;
+            }
+
+            document.getElementById('scoreBalanceValue').textContent = formatCurrencyIDR(totalBalance);
+            document.getElementById('scoreInvent').textContent = formatNumber(totalInvent);
+            document.getElementById('scoreTotalItems').textContent = formatNumber(filteredData.length);
+
+            const activeFilterCount =
+                (uiState.search.trim() ? 1 : 0) +
+                Object.values(uiState.filters).filter(v => v && v.trim() !== '').length;
+
+            const infoEl = document.getElementById('scoreFilterInfo');
+            if (activeFilterCount > 0) {
+                infoEl.innerHTML = `<i class="fa-solid fa-filter mr-1.5"></i> ${activeFilterCount} filter aktif (dari ${formatNumber(rawData.length)} baris)`;
+                infoEl.className = 'text-xs text-indigo-600 font-medium mt-1.5 flex items-center';
+            } else {
+                infoEl.innerHTML = `<i class="fa-solid fa-database mr-1.5"></i> Menampilkan seluruh data`;
+                infoEl.className = 'text-xs text-amber-600 font-medium mt-1.5 flex items-center';
+            }
+        }
+
+        function updateCharts() {
+            const groupCol = uiState.chartGroupDimension;
+            const metric = uiState.chartMetric;
+            const stackByKategori = uiState.chartStackKategori;
+            const getMetricVal = (row) => metric === 'INVENT' ? row._INVENT_NUM : row._BALANCE_NUM;
+
+            const groupTotals = {};
+            const kategoriTotals = {};
+            const matrix = {};
+            const kategoriSet = new Set();
+
+            filteredData.forEach(row => {
+                const gVal = String(row[groupCol] || 'Tidak Terkelompok').trim() || 'Tidak Terkelompok';
+                const kVal = String(row.KATEGORI || row.kategori || 'Tanpa Kategori').trim() || 'Tanpa Kategori';
+                const val = getMetricVal(row);
+
+                groupTotals[gVal] = (groupTotals[gVal] || 0) + val;
+                kategoriTotals[kVal] = (kategoriTotals[kVal] || 0) + val;
+                kategoriSet.add(kVal);
+
+                if (!matrix[gVal]) matrix[gVal] = {};
+                matrix[gVal][kVal] = (matrix[gVal][kVal] || 0) + val;
+            });
+
+            const sortedGroups = Object.entries(groupTotals)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 15)
+                .map(item => item[0]);
+
+            const sortedKategoris = Array.from(kategoriSet).sort((a, b) => (kategoriTotals[b] || 0) - (kategoriTotals[a] || 0));
+
+            document.getElementById('mainChartTitle').textContent =
+                `${metric} per ${groupCol}${stackByKategori ? ' (Dipecah per KATEGORI)' : ''}`;
+            document.getElementById('kategoriChartTitle').textContent = `Proporsi ${metric} per KATEGORI`;
+
+            let datasets = [];
+            if (stackByKategori) {
+                datasets = sortedKategoris.slice(0, 10).map((kat, idx) => ({
+                    label: kat,
+                    data: sortedGroups.map(grp => (matrix[grp] && matrix[grp][kat]) ? matrix[grp][kat] : 0),
+                    backgroundColor: CHART_COLORS[idx % CHART_COLORS.length],
+                    borderRadius: 4
+                }));
+            } else {
+                datasets = [{
+                    label: `${metric} (${groupCol})`,
+                    data: sortedGroups.map(grp => groupTotals[grp] || 0),
+                    backgroundColor: CHART_COLORS[0],
+                    borderRadius: 6
+                }];
+            }
+
+            const mainCtx = document.getElementById('mainGroupChart').getContext('2d');
+            if (mainChartInstance) mainChartInstance.destroy();
+            mainChartInstance = new Chart(mainCtx, {
+                type: 'bar',
+                data: { labels: sortedGroups, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: { boxWidth: 12, font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const v = ctx.parsed.y || 0;
+                                    return `${ctx.dataset.label}: ${metric === 'BALANCE_VALUE' ? formatCurrencyIDR(v) : formatNumber(v)}`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            stacked: stackByKategori,
+                            ticks: { font: { size: 11 }, maxRotation: 35, minRotation: 0 }
+                        },
+                        y: {
+                            stacked: stackByKategori,
+                            beginAtZero: true,
+                            ticks: {
+                                font: { size: 11 },
+                                callback: (val) => metric === 'BALANCE_VALUE'
+                                    ? (Math.abs(val) >= 1e9 ? 'Rp ' + (val / 1e9).toFixed(1) + 'M' : Math.abs(val) >= 1e6 ? 'Rp ' + (val / 1e6).toFixed(0) + 'Jt' : formatCurrencyIDR(val))
+                                    : formatNumber(val)
+                            }
+                        }
+                    }
+                }
+            });
+
+            const topKats = sortedKategoris.slice(0, 8);
+            const katCtx = document.getElementById('kategoriDoughnutChart').getContext('2d');
+            if (kategoriChartInstance) kategoriChartInstance.destroy();
+            kategoriChartInstance = new Chart(katCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: topKats,
+                    datasets: [{
+                        data: topKats.map(k => kategoriTotals[k] || 0),
+                        backgroundColor: topKats.map((_, idx) => CHART_COLORS[idx % CHART_COLORS.length]),
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '62%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => {
+                                    const v = ctx.parsed || 0;
+                                    return `${ctx.label}: ${metric === 'BALANCE_VALUE' ? formatCurrencyIDR(v) : formatNumber(v)}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTableHeader() {
+            const thead = document.getElementById('tableHead');
+            if (!tableColumns || tableColumns.length === 0) {
+                thead.innerHTML = '<tr><th class="px-4 py-3">Data</th></tr>';
+                return;
+            }
+            thead.innerHTML = `
+                <tr>
+                    <th class="px-4 py-3.5 bg-slate-50 sticky left-0 z-10 border-r border-slate-200">#</th>
+                    ${tableColumns.map(col => `<th class="px-4 py-3.5 whitespace-nowrap">${escapeHtml(col)}</th>`).join('')}
+                </tr>
+            `;
+        }
+
+        function renderTableBody() {
+            const tbody = document.getElementById('tableBody');
+            const totalRows = filteredData.length;
+            const perPage = uiState.rowsPerPage;
+            const totalPages = Math.max(1, Math.ceil(totalRows / perPage));
+
+            if (uiState.currentPage > totalPages) uiState.currentPage = totalPages;
+            if (uiState.currentPage < 1) uiState.currentPage = 1;
+
+            const startIdx = (uiState.currentPage - 1) * perPage;
+            const endIdx = Math.min(startIdx + perPage, totalRows);
+            const pageSlice = filteredData.slice(startIdx, endIdx);
+
+            document.getElementById('paginationInfo').textContent = totalRows === 0
+                ? 'Menampilkan 0 - 0 dari 0 data'
+                : `Menampilkan ${formatNumber(startIdx + 1)} - ${formatNumber(endIdx)} dari ${formatNumber(totalRows)} data`;
+
+            document.getElementById('pageIndicator').textContent = `Hal ${uiState.currentPage} / ${totalPages}`;
+            document.getElementById('btnFirstPage').disabled = uiState.currentPage <= 1;
+            document.getElementById('btnPrevPage').disabled = uiState.currentPage <= 1;
+            document.getElementById('btnNextPage').disabled = uiState.currentPage >= totalPages;
+            document.getElementById('btnLastPage').disabled = uiState.currentPage >= totalPages;
+
+            if (pageSlice.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="${Math.max(1, tableColumns.length + 1)}" class="px-6 py-10 text-center text-slate-400">
+                            <i class="fa-solid fa-folder-open text-2xl mb-2"></i>
+                            <p>Tidak ada data yang sesuai dengan filter atau pencarian.</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = pageSlice.map((row, idx) => {
+                const globalRowNum = startIdx + idx + 1;
+                const cells = tableColumns.map(col => {
+                    const rawVal = row[col] ?? '';
+                    const upper = col.toUpperCase();
+                    if (upper.includes('BALANCE')) {
+                        return `<td class="px-4 py-3 whitespace-nowrap text-right font-semibold text-emerald-700">${formatCurrencyIDR(parseNumericValue(rawVal))}</td>`;
+                    }
+                    if (upper === 'INVENT' || upper.includes('STOCK') || upper.includes('QTY')) {
+                        return `<td class="px-4 py-3 whitespace-nowrap text-right font-medium text-indigo-700">${formatNumber(parseNumericValue(rawVal))}</td>`;
+                    }
+                    return `<td class="px-4 py-3 whitespace-nowrap max-w-xs truncate" title="${escapeHtml(String(rawVal))}">${escapeHtml(String(rawVal))}</td>`;
+                }).join('');
+
+                return `
+                    <tr class="hover:bg-slate-50/80 transition">
+                        <td class="px-4 py-3 whitespace-nowrap text-xs font-semibold text-slate-400 bg-slate-50/70 sticky left-0 border-r border-slate-100">${globalRowNum}</td>
+                        ${cells}
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ==========================================
+        // 6B. EKSPOR EXCEL (.XLS)
+        // ==========================================
+        function triggerExcelDownload(sheetName, headers, rowsMatrix, fileBaseName) {
+            if (!rowsMatrix || rowsMatrix.length === 0) {
+                showStatus('Tidak ada data untuk diunduh ke Excel.', 'error');
+                return;
+            }
+
+            const escapeXml = (val) => String(val ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+
+            const headerXml = `<Row>${headers.map(h => `<Cell><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join('')}</Row>`;
+            const bodyXml = rowsMatrix.map(r => {
+                const cells = r.map(v => {
+                    if (typeof v === 'number' && !isNaN(v)) {
+                        return `<Cell><Data ss:Type="Number">${v}</Data></Cell>`;
+                    }
+                    return `<Cell><Data ss:Type="String">${escapeXml(v)}</Data></Cell>`;
+                }).join('');
+                return `<Row>${cells}</Row>`;
+            }).join('');
+
+            const workbookXml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+  <Worksheet ss:Name="${escapeXml(sheetName.slice(0, 31))}">
+    <Table>
+      ${headerXml}
+      ${bodyXml}
+    </Table>
+  </Worksheet>
+</Workbook>`;
+
+            const blob = new Blob([workbookXml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const stamp = new Date().toISOString().slice(0, 10);
+            a.href = url;
+            a.download = `${fileBaseName}_${stamp}.xls`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showStatus(`File Excel "${a.download}" (${rowsMatrix.length} baris) berhasil diunduh.`, 'success');
+        }
+
+        function downloadMonthlyExcel() {
+            const cols = tableColumns && tableColumns.length > 0 ? tableColumns : Object.keys(filteredData[0] || {}).filter(k => !k.startsWith('_'));
+            const matrix = filteredData.map(row => cols.map(col => {
+                const rawVal = row[col] ?? '';
+                const upper = col.toUpperCase();
+                if (upper.includes('BALANCE') || upper === 'INVENT' || upper.includes('STOCK') || upper.includes('QTY')) {
+                    const num = upper.includes('BALANCE') && row._BALANCE_NUM !== undefined
+                        ? row._BALANCE_NUM
+                        : (upper === 'INVENT' && row._INVENT_NUM !== undefined ? row._INVENT_NUM : parseNumericValue(rawVal));
+                    return num;
+                }
+                return String(rawVal);
+            }));
+
+            const monthCfg = monthlyLinks.find(m => m.id === uiState.selectedMonthId);
+            const label = monthCfg ? `${monthCfg.bulan}_${monthCfg.tahun}` : 'Inventaris';
+            triggerExcelDownload(`Inventaris_${label}`, cols, matrix, `Inventaris_${label}`);
+        }
+
+        function downloadCombinedExcel() {
+            const headers = ['#', 'GROUP_NAME1', 'Total Balance Value', 'Total Invent', 'Kontribusi Saldo (%)', 'Jumlah Baris'];
+            const matrix = combinedExportRows.map((item, idx) => [
+                idx + 1,
+                item.group1,
+                item.balance,
+                item.invent,
+                Number(item.sharePct || 0),
+                item.count
+            ]);
+            triggerExcelDownload('Gabungan_GROUP_NAME1', headers, matrix, 'Gabungan_GROUP_NAME1');
+        }
+
+        // ==========================================
+        // 7. DASHBOARD GABUNGAN (GROUP_NAME1 CEPAT)
+        // ==========================================
+        async function buildCombinedDashboard(forceRefresh = false) {
+            const validLinks = monthlyLinks.filter(m => m.url && m.url.trim().length > 0);
+            const progressWrap = document.getElementById('combinedProgressWrap');
+            const progressBar = document.getElementById('combinedProgressBar');
+            const progressText = document.getElementById('combinedProgressText');
+            const progressPct = document.getElementById('combinedProgressPct');
+            const spinner = document.getElementById('combinedSpinner');
+
+            if (validLinks.length === 0) {
+                showStatus('Tidak ada link CSV aktif untuk dashboard gabungan.', 'error');
+                return;
+            }
+
+            spinner.classList.add('fa-spin');
+            progressWrap.classList.remove('hidden');
+            progressBar.style.width = '5%';
+            progressPct.textContent = '5%';
+
+            let completed = 0;
+            const total = validLinks.length;
+
+            await Promise.all(validLinks.map(async (m) => {
+                try {
+                    await fetchMonthDataset(m.id, forceRefresh);
+                } catch (e) {
+                    console.warn(`Lewati ${m.id} pada gabungan:`, e.message);
+                } finally {
+                    completed++;
+                    const pct = Math.round((completed / total) * 100);
+                    progressBar.style.width = `${pct}%`;
+                    progressPct.textContent = `${pct}%`;
+                    progressText.textContent = `Memproses ${completed} dari ${total} link CSV (${m.bulan} ${m.tahun})...`;
+                }
+            }));
+
+            renderCombinedFromMemory();
+            spinner.classList.remove('fa-spin');
+            setTimeout(() => progressWrap.classList.add('hidden'), 1200);
+        }
+
+        function renderCombinedFromMemory() {
+            const validLinks = monthlyLinks.filter(m => m.url && m.url.trim().length > 0);
+            let grandBalance = 0;
+            let grandInvent = 0;
+            let totalRows = 0;
+            let loadedMonthsCount = 0;
+
+            const group1Map = {}; // Agregasi khusus GROUP_NAME1
+            const monthlySeries = [];
+
+            validLinks.forEach(m => {
+                const bundle = memoryDataCache[m.id];
+                if (!bundle || !Array.isArray(bundle.rows)) return;
+
+                loadedMonthsCount++;
+                const filteredRows = bundle.rows.filter(rowMatchesActiveFilters);
+
+                let mBalance = 0;
+                let mInvent = 0;
+
+                filteredRows.forEach(row => {
+                    const bVal = row._BALANCE_NUM;
+                    const iVal = row._INVENT_NUM;
+                    const g1 = String(row.GROUP_NAME1 || row.group_name1 || 'Tanpa Group 1').trim() || 'Tanpa Group 1';
+
+                    grandBalance += bVal;
+                    grandInvent += iVal;
+                    totalRows++;
+
+                    mBalance += bVal;
+                    mInvent += iVal;
+
+                    if (!group1Map[g1]) {
+                        group1Map[g1] = { group1: g1, balance: 0, invent: 0, count: 0 };
+                    }
+                    group1Map[g1].balance += bVal;
+                    group1Map[g1].invent += iVal;
+                    group1Map[g1].count += 1;
+                });
+
+                monthlySeries.push({
+                    label: `${m.bulan.slice(0, 3)} ${m.tahun.slice(-2)}`,
+                    balance: mBalance,
+                    invent: mInvent
+                });
+            });
+
+            const group1List = Object.values(group1Map);
+            const sortMode = uiState.combSortBy || 'balance_desc';
+
+            if (sortMode === 'invent_desc') {
+                group1List.sort((a, b) => b.invent - a.invent);
+            } else if (sortMode === 'name_asc') {
+                group1List.sort((a, b) => a.group1.localeCompare(b.group1, 'id'));
+            } else {
+                group1List.sort((a, b) => b.balance - a.balance);
+            }
+
+            combinedExportRows = group1List.map(item => ({
+                ...item,
+                sharePct: grandBalance > 0 ? ((item.balance / grandBalance) * 100).toFixed(1) : '0.0'
+            }));
+
+            document.getElementById('combScoreBalance').textContent = formatCurrencyIDR(grandBalance);
+            document.getElementById('combScoreInvent').textContent = formatNumber(grandInvent);
+            document.getElementById('combScoreGroup1Count').textContent = formatNumber(group1List.length);
+            document.getElementById('combScoreRowsCount').textContent = formatNumber(totalRows);
+            document.getElementById('combScoreMonthsCount').textContent = `Dari ${loadedMonthsCount} periode termuat`;
+
+            // Render Tabel Khusus GROUP_NAME1
+            const tbody = document.getElementById('combinedGroup1TableBody');
+            if (group1List.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-6 py-10 text-center text-slate-400">
+                            Tidak ada data GROUP_NAME1 yang cocok dengan filter aktif.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tbody.innerHTML = combinedExportRows.map((item, idx) => {
+                    return `
+                        <tr class="hover:bg-slate-50 transition">
+                            <td class="px-4 py-3 text-xs font-semibold text-slate-400">${idx + 1}</td>
+                            <td class="px-4 py-3 font-semibold text-slate-800">${escapeHtml(item.group1)}</td>
+                            <td class="px-4 py-3 text-right font-semibold text-emerald-700 whitespace-nowrap">${formatCurrencyIDR(item.balance)}</td>
+                            <td class="px-4 py-3 text-right font-medium text-indigo-700 whitespace-nowrap">${formatNumber(item.invent)}</td>
+                            <td class="px-4 py-3 text-right text-xs font-semibold text-slate-600">${item.sharePct}%</td>
+                            <td class="px-4 py-3 text-center text-xs text-slate-500">${formatNumber(item.count)}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+
+            // Render Grafik Tren Bulanan
+            const trendCtx = document.getElementById('combinedTrendChart').getContext('2d');
+            if (combinedTrendChartInstance) combinedTrendChartInstance.destroy();
+            combinedTrendChartInstance = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: monthlySeries.map(s => s.label),
+                    datasets: [{
+                        label: 'Balance Value',
+                        data: monthlySeries.map(s => s.balance),
+                        borderColor: '#4f46e5',
+                        backgroundColor: 'rgba(79, 70, 229, 0.12)',
+                        fill: true,
+                        tension: 0.35
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.dataset.label}: ${formatCurrencyIDR(ctx.parsed.y || 0)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: { size: 11 },
+                                callback: (val) => Math.abs(val) >= 1e9 ? 'Rp ' + (val / 1e9).toFixed(1) + 'M' : Math.abs(val) >= 1e6 ? 'Rp ' + (val / 1e6).toFixed(0) + 'Jt' : formatCurrencyIDR(val)
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Render Grafik Top GROUP_NAME1
+            const topG1 = [...group1List].sort((a, b) => b.balance - a.balance).slice(0, 10);
+            const g1Ctx = document.getElementById('combinedGroup1Chart').getContext('2d');
+            if (combinedGroup1ChartInstance) combinedGroup1ChartInstance.destroy();
+            combinedGroup1ChartInstance = new Chart(g1Ctx, {
+                type: 'bar',
+                data: {
+                    labels: topG1.map(g => g.group1),
+                    datasets: [{
+                        label: 'Total Balance Value',
+                        data: topG1.map(g => g.balance),
+                        backgroundColor: '#10b981',
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `Balance Value: ${formatCurrencyIDR(ctx.parsed.y || 0)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { ticks: { font: { size: 11 }, maxRotation: 30, minRotation: 0 } },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                font: { size: 11 },
+                                callback: (val) => Math.abs(val) >= 1e9 ? 'Rp ' + (val / 1e9).toFixed(1) + 'M' : Math.abs(val) >= 1e6 ? 'Rp ' + (val / 1e6).toFixed(0) + 'Jt' : formatCurrencyIDR(val)
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // ==========================================
+        // 8. HALAMAN KOMPARASI ANTAR BULAN
+        // ==========================================
+        async function runComparison() {
+            const idA = document.getElementById('compareMonthA').value;
+            const idB = document.getElementById('compareMonthB').value;
+            const groupDim = uiState.compGroupDim;
+            const metricDim = uiState.compMetricDim;
+
+            if (!idA || !idB) return;
+
+            uiState.compareMonthA = idA;
+            uiState.compareMonthB = idB;
+            saveStateToLocalStorage();
+
+            const spinner = document.getElementById('compareSpinner');
+            spinner.classList.add('fa-spin');
+
+            try {
+                const [bundleA, bundleB] = await Promise.all([
+                    fetchMonthDataset(idA, false),
+                    fetchMonthDataset(idB, false)
+                ]);
+
+                const labelA = `${bundleA.monthCfg.bulan} ${bundleA.monthCfg.tahun}`;
+                const labelB = `${bundleB.monthCfg.bulan} ${bundleB.monthCfg.tahun}`;
+
+                document.getElementById('compLabelMonthA1').textContent = labelA;
+                document.getElementById('compLabelMonthA2').textContent = labelA;
+                document.getElementById('compLabelMonthB1').textContent = labelB;
+                document.getElementById('compLabelMonthB2').textContent = labelB;
+
+                const rowsA = bundleA.rows.filter(rowMatchesActiveFilters);
+                const rowsB = bundleB.rows.filter(rowMatchesActiveFilters);
+
+                const sumBalanceA = rowsA.reduce((acc, r) => acc + r._BALANCE_NUM, 0);
+                const sumBalanceB = rowsB.reduce((acc, r) => acc + r._BALANCE_NUM, 0);
+                const diffBalance = sumBalanceB - sumBalanceA;
+                const pctBalance = sumBalanceA !== 0 ? ((diffBalance / Math.abs(sumBalanceA)) * 100) : (sumBalanceB > 0 ? 100 : 0);
+
+                document.getElementById('compValBalanceA').textContent = formatCurrencyIDR(sumBalanceA);
+                document.getElementById('compValBalanceB').textContent = formatCurrencyIDR(sumBalanceB);
+                document.getElementById('compDiffBalance').textContent = `${diffBalance >= 0 ? '+' : ''}${formatCurrencyIDR(diffBalance)}`;
+                document.getElementById('compDiffBalance').className = `font-bold ${diffBalance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+
+                const balBadge = document.getElementById('compBalanceBadge');
+                balBadge.textContent = `${pctBalance >= 0 ? '+' : ''}${pctBalance.toFixed(1)}%`;
+                balBadge.className = `px-2.5 py-1 rounded-full text-xs font-bold ${diffBalance >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`;
+
+                const sumInventA = rowsA.reduce((acc, r) => acc + r._INVENT_NUM, 0);
+                const sumInventB = rowsB.reduce((acc, r) => acc + r._INVENT_NUM, 0);
+                const diffInvent = sumInventB - sumInventA;
+                const pctInvent = sumInventA !== 0 ? ((diffInvent / Math.abs(sumInventA)) * 100) : (sumInventB > 0 ? 100 : 0);
+
+                document.getElementById('compValInventA').textContent = formatNumber(sumInventA);
+                document.getElementById('compValInventB').textContent = formatNumber(sumInventB);
+                document.getElementById('compDiffInvent').textContent = `${diffInvent >= 0 ? '+' : ''}${formatNumber(diffInvent)}`;
+                document.getElementById('compDiffInvent').className = `font-bold ${diffInvent >= 0 ? 'text-emerald-600' : 'text-rose-600'}`;
+
+                const invBadge = document.getElementById('compInventBadge');
+                invBadge.textContent = `${pctInvent >= 0 ? '+' : ''}${pctInvent.toFixed(1)}%`;
+                invBadge.className = `px-2.5 py-1 rounded-full text-xs font-bold ${diffInvent >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`;
+
+                const getMetric = (r) => metricDim === 'INVENT' ? r._INVENT_NUM : r._BALANCE_NUM;
+                const mapA = {};
+                const mapB = {};
+                const allKeys = new Set();
+
+                rowsA.forEach(r => {
+                    const k = String(r[groupDim] || 'Tidak Terkelompok').trim() || 'Tidak Terkelompok';
+                    mapA[k] = (mapA[k] || 0) + getMetric(r);
+                    allKeys.add(k);
+                });
+
+                rowsB.forEach(r => {
+                    const k = String(r[groupDim] || 'Tidak Terkelompok').trim() || 'Tidak Terkelompok';
+                    mapB[k] = (mapB[k] || 0) + getMetric(r);
+                    allKeys.add(k);
+                });
+
+                const comparisonRows = Array.from(allKeys).map(key => {
+                    const valA = mapA[key] || 0;
+                    const valB = mapB[key] || 0;
+                    const diff = valB - valA;
+                    const pct = valA !== 0 ? ((diff / Math.abs(valA)) * 100) : (valB > 0 ? 100 : 0);
+                    return { key, valA, valB, diff, pct };
+                }).sort((a, b) => Math.max(Math.abs(b.valA), Math.abs(b.valB)) - Math.max(Math.abs(a.valA), Math.abs(a.valB)));
+
+                const topChartRows = comparisonRows.slice(0, 12);
+                const compCtx = document.getElementById('compareBarChart').getContext('2d');
+                if (compareChartInstance) compareChartInstance.destroy();
+                compareChartInstance = new Chart(compCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: topChartRows.map(item => item.key),
+                        datasets: [
+                            {
+                                label: labelA,
+                                data: topChartRows.map(item => item.valA),
+                                backgroundColor: '#94a3b8',
+                                borderRadius: 5
+                            },
+                            {
+                                label: labelB,
+                                data: topChartRows.map(item => item.valB),
+                                backgroundColor: '#4f46e5',
+                                borderRadius: 5
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: { mode: 'index', intersect: false },
+                        plugins: {
+                            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => {
+                                        const v = ctx.parsed.y || 0;
+                                        return `${ctx.dataset.label}: ${metricDim === 'BALANCE_VALUE' ? formatCurrencyIDR(v) : formatNumber(v)}`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: { ticks: { font: { size: 11 }, maxRotation: 35, minRotation: 0 } },
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    font: { size: 11 },
+                                    callback: (val) => metricDim === 'BALANCE_VALUE'
+                                        ? (Math.abs(val) >= 1e9 ? 'Rp ' + (val / 1e9).toFixed(1) + 'M' : Math.abs(val) >= 1e6 ? 'Rp ' + (val / 1e6).toFixed(0) + 'Jt' : formatCurrencyIDR(val))
+                                        : formatNumber(val)
+                                }
+                            }
+                        }
+                    }
+                });
+
+                const fmtMetric = (n) => metricDim === 'BALANCE_VALUE' ? formatCurrencyIDR(n) : formatNumber(n);
+                document.getElementById('compareTableHead').innerHTML = `
+                    <tr>
+                        <th class="px-4 py-3.5">${escapeHtml(groupDim)}</th>
+                        <th class="px-4 py-3.5 text-right">${escapeHtml(labelA)}</th>
+                        <th class="px-4 py-3.5 text-right">${escapeHtml(labelB)}</th>
+                        <th class="px-4 py-3.5 text-right">Selisih (B - A)</th>
+                        <th class="px-4 py-3.5 text-right">% Perubahan</th>
+                    </tr>
+                `;
+
+                const compBody = document.getElementById('compareTableBody');
+                if (comparisonRows.length === 0) {
+                    compBody.innerHTML = `<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">Tidak ada data untuk dikomparasi.</td></tr>`;
+                } else {
+                    compBody.innerHTML = comparisonRows.slice(0, 100).map(item => {
+                        const isPos = item.diff >= 0;
+                        const colorClass = isPos ? 'text-emerald-600' : 'text-rose-600';
+                        return `
+                            <tr class="hover:bg-slate-50 transition">
+                                <td class="px-4 py-3 font-medium text-slate-800">${escapeHtml(item.key)}</td>
+                                <td class="px-4 py-3 text-right whitespace-nowrap">${fmtMetric(item.valA)}</td>
+                                <td class="px-4 py-3 text-right font-semibold text-indigo-700 whitespace-nowrap">${fmtMetric(item.valB)}</td>
+                                <td class="px-4 py-3 text-right font-bold whitespace-nowrap ${colorClass}">${isPos ? '+' : ''}${fmtMetric(item.diff)}</td>
+                                <td class="px-4 py-3 text-right font-bold whitespace-nowrap ${colorClass}">${isPos ? '+' : ''}${item.pct.toFixed(1)}%</td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } catch (err) {
+                console.error(err);
+                showStatus(`Gagal menjalankan komparasi: ${err.message}`, 'error');
+            } finally {
+                spinner.classList.remove('fa-spin');
+            }
+        }
+
+        // ==========================================
+        // 9. MODUL CRUD LINK CSV & KIRIM KE ENDPOINT
+        // ==========================================
+        function renderCrudLinksTable() {
+            const tbody = document.getElementById('crudLinksTableBody');
+            const info = document.getElementById('crudLinkCountInfo');
+            info.textContent = `${monthlyLinks.length} periode link tersimpan`;
+
+            if (monthlyLinks.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-slate-400">Belum ada link CSV terdaftar. Tambahkan melalui form di atas.</td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = monthlyLinks.map((item, index) => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-4 py-3 text-xs font-semibold text-slate-400">${index + 1}</td>
+                    <td class="px-4 py-3 font-bold text-slate-800 whitespace-nowrap">${escapeHtml(item.bulan)}</td>
+                    <td class="px-4 py-3 font-medium text-slate-600 whitespace-nowrap">${escapeHtml(item.tahun)}</td>
+                    <td class="px-4 py-3 max-w-md truncate">
+                        ${item.url
+                            ? `<a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline text-xs">${escapeHtml(item.url)}</a>`
+                            : `<span class="text-xs italic text-rose-500">Belum ada URL</span>`}
+                    </td>
+                    <td class="px-4 py-3 text-center whitespace-nowrap">
+                        <div class="inline-flex items-center space-x-1.5">
+                            <button type="button" onclick="startEditLink('${escapeHtml(item.id)}')" title="Edit Link" class="px-2.5 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-xs font-semibold transition">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button type="button" onclick="deleteLinkItem('${escapeHtml(item.id)}')" title="Hapus Link" class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold transition">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function startEditLink(id) {
+            const target = monthlyLinks.find(m => m.id === id);
+            if (!target) return;
+
+            editingLinkId = target.id;
+            document.getElementById('crudFormTitle').innerHTML = `<i class="fa-solid fa-pen-to-square mr-1 text-amber-600"></i> Edit Link: ${escapeHtml(target.bulan)} ${escapeHtml(target.tahun)}`;
+            document.getElementById('crudBulanInput').value = target.bulan;
+            document.getElementById('crudTahunInput').value = target.tahun;
+            document.getElementById('crudUrlInput').value = target.url || '';
+            document.getElementById('saveCrudBtnText').textContent = 'Update';
+            document.getElementById('btnCancelEditLink').classList.remove('hidden');
+            document.getElementById('crudUrlInput').focus();
+        }
+
+        function resetCrudForm() {
+            editingLinkId = null;
+            document.getElementById('crudFormTitle').innerHTML = `<i class="fa-solid fa-plus-circle mr-1 text-indigo-600"></i> Tambah Periode & Link CSV Baru`;
+            document.getElementById('crudUrlInput').value = '';
+            document.getElementById('saveCrudBtnText').textContent = 'Simpan';
+            document.getElementById('btnCancelEditLink').classList.add('hidden');
+        }
+
+        function deleteLinkItem(id) {
+            const idx = monthlyLinks.findIndex(m => m.id === id);
+            if (idx === -1) return;
+
+            const removed = monthlyLinks[idx];
+            monthlyLinks.splice(idx, 1);
+            delete memoryDataCache[id];
+            saveLinksToLocalStorage();
+            initMonthSelectors();
+            renderCrudLinksTable();
+            showStatus(`Link ${removed.bulan} ${removed.tahun} dihapus dari daftar lokal.`, 'info');
+        }
+
+        async function handleCrudFormSubmit(e) {
+            e.preventDefault();
+            const bulan = document.getElementById('crudBulanInput').value.trim().toUpperCase();
+            const tahun = document.getElementById('crudTahunInput').value.trim();
+            const url = document.getElementById('crudUrlInput').value.trim();
+
+            if (!bulan || !tahun || !url) return;
+
+            const loadingBox = document.getElementById('crudLoadingBox');
+            const loadingText = document.getElementById('crudLoadingText');
+            const saveSpinner = document.getElementById('saveCrudSpinner');
+
+            loadingBox.classList.remove('hidden');
+            loadingText.textContent = `Menyimpan & memvalidasi link CSV ${bulan} ${tahun}...`;
+            saveSpinner.className = 'fa-solid fa-circle-notch fa-spin';
+
+            const newId = `${bulan}_${tahun}`.replace(/[^A-Z0-9_]/g, '_');
+
+            if (editingLinkId) {
+                const idx = monthlyLinks.findIndex(m => m.id === editingLinkId);
+                if (idx !== -1) {
+                    delete memoryDataCache[monthlyLinks[idx].id];
+                    monthlyLinks[idx] = { id: newId, bulan, tahun, url };
+                }
+            } else {
+                const existingIdx = monthlyLinks.findIndex(m => m.id === newId);
+                if (existingIdx !== -1) {
+                    monthlyLinks[existingIdx] = { id: newId, bulan, tahun, url };
+                } else {
+                    monthlyLinks.push({ id: newId, bulan, tahun, url });
+                }
+            }
+
+            saveLinksToLocalStorage();
+            initMonthSelectors();
+            renderCrudLinksTable();
+
+            try {
+                await fetchMonthDataset(newId, true);
+                uiState.selectedMonthId = newId;
+                saveStateToLocalStorage();
+                document.getElementById('sidebarMonthSelect').value = newId;
+                document.getElementById('quickMonthSelect').value = newId;
+                showStatus(`Link ${bulan} ${tahun} tersimpan & data CSV berhasil dimuat!`, 'success');
+            } catch (err) {
+                showStatus(`Link ${bulan} ${tahun} tersimpan, namun gagal memuat CSV: ${err.message}`, 'error');
+            } finally {
+                loadingBox.classList.add('hidden');
+                saveSpinner.className = 'fa-solid fa-floppy-disk';
+                resetCrudForm();
+            }
+        }
+
+        async function sendCrudPayloadToTarget() {
+            const targetUrl = (document.getElementById('crudTargetUrlInput').value || '').trim();
+            localStorage.setItem(LS_KEYS.CRUD_TARGET_URL, targetUrl);
+
+            if (!targetUrl) {
+                showStatus('Masukkan Link Tujuan Kirim Data CRUD terlebih dahulu.', 'error');
+                return;
+            }
+
+            const icon = document.getElementById('sendCrudIcon');
+            icon.className = 'fa-solid fa-circle-notch fa-spin';
+
+            const payload = {
+                action: 'SYNC_MONTHLY_LINKS',
+                updatedAt: new Date().toISOString(),
+                items: monthlyLinks.map(m => ({
+                    BULAN: m.bulan,
+                    TAHUN: m.tahun,
+                    LINK_INVENT: m.url
+                }))
+            };
+
+            try {
+                // Jika target adalah publish CSV read-only Google Sheets, beri tahu dengan jelas
+                if (targetUrl.includes('/pub?') && targetUrl.includes('output=csv')) {
+                    showStatus('Link tujuan berformat CSV (read-only). Data CRUD sudah tersimpan di Local Storage & siap dihubungkan ke endpoint POST/Apps Script.', 'info');
+                    return;
+                }
+
+                await fetch(targetUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                showStatus(`Data CRUD (${monthlyLinks.length} link) telah dikirim ke link tujuan.`, 'success');
+            } catch (err) {
+                showStatus(`Gagal mengirim data CRUD: ${err.message}`, 'error');
+            } finally {
+                icon.className = 'fa-solid fa-paper-plane';
+            }
+        }
+
+        // ==========================================
+        // 10. NAVIGASI TAB & LEFT SIDEBAR CONTROL
+        // ==========================================
+        async function switchView(viewName, runAutoAction = true) {
+            uiState.activeView = viewName;
+            saveStateToLocalStorage();
+
+            const views = {
+                dashboard: document.getElementById('viewDashboard'),
+                combined: document.getElementById('viewCombined'),
+                compare: document.getElementById('viewCompare'),
+                links: document.getElementById('viewLinks')
+            };
+
+            Object.keys(views).forEach(k => {
+                if (views[k]) {
+                    if (k === viewName) views[k].classList.remove('hidden');
+                    else views[k].classList.add('hidden');
+                }
+            });
+
+            const tabMap = {
+                dashboard: [document.getElementById('tabBtnDashboard'), document.getElementById('tabBtnDashboardMobile')],
+                combined: [document.getElementById('tabBtnCombined'), document.getElementById('tabBtnCombinedMobile')],
+                compare: [document.getElementById('tabBtnCompare'), document.getElementById('tabBtnCompareMobile')],
+                links: [document.getElementById('tabBtnLinks'), document.getElementById('tabBtnLinksMobile')]
+            };
+
+            Object.keys(tabMap).forEach(k => {
+                const isActive = k === viewName;
+                (tabMap[k] || []).forEach(btn => {
+                    if (!btn) return;
+                    if (isActive) {
+                        btn.classList.add('bg-indigo-600', 'text-white', 'shadow');
+                        btn.classList.remove('text-slate-300', 'hover:text-white');
+                    } else {
+                        btn.classList.remove('bg-indigo-600', 'text-white', 'shadow');
+                        btn.classList.add('text-slate-300', 'hover:text-white');
+                    }
+                });
+            });
+
+            if (runAutoAction) {
+                if (viewName === 'compare') {
+                    await runComparison();
+                } else if (viewName === 'combined') {
+                    await buildCombinedDashboard(false);
+                } else if (viewName === 'links') {
+                    renderCrudLinksTable();
+                }
+            }
+        }
+
+        function toggleLeftSidebar(forceState = null) {
+            uiState.leftSidebarOpen = forceState !== null ? forceState : !uiState.leftSidebarOpen;
+            applyLeftSidebarState();
+            saveStateToLocalStorage();
+        }
+
+        function applyLeftSidebarState() {
+            const sidebar = document.getElementById('leftFilterSidebar');
+            const backdrop = document.getElementById('leftSidebarBackdrop');
+            const toggleText = document.getElementById('toggleLeftNavText');
+
+            if (uiState.leftSidebarOpen) {
+                sidebar.classList.remove('-translate-x-full', 'lg:hidden');
+                sidebar.classList.add('translate-x-0');
+                backdrop.classList.remove('hidden');
+                if (toggleText) toggleText.textContent = 'Tutup Filter';
+            } else {
+                sidebar.classList.add('-translate-x-full', 'lg:hidden');
+                sidebar.classList.remove('translate-x-0');
+                backdrop.classList.add('hidden');
+                if (toggleText) toggleText.textContent = 'Filter';
+            }
+        }
+
+        // ==========================================
+        // 11. EVENT LISTENERS
+        // ==========================================
+        function setupEventListeners() {
+            document.getElementById('btnToggleLeftNav').addEventListener('click', () => toggleLeftSidebar());
+
+            document.getElementById('sidebarMonthSelect').addEventListener('change', (e) => {
+                loadMonthData(e.target.value, false);
+            });
+            document.getElementById('quickMonthSelect').addEventListener('change', (e) => {
+                loadMonthData(e.target.value, false);
+            });
+
+            document.getElementById('btnRefreshData').addEventListener('click', async () => {
+                await fetchMasterLinksFromCsv(true);
+                initMonthSelectors();
+                renderCrudLinksTable();
+
+                if (uiState.activeView === 'compare') {
+                    const mA = document.getElementById('compareMonthA').value;
+                    const mB = document.getElementById('compareMonthB').value;
+                    await Promise.all([fetchMonthDataset(mA, true), fetchMonthDataset(mB, true)]);
+                    await runComparison();
+                } else if (uiState.activeView === 'combined') {
+                    await buildCombinedDashboard(true);
+                } else {
+                    await loadMonthData(uiState.selectedMonthId, true);
+                }
+            });
+
+            document.getElementById('btnDownloadExcelMonthly').addEventListener('click', downloadMonthlyExcel);
+            document.getElementById('btnDownloadExcelCombined').addEventListener('click', downloadCombinedExcel);
+
+            const searchInput = document.getElementById('globalSearchInput');
+            searchInput.addEventListener('input', (e) => {
+                uiState.search = e.target.value;
+                uiState.currentPage = 1;
+                toggleClearSearchButton();
+                applyFiltersAndRender();
+                if (uiState.activeView === 'compare') runComparison();
+                if (uiState.activeView === 'combined') renderCombinedFromMemory();
+            });
+
+            document.getElementById('btnClearSearch').addEventListener('click', () => {
+                searchInput.value = '';
+                uiState.search = '';
+                uiState.currentPage = 1;
+                toggleClearSearchButton();
+                applyFiltersAndRender();
+                if (uiState.activeView === 'compare') runComparison();
+                if (uiState.activeView === 'combined') renderCombinedFromMemory();
+                searchInput.focus();
+            });
+
+            document.getElementById('btnResetAll').addEventListener('click', () => {
+                searchInput.value = '';
+                uiState.search = '';
+                toggleClearSearchButton();
+
+                FILTER_FIELDS.forEach(f => {
+                    uiState.filters[f.col] = '';
+                    const inp = document.getElementById(`searchInput_${f.col}`);
+                    const clr = document.getElementById(`clearBtn_${f.col}`);
+                    if (inp) inp.value = '';
+                    if (clr) clr.classList.add('hidden');
+                });
+
+                uiState.currentPage = 1;
+                applyFiltersAndRender();
+                if (uiState.activeView === 'compare') runComparison();
+                if (uiState.activeView === 'combined') renderCombinedFromMemory();
+                showStatus('Semua filter dan pencarian telah direset.', 'info');
+            });
+
+            document.getElementById('chartGroupDimension').addEventListener('change', (e) => {
+                uiState.chartGroupDimension = e.target.value;
+                saveStateToLocalStorage();
+                updateCharts();
+            });
+            document.getElementById('chartMetric').addEventListener('change', (e) => {
+                uiState.chartMetric = e.target.value;
+                saveStateToLocalStorage();
+                updateCharts();
+            });
+            document.getElementById('chartStackKategori').addEventListener('change', (e) => {
+                uiState.chartStackKategori = e.target.checked;
+                saveStateToLocalStorage();
+                updateCharts();
+            });
+
+            document.getElementById('btnLoadAllCombined').addEventListener('click', () => buildCombinedDashboard(true));
+            document.getElementById('combSortBy').addEventListener('change', (e) => {
+                uiState.combSortBy = e.target.value;
+                saveStateToLocalStorage();
+                renderCombinedFromMemory();
+            });
+
+            document.getElementById('btnRunCompare').addEventListener('click', () => runComparison());
+            document.getElementById('compareMonthA').addEventListener('change', () => runComparison());
+            document.getElementById('compareMonthB').addEventListener('change', () => runComparison());
+            document.getElementById('compGroupDim').addEventListener('change', (e) => {
+                uiState.compGroupDim = e.target.value;
+                saveStateToLocalStorage();
+                runComparison();
+            });
+            document.getElementById('compMetricDim').addEventListener('change', (e) => {
+                uiState.compMetricDim = e.target.value;
+                saveStateToLocalStorage();
+                runComparison();
+            });
+
+            document.getElementById('crudLinkForm').addEventListener('submit', handleCrudFormSubmit);
+            document.getElementById('btnReloadMasterCsv').addEventListener('click', async () => {
+                await fetchMasterLinksFromCsv(true);
+                initMonthSelectors();
+                renderCrudLinksTable();
+            });
+            document.getElementById('btnSendCrudToTarget').addEventListener('click', sendCrudPayloadToTarget);
+
+            document.getElementById('rowsPerPage').addEventListener('change', (e) => {
+                uiState.rowsPerPage = parseInt(e.target.value, 10);
+                uiState.currentPage = 1;
+                saveStateToLocalStorage();
+                renderTableBody();
+            });
+            document.getElementById('btnFirstPage').addEventListener('click', () => {
+                uiState.currentPage = 1;
+                saveStateToLocalStorage();
+                renderTableBody();
+            });
+            document.getElementById('btnPrevPage').addEventListener('click', () => {
+                if (uiState.currentPage > 1) {
+                    uiState.currentPage--;
+                    saveStateToLocalStorage();
+                    renderTableBody();
+                }
+            });
+            document.getElementById('btnNextPage').addEventListener('click', () => {
+                const totalPages = Math.ceil(filteredData.length / uiState.rowsPerPage);
+                if (uiState.currentPage < totalPages) {
+                    uiState.currentPage++;
+                    saveStateToLocalStorage();
+                    renderTableBody();
+                }
+            });
+            document.getElementById('btnLastPage').addEventListener('click', () => {
+                uiState.currentPage = Math.max(1, Math.ceil(filteredData.length / uiState.rowsPerPage));
+                saveStateToLocalStorage();
+                renderTableBody();
+            });
+        }
+
+        function toggleClearSearchButton() {
+            const val = document.getElementById('globalSearchInput').value;
+            const clearBtn = document.getElementById('btnClearSearch');
+            if (val && val.length > 0) clearBtn.classList.remove('hidden');
+            else clearBtn.classList.add('hidden');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function showStatus(msg, type = 'info') {
+            const banner = document.getElementById('statusBanner');
+            const icon = document.getElementById('statusIcon');
+            const text = document.getElementById('statusMessage');
+
+            banner.classList.remove('hidden', 'bg-indigo-50', 'text-indigo-700', 'bg-emerald-50', 'text-emerald-700', 'bg-rose-50', 'text-rose-700');
+
+            if (type === 'success') {
+                banner.classList.add('bg-emerald-50', 'text-emerald-700', 'border', 'border-emerald-200');
+                icon.className = 'fa-solid fa-circle-check text-lg shrink-0';
+            } else if (type === 'error') {
+                banner.classList.add('bg-rose-50', 'text-rose-700', 'border', 'border-rose-200');
+                icon.className = 'fa-solid fa-circle-exclamation text-lg shrink-0';
+            } else {
+                banner.classList.add('bg-indigo-50', 'text-indigo-700', 'border', 'border-indigo-200');
+                icon.className = 'fa-solid fa-circle-info text-lg shrink-0';
+            }
+
+            text.textContent = msg;
+            if (type !== 'error') {
+                setTimeout(() => banner.classList.add('hidden'), 4500);
+            }
+        }
+    </script>
+</body>
+</html>
