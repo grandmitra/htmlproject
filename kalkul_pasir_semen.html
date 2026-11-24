@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estimator Material Bangunan Profesional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .card-animate { animation: fadeIn 0.6s ease-out forwards; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 p-4 md:p-10">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-blue-900 mb-2">Estimator Bangunan</h1>
+            <p class="text-slate-600">Alat bantu hitung material akurat berbasis standar koefisien SNI.</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- 1. Bata Merah -->
+            <section class="bg-white p-6 rounded-2xl shadow-lg card-animate border-t-4 border-blue-600 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Bata Merah</h2>
+                    <input type="number" id="luasBata" class="w-full p-2.5 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Luas Dinding (m²)">
+                    <button onclick="hitungBata()" class="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition">Hitung</button>
+                </div>
+                <div id="hasilBata" class="mt-4 hidden"></div>
+            </section>
+
+            <!-- 2. Pasir & Semen Pasang Bata -->
+            <section class="bg-white p-6 rounded-2xl shadow-lg card-animate border-t-4 border-yellow-600 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Pasir & Semen Pasang Bata (1:4)</h2>
+                    <input type="number" id="areaPS" class="w-full p-2.5 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-yellow-500" placeholder="Luas Dinding (m²)">
+                    <select id="beratSemen" class="w-full p-2.5 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-yellow-500">
+                        <option value="40">Semen 40 kg</option>
+                        <option value="50">Semen 50 kg</option>
+                    </select>
+                    <button onclick="hitungPasirSemen()" class="w-full bg-yellow-600 text-white py-2.5 rounded-lg font-medium hover:bg-yellow-700 transition">Hitung</button>
+                </div>
+                <div id="hasilPasirSemen" class="mt-4 hidden"></div>
+            </section>
+
+            <!-- 3. Plesteran Dinding -->
+            <section class="bg-white p-6 rounded-2xl shadow-lg card-animate border-t-4 border-orange-600 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Plesteran Dinding (Tebal 15 mm)</h2>
+                    <input type="number" id="areaPlester" class="w-full p-2.5 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Luas Dinding (m²)">
+                    <div class="flex gap-2 mb-3">
+                        <select id="rasioPlester" class="w-1/2 p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <option value="1:4" selected>Campuran 1 : 4 (Umum)</option>
+                            <option value="1:3">Campuran 1 : 3 (Kedap Air)</option>
+                            <option value="1:5">Campuran 1 : 5 (Standar)</option>
+                        </select>
+                        <select id="beratSemenPlester" class="w-1/2 p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500">
+                            <option value="40">Semen 40 kg</option>
+                            <option value="50">Semen 50 kg</option>
+                        </select>
+                    </div>
+                    <button onclick="hitungPlesteran()" class="w-full bg-orange-600 text-white py-2.5 rounded-lg font-medium hover:bg-orange-700 transition">Hitung</button>
+                </div>
+                <div id="hasilPlester" class="mt-4 hidden"></div>
+            </section>
+
+            <!-- 4. Keramik / Granit -->
+            <section class="bg-white p-6 rounded-2xl shadow-lg card-animate border-t-4 border-emerald-600 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Keramik / Granit</h2>
+                    <input type="number" id="kLuas" class="w-full p-2.5 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Luas Area (m²)">
+                    <div class="flex gap-2 mb-3">
+                        <input type="number" id="kp" class="w-1/2 p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="P (cm)">
+                        <input type="number" id="kl" class="w-1/2 p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="L (cm)">
+                    </div>
+                    <button onclick="hitungKeramik()" class="w-full bg-emerald-600 text-white py-2.5 rounded-lg font-medium hover:bg-emerald-700 transition">Hitung</button>
+                </div>
+                <div id="hasilKeramik" class="mt-4 hidden"></div>
+            </section>
+
+            <!-- 5. Kubikasi Kayu Kaso -->
+            <section class="bg-white p-6 rounded-2xl shadow-lg card-animate border-t-4 border-amber-900 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Kubikasi Kayu Kaso (5×7 cm)</h2>
+                    <input type="number" id="kpj" class="w-full p-2.5 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-amber-700" placeholder="Panjang per Batang (m)">
+                    <input type="number" id="kjml" class="w-full p-2.5 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-amber-700" placeholder="Jumlah (btg)">
+                    <button onclick="hitungKayu()" class="w-full bg-amber-900 text-white py-2.5 rounded-lg font-medium hover:bg-black transition">Hitung m³</button>
+                </div>
+                <div id="hasilKayu" class="mt-4 hidden"></div>
+            </section>
+
+            <!-- 6. Kalkulator Cat -->
+            <section class="bg-white p-6 rounded-2xl shadow-lg card-animate border-t-4 border-purple-600 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-4">Kalkulator Cat</h2>
+                    <input type="number" id="luasCat" class="w-full p-2.5 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Luas Dinding (m²)">
+                    <input type="number" id="dayaSebar" class="w-full p-2.5 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Daya Sebar (m²/kg) - misal: 10">
+                    <input type="number" id="lapisan" class="w-full p-2.5 border rounded-lg mb-3 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Jumlah Lapisan - misal: 2">
+                    <button onclick="hitungCat()" class="w-full bg-purple-600 text-white py-2.5 rounded-lg font-medium hover:bg-purple-700 transition">Hitung</button>
+                </div>
+                <div id="hasilCat" class="mt-4 hidden"></div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Toast Notifikasi Salin -->
+    <div id="toastSalin" class="fixed bottom-5 right-5 bg-slate-900 text-white text-xs font-semibold px-4 py-2.5 rounded-xl shadow-xl opacity-0 pointer-events-none transition-opacity duration-300 z-50">
+        ✓ Ringkasan perhitungan berhasil disalin ke clipboard!
+    </div>
+
+    <script>
+        const sharePayloads = {};
+
+        function toggleDetail(id) {
+            const el = document.getElementById(id);
+            const btn = document.getElementById('btn-' + id);
+            if (el.classList.contains('hidden')) {
+                el.classList.remove('hidden');
+                btn.innerHTML = '▲ Sembunyikan Detail Hitung';
+            } else {
+                el.classList.add('hidden');
+                btn.innerHTML = '▼ Detail Hitung';
+            }
+        }
+
+        function showToast(msg = '✓ Ringkasan perhitungan berhasil disalin ke clipboard!') {
+            const toast = document.getElementById('toastSalin');
+            toast.textContent = msg;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 2400);
+        }
+
+        function copySummary(key) {
+            const text = sharePayloads[key];
+            if (!text) return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(() => showToast()).catch(() => fallbackCopy(text));
+            } else {
+                fallbackCopy(text);
+            }
+        }
+
+        function fallbackCopy(text) {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+            showToast();
+        }
+
+        function shareWhatsApp(key) {
+            const text = sharePayloads[key];
+            if (!text) return;
+            const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+
+        function renderResult(containerId, colorClass, summaryHtml, detailId, detailHtml, shareText) {
+            sharePayloads[detailId] = shareText;
+            const container = document.getElementById(containerId);
+            container.classList.remove('hidden');
+            container.innerHTML = `
+                <div class="p-3.5 ${colorClass.bg} rounded-lg text-sm font-semibold ${colorClass.text} border ${colorClass.border}">
+                    <div class="flex justify-between items-start gap-2">
+                        <div>${summaryHtml}</div>
+                        <button id="btn-${detailId}" onclick="toggleDetail('${detailId}')" class="text-xs px-2.5 py-1.5 bg-white/80 hover:bg-white rounded-md border ${colorClass.border} shadow-sm transition shrink-0 font-bold">
+                            ▼ Detail Hitung
+                        </button>
+                    </div>
+                    <div class="mt-3 pt-2.5 border-t ${colorClass.border}/70 flex flex-wrap gap-2">
+                        <button onclick="copySummary('${detailId}')" class="text-xs px-2.5 py-1.5 bg-white hover:bg-slate-50 text-slate-800 rounded-md border border-slate-300 shadow-sm transition font-semibold">
+                            📋 Salin
+                        </button>
+                        <button onclick="shareWhatsApp('${detailId}')" class="text-xs px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-md shadow-sm transition font-semibold">
+                            💬 Share WhatsApp
+                        </button>
+                    </div>
+                    <div id="${detailId}" class="hidden mt-3 pt-3 border-t ${colorClass.border} text-xs font-normal leading-relaxed space-y-2 text-slate-700 bg-white/70 p-3 rounded-md">
+                        ${detailHtml}
+                    </div>
+                </div>
+            `;
+        }
+
+        function hitungBata() {
+            const luas = parseFloat(document.getElementById('luasBata').value) || 0;
+            if (luas <= 0) return;
+            const koef = 75;
+            const exact = luas * koef;
+            const total = Math.ceil(exact);
+
+            const summary = `Estimasi: <strong>${total} pcs bata</strong>`;
+            const detail = `
+                <div>
+                    <p class="font-bold text-slate-900">1. Kebutuhan Bata Merah</p>
+                    <p>Berdasarkan standar pasangan 1 m² dinding bata merah (tebal ½ batu), dibutuhkan sekitar <strong>${koef} pcs</strong> bata per m² (termasuk toleransi pecah).</p>
+                    <ul class="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Total hitungan: ${luas} m² × ${koef} pcs = ${exact.toFixed(1)} pcs</li>
+                        <li>Pembulatan ke atas: <strong>${total} pcs bata</strong></li>
+                    </ul>
+                </div>
+            `;
+            const shareText = `*Estimasi Bata Merah*\n• Luas Dinding: ${luas} m²\n• Kebutuhan: *${total} pcs bata* (standar ${koef} pcs/m²)`;
+            renderResult('hasilBata', {bg: 'bg-blue-50', text: 'text-blue-900', border: 'border-blue-200'}, summary, 'detailBata', detail, shareText);
+        }
+
+        function hitungPasirSemen() {
+            const luas = parseFloat(document.getElementById('areaPS').value) || 0;
+            if (luas <= 0) return;
+            const berat = parseFloat(document.getElementById('beratSemen').value);
+            
+            const koefSemen = 11.50;
+            const koefPasir = 0.043;
+
+            const totalSemenKg = luas * koefSemen;
+            const zakExact = totalSemenKg / berat;
+            const zakBulat = Math.ceil(zakExact);
+            const totalPasir = luas * koefPasir;
+
+            const summary = `Semen: <strong>${zakBulat} Zak</strong> (${berat} kg)<br>Pasir: <strong>${totalPasir.toFixed(2)} m³</strong>`;
+            const detail = `
+                <div>
+                    <p class="font-bold text-slate-900">1. Kebutuhan Semen (Kemasan ${berat} kg)</p>
+                    <p>Berdasarkan koefisien SNI pemasangan 1 m² dinding bata merah (tebal ½ batu) campuran 1SP : 4PP, dibutuhkan <strong>${koefSemen.toFixed(2)} kg</strong> semen per m².</p>
+                    <ul class="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Total berat semen: ${luas} m² × ${koefSemen.toFixed(2)} kg = ${totalSemenKg.toFixed(2)} kg</li>
+                        <li>Jumlah zak (${berat} kg): ${totalSemenKg.toFixed(2)} kg ÷ ${berat} kg = ${zakExact.toFixed(4)} zak</li>
+                        <li>Pembulatan ke atas: <strong>${zakBulat} Zak</strong></li>
+                    </ul>
+                </div>
+                <div class="pt-1">
+                    <p class="font-bold text-slate-900">2. Kebutuhan Pasir Pasang</p>
+                    <p>Berdasarkan koefisien SNI, dibutuhkan <strong>${koefPasir} m³</strong> pasir pasang per m².</p>
+                    <ul class="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Total volume pasir: ${luas} m² × ${koefPasir} m³ = <strong>${totalPasir.toFixed(2)} m³</strong> (${totalPasir.toFixed(3)} m³)</li>
+                    </ul>
+                </div>
+            `;
+            const shareText = `*Estimasi Pasir & Semen Pasang Bata (1:4)*\n• Luas Dinding: ${luas} m²\n• Semen (${berat} kg): *${zakBulat} Zak* (${totalSemenKg.toFixed(1)} kg)\n• Pasir Pasang: *${totalPasir.toFixed(2)} m³*`;
+            renderResult('hasilPasirSemen', {bg: 'bg-yellow-50', text: 'text-yellow-900', border: 'border-yellow-200'}, summary, 'detailPS', detail, shareText);
+        }
+
+        function hitungPlesteran() {
+            const luas = parseFloat(document.getElementById('areaPlester').value) || 0;
+            if (luas <= 0) return;
+            const rasio = document.getElementById('rasioPlester').value;
+            const berat = parseFloat(document.getElementById('beratSemenPlester').value);
+
+            const koefisien = {
+                '1:3': { semen: 7.776, pasir: 0.023 },
+                '1:4': { semen: 6.240, pasir: 0.024 },
+                '1:5': { semen: 5.184, pasir: 0.026 }
+            };
+
+            const k = koefisien[rasio];
+            const totalSemenKg = luas * k.semen;
+            const zakExact = totalSemenKg / berat;
+            const totalZak = Math.ceil(zakExact);
+            const totalPasir = luas * k.pasir;
+
+            const summary = `Semen: <strong>${totalZak} Zak</strong> (${berat} kg)<br>Pasir: <strong>${totalPasir.toFixed(2)} m³</strong>`;
+            const detail = `
+                <div>
+                    <p class="font-bold text-slate-900">1. Kebutuhan Semen (Kemasan ${berat} kg)</p>
+                    <p>Berdasarkan koefisien SNI 2837:2008 plesteran 1 m² (tebal 15 mm) campuran <strong>${rasio}</strong>, dibutuhkan <strong>${k.semen} kg</strong> semen per m².</p>
+                    <ul class="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Total berat semen: ${luas} m² × ${k.semen} kg = ${totalSemenKg.toFixed(2)} kg</li>
+                        <li>Jumlah zak (${berat} kg): ${totalSemenKg.toFixed(2)} kg ÷ ${berat} kg = ${zakExact.toFixed(4)} zak</li>
+                        <li>Pembulatan ke atas: <strong>${totalZak} Zak</strong></li>
+                    </ul>
+                </div>
+                <div class="pt-1">
+                    <p class="font-bold text-slate-900">2. Kebutuhan Pasir Pasang</p>
+                    <p>Berdasarkan koefisien SNI, dibutuhkan <strong>${k.pasir} m³</strong> pasir per m².</p>
+                    <ul class="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Total volume pasir: ${luas} m² × ${k.pasir} m³ = <strong>${totalPasir.toFixed(2)} m³</strong> (${totalPasir.toFixed(3)} m³)</li>
+                    </ul>
+                </div>
+            `;
+            const shareText = `*Estimasi Plesteran Dinding (15 mm, ${rasio})*\n• Luas Dinding: ${luas} m²\n• Semen (${berat} kg): *${totalZak} Zak* (${totalSemenKg.toFixed(1)} kg)\n• Pasir Pasang: *${totalPasir.toFixed(2)} m³*`;
+            renderResult('hasilPlester', {bg: 'bg-orange-50', text: 'text-orange-900', border: 'border-orange-200'}, summary, 'detailPlester', detail, shareText);
+        }
+
+        function hitungKeramik() {
+            const luas = parseFloat(document.getElementById('kLuas').value) || 0;
+            const pCm = parseFloat(document.getElementById('kp').value) || 0;
+            const lCm = parseFloat(document.getElementById('kl').value) || 0;
+            if (luas <= 0 || pCm <= 0 || lCm <= 0) return;
+
+            const p = pCm / 100;
+            const l = lCm / 100;
+            const luasKeping = p * l;
+            const kepingMurni = luas / luasKeping;
+            const kepingCadangan = kepingMurni * 1.1;
+            const total = Math.ceil(kepingCadangan);
+
+            const summary = `Estimasi: <strong>${total} keping</strong> (inc. 10% cadangan)`;
+            const detail = `
+                <div>
+                    <p class="font-bold text-slate-900">1. Luas Per Keping Keramik / Granit</p>
+                    <ul class="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Ukuran: ${pCm} cm × ${lCm} cm = ${p} m × ${l} m = <strong>${luasKeping.toFixed(4)} m²/keping</strong></li>
+                    </ul>
+                </div>
+                <div class="pt-1">
+                    <p class="font-bold text-slate-900">2. Kebutuhan Keping + Cadangan (10%)</p>
+                    <ul class="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Kebutuhan bersih: ${luas} m² ÷ ${luasKeping.toFixed(4)} m² = ${kepingMurni.toFixed(2)} keping</li>
+                        <li>Tambah cadangan 10% (potongan/pecah): ${kepingMurni.toFixed(2)} × 1,1 = ${kepingCadangan.toFixed(2)} keping</li>
+                        <li>Pembulatan ke atas: <strong>${total} keping</strong></li>
+                    </ul>
+                </div>
+            `;
+            const shareText = `*Estimasi Keramik / Granit*\n• Luas Area: ${luas} m²\n• Ukuran: ${pCm}×${lCm} cm\n• Kebutuhan: *${total} keping* (sudah termasuk cadangan 10%)`;
+            renderResult('hasilKeramik', {bg: 'bg-emerald-50', text: 'text-emerald-900', border: 'border-emerald-200'}, summary, 'detailKeramik', detail, shareText);
+        }
+
+        function hitungKayu() {
+            const p = parseFloat(document.getElementById('kpj').value) || 0;
+            const j = parseFloat(document.getElementById('kjml').value) || 0;
+            if (p <= 0 || j <= 0) return;
+
+            const pCm = p * 100;
+            const volPerBtg = (5 * 7 * pCm) / 1000000;
+            const totalVol = volPerBtg * j;
+
+            const summary = `Total Volume: <strong>${totalVol.toFixed(3)} m³</strong>`;
+            const detail = `
+                <div>
+                    <p class="font-bold text-slate-900">1. Rumus Kubikasi Kayu Kaso (5 × 7 cm)</p>
+                    <ul class="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Volume 1 batang: (5 cm × 7 cm × ${pCm} cm) ÷ 1.000.000 = ${volPerBtg.toFixed(4)} m³</li>
+                        <li>Total volume (${j} batang): ${volPerBtg.toFixed(4)} m³ × ${j} btg = <strong>${totalVol.toFixed(3)} m³</strong></li>
+                    </ul>
+                </div>
+            `;
+            const shareText = `*Estimasi Kubikasi Kayu Kaso (5×7 cm)*\n• Panjang: ${p} m | Jumlah: ${j} btg\n• Total Volume: *${totalVol.toFixed(3)} m³*`;
+            renderResult('hasilKayu', {bg: 'bg-amber-50', text: 'text-amber-900', border: 'border-amber-200'}, summary, 'detailKayu', detail, shareText);
+        }
+
+        function hitungCat() {
+            const luas = parseFloat(document.getElementById('luasCat').value) || 0;
+            const sebar = parseFloat(document.getElementById('dayaSebar').value) || 0;
+            const lapis = parseFloat(document.getElementById('lapisan').value) || 1;
+            if (luas <= 0 || sebar <= 0) return;
+
+            const luasTotal = luas * lapis;
+            const totalKg = luasTotal / sebar;
+
+            const summary = `Estimasi: <strong>${totalKg.toFixed(1)} kg cat</strong>`;
+            const detail = `
+                <div>
+                    <p class="font-bold text-slate-900">1. Perhitungan Daya Sebar Cat</p>
+                    <ul class="list-disc pl-4 mt-1 space-y-0.5">
+                        <li>Total luas pengecatan (${lapis} lapis): ${luas} m² × ${lapis} = ${luasTotal} m²</li>
+                        <li>Kebutuhan cat: ${luasTotal} m² ÷ ${sebar} m²/kg = <strong>${totalKg.toFixed(2)} kg</strong> (dibulatkan ${totalKg.toFixed(1)} kg)</li>
+                    </ul>
+                </div>
+            `;
+            const shareText = `*Estimasi Kebutuhan Cat*\n• Luas Dinding: ${luas} m² (${lapis} lapis)\n• Daya Sebar: ${sebar} m²/kg\n• Kebutuhan: *${totalKg.toFixed(1)} kg cat*`;
+            renderResult('hasilCat', {bg: 'bg-purple-50', text: 'text-purple-900', border: 'border-purple-200'}, summary, 'detailCat', detail, shareText);
+        }
+    </script>
+</body>
+</html>
