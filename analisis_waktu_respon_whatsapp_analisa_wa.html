@@ -3,1416 +3,1099 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Analisa WA — Dashboard Waktu Respon Percakapan</title>
-
-  <!-- Google Fonts: Inter -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
-  <!-- Tailwind CSS via CDN -->
+  <title>Analisa Respon & Media WhatsApp (Folder Mode)</title>
+  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'sans-serif'],
-          },
-          colors: {
-            wa: {
-              50: '#ecfdf5',
-              100: '#d1fae5',
-              200: '#a7f3d0',
-              500: '#10b981',
-              600: '#059669',
-              700: '#047857',
-              800: '#065f46',
-              900: '#064e3b',
-            }
-          }
-        }
-      }
-    };
-  </script>
-
-  <!-- SheetJS (XLSX) untuk membaca & export file Excel -->
-  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-
-  <!-- Lucide Icons via CDN -->
-  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Chart.js untuk Grafik Perbandingan & Komposisi -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS untuk Export ke Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .excel-table th { position: sticky; top: 0; z-index: 10; }
+  </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
 
-  <!-- Toast Notification Container -->
-  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0 pointer-events-none"></div>
-
-  <!-- Top Navigation Header -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
-      <div class="flex items-center gap-3 min-w-0">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-sm shrink-0">
-          <i data-lucide="message-square-clock" class="w-5 h-5"></i>
+  <!-- Header -->
+  <header class="bg-emerald-700 text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="bg-white/20 p-2 rounded-lg">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+          </svg>
         </div>
-        <div class="min-w-0">
-          <h1 class="text-base sm:text-lg font-bold text-slate-900 truncate">Analisa Waktu Respon WA</h1>
-          <p class="text-xs text-slate-500 hidden sm:block">Audit kecepatan balasan percakapan WhatsApp (.txt / .xlsx)</p>
+        <div>
+          <h1 class="text-base md:text-lg font-bold leading-tight">Analisa Respon & Media WA</h1>
+          <p class="text-[11px] text-emerald-100">Mode Folder Lengkap (.txt, .vcf, Image, PDF, Dokumen) • Zero-Lag Memory</p>
         </div>
       </div>
 
-      <div class="flex items-center gap-2 shrink-0">
-        <button
-          id="btn-load-demo"
-          type="button"
-          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
-          title="Muat contoh percakapan untuk simulasi"
-        >
-          <i data-lucide="sparkles" class="w-4 h-4 text-emerald-600"></i>
-          <span>Data Contoh</span>
-        </button>
-
-        <label
-          for="file-input"
-          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition cursor-pointer"
-        >
-          <i data-lucide="upload" class="w-4 h-4"></i>
-          <span>Upload File</span>
+      <!-- Tombol Pilih Folder & Export -->
+      <div class="flex items-center gap-2">
+        <label class="cursor-pointer bg-white text-emerald-800 hover:bg-emerald-50 font-semibold text-xs md:text-sm px-3.5 py-2 rounded-lg shadow-sm flex items-center gap-2 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          <span>Pilih Folder WA</span>
+          <input type="file" id="folderInput" webkitdirectory directory multiple class="hidden" />
         </label>
-        <input
-          id="file-input"
-          type="file"
-          accept=".txt,.xlsx,.xls,.csv"
-          class="hidden"
-        />
+
+        <button id="btnExport" disabled onclick="exportToExcel()" class="bg-emerald-900/60 disabled:opacity-40 hover:bg-emerald-900 text-white font-medium text-xs md:text-sm px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition cursor-pointer disabled:cursor-not-allowed">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span class="hidden sm:inline">Export Excel</span>
+        </button>
       </div>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+  <main class="max-w-7xl mx-auto px-3 md:px-4 py-5 space-y-5">
 
-    <!-- Empty State / Upload Dropzone -->
-    <section id="empty-state" class="bg-white rounded-2xl border-2 border-dashed border-slate-300 hover:border-emerald-500 transition p-8 sm:p-12 text-center shadow-xs">
-      <div
-        id="drop-zone"
-        class="max-w-xl mx-auto flex flex-col items-center justify-center cursor-pointer"
-      >
-        <div class="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4">
-          <i data-lucide="file-spreadsheet" class="w-8 h-8"></i>
-        </div>
-        <h2 class="text-lg sm:text-xl font-bold text-slate-900 mb-2">
-          Upload File Chat WhatsApp atau Hasil Analisa Excel
-        </h2>
-        <p class="text-sm text-slate-500 mb-6 leading-relaxed">
-          Tarik & lepas file ke area ini, atau klik tombol di bawah. Mendukung file mentah <strong>Export Chat WhatsApp (.txt)</strong> format Android & iOS, maupun file olahan <strong>(.xlsx / .csv)</strong>.
-        </p>
-
-        <div class="flex flex-col sm:flex-row items-center justify-center gap-3 w-full sm:w-auto">
-          <label
-            for="file-input"
-            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition cursor-pointer"
-          >
-            <i data-lucide="folder-open" class="w-4 h-4"></i>
-            <span>Pilih File (.txt / .xlsx)</span>
-          </label>
-          <button
-            id="btn-load-demo-hero"
-            type="button"
-            class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
-          >
-            <i data-lucide="play-circle" class="w-4 h-4 text-emerald-600"></i>
-            <span>Coba Pakai Data Contoh</span>
-          </button>
-        </div>
-
-        <div class="mt-8 pt-6 border-t border-slate-100 w-full grid grid-cols-1 sm:grid-cols-3 gap-3 text-left text-xs text-slate-500">
-          <div class="bg-slate-50 p-3 rounded-xl">
-            <span class="font-semibold text-slate-700 block mb-0.5">1. Privasi 100% Aman</span>
-            Semua proses parsing & hitung berjalan lokal di browser Anda.
-          </div>
-          <div class="bg-slate-50 p-3 rounded-xl">
-            <span class="font-semibold text-slate-700 block mb-0.5">2. Auto-Deteksi Format</span>
-            Otomatis mengenali format tanggal Android, iOS, & tabel Excel.
-          </div>
-          <div class="bg-slate-50 p-3 rounded-xl">
-            <span class="font-semibold text-slate-700 block mb-0.5">3. Siap Export Excel</span>
-            Unduh hasil filter beserta ringkasan per pengirim dalam 1 klik.
-          </div>
-        </div>
+    <!-- Empty State -->
+    <div id="emptyState" class="bg-white border-2 border-dashed border-emerald-300 rounded-2xl p-8 text-center shadow-sm">
+      <div class="w-14 h-14 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto mb-3">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+        </svg>
       </div>
-    </section>
+      <h2 class="text-lg font-bold text-slate-800">Pilih Folder Hasil Export WhatsApp</h2>
+      <p class="text-sm text-slate-500 max-w-xl mx-auto mt-1">
+        Klik tombol <b>"Pilih Folder WA"</b> di atas lalu pilih folder hasil ekstrak.
+        Sistem hanya membaca teks chat & kontak (.vcf) sehingga tetap <b>sangat ringan</b> walau berisi ratusan foto, PDF, atau presentasi.
+      </p>
+      <div class="mt-4">
+        <label class="cursor-pointer inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow transition">
+          <span>Buka Folder Sekarang</span>
+          <input type="file" id="folderInputHero" webkitdirectory directory multiple class="hidden" />
+        </label>
+      </div>
+    </div>
 
-    <!-- Dashboard Content (Hidden until data loaded) -->
-    <div id="dashboard-content" class="hidden space-y-6">
+    <!-- Main Dashboard -->
+    <div id="dashboardContent" class="hidden space-y-5">
 
-      <!-- Active File Info & Global Filter Bar -->
-      <section class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
-          <div class="flex items-center gap-3 min-w-0">
-            <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-              <i data-lucide="file-check-2" class="w-5 h-5"></i>
-            </div>
-            <div class="min-w-0">
-              <div class="flex items-center gap-2">
-                <h2 id="file-name-display" class="text-sm sm:text-base font-bold text-slate-900 truncate">hasil_analisa_respon.xlsx</h2>
-                <span id="file-type-badge" class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800 shrink-0">XLSX</span>
-              </div>
-              <p id="file-meta-display" class="text-xs text-slate-500 mt-0.5">Memuat informasi data...</p>
-            </div>
+      <!-- Info Folder & Filter Panel -->
+      <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md" id="folderNameBadge">Folder: -</span>
+            <span class="text-xs text-slate-500 ml-2" id="folderStatsText">0 file terdeteksi</span>
           </div>
-
-          <div class="flex items-center gap-2 self-end sm:self-auto">
-            <button
-              id="btn-reset-filters"
-              type="button"
-              class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
-            >
-              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-              <span>Reset Filter</span>
-            </button>
-            <button
-              id="btn-export-excel"
-              type="button"
-              class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs transition cursor-pointer"
-            >
-              <i data-lucide="download" class="w-3.5 h-3.5"></i>
-              <span>Export ke Excel</span>
-            </button>
-          </div>
+          <button onclick="resetFilters()" class="text-xs text-slate-500 hover:text-emerald-700 underline">Reset Semua Filter</button>
         </div>
 
-        <!-- Filter Controls Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          <!-- Filter Pengirim -->
+        <!-- Grid Filter -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
           <div>
-            <label for="filter-sender" class="block text-xs font-semibold text-slate-600 mb-1">Filter Pengirim (Penjawab)</label>
-            <select
-              id="filter-sender"
-              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            >
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dari Tanggal</label>
+            <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Sampai Tanggal</label>
+            <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Pengirim (Pembalas)</label>
+            <select id="filterSender" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
               <option value="ALL">Semua Pengirim</option>
             </select>
           </div>
 
-          <!-- Filter Batas Maksimal Respon -->
           <div>
-            <label for="filter-max-response" class="block text-xs font-semibold text-slate-600 mb-1">Batas Waktu Respon Valid</label>
-            <select
-              id="filter-max-response"
-              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            >
-              <option value="720" selected>Maks. 12 Jam (720 menit)</option>
-              <option value="60">Maks. 1 Jam (60 menit)</option>
-              <option value="240">Maks. 4 Jam (240 menit)</option>
-              <option value="1440">Maks. 24 Jam (1.440 menit)</option>
-              <option value="ALL">Semua Durasi (Tanpa Batas)</option>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Kondisi Jeda Respon</label>
+            <select id="filterDelayOp" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+              <option value="lte">Di bawah / Maksimal (≤)</option>
+              <option value="gte">Di atas / Minimal (≥)</option>
             </select>
           </div>
 
-          <!-- Filter Tanggal Mulai -->
           <div>
-            <label for="filter-date-start" class="block text-xs font-semibold text-slate-600 mb-1">Dari Tanggal</label>
-            <input
-              id="filter-date-start"
-              type="date"
-              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            />
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Batas Menit (Kosong = Semua)</label>
+            <input type="number" id="filterDelayVal" value="720" min="0" placeholder="Misal: 60 atau 720" oninput="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
           </div>
 
-          <!-- Filter Tanggal Akhir -->
           <div>
-            <label for="filter-date-end" class="block text-xs font-semibold text-slate-600 mb-1">Sampai Tanggal</label>
-            <input
-              id="filter-date-end"
-              type="date"
-              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-            />
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Filter Lampiran Media</label>
+            <select id="filterMedia" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+              <option value="ALL">Semua Chat (Teks & Media)</option>
+              <option value="HAS_MEDIA">Hanya Ada Lampiran Media</option>
+              <option value="IMAGE">Gambar / Foto (.jpg/.png)</option>
+              <option value="VCF">Kontak (.vcf)</option>
+              <option value="DOC">Dokumen / Video / Audio Lain</option>
+            </select>
           </div>
         </div>
       </section>
 
-      <!-- KPI Scorecards -->
-      <section aria-label="Ringkasan Metrik Utama" class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
-        <!-- Card 1: Total Balasan -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs col-span-2 lg:col-span-1">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-slate-500">Total Balasan Valid</span>
-            <div class="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <i data-lucide="messages-square" class="w-4 h-4"></i>
-            </div>
-          </div>
-          <div id="kpi-total" class="text-2xl font-extrabold text-slate-900">0</div>
-          <p id="kpi-total-sub" class="text-xs text-slate-400 mt-1">Percakapan terhitung</p>
+      <!-- Scorecard KPI -->
+      <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-medium text-slate-500">Total Balasan Valid</p>
+          <p class="text-xl md:text-2xl font-bold text-slate-800 mt-1" id="kpiTotal">0</p>
+          <p class="text-[10px] text-slate-400 mt-0.5">Pergantian pengirim</p>
         </div>
-
-        <!-- Card 2: Rata-rata Respon -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-slate-500">Rata-rata Respon</span>
-            <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-              <i data-lucide="timer" class="w-4 h-4"></i>
-            </div>
-          </div>
-          <div id="kpi-avg" class="text-xl sm:text-2xl font-extrabold text-slate-900">0 mnt</div>
-          <p id="kpi-avg-human" class="text-xs text-slate-500 mt-1 truncate">-</p>
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-medium text-slate-500">Rata-rata Respon</p>
+          <p class="text-xl md:text-2xl font-bold text-emerald-700 mt-1" id="kpiMean">0 mnt</p>
+          <p class="text-[10px] text-slate-400 mt-0.5" id="kpiMeanHour">0 jam</p>
         </div>
-
-        <!-- Card 3: Median Respon -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-slate-500">Median (Nilai Tengah)</span>
-            <div class="w-8 h-8 rounded-lg bg-teal-50 text-teal-600 flex items-center justify-center">
-              <i data-lucide="gauge" class="w-4 h-4"></i>
-            </div>
-          </div>
-          <div id="kpi-median" class="text-xl sm:text-2xl font-extrabold text-teal-700">0 mnt</div>
-          <p id="kpi-median-human" class="text-xs text-slate-500 mt-1 truncate">Indikator paling akurat</p>
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-medium text-slate-500">Median (Nilai Tengah)</p>
+          <p class="text-xl md:text-2xl font-bold text-blue-700 mt-1" id="kpiMedian">0 mnt</p>
+          <p class="text-[10px] text-slate-400 mt-0.5">Paling akurat (bebas outlier)</p>
         </div>
-
-        <!-- Card 4: Tercepat -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-slate-500">Respon Tercepat</span>
-            <div class="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
-              <i data-lucide="zap" class="w-4 h-4"></i>
-            </div>
-          </div>
-          <div id="kpi-min" class="text-xl sm:text-2xl font-extrabold text-green-600">0 mnt</div>
-          <p id="kpi-min-sub" class="text-xs text-slate-400 mt-1">Durasi minimum</p>
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-medium text-slate-500">Respon Tercepat</p>
+          <p class="text-xl md:text-2xl font-bold text-teal-600 mt-1" id="kpiMin">0 mnt</p>
+          <p class="text-[10px] text-slate-400 mt-0.5">Jeda minimum</p>
         </div>
-
-        <!-- Card 5: Terlama -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
-          <div class="flex items-center justify-between mb-2">
-            <span class="text-xs font-semibold text-slate-500">Respon Terlama</span>
-            <div class="w-8 h-8 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-              <i data-lucide="hourglass" class="w-4 h-4"></i>
-            </div>
-          </div>
-          <div id="kpi-max" class="text-xl sm:text-2xl font-extrabold text-amber-600">0 mnt</div>
-          <p id="kpi-max-human" class="text-xs text-slate-500 mt-1 truncate">-</p>
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-medium text-slate-500">Respon Terlama</p>
+          <p class="text-xl md:text-2xl font-bold text-amber-600 mt-1" id="kpiMax">0 mnt</p>
+          <p class="text-[10px] text-slate-400 mt-0.5" id="kpiMaxHour">0 jam</p>
+        </div>
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-purple-400 transition" onclick="openFolderFilesModal()">
+          <p class="text-[11px] font-medium text-slate-500">Media di Folder ↗</p>
+          <p class="text-xl md:text-2xl font-bold text-purple-700 mt-1" id="kpiMediaCount">0</p>
+          <p class="text-[10px] text-slate-400 mt-0.5" id="kpiMediaBreakdown">0 img • 0 vcf</p>
         </div>
       </section>
 
-      <!-- Ringkasan Per Pengirim -->
-      <section class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <div class="px-4 sm:px-6 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <div>
-            <h3 class="text-sm sm:text-base font-bold text-slate-900">Ringkasan Kecepatan Respon Per Pengirim</h3>
-            <p class="text-xs text-slate-500">Klik nama pengirim untuk memfilter detail percakapan di bawah</p>
+      <!-- Grafik & Ringkasan -->
+      <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <!-- Grafik Bar Per Pengirim -->
+        <div class="lg:col-span-5 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+          <div class="mb-2">
+            <h3 class="text-sm font-bold text-slate-800">Kecepatan Respon Antar Pengirim</h3>
+            <p class="text-[11px] text-slate-500">Rata-rata (Mean) vs Median (Menit)</p>
           </div>
-          <div class="flex items-center gap-2 text-[11px] font-medium text-slate-500">
-            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-emerald-500"></span> &le; 5 mnt</span>
-            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-amber-500"></span> 6–30 mnt</span>
-            <span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-rose-500"></span> &gt; 30 mnt</span>
+          <div class="relative flex-1 min-h-[240px]">
+            <canvas id="senderChart"></canvas>
           </div>
         </div>
 
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                <th class="py-3 px-4 sm:px-6">Nama Pengirim</th>
-                <th class="py-3 px-4 text-right">Jumlah Balasan</th>
-                <th class="py-3 px-4 text-right">Rata-rata (Mnt)</th>
-                <th class="py-3 px-4 text-right">Median (Mnt)</th>
-                <th class="py-3 px-4 text-right hidden sm:table-cell">Tercepat (Mnt)</th>
-                <th class="py-3 px-4 sm:px-6 text-right hidden sm:table-cell">Terlama (Mnt)</th>
+        <!-- Grafik Doughnut Komposisi Lama Waktu Respon -->
+        <div class="lg:col-span-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+          <div class="mb-2">
+            <h3 class="text-sm font-bold text-slate-800">Komposisi Lama Waktu Respon</h3>
+            <p class="text-[11px] text-slate-500">Persentase sebaran durasi balasan (0 mnt, 1 mnt, dst.)</p>
+          </div>
+          <div class="relative flex-1 min-h-[240px]">
+            <canvas id="responseDoughnutChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Ringkasan Per Pengirim & File -->
+        <div class="lg:col-span-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+          <div>
+            <h3 class="text-sm font-bold text-slate-800 mb-2">Ringkasan Per Pengirim</h3>
+            <div class="overflow-x-auto border border-slate-200 rounded-lg max-h-[190px]">
+              <table class="w-full text-[11px] text-left">
+                <thead class="bg-slate-100 text-slate-700 font-semibold sticky top-0">
+                  <tr>
+                    <th class="px-2 py-1.5">Pengirim</th>
+                    <th class="px-1.5 py-1.5 text-right">Jml</th>
+                    <th class="px-1.5 py-1.5 text-right">Rata2</th>
+                    <th class="px-2 py-1.5 text-right">Med</th>
+                  </tr>
+                </thead>
+                <tbody id="summaryTableBody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Ringkasan File Media dalam Folder -->
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold text-slate-700">File Non-Chat</span>
+              <button onclick="openFolderFilesModal()" class="text-[11px] font-semibold text-emerald-700 hover:underline cursor-pointer">Daftar →</button>
+            </div>
+            <div id="mediaChipsContainer" class="flex flex-wrap gap-1.5 text-[11px]"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabel Detail Percakapan -->
+      <section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50/70">
+          <!-- Search dengan Clear Text -->
+          <div class="relative w-full sm:w-80">
+            <input type="text" id="searchInput" oninput="handleSearchInput()" placeholder="Cari pesan, nama pengirim, atau nama file..." class="w-full text-xs pl-8 pr-8 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white" />
+            <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <button id="clearSearchBtn" onclick="clearSearch()" title="Clear text" class="hidden absolute right-2 top-1.5 text-slate-400 hover:text-rose-600 p-0.5 rounded-full">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="flex items-center gap-3 ml-auto">
+            <span class="hidden sm:inline text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md font-medium">
+              ↓ Tanggal Terbaru di Atas
+            </span>
+            <!-- Paging By -->
+            <div class="flex items-center gap-2 text-xs text-slate-600">
+              <span>Tampilkan:</span>
+              <select id="pageSizeSelect" onchange="changePageSize()" class="border border-slate-300 rounded-lg px-2 py-1.5 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="15">15 baris</option>
+                <option value="30" selected>30 baris</option>
+                <option value="50">50 baris</option>
+                <option value="100">100 baris</option>
+                <option value="999999">Semua</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Desktop Excel Table View -->
+        <div class="hidden md:block overflow-x-auto max-h-[540px]">
+          <table class="w-full text-xs text-left border-collapse excel-table">
+            <thead class="bg-emerald-800 text-white font-semibold">
+              <tr>
+                <th class="px-3 py-2.5 border-r border-emerald-700 w-10 text-center">#</th>
+                <th class="px-3 py-2.5 border-r border-emerald-700 whitespace-nowrap">timestamp ↓</th>
+                <th class="px-3 py-2.5 border-r border-emerald-700">pengirim</th>
+                <th class="px-3 py-2.5 border-r border-emerald-700 min-w-[260px]">pesan & lampiran media</th>
+                <th class="px-3 py-2.5 border-r border-emerald-700">pengirim_prev</th>
+                <th class="px-3 py-2.5 border-r border-emerald-700 whitespace-nowrap">waktu_prev</th>
+                <th class="px-3 py-2.5 text-right whitespace-nowrap">respon_menit</th>
               </tr>
             </thead>
-            <tbody id="summary-table-body" class="divide-y divide-slate-100 text-sm">
-              <!-- Diisi via JavaScript -->
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <!-- Detail Percakapan (Excel-Like Table & Mobile Cards) -->
-      <section class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
-        <!-- Toolbar: Title, Search with Clear Text, Paging By -->
-        <div class="p-4 sm:p-6 border-b border-slate-200 space-y-4">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div>
-              <h3 class="text-base font-bold text-slate-900">Detail Analisa Waktu Respon</h3>
-              <p class="text-xs text-slate-500">Struktur kolom sesuai standar <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-700">hasil_analisa_respon.xlsx</code></p>
-            </div>
-
-            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-              <!-- Search Input dengan Tombol Clear Text (X) -->
-              <div class="relative flex-1 sm:w-72 md:w-80">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <i data-lucide="search" class="w-4 h-4"></i>
-                </div>
-                <input
-                  id="search-input"
-                  type="text"
-                  placeholder="Cari isi pesan atau pengirim..."
-                  class="w-full pl-9 pr-9 py-2.5 rounded-xl border border-slate-300 text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                />
-                <button
-                  id="btn-clear-search"
-                  type="button"
-                  title="Bersihkan pencarian (Clear text)"
-                  class="hidden absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-rose-600 transition cursor-pointer"
-                >
-                  <span class="w-6 h-6 rounded-lg bg-slate-100 hover:bg-rose-50 flex items-center justify-center">
-                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                  </span>
-                </button>
-              </div>
-
-              <!-- Paging By Selector -->
-              <div class="flex items-center justify-between sm:justify-start gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
-                <label for="page-size-select" class="text-xs font-semibold text-slate-600 whitespace-nowrap">Tampilkan:</label>
-                <select
-                  id="page-size-select"
-                  class="bg-white border border-slate-300 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                >
-                  <option value="10">10 baris</option>
-                  <option value="25" selected>25 baris</option>
-                  <option value="50">50 baris</option>
-                  <option value="100">100 baris</option>
-                  <option value="ALL">Semua</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Desktop View: Excel-Like Data Table (md and up) -->
-        <div class="hidden md:block overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-100/80 border-b border-slate-200 text-xs font-bold text-slate-700 select-none">
-                <th class="py-3.5 px-4 w-14 text-center border-r border-slate-200/70">No</th>
-                <th data-sort="timestamp" class="py-3.5 px-4 border-r border-slate-200/70 cursor-pointer hover:bg-slate-200/60 transition whitespace-nowrap">
-                  <div class="flex items-center justify-between gap-1">
-                    <span>timestamp</span>
-                    <i data-lucide="arrow-up-down" class="w-3.5 h-3.5 text-slate-400"></i>
-                  </div>
-                </th>
-                <th data-sort="pengirim" class="py-3.5 px-4 border-r border-slate-200/70 cursor-pointer hover:bg-slate-200/60 transition whitespace-nowrap">
-                  <div class="flex items-center justify-between gap-1">
-                    <span>pengirim</span>
-                    <i data-lucide="arrow-up-down" class="w-3.5 h-3.5 text-slate-400"></i>
-                  </div>
-                </th>
-                <th class="py-3.5 px-4 border-r border-slate-200/70 min-w-[260px]">pesan</th>
-                <th class="py-3.5 px-4 border-r border-slate-200/70 whitespace-nowrap">pengirim_prev</th>
-                <th class="py-3.5 px-4 border-r border-slate-200/70 whitespace-nowrap">waktu_prev</th>
-                <th data-sort="respon_menit" class="py-3.5 px-4 cursor-pointer hover:bg-slate-200/60 transition text-right whitespace-nowrap">
-                  <div class="flex items-center justify-end gap-1">
-                    <span>respon_menit</span>
-                    <i data-lucide="arrow-up-down" class="w-3.5 h-3.5 text-slate-400"></i>
-                  </div>
-                </th>
-              </tr>
-            </thead>
-            <tbody id="detail-table-body" class="divide-y divide-slate-200 text-xs sm:text-sm">
-              <!-- Diisi via JavaScript -->
-            </tbody>
+            <tbody id="desktopTableBody" class="divide-y divide-slate-200 bg-white"></tbody>
           </table>
         </div>
 
-        <!-- Mobile View: Ergonomic Card List (< 768px) -->
-        <div id="mobile-cards-container" class="md:hidden divide-y divide-slate-200 bg-slate-50/50">
-          <!-- Diisi via JavaScript -->
-        </div>
+        <!-- Mobile Card View -->
+        <div id="mobileCardContainer" class="md:hidden divide-y divide-slate-200 bg-slate-50/50"></div>
 
-        <!-- Empty Search Result State -->
-        <div id="no-results-box" class="hidden py-12 px-4 text-center">
-          <div class="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-3">
-            <i data-lucide="search-x" class="w-6 h-6"></i>
-          </div>
-          <h4 class="text-sm font-bold text-slate-800">Tidak ada percakapan yang cocok</h4>
-          <p class="text-xs text-slate-500 mt-1 mb-4">Coba hapus kata kunci pencarian atau sesuaikan filter pengirim & tanggal.</p>
-          <button
-            id="btn-clear-all-empty"
-            type="button"
-            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition cursor-pointer"
-          >
-            <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
-            <span>Bersihkan Pencarian & Filter</span>
-          </button>
-        </div>
-
-        <!-- Pagination Footer -->
-        <div id="pagination-footer" class="px-4 sm:px-6 py-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div id="pagination-info" class="text-xs font-medium text-slate-600 text-center sm:text-left">
-            Menampilkan 0 - 0 dari 0 data
-          </div>
-
-          <div id="pagination-controls" class="flex items-center gap-1 flex-wrap justify-center">
-            <!-- Tombol halaman dirender dinamis -->
+        <!-- Footer Pagination -->
+        <div class="p-3 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
+          <div id="paginationInfo">Menampilkan 0 - 0 dari 0 data</div>
+          <div class="flex items-center gap-1.5">
+            <button id="prevPageBtn" onclick="prevPage()" class="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-100 disabled:opacity-40 font-medium">← Sebelumnya</button>
+            <span id="pageIndicator" class="px-2 font-semibold">Hal 1 / 1</span>
+            <button id="nextPageBtn" onclick="nextPage()" class="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-100 disabled:opacity-40 font-medium">Berikutnya →</button>
           </div>
         </div>
       </section>
-
     </div>
   </main>
 
-  <!-- Footer -->
-  <footer class="bg-white border-t border-slate-200 py-4 mt-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
-      <span>Analisa WA — Dashboard Audit Waktu Respon Percakapan WhatsApp</span>
-      <span>Diproses lokal di browser • Mendukung Export Chat (.txt) & Excel (.xlsx)</span>
+  <!-- Modal Preview Media & Daftar File Folder -->
+  <div id="previewModal" class="hidden fixed inset-0 z-50 bg-slate-900/65 backdrop-blur-xs flex items-center justify-center p-3 md:p-5" onclick="if(event.target===this) closeModal()">
+    <div id="modalDialog" class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
+      <div class="px-4 py-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <button id="modalBackBtn" onclick="openFolderFilesModal()" class="hidden shrink-0 text-xs font-semibold bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg transition cursor-pointer">
+            ← Daftar File
+          </button>
+          <h4 id="modalTitle" class="text-sm font-bold text-slate-800 truncate">Preview Lampiran</h4>
+        </div>
+        <button onclick="closeModal()" class="shrink-0 text-slate-500 hover:text-rose-600 p-1 rounded-lg cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div id="modalBody" class="p-4 overflow-y-auto text-xs text-slate-700 flex-1"></div>
     </div>
-  </footer>
+  </div>
 
-  <!-- Application Logic -->
   <script>
-    (function () {
-      'use strict';
+    let rawResponses = [];
+    let filteredResponses = [];
+    let folderFilesMap = new Map();
+    let folderStats = { folderName: '', totalFiles: 0, images: 0, vcfs: 0, docs: 0, others: 0, fileList: [] };
+    let vcfCache = new Map();
+    let currentPage = 1;
+    let pageSize = 30;
+    let chartInstance = null;
+    let doughnutChartInstance = null;
+    let activeBlobUrl = null;
 
-      // =========================================================================
-      // 1. STATE APLIKASI
-      // =========================================================================
-      const state = {
-        rawRecords: [],        // Seluruh data respon (sebelum filter)
-        filteredRecords: [],   // Data setelah filter & search & sort
-        fileName: '',
-        fileType: '',
-        filters: {
-          sender: 'ALL',
-          maxResponse: '720',  // Default 720 menit (12 jam) sesuai standar analisa
-          dateStart: '',
-          dateEnd: '',
-          search: ''
-        },
-        sort: {
-          column: 'timestamp',
-          direction: 'asc'     // 'asc' | 'desc'
-        },
-        pagination: {
-          currentPage: 1,
-          pageSize: 25         // '10' | '25' | '50' | '100' | 'ALL'
+    document.getElementById('folderInput').addEventListener('change', handleFolderSelect);
+    document.getElementById('folderInputHero').addEventListener('change', handleFolderSelect);
+
+    async function handleFolderSelect(event) {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+
+      folderFilesMap.clear();
+      vcfCache.clear();
+      folderStats = { folderName: '', totalFiles: files.length, images: 0, vcfs: 0, docs: 0, others: 0, fileList: [] };
+
+      const firstPath = files[0].webkitRelativePath || '';
+      folderStats.folderName = firstPath.includes('/') ? firstPath.split('/')[0] : 'Folder Terpilih';
+
+      let chatTxtFile = null;
+      const vcfFiles = [];
+
+      for (const file of files) {
+        const nameLower = file.name.toLowerCase();
+        folderFilesMap.set(nameLower, file);
+
+        if (nameLower.endsWith('.txt') && !chatTxtFile) {
+          chatTxtFile = file;
+        } else if (nameLower.endsWith('.vcf')) {
+          folderStats.vcfs++;
+          vcfFiles.push(file);
+          folderStats.fileList.push({ name: file.name, type: 'VCF Contact', size: file.size, file });
+        } else if (/\.(jpg|jpeg|png|webp|gif)$/i.test(nameLower)) {
+          folderStats.images++;
+          folderStats.fileList.push({ name: file.name, type: 'Image', size: file.size, file });
+        } else if (/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|mp4|opus|mp3|ogg|zip|rar)$/i.test(nameLower)) {
+          folderStats.docs++;
+          folderStats.fileList.push({ name: file.name, type: 'Media/Dokumen', size: file.size, file });
+        } else if (!nameLower.endsWith('.txt')) {
+          folderStats.others++;
+          folderStats.fileList.push({ name: file.name, type: 'Lainnya', size: file.size, file });
         }
-      };
-
-      // =========================================================================
-      // 2. REFERENSI ELEMEN DOM
-      // =========================================================================
-      const els = {
-        fileInput: document.getElementById('file-input'),
-        dropZone: document.getElementById('drop-zone'),
-        emptyState: document.getElementById('empty-state'),
-        dashboardContent: document.getElementById('dashboard-content'),
-        btnLoadDemo: document.getElementById('btn-load-demo'),
-        btnLoadDemoHero: document.getElementById('btn-load-demo-hero'),
-        fileNameDisplay: document.getElementById('file-name-display'),
-        fileTypeBadge: document.getElementById('file-type-badge'),
-        fileMetaDisplay: document.getElementById('file-meta-display'),
-        btnResetFilters: document.getElementById('btn-reset-filters'),
-        btnExportExcel: document.getElementById('btn-export-excel'),
-        filterSender: document.getElementById('filter-sender'),
-        filterMaxResponse: document.getElementById('filter-max-response'),
-        filterDateStart: document.getElementById('filter-date-start'),
-        filterDateEnd: document.getElementById('filter-date-end'),
-        kpiTotal: document.getElementById('kpi-total'),
-        kpiTotalSub: document.getElementById('kpi-total-sub'),
-        kpiAvg: document.getElementById('kpi-avg'),
-        kpiAvgHuman: document.getElementById('kpi-avg-human'),
-        kpiMedian: document.getElementById('kpi-median'),
-        kpiMedianHuman: document.getElementById('kpi-median-human'),
-        kpiMin: document.getElementById('kpi-min'),
-        kpiMinSub: document.getElementById('kpi-min-sub'),
-        kpiMax: document.getElementById('kpi-max'),
-        kpiMaxHuman: document.getElementById('kpi-max-human'),
-        summaryTableBody: document.getElementById('summary-table-body'),
-        searchInput: document.getElementById('search-input'),
-        btnClearSearch: document.getElementById('btn-clear-search'),
-        pageSizeSelect: document.getElementById('page-size-select'),
-        detailTableBody: document.getElementById('detail-table-body'),
-        mobileCardsContainer: document.getElementById('mobile-cards-container'),
-        noResultsBox: document.getElementById('no-results-box'),
-        btnClearAllEmpty: document.getElementById('btn-clear-all-empty'),
-        paginationFooter: document.getElementById('pagination-footer'),
-        paginationInfo: document.getElementById('pagination-info'),
-        paginationControls: document.getElementById('pagination-controls'),
-        toastContainer: document.getElementById('toast-container')
-      };
-
-      // =========================================================================
-      // 3. UTILITAS FORMAT TANGGAL, DURASI & NOTIFIKASI
-      // =========================================================================
-      function showToast(message, type = 'success') {
-        const toast = document.createElement('div');
-        const colors = {
-          success: 'bg-slate-900 text-white border-emerald-500',
-          error: 'bg-rose-600 text-white border-rose-800',
-          info: 'bg-slate-800 text-white border-blue-400'
-        };
-        toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border-l-4 text-xs sm:text-sm font-medium transition-all duration-300 ${colors[type] || colors.success}`;
-        toast.innerHTML = `<span>${escapeHtml(message)}</span>`;
-        els.toastContainer.appendChild(toast);
-
-        setTimeout(() => {
-          toast.classList.add('opacity-0', 'translate-y-2');
-          setTimeout(() => toast.remove(), 300);
-        }, 3500);
       }
 
-      function escapeHtml(str) {
-        if (str === null || str === undefined) return '';
-        return String(str)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#039;');
+      folderStats.fileList.sort((a, b) => a.name.localeCompare(b.name));
+
+      if (!chatTxtFile) {
+        alert('Tidak ditemukan file riwayat chat (.txt) di dalam folder tersebut!');
+        return;
       }
 
-      function formatDateTime(dateObj) {
-        if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return '-';
-        const pad = (n) => String(n).padStart(2, '0');
-        const y = dateObj.getFullYear();
-        const m = pad(dateObj.getMonth() + 1);
-        const d = pad(dateObj.getDate());
-        const h = pad(dateObj.getHours());
-        const min = pad(dateObj.getMinutes());
-        const s = pad(dateObj.getSeconds());
-        return `${y}-${m}-${d} ${h}:${min}:${s}`;
+      for (const vcf of vcfFiles) {
+        try {
+          const text = await vcf.text();
+          vcfCache.set(vcf.name.toLowerCase(), parseVcfText(text, vcf.name));
+        } catch (e) {}
       }
 
-      function formatDateISO(dateObj) {
-        if (!(dateObj instanceof Date) || isNaN(dateObj.getTime())) return '';
-        const pad = (n) => String(n).padStart(2, '0');
-        return `${dateObj.getFullYear()}-${pad(dateObj.getMonth() + 1)}-${pad(dateObj.getDate())}`;
+      const chatText = await chatTxtFile.text();
+      rawResponses = parseWhatsAppChat(chatText);
+
+      if (!rawResponses.length) {
+        alert('Data chat tidak terbaca atau belum ada pergantian balasan antar pengirim.');
+        return;
       }
 
-      function formatHumanDuration(minutes) {
-        if (minutes === null || minutes === undefined || isNaN(minutes)) return '-';
-        if (minutes < 1) return `${Math.round(minutes * 60)} detik`;
-        if (minutes < 60) return `${minutes.toFixed(1).replace(/\.0$/, '')} menit`;
-        const hrs = Math.floor(minutes / 60);
-        const mins = Math.round(minutes % 60);
-        return mins > 0 ? `${hrs} jam ${mins} mnt` : `${hrs} jam`;
-      }
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('dashboardContent').classList.remove('hidden');
+      document.getElementById('btnExport').disabled = false;
 
-      function getResponseBadgeClass(minutes) {
-        if (minutes <= 5) {
-          return 'bg-emerald-100 text-emerald-800 border-emerald-200';
-        }
-        if (minutes <= 30) {
-          return 'bg-amber-100 text-amber-800 border-amber-200';
-        }
-        return 'bg-rose-100 text-rose-800 border-rose-200';
-      }
+      document.getElementById('folderNameBadge').textContent = `📁 ${folderStats.folderName}`;
+      document.getElementById('folderStatsText').textContent =
+        `${folderStats.totalFiles} file (${folderStats.images} gambar, ${folderStats.vcfs} kontak .vcf, ${folderStats.docs + folderStats.others} dok/media)`;
 
-      // =========================================================================
-      // 4. PARSER FILE WHATSAPP (.TXT) & EXCEL (.XLSX / .CSV)
-      // =========================================================================
-      function parseFlexibleDate(dateStr, timeStr) {
-        // Bersihkan karakter non-standar seperti narrow no-break space
-        const cleanDate = dateStr.trim();
-        let cleanTime = timeStr.trim().replace(/\./g, ':');
+      populateFilterControls();
+      renderFolderMediaChips();
+      applyFilters();
+    }
 
-        // Tangani AM/PM jika ada
-        let isPM = false;
-        let isAM = false;
-        if (/pm/i.test(cleanTime)) {
-          isPM = true;
-          cleanTime = cleanTime.replace(/pm/i, '').trim();
-        } else if (/am/i.test(cleanTime)) {
-          isAM = true;
-          cleanTime = cleanTime.replace(/am/i, '').trim();
-        }
+    function parseWhatsAppChat(text) {
+      const lines = text.split(/\r?\n/);
+      const androidRegex = /^(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\s-\s([^:]+):\s(.*)$/;
+      const iosRegex = /^\[(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\]\s([^:]+):\s(.*)$/;
 
-        const dateParts = cleanDate.split(/[\/\-]/).map(Number);
-        if (dateParts.length !== 3) return null;
+      const messages = [];
+      for (let rawLine of lines) {
+        const line = rawLine.replace(/[\u200e\u200f\ufeff]/g, '').trim();
+        if (!line) continue;
 
-        let day, month, year;
-        // Cek apakah format YYYY-MM-DD atau DD/MM/YY(YY)
-        if (dateParts[0] > 31) {
-          [year, month, day] = dateParts;
-        } else {
-          [day, month, year] = dateParts;
-          // Jika bulan > 12, kemungkinan MM/DD/YY
-          if (month > 12 && day <= 12) {
-            [month, day] = [day, month];
-          }
-        }
-
-        if (year < 100) {
-          year += 2000;
-        }
-
-        const timeParts = cleanTime.split(':').map(Number);
-        let hour = timeParts[0] || 0;
-        const minute = timeParts[1] || 0;
-        const second = timeParts[2] || 0;
-
-        if (isPM && hour < 12) hour += 12;
-        if (isAM && hour === 12) hour = 0;
-
-        const dt = new Date(year, month - 1, day, hour, minute, second);
-        return isNaN(dt.getTime()) ? null : dt;
-      }
-
-      function parseWhatsAppTxt(text) {
-        const lines = text.split(/\r?\n/);
-        const messages = [];
-
-        // Pola 1 (Android): 17/03/25 10.22 - Nama: Pesan  ATAU  17/03/2025, 10:22 - Nama: Pesan
-        const androidRegex = /^(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}),?\s+(\d{1,2}[\.:]\d{2}(?:[\.:]\d{2})?(?:\s?[APMapm]{2})?)\s+-\s+([^:]+):\s(.*)$/;
-
-        // Pola 2 (iOS): [17/03/25, 10.22.15] Nama: Pesan  ATAU  [17/03/2025 10:22:15] Nama: Pesan
-        const iosRegex = /^\[(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}),?\s+(\d{1,2}[\.:]\d{2}(?:[\.:]\d{2})?(?:\s?[APMapm]{2})?)\]\s+([^:]+):\s(.*)$/;
-
-        // Pola Pesan Sistem (tanpa titik dua pengirim) agar tidak menempel ke pesan sebelumnya
-        const systemRegex = /^(?:\[?\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4},?\s+\d{1,2}[\.:]\d{2}(?:[\.:]\d{2})?(?:\s?[APMapm]{2})?\]?\s+(?:-\s+)?)/;
-
-        for (let rawLine of lines) {
-          // Hapus karakter invisible LTR/RTL mark dari WhatsApp
-          const line = rawLine.replace(/[\u200e\u200f\u202a-\u202e]/g, '').trim();
-          if (!line) continue;
-
-          let match = line.match(androidRegex) || line.match(iosRegex);
-          if (match) {
-            const [, datePart, timePart, sender, body] = match;
-            const dt = parseFlexibleDate(datePart, timePart);
-            if (dt) {
-              messages.push({
-                timestamp: dt,
-                pengirim: sender.trim(),
-                pesan: body.trim()
-              });
-            }
-          } else if (systemRegex.test(line)) {
-            // Abaikan baris notifikasi sistem (misal: "Pesan dan panggilan terenkripsi...")
-            continue;
-          } else if (messages.length > 0) {
-            // Baris lanjutan (multiline message)
-            messages[messages.length - 1].pesan += '\n' + line;
-          }
-        }
-
-        // Hitung selisih respon saat terjadi pergantian pengirim
-        const responseRecords = [];
-        for (let i = 1; i < messages.length; i++) {
-          const curr = messages[i];
-          const prev = messages[i - 1];
-
-          if (curr.pengirim !== prev.pengirim) {
-            const diffMinutes = (curr.timestamp.getTime() - prev.timestamp.getTime()) / 60000;
-            if (diffMinutes >= 0) {
-              responseRecords.push({
-                timestamp: curr.timestamp,
-                timestampStr: formatDateTime(curr.timestamp),
-                dateISO: formatDateISO(curr.timestamp),
-                pengirim: curr.pengirim,
-                pesan: curr.pesan,
-                pengirim_prev: prev.pengirim,
-                waktu_prev: prev.timestamp,
-                waktuPrevStr: formatDateTime(prev.timestamp),
-                respon_menit: Number(diffMinutes.toFixed(2))
-              });
-            }
-          }
-        }
-
-        return responseRecords;
-      }
-
-      function parseExcelOrCsv(arrayBuffer) {
-        const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
-        const firstSheetName = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheetName];
-        const rows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
-
-        if (!rows.length) return [];
-
-        const records = [];
-        for (const row of rows) {
-          // Normalisasi nama kolom (case-insensitive)
-          const norm = {};
-          for (const key of Object.keys(row)) {
-            norm[key.trim().toLowerCase()] = row[key];
-          }
-
-          // Cek apakah sudah berformat hasil_analisa_respon.xlsx
-          if ('timestamp' in norm && 'pengirim' in norm && 'respon_menit' in norm) {
-            const ts = norm.timestamp instanceof Date ? norm.timestamp : new Date(norm.timestamp);
-            const wPrev = norm.waktu_prev instanceof Date ? norm.waktu_prev : new Date(norm.waktu_prev);
-            const responVal = parseFloat(norm.respon_menit);
-
-            if (!isNaN(ts.getTime()) && !isNaN(responVal)) {
-              records.push({
-                timestamp: ts,
-                timestampStr: formatDateTime(ts),
-                dateISO: formatDateISO(ts),
-                pengirim: String(norm.pengirim || '').trim(),
-                pesan: String(norm.pesan || '').trim(),
-                pengirim_prev: String(norm.pengirim_prev || '').trim(),
-                waktu_prev: !isNaN(wPrev.getTime()) ? wPrev : null,
-                waktuPrevStr: !isNaN(wPrev.getTime()) ? formatDateTime(wPrev) : String(norm.waktu_prev || '-'),
-                respon_menit: Number(responVal.toFixed(2))
-              });
-            }
-          }
-        }
-
-        return records;
-      }
-
-      // =========================================================================
-      // 5. DATA CONTOH (DEMO) SESUAI KONTEKS PERCAKAPAN NYATA
-      // =========================================================================
-      function generateDemoData() {
-        const rawChat = [
-          ['2025-03-17 10:22:00', 'Budi Santoso (Pelanggan)', 'Halo kak, selamat pagi. Mau tanya stok produk seri Pro masih ready?'],
-          ['2025-03-17 10:24:00', 'Admin CS Rina', 'Halo pagi Kak Budi! Untuk seri Pro saat ini ready stok siap kirim hari ini ya kak.'],
-          ['2025-03-17 10:29:00', 'Budi Santoso (Pelanggan)', 'Kalau kirim ke Tangerang kira-kira estimasi berapa hari sampai?'],
-          ['2025-03-17 10:31:00', 'Admin CS Rina', 'Untuk pengiriman reguler ke area Tangerang estimasi 1-2 hari kerja kak.'],
-          ['2025-03-17 11:05:00', 'Siti Aminah (Pelanggan)', 'Min, saya sudah transfer untuk invoice #INV-2091 mohon dicek ya'],
-          ['2025-03-17 11:18:00', 'Admin CS Rina', 'Baik Kak Siti, pembayaran untuk #INV-2091 sudah terkonfirmasi masuk. Pesanan segera diproses.'],
-          ['2025-03-17 13:10:00', 'Dedi Kurniawan (Pelanggan)', 'Permisi, apakah bisa minta katalog harga grosir untuk pembelian di atas 20 unit?'],
-          ['2025-03-17 13:45:00', 'Sales Supervisor Andi', 'Selamat siang Pak Dedi, saya bantu lampirkan daftar harga grosir khusus pembelian 20 unit ke atas ya Pak.'],
-          ['2025-03-17 14:02:00', 'Dedi Kurniawan (Pelanggan)', 'Oke terima kasih Pak Andi, saya pelajari dulu dengan tim pengadaan.'],
-          ['2025-03-17 14:04:00', 'Sales Supervisor Andi', 'Siap Pak Dedi, silakan kabari kapan saja jika ada yang ingin didiskusikan.'],
-          ['2025-03-18 08:30:00', 'Budi Santoso (Pelanggan)', 'Kak, resi pengiriman saya atas nama Budi sudah keluar belum ya?'],
-          ['2025-03-18 08:33:00', 'Admin CS Rina', 'Sudah keluar Kak Budi, berikut nomor resinya: JNE8829104421.'],
-          ['2025-03-18 09:15:00', 'Rizky Pratama (Pelanggan)', 'Halo admin, cara klaim garansi jika adaptor bermasalah bagaimana prosedurnya?'],
-          ['2025-03-18 10:05:00', 'Admin CS Rina', 'Halo Kak Rizky, silakan kirimkan foto kartu garansi dan video kendala adaptornya di sini ya kak agar kami buatkan tiket retur.'],
-          ['2025-03-18 10:12:00', 'Rizky Pratama (Pelanggan)', 'Baik kak, sebentar saya fotokan dulu unitnya.'],
-          ['2025-03-18 10:14:00', 'Admin CS Rina', 'Ditunggu ya Kak Rizky, terima kasih.'],
-          ['2025-03-19 14:20:00', 'Maya Lestari (Pelanggan)', 'Kak mau order 3 pcs warna hitam, totalnya jadi berapa termasuk ongkir ke Bandung?'],
-          ['2025-03-19 14:22:00', 'Admin CS Rina', 'Total 3 pcs warna hitam Rp 750.000 + ongkir Bandung Rp 18.000 = Rp 768.000 ya Kak Maya.'],
-          ['2025-03-19 15:40:00', 'Dedi Kurniawan (Pelanggan)', 'Pak Andi, kita jadi ambil 25 unit minggu ini. Bisa terbitkan faktur pajaknya?'],
-          ['2025-03-19 15:52:00', 'Sales Supervisor Andi', 'Baik Pak Dedi, siap! Mohon kirimkan NPWP perusahaan Bapak agar tim finance kami terbitkan faktur pajaknya hari ini.'],
-          ['2025-03-20 09:00:00', 'Hendra Wijaya (Pelanggan)', 'Pagi min, jam operasional toko offline buka sampai jam berapa?'],
-          ['2025-03-20 09:03:00', 'Admin CS Rina', 'Pagi Kak Hendra, toko offline kami buka Senin-Sabtu pukul 09.00 hingga 18.00 WIB.'],
-          ['2025-03-20 16:10:00', 'Maya Lestari (Pelanggan)', 'Paket sudah sampai dengan aman kak, packing rapi banget. Makasih ya!'],
-          ['2025-03-20 16:11:00', 'Admin CS Rina', 'Terima kasih kembali Kak Maya! Senang mendengarnya, ditunggu orderan berikutnya ya.']
-        ];
-
-        const records = [];
-        for (let i = 1; i < rawChat.length; i++) {
-          const [tsStr, sender, msg] = rawChat[i];
-          const [prevTsStr, prevSender] = rawChat[i - 1];
-          if (sender !== prevSender) {
-            const ts = new Date(tsStr.replace(' ', 'T'));
-            const prevTs = new Date(prevTsStr.replace(' ', 'T'));
-            const diffMin = (ts.getTime() - prevTs.getTime()) / 60000;
-            records.push({
-              timestamp: ts,
-              timestampStr: formatDateTime(ts),
-              dateISO: formatDateISO(ts),
-              pengirim: sender,
-              pesan: msg,
-              pengirim_prev: prevSender,
-              waktu_prev: prevTs,
-              waktuPrevStr: formatDateTime(prevTs),
-              respon_menit: Number(diffMin.toFixed(2))
+        let match = line.match(androidRegex) || line.match(iosRegex);
+        if (match) {
+          const [, dateStr, timeStr, sender, msg] = match;
+          const dt = parseDateTime(dateStr, timeStr);
+          if (dt) {
+            messages.push({
+              timestamp: dt,
+              timestampMs: dt.getTime(),
+              timestampStr: formatDateTime(dt),
+              dateISO: formatDateISO(dt),
+              sender: sender.trim(),
+              message: msg.trim()
             });
           }
+        } else if (messages.length > 0) {
+          messages[messages.length - 1].message += '\n' + line;
         }
-        return records;
       }
 
-      // =========================================================================
-      // 6. INISIALISASI DATA & POPULASI FILTER
-      // =========================================================================
-      function loadDataset(records, fileName, fileType) {
-        if (!records || records.length === 0) {
-          showToast('Tidak ditemukan data percakapan yang valid di dalam file.', 'error');
-          return;
+      const responses = [];
+      for (let i = 1; i < messages.length; i++) {
+        const curr = messages[i];
+        const prev = messages[i - 1];
+
+        if (curr.sender !== prev.sender) {
+          const diffMinutes = Math.round((curr.timestamp - prev.timestamp) / 60000);
+          const mediaInfo = detectAttachmentInMessage(curr.message);
+
+          responses.push({
+            timestamp: curr.timestampStr,
+            timestampMs: curr.timestampMs,
+            dateISO: curr.dateISO,
+            pengirim: curr.sender,
+            pesan: curr.message,
+            pengirim_prev: prev.sender,
+            waktu_prev: prev.timestampStr,
+            respon_menit: diffMinutes < 0 ? 0 : diffMinutes,
+            media: mediaInfo
+          });
         }
-
-        state.rawRecords = records;
-        state.fileName = fileName;
-        state.fileType = fileType;
-
-        // Reset filter & pagination
-        state.filters.sender = 'ALL';
-        state.filters.maxResponse = '720';
-        state.filters.search = '';
-        els.searchInput.value = '';
-        els.btnClearSearch.classList.add('hidden');
-        els.filterMaxResponse.value = '720';
-        state.pagination.currentPage = 1;
-
-        // Isi dropdown pengirim unik
-        const uniqueSenders = [...new Set(records.map(r => r.pengirim))].sort((a, b) => a.localeCompare(b));
-        els.filterSender.innerHTML = '<option value="ALL">Semua Pengirim (' + uniqueSenders.length + ')</option>';
-        uniqueSenders.forEach(sender => {
-          const opt = document.createElement('option');
-          opt.value = sender;
-          opt.textContent = sender;
-          els.filterSender.appendChild(opt);
-        });
-
-        // Tentukan rentang tanggal min/max otomatis
-        const validDates = records.map(r => r.dateISO).filter(Boolean).sort();
-        if (validDates.length > 0) {
-          const minDate = validDates[0];
-          const maxDate = validDates[validDates.length - 1];
-          els.filterDateStart.value = minDate;
-          els.filterDateEnd.value = maxDate;
-          state.filters.dateStart = minDate;
-          state.filters.dateEnd = maxDate;
-        }
-
-        // Update header info file
-        els.fileNameDisplay.textContent = fileName;
-        els.fileTypeBadge.textContent = fileType.toUpperCase();
-        els.fileMetaDisplay.textContent = `Total ${records.length.toLocaleString('id-ID')} pasangan balasan terdeteksi • Periode ${state.filters.dateStart || '-'} s/d ${state.filters.dateEnd || '-'}`;
-
-        // Tampilkan dashboard
-        els.emptyState.classList.add('hidden');
-        els.dashboardContent.classList.remove('hidden');
-
-        applyFiltersAndRender();
-        showToast(`Berhasil memuat ${records.length.toLocaleString('id-ID')} data respon dari ${fileName}`, 'success');
       }
+      return responses;
+    }
 
-      // =========================================================================
-      // 7. FILTERING, SORTING & STATISTIK
-      // =========================================================================
-      function applyFiltersAndRender() {
-        const { sender, maxResponse, dateStart, dateEnd, search } = state.filters;
-        const maxLimit = maxResponse === 'ALL' ? Infinity : parseFloat(maxResponse);
-        const query = search.trim().toLowerCase();
+    function detectAttachmentInMessage(msg) {
+      const attachedMatch = msg.match(/([^\n<>:"/\\|?*]+\.[a-zA-Z0-9]{2,5})\s*\(file terlampir\)/i)
+                         || msg.match(/<attached:\s*([^>]+)>/i)
+                         || msg.match(/([^\n]+\.vcf)\b/i);
 
-        // Filter records
-        let filtered = state.rawRecords.filter(item => {
+      if (attachedMatch) {
+        const fileName = attachedMatch[1].trim();
+        const fileObj = folderFilesMap.get(fileName.toLowerCase()) || null;
+        const ext = fileName.split('.').pop().toLowerCase();
+        let category = 'DOC';
+        if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) category = 'IMAGE';
+        else if (ext === 'vcf') category = 'VCF';
+
+        return { fileName, fileObj, category, existsInFolder: !!fileObj };
+      }
+      return null;
+    }
+
+    function parseDateTime(dateStr, timeStr) {
+      const parts = dateStr.split('/');
+      if (parts.length !== 3) return null;
+      let day = parseInt(parts[0], 10);
+      let month = parseInt(parts[1], 10) - 1;
+      let year = parseInt(parts[2], 10);
+      if (year < 100) year += 2000;
+
+      const tParts = timeStr.replace('.', ':').split(':');
+      const hour = parseInt(tParts[0], 10);
+      const minute = parseInt(tParts[1], 10);
+      return new Date(year, month, day, hour, minute, 0);
+    }
+
+    function formatDateTime(dt) {
+      const pad = n => String(n).padStart(2, '0');
+      return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    }
+
+    function formatDateISO(dt) {
+      const pad = n => String(n).padStart(2, '0');
+      return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+    }
+
+    function parseVcfText(text, fileName) {
+      const fnMatch = text.match(/FN(?:;[^:]*)?:(.+)/i);
+      const telMatches = [...text.matchAll(/TEL(?:;[^:]*)?:(.+)/gi)].map(m => m[1].trim());
+      const orgMatch = text.match(/ORG(?:;[^:]*)?:(.+)/i);
+      return {
+        fileName,
+        fullName: fnMatch ? fnMatch[1].trim() : fileName.replace(/\.vcf$/i, ''),
+        phones: telMatches.length ? telMatches : ['-'],
+        org: orgMatch ? orgMatch[1].trim() : ''
+      };
+    }
+
+    function populateFilterControls() {
+      const senders = [...new Set(rawResponses.map(r => r.pengirim))].sort();
+      const senderSelect = document.getElementById('filterSender');
+      senderSelect.innerHTML = '<option value="ALL">Semua Pengirim</option>' +
+        senders.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+
+      const dates = rawResponses.map(r => r.dateISO).sort();
+      if (dates.length) {
+        document.getElementById('filterStartDate').value = dates[0];
+        document.getElementById('filterEndDate').value = dates[dates.length - 1];
+      }
+    }
+
+    function resetFilters() {
+      populateFilterControls();
+      document.getElementById('filterDelayOp').value = 'lte';
+      document.getElementById('filterDelayVal').value = '720';
+      document.getElementById('filterMedia').value = 'ALL';
+      clearSearch();
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const startDate = document.getElementById('filterStartDate').value;
+      const endDate = document.getElementById('filterEndDate').value;
+      const sender = document.getElementById('filterSender').value;
+      const delayOp = document.getElementById('filterDelayOp').value;
+      const delayValRaw = document.getElementById('filterDelayVal').value;
+      const delayVal = delayValRaw !== '' ? parseFloat(delayValRaw) : null;
+      const mediaFilter = document.getElementById('filterMedia').value;
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+      filteredResponses = rawResponses
+        .filter(item => {
+          if (startDate && item.dateISO < startDate) return false;
+          if (endDate && item.dateISO > endDate) return false;
           if (sender !== 'ALL' && item.pengirim !== sender) return false;
-          if (item.respon_menit > maxLimit) return false;
-          if (dateStart && item.dateISO && item.dateISO < dateStart) return false;
-          if (dateEnd && item.dateISO && item.dateISO > dateEnd) return false;
+
+          if (delayVal !== null && !isNaN(delayVal)) {
+            if (delayOp === 'lte' && item.respon_menit > delayVal) return false;
+            if (delayOp === 'gte' && item.respon_menit < delayVal) return false;
+          }
+
+          if (mediaFilter === 'HAS_MEDIA' && !item.media) return false;
+          if (mediaFilter === 'IMAGE' && (!item.media || item.media.category !== 'IMAGE')) return false;
+          if (mediaFilter === 'VCF' && (!item.media || item.media.category !== 'VCF')) return false;
+          if (mediaFilter === 'DOC' && (!item.media || item.media.category !== 'DOC')) return false;
 
           if (query) {
-            const matchMsg = item.pesan.toLowerCase().includes(query);
-            const matchSender = item.pengirim.toLowerCase().includes(query);
-            const matchPrev = item.pengirim_prev.toLowerCase().includes(query);
-            if (!matchMsg && !matchSender && !matchPrev) return false;
+            const hay = `${item.pengirim} ${item.pengirim_prev} ${item.pesan} ${item.timestamp}`.toLowerCase();
+            if (!hay.includes(query)) return false;
           }
           return true;
-        });
+        })
+        // Urutkan timestamp terbaru di paling atas
+        .sort((a, b) => b.timestampMs - a.timestampMs);
 
-        // Sort records
-        const { column, direction } = state.sort;
-        const dirMultiplier = direction === 'asc' ? 1 : -1;
+      currentPage = 1;
+      updateKPIs();
+      updateSenderSummaryAndChart();
+      updateDoughnutChart();
+      renderTableAndCards();
+    }
 
-        filtered.sort((a, b) => {
-          if (column === 'timestamp') {
-            return (a.timestamp.getTime() - b.timestamp.getTime()) * dirMultiplier;
-          }
-          if (column === 'pengirim') {
-            return a.pengirim.localeCompare(b.pengirim) * dirMultiplier;
-          }
-          if (column === 'respon_menit') {
-            return (a.respon_menit - b.respon_menit) * dirMultiplier;
-          }
-          return 0;
-        });
+    function updateKPIs() {
+      const n = filteredResponses.length;
+      document.getElementById('kpiTotal').textContent = n.toLocaleString('id-ID');
+      const totalNonChat = folderStats.fileList.length;
+      document.getElementById('kpiMediaCount').textContent = totalNonChat.toLocaleString('id-ID');
+      document.getElementById('kpiMediaBreakdown').textContent = `${folderStats.images} img • ${folderStats.vcfs} vcf • ${folderStats.docs + folderStats.others} dok`;
 
-        state.filteredRecords = filtered;
-
-        renderKPIs(filtered);
-        renderSummaryPerSender(filtered);
-        renderDetailTableAndCards();
+      if (n === 0) {
+        ['kpiMean', 'kpiMedian', 'kpiMin', 'kpiMax'].forEach(id => document.getElementById(id).textContent = '0 mnt');
+        document.getElementById('kpiMeanHour').textContent = '0 jam';
+        document.getElementById('kpiMaxHour').textContent = '0 jam';
+        return;
       }
 
-      function computeMedian(values) {
-        if (!values.length) return 0;
-        const sorted = [...values].sort((a, b) => a - b);
-        const mid = Math.floor(sorted.length / 2);
-        return sorted.length % 2 !== 0
-          ? sorted[mid]
-          : (sorted[mid - 1] + sorted[mid]) / 2;
+      const values = filteredResponses.map(r => r.respon_menit).sort((a, b) => a - b);
+      const sum = values.reduce((a, b) => a + b, 0);
+      const mean = sum / n;
+      const median = n % 2 === 1 ? values[Math.floor(n / 2)] : (values[n / 2 - 1] + values[n / 2]) / 2;
+      const min = values[0];
+      const max = values[n - 1];
+
+      document.getElementById('kpiMean').textContent = `${mean.toFixed(1)} mnt`;
+      document.getElementById('kpiMeanHour').textContent = `≈ ${(mean / 60).toFixed(2)} jam`;
+      document.getElementById('kpiMedian').textContent = `${median.toFixed(1)} mnt`;
+      document.getElementById('kpiMin').textContent = `${min} mnt`;
+      document.getElementById('kpiMax').textContent = `${max.toLocaleString('id-ID')} mnt`;
+      document.getElementById('kpiMaxHour').textContent = `≈ ${(max / 60).toFixed(1)} jam`;
+    }
+
+    function updateSenderSummaryAndChart() {
+      const grouped = {};
+      for (const r of filteredResponses) {
+        if (!grouped[r.pengirim]) grouped[r.pengirim] = [];
+        grouped[r.pengirim].push(r.respon_menit);
       }
 
-      function renderKPIs(data) {
-        const count = data.length;
-        els.kpiTotal.textContent = count.toLocaleString('id-ID');
+      const summaryRows = Object.entries(grouped).map(([sender, arr]) => {
+        arr.sort((a, b) => a - b);
+        const count = arr.length;
+        const mean = arr.reduce((a, b) => a + b, 0) / count;
+        const median = count % 2 === 1 ? arr[Math.floor(count / 2)] : (arr[count / 2 - 1] + arr[count / 2]) / 2;
+        return { sender, count, mean: Number(mean.toFixed(1)), median: Number(median.toFixed(1)) };
+      }).sort((a, b) => b.count - a.count);
 
-        if (count === 0) {
-          els.kpiTotalSub.textContent = 'Tidak ada data pada filter ini';
-          els.kpiAvg.textContent = '-';
-          els.kpiAvgHuman.textContent = '-';
-          els.kpiMedian.textContent = '-';
-          els.kpiMedianHuman.textContent = '-';
-          els.kpiMin.textContent = '-';
-          els.kpiMax.textContent = '-';
-          els.kpiMaxHuman.textContent = '-';
-          return;
-        }
+      const tbody = document.getElementById('summaryTableBody');
+      tbody.innerHTML = summaryRows.length ? summaryRows.map(row => `
+        <tr class="hover:bg-emerald-50/60 cursor-pointer" onclick="quickFilterSender('${escapeHtml(row.sender)}')">
+          <td class="px-2 py-1.5 font-semibold text-slate-800 truncate max-w-[110px]" title="${escapeHtml(row.sender)}">${escapeHtml(row.sender)}</td>
+          <td class="px-1.5 py-1.5 text-right font-medium">${row.count}</td>
+          <td class="px-1.5 py-1.5 text-right text-emerald-700 font-semibold">${row.mean}m</td>
+          <td class="px-2 py-1.5 text-right text-blue-700 font-semibold">${row.median}m</td>
+        </tr>
+      `).join('') : '<tr><td colspan="4" class="px-3 py-4 text-center text-slate-400">Tidak ada data</td></tr>';
 
-        const durations = data.map(d => d.respon_menit);
-        const sum = durations.reduce((acc, v) => acc + v, 0);
-        const avg = sum / count;
-        const median = computeMedian(durations);
-        const min = Math.min(...durations);
-        const max = Math.max(...durations);
+      const ctx = document.getElementById('senderChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
 
-        els.kpiTotalSub.textContent = `Dari ${state.rawRecords.length.toLocaleString('id-ID')} total balasan`;
-        els.kpiAvg.textContent = `${avg.toFixed(1)} mnt`;
-        els.kpiAvgHuman.textContent = `≈ ${formatHumanDuration(avg)}`;
-
-        els.kpiMedian.textContent = `${median.toFixed(1)} mnt`;
-        els.kpiMedianHuman.textContent = `≈ ${formatHumanDuration(median)}`;
-
-        els.kpiMin.textContent = `${min.toFixed(1).replace(/\.0$/, '')} mnt`;
-        els.kpiMinSub.textContent = formatHumanDuration(min);
-
-        els.kpiMax.textContent = `${max.toFixed(1).replace(/\.0$/, '')} mnt`;
-        els.kpiMaxHuman.textContent = `≈ ${formatHumanDuration(max)}`;
-      }
-
-      function renderSummaryPerSender(data) {
-        if (!data.length) {
-          els.summaryTableBody.innerHTML = `
-            <tr>
-              <td colspan="6" class="py-6 px-4 text-center text-xs text-slate-400">
-                Tidak ada data untuk diringkas pada filter saat ini.
-              </td>
-            </tr>
-          `;
-          return;
-        }
-
-        const groups = {};
-        for (const row of data) {
-          if (!groups[row.pengirim]) {
-            groups[row.pengirim] = [];
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: summaryRows.map(r => r.sender),
+          datasets: [
+            {
+              label: 'Rata-rata (Menit)',
+              data: summaryRows.map(r => r.mean),
+              backgroundColor: 'rgba(5, 150, 105, 0.85)',
+              borderRadius: 6
+            },
+            {
+              label: 'Median (Menit)',
+              data: summaryRows.map(r => r.median),
+              backgroundColor: 'rgba(37, 99, 235, 0.85)',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { font: { size: 11 } } }
+          },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Menit', font: { size: 11 } } },
+            x: { ticks: { font: { size: 10 } } }
           }
-          groups[row.pengirim].push(row.respon_menit);
         }
+      });
+    }
 
-        const summaryList = Object.entries(groups).map(([pengirim, vals]) => {
-          const count = vals.length;
-          const avg = vals.reduce((a, b) => a + b, 0) / count;
-          const median = computeMedian(vals);
-          const min = Math.min(...vals);
-          const max = Math.max(...vals);
-          return { pengirim, count, avg, median, min, max };
-        }).sort((a, b) => b.count - a.count);
+    function updateDoughnutChart() {
+      const ctx = document.getElementById('responseDoughnutChart').getContext('2d');
+      if (doughnutChartInstance) doughnutChartInstance.destroy();
 
-        els.summaryTableBody.innerHTML = summaryList.map(item => {
-          const badgeCls = getResponseBadgeClass(item.median);
-          const isSelected = state.filters.sender === item.pengirim;
-          return `
-            <tr class="hover:bg-slate-50/90 transition ${isSelected ? 'bg-emerald-50/60' : ''}">
-              <td class="py-3 px-4 sm:px-6 font-semibold text-slate-800">
-                <button
-                  type="button"
-                  data-filter-sender="${escapeHtml(item.pengirim)}"
-                  class="text-left hover:text-emerald-700 hover:underline flex items-center gap-2 cursor-pointer"
-                >
-                  <span>${escapeHtml(item.pengirim)}</span>
-                  ${isSelected ? '<span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-600 text-white">Aktif</span>' : ''}
-                </button>
-              </td>
-              <td class="py-3 px-4 text-right font-medium text-slate-700">${item.count.toLocaleString('id-ID')}</td>
-              <td class="py-3 px-4 text-right text-slate-600">${item.avg.toFixed(2)}</td>
-              <td class="py-3 px-4 text-right">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeCls}">
-                  ${item.median.toFixed(2)}
-                </span>
-              </td>
-              <td class="py-3 px-4 text-right text-slate-500 hidden sm:table-cell">${item.min.toFixed(2)}</td>
-              <td class="py-3 px-4 sm:px-6 text-right text-slate-500 hidden sm:table-cell">${item.max.toFixed(2)}</td>
-            </tr>
-          `;
-        }).join('');
+      const total = filteredResponses.length;
+      const buckets = {
+        m0: 0,      // 0 menit
+        m1: 0,      // 1 menit
+        m2_5: 0,    // 2 - 5 menit
+        m6_60: 0,   // 6 - 60 menit
+        mGt60: 0    // > 60 menit
+      };
 
-        // Bind klik nama pengirim untuk quick-filter
-        els.summaryTableBody.querySelectorAll('[data-filter-sender]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const targetSender = btn.getAttribute('data-filter-sender');
-            state.filters.sender = state.filters.sender === targetSender ? 'ALL' : targetSender;
-            els.filterSender.value = state.filters.sender;
-            state.pagination.currentPage = 1;
-            applyFiltersAndRender();
-          });
-        });
+      for (const r of filteredResponses) {
+        const d = r.respon_menit;
+        if (d === 0) buckets.m0++;
+        else if (d === 1) buckets.m1++;
+        else if (d <= 5) buckets.m2_5++;
+        else if (d <= 60) buckets.m6_60++;
+        else buckets.mGt60++;
       }
 
-      // =========================================================================
-      // 8. RENDER TABEL DESKTOP, CARD VIEW MOBILE & PAGINATION
-      // =========================================================================
-      function renderDetailTableAndCards() {
-        const totalItems = state.filteredRecords.length;
+      const rawCounts = [buckets.m0, buckets.m1, buckets.m2_5, buckets.m6_60, buckets.mGt60];
+      const baseLabels = ['0 Menit', '1 Menit', '2 - 5 Menit', '6 - 60 Menit', '> 60 Menit'];
+      const labelsWithPct = baseLabels.map((lbl, idx) => {
+        const pct = total > 0 ? ((rawCounts[idx] / total) * 100).toFixed(1) : '0.0';
+        return `${lbl} (${pct}%)`;
+      });
 
-        if (totalItems === 0) {
-          els.detailTableBody.innerHTML = '';
-          els.mobileCardsContainer.innerHTML = '';
-          els.noResultsBox.classList.remove('hidden');
-          els.paginationFooter.classList.add('hidden');
-          lucide.createIcons();
-          return;
+      doughnutChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labelsWithPct,
+          datasets: [{
+            data: rawCounts,
+            backgroundColor: [
+              'rgba(16, 185, 129, 0.88)', // 0 menit - emerald
+              'rgba(59, 130, 246, 0.88)', // 1 menit - blue
+              'rgba(139, 92, 246, 0.88)', // 2-5 menit - violet
+              'rgba(245, 158, 11, 0.88)', // 6-60 menit - amber
+              'rgba(239, 68, 68, 0.88)'   // > 60 menit - red
+            ],
+            borderColor: '#ffffff',
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '58%',
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                boxWidth: 12,
+                padding: 10,
+                font: { size: 10 }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const val = context.parsed || 0;
+                  const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                  return ` ${val} balasan (${pct}%)`;
+                }
+              }
+            }
+          }
         }
+      });
+    }
 
-        els.noResultsBox.classList.add('hidden');
-        els.paginationFooter.classList.remove('hidden');
+    function quickFilterSender(senderName) {
+      const sel = document.getElementById('filterSender');
+      sel.value = (sel.value === senderName) ? 'ALL' : senderName;
+      applyFilters();
+    }
 
-        // Hitung slicing pagination
-        const pageSizeRaw = state.pagination.pageSize;
-        const isShowAll = pageSizeRaw === 'ALL';
-        const pageSize = isShowAll ? totalItems : Number(pageSizeRaw);
-        const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
+    function renderFolderMediaChips() {
+      const container = document.getElementById('mediaChipsContainer');
+      const vcfNames = [...vcfCache.values()].slice(0, 3).map(v => `👤 ${v.fullName}`);
+      let html = `
+        <span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-medium">🖼️ ${folderStats.images} Img</span>
+        <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium">📇 ${folderStats.vcfs} VCF</span>
+        <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium">📎 ${folderStats.docs + folderStats.others} Dok</span>
+      `;
+      if (vcfNames.length) {
+        html += vcfNames.map(n => `<span class="bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded truncate max-w-full">${escapeHtml(n)}</span>`).join('');
+      }
+      container.innerHTML = html;
+    }
 
-        if (state.pagination.currentPage > totalPages) {
-          state.pagination.currentPage = totalPages;
-        }
+    function renderTableAndCards() {
+      const total = filteredResponses.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
 
-        const startIdx = (state.pagination.currentPage - 1) * pageSize;
-        const endIdx = Math.min(startIdx + pageSize, totalItems);
-        const pageData = state.filteredRecords.slice(startIdx, endIdx);
+      const startIdx = (currentPage - 1) * pageSize;
+      const endIdx = Math.min(startIdx + pageSize, total);
+      const slice = filteredResponses.slice(startIdx, endIdx);
 
-        // 1. Render Desktop Table Rows (Excel Layout)
-        els.detailTableBody.innerHTML = pageData.map((row, idx) => {
-          const rowNum = startIdx + idx + 1;
-          const badgeCls = getResponseBadgeClass(row.respon_menit);
-          return `
-            <tr class="hover:bg-emerald-50/40 transition align-top">
-              <td class="py-3 px-4 text-center font-mono text-xs text-slate-400 border-r border-slate-100">${rowNum}</td>
-              <td class="py-3 px-4 font-mono text-xs text-slate-700 whitespace-nowrap border-r border-slate-100">${escapeHtml(row.timestampStr)}</td>
-              <td class="py-3 px-4 font-semibold text-slate-900 whitespace-nowrap border-r border-slate-100">${escapeHtml(row.pengirim)}</td>
-              <td class="py-3 px-4 text-slate-700 border-r border-slate-100 max-w-md break-words whitespace-pre-line leading-relaxed">${escapeHtml(row.pesan)}</td>
-              <td class="py-3 px-4 text-slate-600 whitespace-nowrap border-r border-slate-100">${escapeHtml(row.pengirim_prev)}</td>
-              <td class="py-3 px-4 font-mono text-xs text-slate-500 whitespace-nowrap border-r border-slate-100">${escapeHtml(row.waktuPrevStr)}</td>
-              <td class="py-3 px-4 text-right whitespace-nowrap">
-                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${badgeCls}">
-                  ${row.respon_menit.toFixed(1).replace(/\.0$/, '')}
-                </span>
-              </td>
-            </tr>
-          `;
-        }).join('');
+      const tbody = document.getElementById('desktopTableBody');
+      tbody.innerHTML = slice.length ? slice.map((row, idx) => {
+        const badgeColor = row.respon_menit <= 5 ? 'bg-emerald-100 text-emerald-800'
+                         : row.respon_menit <= 60 ? 'bg-blue-100 text-blue-800'
+                         : 'bg-amber-100 text-amber-800';
+        const mediaBadge = renderMediaActionBadge(row.media);
 
-        // 2. Render Mobile Cards (< 768px)
-        els.mobileCardsContainer.innerHTML = pageData.map((row, idx) => {
-          const rowNum = startIdx + idx + 1;
-          const badgeCls = getResponseBadgeClass(row.respon_menit);
-          return `
-            <article class="p-4 bg-white space-y-2.5">
-              <div class="flex items-start justify-between gap-2">
-                <div class="min-w-0">
-                  <div class="flex items-center gap-1.5">
-                    <span class="text-[11px] font-mono text-slate-400">#${rowNum}</span>
-                    <h4 class="text-sm font-bold text-slate-900 truncate">${escapeHtml(row.pengirim)}</h4>
-                  </div>
-                  <p class="text-[11px] font-mono text-slate-500 mt-0.5">${escapeHtml(row.timestampStr)}</p>
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-3 py-2 border-r border-slate-200 text-center text-slate-400 font-mono">${startIdx + idx + 1}</td>
+            <td class="px-3 py-2 border-r border-slate-200 whitespace-nowrap font-mono text-slate-600">${row.timestamp}</td>
+            <td class="px-3 py-2 border-r border-slate-200 font-semibold text-slate-800">${escapeHtml(row.pengirim)}</td>
+            <td class="px-3 py-2 border-r border-slate-200 text-slate-700">
+              <div class="whitespace-pre-line break-words max-w-md">${escapeHtml(row.pesan)}</div>
+              ${mediaBadge}
+            </td>
+            <td class="px-3 py-2 border-r border-slate-200 text-slate-600">${escapeHtml(row.pengirim_prev)}</td>
+            <td class="px-3 py-2 border-r border-slate-200 whitespace-nowrap font-mono text-slate-500">${row.waktu_prev}</td>
+            <td class="px-3 py-2 text-right whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded-full font-bold ${badgeColor}">${row.respon_menit}</span>
+            </td>
+          </tr>
+        `;
+      }).join('') : '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">Tidak ada percakapan yang cocok dengan filter.</td></tr>';
+
+      const mobileContainer = document.getElementById('mobileCardContainer');
+      mobileContainer.innerHTML = slice.length ? slice.map((row) => {
+        const badgeColor = row.respon_menit <= 5 ? 'bg-emerald-100 text-emerald-800'
+                         : row.respon_menit <= 60 ? 'bg-blue-100 text-blue-800'
+                         : 'bg-amber-100 text-amber-800';
+        const mediaBadge = renderMediaActionBadge(row.media);
+
+        return `
+          <div class="p-3.5 bg-white space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-800">${escapeHtml(row.pengirim)}</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeColor}">Respon: ${row.respon_menit} mnt</span>
+            </div>
+            <p class="text-xs text-slate-700 whitespace-pre-line break-words bg-slate-50 p-2.5 rounded-lg border border-slate-100">${escapeHtml(row.pesan)}</p>
+            ${mediaBadge}
+            <div class="flex flex-wrap items-center justify-between text-[10px] text-slate-400 pt-1">
+              <span>Balas ke: <b class="text-slate-600">${escapeHtml(row.pengirim_prev)}</b> (${row.waktu_prev})</span>
+              <span class="font-mono">${row.timestamp}</span>
+            </div>
+          </div>
+        `;
+      }).join('') : '<div class="p-6 text-center text-xs text-slate-400">Tidak ada percakapan yang cocok dengan filter.</div>';
+
+      document.getElementById('paginationInfo').textContent =
+        total ? `Menampilkan ${startIdx + 1} - ${endIdx} dari ${total.toLocaleString('id-ID')} baris` : 'Menampilkan 0 data';
+      document.getElementById('pageIndicator').textContent = `Hal ${currentPage} / ${totalPages}`;
+      document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+      document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
+    }
+
+    function renderMediaActionBadge(media) {
+      if (!media) return '';
+      const safeName = escapeHtml(media.fileName);
+      if (!media.existsInFolder) {
+        return `<div class="mt-1.5 inline-flex items-center gap-1 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200">📎 ${safeName} (tidak ada di folder)</div>`;
+      }
+      const icon = media.category === 'IMAGE' ? '🖼️' : media.category === 'VCF' ? '📇' : '📄';
+      return `
+        <button data-filename="${safeName}" onclick="previewMediaFile(this.dataset.filename, false)" class="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-md border border-emerald-200 transition cursor-pointer">
+          <span>${icon} Lihat ${safeName}</span>
+        </button>
+      `;
+    }
+
+    function revokeActiveBlob() {
+      if (activeBlobUrl) {
+        URL.revokeObjectURL(activeBlobUrl);
+        activeBlobUrl = null;
+      }
+    }
+
+    function previewMediaFile(fileName, fromFolderList = false) {
+      const file = folderFilesMap.get(fileName.toLowerCase());
+      if (!file) return;
+
+      revokeActiveBlob();
+
+      const modal = document.getElementById('previewModal');
+      const title = document.getElementById('modalTitle');
+      const body = document.getElementById('modalBody');
+      const backBtn = document.getElementById('modalBackBtn');
+
+      backBtn.classList.toggle('hidden', !fromFolderList);
+      title.textContent = file.name;
+
+      const ext = file.name.split('.').pop().toLowerCase();
+      const sizeStr = file.size >= 1048576
+        ? `${(file.size / 1048576).toFixed(2)} MB`
+        : `${(file.size / 1024).toFixed(1)} KB`;
+
+      if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
+        activeBlobUrl = URL.createObjectURL(file);
+        body.innerHTML = `
+          <div class="space-y-3 text-center">
+            <img src="${activeBlobUrl}" class="max-h-[68vh] mx-auto rounded-lg shadow border border-slate-200" alt="${escapeHtml(file.name)}" />
+            <div class="flex items-center justify-center gap-3 text-[11px] text-slate-500">
+              <span>Ukuran: <b>${sizeStr}</b></span>
+              <a href="${activeBlobUrl}" download="${escapeHtml(file.name)}" class="text-emerald-700 font-semibold hover:underline">⬇ Download Gambar</a>
+            </div>
+          </div>
+        `;
+      } else if (ext === 'vcf') {
+        const info = vcfCache.get(file.name.toLowerCase());
+        activeBlobUrl = URL.createObjectURL(file);
+        body.innerHTML = info ? `
+          <div class="space-y-3 p-1">
+            <div class="p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <p class="text-[11px] text-blue-600 font-semibold uppercase tracking-wide">Kartu Kontak (vCard)</p>
+              <p class="text-lg font-bold text-slate-800 mt-0.5">${escapeHtml(info.fullName)}</p>
+              ${info.org ? `<p class="text-xs text-slate-600 mt-1">Instansi / Perusahaan: <b>${escapeHtml(info.org)}</b></p>` : ''}
+            </div>
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+              <p class="text-[11px] text-slate-500 font-semibold">Nomor Telepon:</p>
+              ${info.phones.map(p => `
+                <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200">
+                  <span class="font-mono text-sm font-bold text-emerald-700">${escapeHtml(p)}</span>
+                  <button onclick="navigator.clipboard.writeText('${escapeHtml(p)}'); this.textContent='Tersalin!';" class="text-[11px] bg-slate-100 hover:bg-emerald-100 text-slate-700 px-2.5 py-1 rounded font-medium cursor-pointer">Salin</button>
                 </div>
-
-                <span class="shrink-0 inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold border ${badgeCls}">
-                  ${row.respon_menit.toFixed(1).replace(/\.0$/, '')} mnt
-                </span>
+              `).join('')}
+            </div>
+            <div class="text-right">
+              <a href="${activeBlobUrl}" download="${escapeHtml(file.name)}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:underline">⬇ Simpan Kontak (.vcf)</a>
+            </div>
+          </div>
+        ` : '<p class="text-center py-6 text-slate-500">Detail kontak tidak terbaca.</p>';
+      } else if (ext === 'pdf') {
+        activeBlobUrl = URL.createObjectURL(file);
+        body.innerHTML = `
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
+              <span class="text-[11px] text-slate-600">Dokumen PDF • Ukuran: <b>${sizeStr}</b></span>
+              <div class="flex items-center gap-3">
+                <a href="${activeBlobUrl}" target="_blank" rel="noopener" class="text-[11px] font-semibold text-blue-700 hover:underline">↗ Buka di Tab Baru</a>
+                <a href="${activeBlobUrl}" download="${escapeHtml(file.name)}" class="text-[11px] font-semibold text-emerald-700 hover:underline">⬇ Download PDF</a>
               </div>
-
-              <div class="bg-slate-50 rounded-xl p-3 text-sm text-slate-800 whitespace-pre-line break-words leading-relaxed border border-slate-100">
-                ${escapeHtml(row.pesan)}
-              </div>
-
-              <div class="flex flex-col gap-1 text-[11px] text-slate-500 pt-0.5">
-                <div class="flex items-center justify-between gap-2">
-                  <span class="truncate">Membalas: <strong class="text-slate-700">${escapeHtml(row.pengirim_prev)}</strong></span>
-                  <span class="font-mono shrink-0">${escapeHtml(row.waktuPrevStr.split(' ')[1] || row.waktuPrevStr)}</span>
-                </div>
-              </div>
-            </article>
-          `;
-        }).join('');
-
-        // 3. Render Pagination Info & Controls
-        els.paginationInfo.textContent = `Menampilkan ${(startIdx + 1).toLocaleString('id-ID')} – ${endIdx.toLocaleString('id-ID')} dari ${totalItems.toLocaleString('id-ID')} data`;
-        renderPaginationButtons(state.pagination.currentPage, totalPages);
-        lucide.createIcons();
+            </div>
+            <iframe src="${activeBlobUrl}" class="w-full h-[65vh] rounded-lg border border-slate-300" title="${escapeHtml(file.name)}"></iframe>
+          </div>
+        `;
+      } else if (['mp4', 'webm', 'ogg'].includes(ext)) {
+        activeBlobUrl = URL.createObjectURL(file);
+        body.innerHTML = `
+          <div class="space-y-2 text-center">
+            <video src="${activeBlobUrl}" controls class="max-h-[65vh] mx-auto rounded-lg shadow bg-black"></video>
+            <p class="text-[11px] text-slate-500">Ukuran: <b>${sizeStr}</b></p>
+          </div>
+        `;
+      } else if (['mp3', 'opus', 'wav', 'm4a'].includes(ext)) {
+        activeBlobUrl = URL.createObjectURL(file);
+        body.innerHTML = `
+          <div class="p-6 text-center space-y-3">
+            <p class="font-semibold text-slate-800">🎵 Rekaman Audio / Voice Note</p>
+            <audio src="${activeBlobUrl}" controls class="w-full max-w-md mx-auto"></audio>
+            <p class="text-[11px] text-slate-500">Ukuran: <b>${sizeStr}</b></p>
+          </div>
+        `;
+      } else {
+        activeBlobUrl = URL.createObjectURL(file);
+        body.innerHTML = `
+          <div class="p-6 text-center space-y-3">
+            <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-xl">📁</div>
+            <div>
+              <p class="font-bold text-sm text-slate-800 break-all">${escapeHtml(file.name)}</p>
+              <p class="text-xs text-slate-500 mt-1">Tipe: <b>.${ext.toUpperCase()}</b> • Ukuran: <b>${sizeStr}</b></p>
+              <p class="text-[11px] text-slate-400 mt-1">Browser tidak menampilkan pratinjau langsung untuk format .${ext}, silakan buka/unduh file ke perangkat Anda.</p>
+            </div>
+            <div class="pt-2">
+              <a href="${activeBlobUrl}" download="${escapeHtml(file.name)}" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow transition">
+                ⬇ Buka / Download File (${sizeStr})
+              </a>
+            </div>
+          </div>
+        `;
       }
+      modal.classList.remove('hidden');
+    }
 
-      function renderPaginationButtons(current, total) {
-        if (total <= 1) {
-          els.paginationControls.innerHTML = '';
-          return;
-        }
+    function openFolderFilesModal() {
+      revokeActiveBlob();
+      const modal = document.getElementById('previewModal');
+      document.getElementById('modalBackBtn').classList.add('hidden');
+      document.getElementById('modalTitle').textContent = `Daftar File Media di Folder (${folderStats.fileList.length})`;
 
-        const buttons = [];
-        const createBtn = (label, page, disabled = false, active = false) => {
-          const baseCls = 'min-w-[34px] h-8 px-2.5 rounded-lg text-xs font-semibold transition flex items-center justify-center';
-          if (active) {
-            return `<button type="button" data-page="${page}" class="${baseCls} bg-emerald-600 text-white shadow-xs">${label}</button>`;
-          }
-          if (disabled) {
-            return `<button type="button" disabled class="${baseCls} bg-slate-100 text-slate-300 cursor-not-allowed">${label}</button>`;
-          }
-          return `<button type="button" data-page="${page}" class="${baseCls} bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 cursor-pointer">${label}</button>`;
+      document.getElementById('modalBody').innerHTML = `
+        <div class="space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <input type="text" id="modalFileSearch" oninput="filterModalFileList()" placeholder="Cari nama file, .pdf, .vcf, .png, .pptx..." class="w-full sm:w-80 text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <span class="text-[11px] text-slate-500">Klik nama file untuk melihat preview / membuka file</span>
+          </div>
+          <div class="overflow-x-auto border border-slate-200 rounded-xl max-h-[62vh]">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-slate-100 font-semibold text-slate-700 sticky top-0">
+                <tr>
+                  <th class="p-2.5 w-10">#</th>
+                  <th class="p-2.5">Nama File (Klik untuk Buka)</th>
+                  <th class="p-2.5">Tipe</th>
+                  <th class="p-2.5 text-right">Ukuran</th>
+                </tr>
+              </thead>
+              <tbody id="modalFileTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      renderModalFileRows(folderStats.fileList);
+      modal.classList.remove('hidden');
+    }
+
+    function filterModalFileList() {
+      const q = (document.getElementById('modalFileSearch')?.value || '').trim().toLowerCase();
+      const filtered = q
+        ? folderStats.fileList.filter(f => f.name.toLowerCase().includes(q) || f.type.toLowerCase().includes(q))
+        : folderStats.fileList;
+      renderModalFileRows(filtered);
+    }
+
+    function renderModalFileRows(list) {
+      const tbody = document.getElementById('modalFileTableBody');
+      if (!tbody) return;
+
+      tbody.innerHTML = list.length ? list.map((f, i) => {
+        const icon = f.type === 'Image' ? '🖼️' : f.type === 'VCF Contact' ? '📇' : f.name.toLowerCase().endsWith('.pdf') ? '📕' : '📄';
+        const safeName = escapeHtml(f.name);
+        return `
+          <tr class="hover:bg-emerald-50/70 transition">
+            <td class="py-2 px-2.5 text-slate-400 font-mono">${i + 1}</td>
+            <td class="py-2 px-2.5">
+              <button data-filename="${safeName}" onclick="previewMediaFile(this.dataset.filename, true)" class="text-left font-semibold text-emerald-700 hover:text-emerald-900 hover:underline flex items-start gap-1.5 cursor-pointer break-all">
+                <span class="shrink-0">${icon}</span>
+                <span>${safeName}</span>
+              </button>
+            </td>
+            <td class="py-2 px-2.5 text-slate-500 whitespace-nowrap">${f.type}</td>
+            <td class="py-2 px-2.5 text-right font-mono text-slate-500 whitespace-nowrap">${(f.size / 1024).toFixed(1)} KB</td>
+          </tr>
+        `;
+      }).join('') : '<tr><td colspan="4" class="p-6 text-center text-slate-400">Tidak ada file yang cocok.</td></tr>';
+    }
+
+    function closeModal() {
+      revokeActiveBlob();
+      document.getElementById('previewModal').classList.add('hidden');
+    }
+
+    function handleSearchInput() {
+      const val = document.getElementById('searchInput').value;
+      document.getElementById('clearSearchBtn').classList.toggle('hidden', !val);
+      applyFilters();
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      applyFilters();
+    }
+
+    function changePageSize() {
+      pageSize = parseInt(document.getElementById('pageSizeSelect').value, 10);
+      currentPage = 1;
+      renderTableAndCards();
+    }
+
+    function prevPage() {
+      if (currentPage > 1) { currentPage--; renderTableAndCards(); }
+    }
+
+    function nextPage() {
+      const totalPages = Math.ceil(filteredResponses.length / pageSize);
+      if (currentPage < totalPages) { currentPage++; renderTableAndCards(); }
+    }
+
+    function exportToExcel() {
+      if (!filteredResponses.length) return;
+
+      const detailData = filteredResponses.map(r => ({
+        timestamp: r.timestamp,
+        pengirim: r.pengirim,
+        pesan: r.pesan,
+        lampiran_media: r.media ? r.media.fileName : '',
+        pengirim_prev: r.pengirim_prev,
+        waktu_prev: r.waktu_prev,
+        respon_menit: r.respon_menit
+      }));
+
+      const grouped = {};
+      for (const r of filteredResponses) {
+        if (!grouped[r.pengirim]) grouped[r.pengirim] = [];
+        grouped[r.pengirim].push(r.respon_menit);
+      }
+      const summaryData = Object.entries(grouped).map(([pengirim, arr]) => {
+        arr.sort((a, b) => a - b);
+        const n = arr.length;
+        const mean = arr.reduce((a, b) => a + b, 0) / n;
+        const median = n % 2 === 1 ? arr[Math.floor(n / 2)] : (arr[n / 2 - 1] + arr[n / 2]) / 2;
+        return {
+          pengirim,
+          jumlah_balasan: n,
+          rata_rata_menit: Number(mean.toFixed(2)),
+          median_menit: Number(median.toFixed(2)),
+          tercepat_menit: arr[0],
+          terlama_menit: arr[n - 1]
         };
-
-        buttons.push(createBtn('&laquo;', 1, current === 1));
-        buttons.push(createBtn('&lsaquo;', current - 1, current === 1));
-
-        // Window nomor halaman (maks 5 tombol angka)
-        let startPage = Math.max(1, current - 2);
-        let endPage = Math.min(total, startPage + 4);
-        if (endPage - startPage < 4) {
-          startPage = Math.max(1, endPage - 4);
-        }
-
-        for (let p = startPage; p <= endPage; p++) {
-          buttons.push(createBtn(p, p, false, p === current));
-        }
-
-        buttons.push(createBtn('&rsaquo;', current + 1, current === total));
-        buttons.push(createBtn('&raquo;', total, current === total));
-
-        els.paginationControls.innerHTML = buttons.join('');
-        els.paginationControls.querySelectorAll('button[data-page]').forEach(btn => {
-          btn.addEventListener('click', () => {
-            const target = Number(btn.getAttribute('data-page'));
-            if (target >= 1 && target <= total) {
-              state.pagination.currentPage = target;
-              renderDetailTableAndCards();
-            }
-          });
-        });
-      }
-
-      // =========================================================================
-      // 9. EXPORT KE EXCEL (.XLSX) DENGAN SHEETJS
-      // =========================================================================
-      function exportToExcel() {
-        if (!state.filteredRecords.length) {
-          showToast('Tidak ada data yang bisa di-export.', 'error');
-          return;
-        }
-
-        try {
-          // Sheet 1: Detail Analisa (format persis seperti hasil_analisa_respon.xlsx)
-          const detailRows = state.filteredRecords.map(r => ({
-            timestamp: r.timestampStr,
-            pengirim: r.pengirim,
-            pesan: r.pesan,
-            pengirim_prev: r.pengirim_prev,
-            waktu_prev: r.waktuPrevStr,
-            respon_menit: r.respon_menit
-          }));
-
-          // Sheet 2: Ringkasan Per Pengirim
-          const groups = {};
-          for (const row of state.filteredRecords) {
-            if (!groups[row.pengirim]) groups[row.pengirim] = [];
-            groups[row.pengirim].push(row.respon_menit);
-          }
-
-          const summaryRows = Object.entries(groups).map(([pengirim, vals]) => {
-            const count = vals.length;
-            const avg = vals.reduce((a, b) => a + b, 0) / count;
-            const median = computeMedian(vals);
-            const min = Math.min(...vals);
-            const max = Math.max(...vals);
-            return {
-              pengirim,
-              jumlah_balasan: count,
-              rata_rata_menit: Number(avg.toFixed(2)),
-              median_menit: Number(median.toFixed(2)),
-              tercepat_menit: Number(min.toFixed(2)),
-              terlama_menit: Number(max.toFixed(2))
-            };
-          });
-
-          const wb = XLSX.utils.book_new();
-          const wsDetail = XLSX.utils.json_to_sheet(detailRows);
-          const wsSummary = XLSX.utils.json_to_sheet(summaryRows);
-
-          // Atur lebar kolom agar rapi saat dibuka di Excel
-          wsDetail['!cols'] = [
-            { wch: 20 }, { wch: 24 }, { wch: 50 }, { wch: 24 }, { wch: 20 }, { wch: 15 }
-          ];
-          wsSummary['!cols'] = [
-            { wch: 26 }, { wch: 16 }, { wch: 18 }, { wch: 16 }, { wch: 16 }, { wch: 16 }
-          ];
-
-          XLSX.utils.book_append_sheet(wb, wsDetail, 'Detail_Respon');
-          XLSX.utils.book_append_sheet(wb, wsSummary, 'Ringkasan_Pengirim');
-
-          const dateStamp = new Date().toISOString().slice(0, 10);
-          const outName = `hasil_analisa_respon_${dateStamp}.xlsx`;
-          XLSX.writeFile(wb, outName);
-
-          showToast(`Berhasil mengunduh ${outName} (${detailRows.length} baris)`, 'success');
-        } catch (err) {
-          console.error(err);
-          showToast('Gagal membuat file Excel. Silakan coba lagi.', 'error');
-        }
-      }
-
-      // =========================================================================
-      // 10. EVENT LISTENERS (UPLOAD, DRAG & DROP, FILTER, CLEAR TEXT, EXPORT)
-      // =========================================================================
-      function handleFileProcess(file) {
-        if (!file) return;
-        const ext = file.name.split('.').pop().toLowerCase();
-
-        if (ext === 'txt') {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            try {
-              const parsed = parseWhatsAppTxt(e.target.result);
-              loadDataset(parsed, file.name, 'TXT');
-            } catch (err) {
-              console.error(err);
-              showToast('Format file .txt tidak dikenali.', 'error');
-            }
-          };
-          reader.readAsText(file, 'UTF-8');
-        } else if (['xlsx', 'xls', 'csv'].includes(ext)) {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            try {
-              const parsed = parseExcelOrCsv(e.target.result);
-              loadDataset(parsed, file.name, ext);
-            } catch (err) {
-              console.error(err);
-              showToast('Gagal membaca file Excel/CSV. Pastikan struktur kolom sesuai.', 'error');
-            }
-          };
-          reader.readAsArrayBuffer(file);
-        } else {
-          showToast('Format file tidak didukung. Gunakan .txt, .xlsx, .xls, atau .csv', 'error');
-        }
-      }
-
-      els.fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        handleFileProcess(file);
-        els.fileInput.value = ''; // Reset input agar file yang sama bisa di-upload ulang
       });
 
-      // Drag & Drop support pada Empty State
-      ['dragenter', 'dragover'].forEach(evtName => {
-        els.emptyState.addEventListener(evtName, (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          els.emptyState.classList.add('border-emerald-500', 'bg-emerald-50/30');
-        });
-      });
+      const mediaData = folderStats.fileList.map(f => ({
+        nama_file: f.name,
+        kategori: f.type,
+        ukuran_kb: Number((f.size / 1024).toFixed(1)),
+        detail_kontak_vcf: vcfCache.has(f.name.toLowerCase())
+          ? `${vcfCache.get(f.name.toLowerCase()).fullName} (${vcfCache.get(f.name.toLowerCase()).phones.join(', ')})`
+          : ''
+      }));
 
-      ['dragleave', 'drop'].forEach(evtName => {
-        els.emptyState.addEventListener(evtName, (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          els.emptyState.classList.remove('border-emerald-500', 'bg-emerald-50/30');
-        });
-      });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detailData), 'Detail_Respon');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), 'Ringkasan_Pengirim');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mediaData), 'Daftar_Media_Folder');
 
-      els.emptyState.addEventListener('drop', (e) => {
-        const file = e.dataTransfer.files[0];
-        handleFileProcess(file);
-      });
+      const safeFolder = (folderStats.folderName || 'WA').replace(/[^a-zA-Z0-9_-]/g, '_');
+      XLSX.writeFile(wb, `Analisa_WA_${safeFolder}.xlsx`);
+    }
 
-      // Tombol Muat Data Contoh (Demo)
-      const triggerDemo = () => {
-        const demoRecords = generateDemoData();
-        loadDataset(demoRecords, 'contoh_chat_pelanggan_wa.txt', 'DEMO');
-      };
-      els.btnLoadDemo.addEventListener('click', triggerDemo);
-      els.btnLoadDemoHero.addEventListener('click', triggerDemo);
-
-      // Filter Controls
-      els.filterSender.addEventListener('change', (e) => {
-        state.filters.sender = e.target.value;
-        state.pagination.currentPage = 1;
-        applyFiltersAndRender();
-      });
-
-      els.filterMaxResponse.addEventListener('change', (e) => {
-        state.filters.maxResponse = e.target.value;
-        state.pagination.currentPage = 1;
-        applyFiltersAndRender();
-      });
-
-      els.filterDateStart.addEventListener('change', (e) => {
-        state.filters.dateStart = e.target.value;
-        state.pagination.currentPage = 1;
-        applyFiltersAndRender();
-      });
-
-      els.filterDateEnd.addEventListener('change', (e) => {
-        state.filters.dateEnd = e.target.value;
-        state.pagination.currentPage = 1;
-        applyFiltersAndRender();
-      });
-
-      // Search Input & Tombol Clear Text (X)
-      els.searchInput.addEventListener('input', (e) => {
-        const val = e.target.value;
-        state.filters.search = val;
-        state.pagination.currentPage = 1;
-
-        if (val.length > 0) {
-          els.btnClearSearch.classList.remove('hidden');
-        } else {
-          els.btnClearSearch.classList.add('hidden');
-        }
-        applyFiltersAndRender();
-      });
-
-      const clearSearchOnly = () => {
-        els.searchInput.value = '';
-        state.filters.search = '';
-        els.btnClearSearch.classList.add('hidden');
-        state.pagination.currentPage = 1;
-        applyFiltersAndRender();
-        els.searchInput.focus();
-      };
-
-      els.btnClearSearch.addEventListener('click', clearSearchOnly);
-
-      // Reset Semua Filter
-      const resetAllFilters = () => {
-        state.filters.sender = 'ALL';
-        state.filters.maxResponse = '720';
-        state.filters.search = '';
-        els.filterSender.value = 'ALL';
-        els.filterMaxResponse.value = '720';
-        els.searchInput.value = '';
-        els.btnClearSearch.classList.add('hidden');
-
-        const validDates = state.rawRecords.map(r => r.dateISO).filter(Boolean).sort();
-        if (validDates.length > 0) {
-          els.filterDateStart.value = validDates[0];
-          els.filterDateEnd.value = validDates[validDates.length - 1];
-          state.filters.dateStart = validDates[0];
-          state.filters.dateEnd = validDates[validDates.length - 1];
-        }
-
-        state.pagination.currentPage = 1;
-        applyFiltersAndRender();
-        showToast('Semua filter dikembalikan ke pengaturan awal.', 'info');
-      };
-
-      els.btnResetFilters.addEventListener('click', resetAllFilters);
-      els.btnClearAllEmpty.addEventListener('click', resetAllFilters);
-
-      // Paging By (Rows per page)
-      els.pageSizeSelect.addEventListener('change', (e) => {
-        state.pagination.pageSize = e.target.value;
-        state.pagination.currentPage = 1;
-        renderDetailTableAndCards();
-      });
-
-      // Sorting pada Header Kolom Tabel
-      document.querySelectorAll('th[data-sort]').forEach(th => {
-        th.addEventListener('click', () => {
-          const col = th.getAttribute('data-sort');
-          if (state.sort.column === col) {
-            state.sort.direction = state.sort.direction === 'asc' ? 'desc' : 'asc';
-          } else {
-            state.sort.column = col;
-            state.sort.direction = 'asc';
-          }
-          applyFiltersAndRender();
-        });
-      });
-
-      // Export to Excel
-      els.btnExportExcel.addEventListener('click', exportToExcel);
-
-      // Render Lucide Icons saat halaman siap
-      lucide.createIcons();
-    })();
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
   </script>
 </body>
 </html>
