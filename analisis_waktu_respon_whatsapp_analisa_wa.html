@@ -31,7 +31,7 @@
         </div>
         <div>
           <h1 class="text-base md:text-lg font-bold leading-tight">Analisa Respon & Media WA</h1>
-          <p class="text-[11px] text-emerald-100">Mode Folder Lengkap (.txt, .vcf, Image, PDF, Dokumen) • Zero-Lag Memory</p>
+          <p class="text-[11px] text-emerald-100">Mode Folder Lengkap (.txt, .vcf, Image, PDF, Dokumen) • Default 8 Jam (480 mnt)</p>
         </div>
       </div>
 
@@ -67,7 +67,7 @@
       <h2 class="text-lg font-bold text-slate-800">Pilih Folder Hasil Export WhatsApp</h2>
       <p class="text-sm text-slate-500 max-w-xl mx-auto mt-1">
         Klik tombol <b>"Pilih Folder WA"</b> di atas lalu pilih folder hasil ekstrak.
-        Sistem hanya membaca teks chat & kontak (.vcf) sehingga tetap <b>sangat ringan</b> walau berisi ratusan foto, PDF, atau presentasi.
+        Seluruh percakapan dari file <b>.txt</b> asli akan ditampilkan lengkap, dengan batas respon default <b>480 menit (8 jam)</b>.
       </p>
       <div class="mt-4">
         <label class="cursor-pointer inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow transition">
@@ -87,11 +87,11 @@
             <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md" id="folderNameBadge">Folder: -</span>
             <span class="text-xs text-slate-500 ml-2" id="folderStatsText">0 file terdeteksi</span>
           </div>
-          <button onclick="resetFilters()" class="text-xs text-slate-500 hover:text-emerald-700 underline">Reset Semua Filter</button>
+          <button onclick="resetFilters()" class="text-xs text-slate-500 hover:text-emerald-700 underline cursor-pointer">Reset Semua Filter</button>
         </div>
 
         <!-- Grid Filter -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
           <div>
             <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dari Tanggal</label>
             <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
@@ -103,9 +103,17 @@
           </div>
 
           <div>
-            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Pengirim (Pembalas)</label>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Pengirim</label>
             <select id="filterSender" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
               <option value="ALL">Semua Pengirim</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Cakupan Baris TXT</label>
+            <select id="filterScope" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+              <option value="ALL_TXT" selected>Semua Percakapan TXT Asli</option>
+              <option value="REPLY_ONLY">Hanya Pergantian Balasan</option>
             </select>
           </div>
 
@@ -118,8 +126,8 @@
           </div>
 
           <div>
-            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Batas Menit (Kosong = Semua)</label>
-            <input type="number" id="filterDelayVal" value="720" min="0" placeholder="Misal: 60 atau 720" oninput="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Batas Menit (Default 480)</label>
+            <input type="number" id="filterDelayVal" value="480" min="0" placeholder="480 = 8 jam" oninput="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
           </div>
 
           <div>
@@ -138,9 +146,9 @@
       <!-- Scorecard KPI -->
       <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
-          <p class="text-[11px] font-medium text-slate-500">Total Balasan Valid</p>
+          <p class="text-[11px] font-medium text-slate-500">Balasan Valid (Statistik)</p>
           <p class="text-xl md:text-2xl font-bold text-slate-800 mt-1" id="kpiTotal">0</p>
-          <p class="text-[10px] text-slate-400 mt-0.5">Pergantian pengirim</p>
+          <p class="text-[10px] text-slate-400 mt-0.5" id="kpiTotalAllRows">0 total baris tampil</p>
         </div>
         <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
           <p class="text-[11px] font-medium text-slate-500">Rata-rata Respon</p>
@@ -175,7 +183,7 @@
         <div class="lg:col-span-5 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col">
           <div class="mb-2">
             <h3 class="text-sm font-bold text-slate-800">Kecepatan Respon Antar Pengirim</h3>
-            <p class="text-[11px] text-slate-500">Rata-rata (Mean) vs Median (Menit)</p>
+            <p class="text-[11px] text-slate-500">Rata-rata (Mean) vs Median (Menit) • Pergantian Balasan</p>
           </div>
           <div class="relative flex-1 min-h-[240px]">
             <canvas id="senderChart"></canvas>
@@ -202,7 +210,7 @@
                 <thead class="bg-slate-100 text-slate-700 font-semibold sticky top-0">
                   <tr>
                     <th class="px-2 py-1.5">Pengirim</th>
-                    <th class="px-1.5 py-1.5 text-right">Jml</th>
+                    <th class="px-1.5 py-1.5 text-right">Balas</th>
                     <th class="px-1.5 py-1.5 text-right">Rata2</th>
                     <th class="px-2 py-1.5 text-right">Med</th>
                   </tr>
@@ -232,7 +240,7 @@
             <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-            <button id="clearSearchBtn" onclick="clearSearch()" title="Clear text" class="hidden absolute right-2 top-1.5 text-slate-400 hover:text-rose-600 p-0.5 rounded-full">
+            <button id="clearSearchBtn" onclick="clearSearch()" title="Clear text" class="hidden absolute right-2 top-1.5 text-slate-400 hover:text-rose-600 p-0.5 rounded-full cursor-pointer">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>
@@ -282,9 +290,9 @@
         <div class="p-3 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
           <div id="paginationInfo">Menampilkan 0 - 0 dari 0 data</div>
           <div class="flex items-center gap-1.5">
-            <button id="prevPageBtn" onclick="prevPage()" class="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-100 disabled:opacity-40 font-medium">← Sebelumnya</button>
+            <button id="prevPageBtn" onclick="prevPage()" class="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-100 disabled:opacity-40 font-medium cursor-pointer">← Sebelumnya</button>
             <span id="pageIndicator" class="px-2 font-semibold">Hal 1 / 1</span>
-            <button id="nextPageBtn" onclick="nextPage()" class="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-100 disabled:opacity-40 font-medium">Berikutnya →</button>
+            <button id="nextPageBtn" onclick="nextPage()" class="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-100 disabled:opacity-40 font-medium cursor-pointer">Berikutnya →</button>
           </div>
         </div>
       </section>
@@ -312,8 +320,10 @@
   </div>
 
   <script>
-    let rawResponses = [];
-    let filteredResponses = [];
+    const DEFAULT_DELAY_MINUTES = 480; // 8 jam
+
+    let rawMessages = [];       // Semua baris percakapan asli dari .txt
+    let filteredRows = [];      // Baris yang lolos filter untuk tabel
     let folderFilesMap = new Map();
     let folderStats = { folderName: '', totalFiles: 0, images: 0, vcfs: 0, docs: 0, others: 0, fileList: [] };
     let vcfCache = new Map();
@@ -377,10 +387,10 @@
       }
 
       const chatText = await chatTxtFile.text();
-      rawResponses = parseWhatsAppChat(chatText);
+      rawMessages = parseWhatsAppChat(chatText);
 
-      if (!rawResponses.length) {
-        alert('Data chat tidak terbaca atau belum ada pergantian balasan antar pengirim.');
+      if (!rawMessages.length) {
+        alert('Data chat tidak terbaca dari file .txt.');
         return;
       }
 
@@ -390,7 +400,7 @@
 
       document.getElementById('folderNameBadge').textContent = `📁 ${folderStats.folderName}`;
       document.getElementById('folderStatsText').textContent =
-        `${folderStats.totalFiles} file (${folderStats.images} gambar, ${folderStats.vcfs} kontak .vcf, ${folderStats.docs + folderStats.others} dok/media)`;
+        `${folderStats.totalFiles} file (${folderStats.images} gambar, ${folderStats.vcfs} kontak .vcf, ${folderStats.docs + folderStats.others} dok/media) • ${rawMessages.length} baris chat`;
 
       populateFilterControls();
       renderFolderMediaChips();
@@ -399,56 +409,110 @@
 
     function parseWhatsAppChat(text) {
       const lines = text.split(/\r?\n/);
-      const androidRegex = /^(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\s-\s([^:]+):\s(.*)$/;
-      const iosRegex = /^\[(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\]\s([^:]+):\s(.*)$/;
+      // Mendukung format chat ber-pengirim maupun baris info sistem (contoh: enkripsi end-to-end)
+      const androidMsgRegex = /^(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\s-\s([^:]+):\s(.*)$/;
+      const iosMsgRegex = /^\[(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\]\s([^:]+):\s(.*)$/;
+      const androidSysRegex = /^(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\s-\s(.+)$/;
+      const iosSysRegex = /^\[(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\]\s(.+)$/;
 
-      const messages = [];
-      for (let rawLine of lines) {
-        const line = rawLine.replace(/[\u200e\u200f\ufeff]/g, '').trim();
-        if (!line) continue;
+      const parsedEntries = [];
+      let fallbackTime = new Date(2000, 0, 1, 0, 0, 0);
 
-        let match = line.match(androidRegex) || line.match(iosRegex);
-        if (match) {
-          const [, dateStr, timeStr, sender, msg] = match;
-          const dt = parseDateTime(dateStr, timeStr);
-          if (dt) {
-            messages.push({
-              timestamp: dt,
-              timestampMs: dt.getTime(),
-              timestampStr: formatDateTime(dt),
-              dateISO: formatDateISO(dt),
-              sender: sender.trim(),
-              message: msg.trim()
-            });
-          }
-        } else if (messages.length > 0) {
-          messages[messages.length - 1].message += '\n' + line;
+      for (let idx = 0; idx < lines.length; idx++) {
+        const rawLine = lines[idx];
+        const line = rawLine.replace(/[\u200e\u200f\ufeff]/g, '');
+
+        let msgMatch = line.trim().match(androidMsgRegex) || line.trim().match(iosMsgRegex);
+        if (msgMatch) {
+          const [, dateStr, timeStr, sender, msg] = msgMatch;
+          const dt = parseDateTime(dateStr, timeStr) || fallbackTime;
+          fallbackTime = dt;
+          parsedEntries.push({
+            seq: parsedEntries.length + 1,
+            isSystem: false,
+            dt,
+            timestamp: formatDateTime(dt),
+            timestampMs: dt.getTime(),
+            dateISO: formatDateISO(dt),
+            sender: sender.trim(),
+            message: msg
+          });
+          continue;
         }
-      }
 
-      const responses = [];
-      for (let i = 1; i < messages.length; i++) {
-        const curr = messages[i];
-        const prev = messages[i - 1];
+        let sysMatch = line.trim().match(androidSysRegex) || line.trim().match(iosSysRegex);
+        if (sysMatch) {
+          const [, dateStr, timeStr, sysText] = sysMatch;
+          const dt = parseDateTime(dateStr, timeStr) || fallbackTime;
+          fallbackTime = dt;
+          parsedEntries.push({
+            seq: parsedEntries.length + 1,
+            isSystem: true,
+            dt,
+            timestamp: formatDateTime(dt),
+            timestampMs: dt.getTime(),
+            dateISO: formatDateISO(dt),
+            sender: 'Sistem WA',
+            message: sysText.trim()
+          });
+          continue;
+        }
 
-        if (curr.sender !== prev.sender) {
-          const diffMinutes = Math.round((curr.timestamp - prev.timestamp) / 60000);
-          const mediaInfo = detectAttachmentInMessage(curr.message);
-
-          responses.push({
-            timestamp: curr.timestampStr,
-            timestampMs: curr.timestampMs,
-            dateISO: curr.dateISO,
-            pengirim: curr.sender,
-            pesan: curr.message,
-            pengirim_prev: prev.sender,
-            waktu_prev: prev.timestampStr,
-            respon_menit: diffMinutes < 0 ? 0 : diffMinutes,
-            media: mediaInfo
+        // Baris lanjutan (multiline) dari pesan sebelumnya
+        if (parsedEntries.length > 0) {
+          parsedEntries[parsedEntries.length - 1].message += '\n' + line;
+        } else if (line.trim()) {
+          parsedEntries.push({
+            seq: parsedEntries.length + 1,
+            isSystem: true,
+            dt: fallbackTime,
+            timestamp: formatDateTime(fallbackTime),
+            timestampMs: fallbackTime.getTime(),
+            dateISO: formatDateISO(fallbackTime),
+            sender: 'Sistem WA',
+            message: line.trim()
           });
         }
       }
-      return responses;
+
+      // Bangun semua baris percakapan asli + hitung respon_menit hanya saat pergantian pengirim
+      const rows = [];
+      let lastNonSystem = null;
+
+      for (const entry of parsedEntries) {
+        let isReplyTurn = false;
+        let diffMinutes = null;
+        let pengirimPrev = '-';
+        let waktuPrev = '-';
+
+        if (!entry.isSystem) {
+          if (lastNonSystem && entry.sender !== lastNonSystem.sender) {
+            isReplyTurn = true;
+            const rawDiff = Math.round((entry.dt - lastNonSystem.dt) / 60000);
+            diffMinutes = rawDiff < 0 ? 0 : rawDiff;
+            pengirimPrev = lastNonSystem.sender;
+            waktuPrev = lastNonSystem.timestamp;
+          }
+          lastNonSystem = entry;
+        }
+
+        rows.push({
+          seq: entry.seq,
+          isSystem: entry.isSystem,
+          isReplyTurn,
+          timestamp: entry.timestamp,
+          timestampMs: entry.timestampMs,
+          dateISO: entry.dateISO,
+          pengirim: entry.sender,
+          pesan: entry.message,
+          pengirim_prev: pengirimPrev,
+          waktu_prev: waktuPrev,
+          respon_menit: diffMinutes,
+          media: detectAttachmentInMessage(entry.message)
+        });
+      }
+
+      return rows;
     }
 
     function detectAttachmentInMessage(msg) {
@@ -472,15 +536,16 @@
     function parseDateTime(dateStr, timeStr) {
       const parts = dateStr.split('/');
       if (parts.length !== 3) return null;
-      let day = parseInt(parts[0], 10);
-      let month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
       let year = parseInt(parts[2], 10);
       if (year < 100) year += 2000;
 
       const tParts = timeStr.replace('.', ':').split(':');
       const hour = parseInt(tParts[0], 10);
       const minute = parseInt(tParts[1], 10);
-      return new Date(year, month, day, hour, minute, 0);
+      const dt = new Date(year, month, day, hour, minute, 0);
+      return isNaN(dt.getTime()) ? null : dt;
     }
 
     function formatDateTime(dt) {
@@ -506,12 +571,12 @@
     }
 
     function populateFilterControls() {
-      const senders = [...new Set(rawResponses.map(r => r.pengirim))].sort();
+      const senders = [...new Set(rawMessages.filter(r => !r.isSystem).map(r => r.pengirim))].sort();
       const senderSelect = document.getElementById('filterSender');
       senderSelect.innerHTML = '<option value="ALL">Semua Pengirim</option>' +
         senders.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
 
-      const dates = rawResponses.map(r => r.dateISO).sort();
+      const dates = rawMessages.map(r => r.dateISO).filter(Boolean).sort();
       if (dates.length) {
         document.getElementById('filterStartDate').value = dates[0];
         document.getElementById('filterEndDate').value = dates[dates.length - 1];
@@ -520,8 +585,9 @@
 
     function resetFilters() {
       populateFilterControls();
+      document.getElementById('filterScope').value = 'ALL_TXT';
       document.getElementById('filterDelayOp').value = 'lte';
-      document.getElementById('filterDelayVal').value = '720';
+      document.getElementById('filterDelayVal').value = String(DEFAULT_DELAY_MINUTES);
       document.getElementById('filterMedia').value = 'ALL';
       clearSearch();
       applyFilters();
@@ -531,21 +597,33 @@
       const startDate = document.getElementById('filterStartDate').value;
       const endDate = document.getElementById('filterEndDate').value;
       const sender = document.getElementById('filterSender').value;
+      const scope = document.getElementById('filterScope').value;
       const delayOp = document.getElementById('filterDelayOp').value;
       const delayValRaw = document.getElementById('filterDelayVal').value;
       const delayVal = delayValRaw !== '' ? parseFloat(delayValRaw) : null;
+      const hasExplicitDelayFilter = delayVal !== null && !isNaN(delayVal);
       const mediaFilter = document.getElementById('filterMedia').value;
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
 
-      filteredResponses = rawResponses
+      filteredRows = rawMessages
         .filter(item => {
           if (startDate && item.dateISO < startDate) return false;
           if (endDate && item.dateISO > endDate) return false;
           if (sender !== 'ALL' && item.pengirim !== sender) return false;
 
-          if (delayVal !== null && !isNaN(delayVal)) {
-            if (delayOp === 'lte' && item.respon_menit > delayVal) return false;
-            if (delayOp === 'gte' && item.respon_menit < delayVal) return false;
+          if (scope === 'REPLY_ONLY') {
+            if (!item.isReplyTurn) return false;
+            if (hasExplicitDelayFilter) {
+              if (delayOp === 'lte' && item.respon_menit > delayVal) return false;
+              if (delayOp === 'gte' && item.respon_menit < delayVal) return false;
+            }
+          } else {
+            // Mode "Semua Percakapan TXT Asli":
+            // Jika pengguna mengubah batas menit secara khusus (bukan default 480) atau memakai operator >=,
+            // terapkan batas pada baris yang memiliki respon_menit; baris non-balasan tetap tampil agar semua chat TXT terlihat.
+            if (hasExplicitDelayFilter && item.isReplyTurn && delayOp === 'gte' && item.respon_menit < delayVal) {
+              return false;
+            }
           }
 
           if (mediaFilter === 'HAS_MEDIA' && !item.media) return false;
@@ -559,8 +637,8 @@
           }
           return true;
         })
-        // Urutkan timestamp terbaru di paling atas
-        .sort((a, b) => b.timestampMs - a.timestampMs);
+        // Urutkan timestamp terbaru di paling atas (pertahankan urutan asli TXT pada timestamp yang sama)
+        .sort((a, b) => (b.timestampMs - a.timestampMs) || (b.seq - a.seq));
 
       currentPage = 1;
       updateKPIs();
@@ -569,9 +647,28 @@
       renderTableAndCards();
     }
 
+    function getValidReplyRows() {
+      const delayOp = document.getElementById('filterDelayOp').value;
+      const delayValRaw = document.getElementById('filterDelayVal').value;
+      const delayVal = delayValRaw !== '' ? parseFloat(delayValRaw) : null;
+      const hasDelay = delayVal !== null && !isNaN(delayVal);
+
+      return filteredRows.filter(r => {
+        if (!r.isReplyTurn || typeof r.respon_menit !== 'number') return false;
+        if (hasDelay) {
+          if (delayOp === 'lte' && r.respon_menit > delayVal) return false;
+          if (delayOp === 'gte' && r.respon_menit < delayVal) return false;
+        }
+        return true;
+      });
+    }
+
     function updateKPIs() {
-      const n = filteredResponses.length;
+      const validReplies = getValidReplyRows();
+      const n = validReplies.length;
       document.getElementById('kpiTotal').textContent = n.toLocaleString('id-ID');
+      document.getElementById('kpiTotalAllRows').textContent = `${filteredRows.length.toLocaleString('id-ID')} baris chat tampil`;
+
       const totalNonChat = folderStats.fileList.length;
       document.getElementById('kpiMediaCount').textContent = totalNonChat.toLocaleString('id-ID');
       document.getElementById('kpiMediaBreakdown').textContent = `${folderStats.images} img • ${folderStats.vcfs} vcf • ${folderStats.docs + folderStats.others} dok`;
@@ -583,7 +680,7 @@
         return;
       }
 
-      const values = filteredResponses.map(r => r.respon_menit).sort((a, b) => a - b);
+      const values = validReplies.map(r => r.respon_menit).sort((a, b) => a - b);
       const sum = values.reduce((a, b) => a + b, 0);
       const mean = sum / n;
       const median = n % 2 === 1 ? values[Math.floor(n / 2)] : (values[n / 2 - 1] + values[n / 2]) / 2;
@@ -599,8 +696,9 @@
     }
 
     function updateSenderSummaryAndChart() {
+      const validReplies = getValidReplyRows();
       const grouped = {};
-      for (const r of filteredResponses) {
+      for (const r of validReplies) {
         if (!grouped[r.pengirim]) grouped[r.pengirim] = [];
         grouped[r.pengirim].push(r.respon_menit);
       }
@@ -663,7 +761,8 @@
       const ctx = document.getElementById('responseDoughnutChart').getContext('2d');
       if (doughnutChartInstance) doughnutChartInstance.destroy();
 
-      const total = filteredResponses.length;
+      const validReplies = getValidReplyRows();
+      const total = validReplies.length;
       const buckets = {
         m0: 0,      // 0 menit
         m1: 0,      // 1 menit
@@ -672,7 +771,7 @@
         mGt60: 0    // > 60 menit
       };
 
-      for (const r of filteredResponses) {
+      for (const r of validReplies) {
         const d = r.respon_menit;
         if (d === 0) buckets.m0++;
         else if (d === 1) buckets.m1++;
@@ -695,11 +794,11 @@
           datasets: [{
             data: rawCounts,
             backgroundColor: [
-              'rgba(16, 185, 129, 0.88)', // 0 menit - emerald
-              'rgba(59, 130, 246, 0.88)', // 1 menit - blue
-              'rgba(139, 92, 246, 0.88)', // 2-5 menit - violet
-              'rgba(245, 158, 11, 0.88)', // 6-60 menit - amber
-              'rgba(239, 68, 68, 0.88)'   // > 60 menit - red
+              'rgba(16, 185, 129, 0.88)',
+              'rgba(59, 130, 246, 0.88)',
+              'rgba(139, 92, 246, 0.88)',
+              'rgba(245, 158, 11, 0.88)',
+              'rgba(239, 68, 68, 0.88)'
             ],
             borderColor: '#ffffff',
             borderWidth: 2
@@ -752,24 +851,32 @@
       container.innerHTML = html;
     }
 
+    function renderResponseBadge(row) {
+      if (!row.isReplyTurn || typeof row.respon_menit !== 'number') {
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-400">${row.isSystem ? 'Sistem' : 'Lanjutan'}</span>`;
+      }
+      const badgeColor = row.respon_menit <= 5 ? 'bg-emerald-100 text-emerald-800'
+                       : row.respon_menit <= 60 ? 'bg-blue-100 text-blue-800'
+                       : 'bg-amber-100 text-amber-800';
+      return `<span class="px-2 py-0.5 rounded-full font-bold ${badgeColor}">${row.respon_menit}</span>`;
+    }
+
     function renderTableAndCards() {
-      const total = filteredResponses.length;
+      const total = filteredRows.length;
       const totalPages = Math.max(1, Math.ceil(total / pageSize));
       if (currentPage > totalPages) currentPage = totalPages;
 
       const startIdx = (currentPage - 1) * pageSize;
       const endIdx = Math.min(startIdx + pageSize, total);
-      const slice = filteredResponses.slice(startIdx, endIdx);
+      const slice = filteredRows.slice(startIdx, endIdx);
 
       const tbody = document.getElementById('desktopTableBody');
       tbody.innerHTML = slice.length ? slice.map((row, idx) => {
-        const badgeColor = row.respon_menit <= 5 ? 'bg-emerald-100 text-emerald-800'
-                         : row.respon_menit <= 60 ? 'bg-blue-100 text-blue-800'
-                         : 'bg-amber-100 text-amber-800';
         const mediaBadge = renderMediaActionBadge(row.media);
+        const rowBg = row.isSystem ? 'bg-slate-50/80 italic text-slate-500' : 'hover:bg-slate-50';
 
         return `
-          <tr class="hover:bg-slate-50 transition">
+          <tr class="${rowBg} transition">
             <td class="px-3 py-2 border-r border-slate-200 text-center text-slate-400 font-mono">${startIdx + idx + 1}</td>
             <td class="px-3 py-2 border-r border-slate-200 whitespace-nowrap font-mono text-slate-600">${row.timestamp}</td>
             <td class="px-3 py-2 border-r border-slate-200 font-semibold text-slate-800">${escapeHtml(row.pengirim)}</td>
@@ -780,7 +887,7 @@
             <td class="px-3 py-2 border-r border-slate-200 text-slate-600">${escapeHtml(row.pengirim_prev)}</td>
             <td class="px-3 py-2 border-r border-slate-200 whitespace-nowrap font-mono text-slate-500">${row.waktu_prev}</td>
             <td class="px-3 py-2 text-right whitespace-nowrap">
-              <span class="px-2 py-0.5 rounded-full font-bold ${badgeColor}">${row.respon_menit}</span>
+              ${renderResponseBadge(row)}
             </td>
           </tr>
         `;
@@ -788,16 +895,20 @@
 
       const mobileContainer = document.getElementById('mobileCardContainer');
       mobileContainer.innerHTML = slice.length ? slice.map((row) => {
-        const badgeColor = row.respon_menit <= 5 ? 'bg-emerald-100 text-emerald-800'
+        const mediaBadge = renderMediaActionBadge(row.media);
+        const respLabel = row.isReplyTurn && typeof row.respon_menit === 'number'
+          ? `Respon: ${row.respon_menit} mnt`
+          : (row.isSystem ? 'Sistem' : 'Lanjutan');
+        const badgeColor = !row.isReplyTurn ? 'bg-slate-100 text-slate-500'
+                         : row.respon_menit <= 5 ? 'bg-emerald-100 text-emerald-800'
                          : row.respon_menit <= 60 ? 'bg-blue-100 text-blue-800'
                          : 'bg-amber-100 text-amber-800';
-        const mediaBadge = renderMediaActionBadge(row.media);
 
         return `
           <div class="p-3.5 bg-white space-y-2">
             <div class="flex items-center justify-between gap-2">
               <span class="font-bold text-xs text-slate-800">${escapeHtml(row.pengirim)}</span>
-              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeColor}">Respon: ${row.respon_menit} mnt</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeColor}">${respLabel}</span>
             </div>
             <p class="text-xs text-slate-700 whitespace-pre-line break-words bg-slate-50 p-2.5 rounded-lg border border-slate-100">${escapeHtml(row.pesan)}</p>
             ${mediaBadge}
@@ -882,7 +993,7 @@
               ${info.phones.map(p => `
                 <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200">
                   <span class="font-mono text-sm font-bold text-emerald-700">${escapeHtml(p)}</span>
-                  <button onclick="navigator.clipboard.writeText('${escapeHtml(p)}'); this.textContent='Tersalin!';" class="text-[11px] bg-slate-100 hover:bg-emerald-100 text-slate-700 px-2.5 py-1 rounded font-medium cursor-pointer">Salin</button>
+                  <button data-phone="${escapeHtml(p)}" onclick="navigator.clipboard?.writeText(this.dataset.phone); this.textContent='Tersalin!';" class="text-[11px] bg-slate-100 hover:bg-emerald-100 text-slate-700 px-2.5 py-1 rounded font-medium cursor-pointer">Salin</button>
                 </div>
               `).join('')}
             </div>
@@ -1034,25 +1145,28 @@
     }
 
     function nextPage() {
-      const totalPages = Math.ceil(filteredResponses.length / pageSize);
+      const totalPages = Math.ceil(filteredRows.length / pageSize);
       if (currentPage < totalPages) { currentPage++; renderTableAndCards(); }
     }
 
     function exportToExcel() {
-      if (!filteredResponses.length) return;
+      if (!filteredRows.length) return;
 
-      const detailData = filteredResponses.map(r => ({
+      const detailData = filteredRows.map(r => ({
+        seq_txt: r.seq,
         timestamp: r.timestamp,
         pengirim: r.pengirim,
+        jenis_baris: r.isSystem ? 'Sistem' : (r.isReplyTurn ? 'Balasan' : 'Lanjutan'),
         pesan: r.pesan,
         lampiran_media: r.media ? r.media.fileName : '',
         pengirim_prev: r.pengirim_prev,
         waktu_prev: r.waktu_prev,
-        respon_menit: r.respon_menit
+        respon_menit: typeof r.respon_menit === 'number' ? r.respon_menit : ''
       }));
 
+      const validReplies = getValidReplyRows();
       const grouped = {};
-      for (const r of filteredResponses) {
+      for (const r of validReplies) {
         if (!grouped[r.pengirim]) grouped[r.pengirim] = [];
         grouped[r.pengirim].push(r.respon_menit);
       }
@@ -1081,7 +1195,7 @@
       }));
 
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detailData), 'Detail_Respon');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detailData), 'Detail_Percakapan');
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), 'Ringkasan_Pengirim');
       XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mediaData), 'Daftar_Media_Folder');
 
