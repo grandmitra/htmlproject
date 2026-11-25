@@ -90,18 +90,49 @@
           <button onclick="resetFilters()" class="text-xs text-slate-500 hover:text-emerald-700 underline cursor-pointer">Reset Semua Filter</button>
         </div>
 
-        <!-- Grid Filter -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
+        <!-- Baris 1: Periode & Jam Khusus 1 Hari / Hari Ini -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 bg-slate-50/80 p-3 rounded-xl border border-slate-200/80">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Periode Waktu</label>
+            <select id="filterPeriod" onchange="handlePeriodChange()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white font-semibold text-emerald-800">
+              <option value="THIS_MONTH" selected>Bulan Ini (Default)</option>
+              <option value="2_MONTHS">2 Bulan</option>
+              <option value="3_MONTHS">3 Bulan</option>
+              <option value="6_MONTHS">6 Bulan</option>
+              <option value="TODAY">Hari Ini</option>
+              <option value="CUSTOM">Custom Tanggal</option>
+            </select>
+          </div>
+
           <div>
             <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dari Tanggal</label>
-            <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <input type="date" id="filterStartDate" onchange="handleManualDateChange()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white" />
           </div>
 
           <div>
             <label class="block text-[11px] font-semibold text-slate-600 mb-1">Sampai Tanggal</label>
-            <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <input type="date" id="filterEndDate" onchange="handleManualDateChange()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white" />
           </div>
 
+          <div>
+            <label id="labelStartTime" class="block text-[11px] font-semibold text-slate-400 mb-1">Dari Jam (1 Hari)</label>
+            <input type="time" id="filterStartTime" value="08:30" disabled onchange="applyFilters()" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-100 text-slate-400 disabled:cursor-not-allowed transition" />
+          </div>
+
+          <div>
+            <label id="labelEndTime" class="block text-[11px] font-semibold text-slate-400 mb-1">Sampai Dengan Jam</label>
+            <input type="time" id="filterEndTime" value="17:30" disabled onchange="applyFilters()" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-100 text-slate-400 disabled:cursor-not-allowed transition" />
+          </div>
+
+          <div class="flex items-end">
+            <div id="timeFilterStatusBadge" class="w-full text-center text-[11px] px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-400 font-medium">
+              Jam: Nonaktif (Pilih 1 Hari)
+            </div>
+          </div>
+        </div>
+
+        <!-- Baris 2: Filter Pengirim, Cakupan, Respon & Media -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <div>
             <label class="block text-[11px] font-semibold text-slate-600 mb-1">Pengirim</label>
             <select id="filterSender" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
@@ -321,6 +352,8 @@
 
   <script>
     const DEFAULT_DELAY_MINUTES = 480; // 8 jam
+    const DEFAULT_TODAY_START_TIME = '08:30';
+    const DEFAULT_TODAY_END_TIME = '17:30';
 
     let rawMessages = [];       // Semua baris percakapan asli dari .txt
     let filteredRows = [];      // Baris yang lolos filter untuk tabel
@@ -409,7 +442,6 @@
 
     function parseWhatsAppChat(text) {
       const lines = text.split(/\r?\n/);
-      // Mendukung format chat ber-pengirim maupun baris info sistem (contoh: enkripsi end-to-end)
       const androidMsgRegex = /^(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\s-\s([^:]+):\s(.*)$/;
       const iosMsgRegex = /^\[(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\]\s([^:]+):\s(.*)$/;
       const androidSysRegex = /^(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\s-\s(.+)$/;
@@ -434,6 +466,7 @@
             timestamp: formatDateTime(dt),
             timestampMs: dt.getTime(),
             dateISO: formatDateISO(dt),
+            timeHM: formatTimeHM(dt),
             sender: sender.trim(),
             message: msg
           });
@@ -452,13 +485,13 @@
             timestamp: formatDateTime(dt),
             timestampMs: dt.getTime(),
             dateISO: formatDateISO(dt),
+            timeHM: formatTimeHM(dt),
             sender: 'Sistem WA',
             message: sysText.trim()
           });
           continue;
         }
 
-        // Baris lanjutan (multiline) dari pesan sebelumnya
         if (parsedEntries.length > 0) {
           parsedEntries[parsedEntries.length - 1].message += '\n' + line;
         } else if (line.trim()) {
@@ -469,13 +502,13 @@
             timestamp: formatDateTime(fallbackTime),
             timestampMs: fallbackTime.getTime(),
             dateISO: formatDateISO(fallbackTime),
+            timeHM: formatTimeHM(fallbackTime),
             sender: 'Sistem WA',
             message: line.trim()
           });
         }
       }
 
-      // Bangun semua baris percakapan asli + hitung respon_menit hanya saat pergantian pengirim
       const rows = [];
       let lastNonSystem = null;
 
@@ -503,6 +536,7 @@
           timestamp: entry.timestamp,
           timestampMs: entry.timestampMs,
           dateISO: entry.dateISO,
+          timeHM: entry.timeHM,
           pengirim: entry.sender,
           pesan: entry.message,
           pengirim_prev: pengirimPrev,
@@ -558,6 +592,127 @@
       return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
     }
 
+    function formatTimeHM(dt) {
+      const pad = n => String(n).padStart(2, '0');
+      return `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    }
+
+    function computePeriodDateRange(periodKey) {
+      const now = new Date();
+      const endISO = formatDateISO(now);
+
+      if (periodKey === 'TODAY') {
+        return { startISO: endISO, endISO };
+      }
+      if (periodKey === 'THIS_MONTH') {
+        const startDt = new Date(now.getFullYear(), now.getMonth(), 1);
+        return { startISO: formatDateISO(startDt), endISO };
+      }
+      if (periodKey === '2_MONTHS') {
+        const startDt = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        return { startISO: formatDateISO(startDt), endISO };
+      }
+      if (periodKey === '3_MONTHS') {
+        const startDt = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+        return { startISO: formatDateISO(startDt), endISO };
+      }
+      if (periodKey === '6_MONTHS') {
+        const startDt = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+        return { startISO: formatDateISO(startDt), endISO };
+      }
+
+      return null;
+    }
+
+    // Filter jam aktif jika mode "Hari Ini" ATAU tanggal mulai & sampai sama (1 hari penuh)
+    function isSingleDayTimeFilterActive() {
+      const period = document.getElementById('filterPeriod').value;
+      if (period === 'TODAY') return true;
+
+      const startDate = document.getElementById('filterStartDate').value;
+      const endDate = document.getElementById('filterEndDate').value;
+      return Boolean(startDate && endDate && startDate === endDate);
+    }
+
+    function syncTimeFilterState() {
+      const period = document.getElementById('filterPeriod').value;
+      const isTimeActive = isSingleDayTimeFilterActive();
+
+      const startTimeEl = document.getElementById('filterStartTime');
+      const endTimeEl = document.getElementById('filterEndTime');
+      const labelStart = document.getElementById('labelStartTime');
+      const labelEnd = document.getElementById('labelEndTime');
+      const badge = document.getElementById('timeFilterStatusBadge');
+
+      if (isTimeActive) {
+        if (!startTimeEl.value) startTimeEl.value = DEFAULT_TODAY_START_TIME;
+        if (!endTimeEl.value) endTimeEl.value = DEFAULT_TODAY_END_TIME;
+
+        startTimeEl.disabled = false;
+        endTimeEl.disabled = false;
+
+        startTimeEl.className = 'w-full text-xs border border-emerald-400 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white text-slate-800 font-medium transition';
+        endTimeEl.className = 'w-full text-xs border border-emerald-400 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white text-slate-800 font-medium transition';
+        labelStart.className = 'block text-[11px] font-semibold text-emerald-800 mb-1';
+        labelEnd.className = 'block text-[11px] font-semibold text-emerald-800 mb-1';
+
+        const modeTag = period === 'TODAY' ? 'Hari Ini' : '1 Hari';
+        badge.className = 'w-full text-center text-[11px] px-2.5 py-2 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold';
+        badge.textContent = `${modeTag}: ${startTimeEl.value} – ${endTimeEl.value}`;
+      } else {
+        startTimeEl.disabled = true;
+        endTimeEl.disabled = true;
+
+        startTimeEl.className = 'w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-100 text-slate-400 disabled:cursor-not-allowed transition';
+        endTimeEl.className = 'w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-100 text-slate-400 disabled:cursor-not-allowed transition';
+        labelStart.className = 'block text-[11px] font-semibold text-slate-400 mb-1';
+        labelEnd.className = 'block text-[11px] font-semibold text-slate-400 mb-1';
+
+        badge.className = 'w-full text-center text-[11px] px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-400 font-medium';
+        badge.textContent = 'Jam: Nonaktif (Pilih 1 Hari)';
+      }
+    }
+
+    function handlePeriodChange() {
+      const period = document.getElementById('filterPeriod').value;
+      const range = computePeriodDateRange(period);
+
+      if (period === 'TODAY') {
+        document.getElementById('filterStartTime').value = DEFAULT_TODAY_START_TIME;
+        document.getElementById('filterEndTime').value = DEFAULT_TODAY_END_TIME;
+      }
+
+      if (range) {
+        document.getElementById('filterStartDate').value = range.startISO;
+        document.getElementById('filterEndDate').value = range.endISO;
+      }
+
+      syncTimeFilterState();
+      applyFilters();
+    }
+
+    function handleManualDateChange() {
+      const startDate = document.getElementById('filterStartDate').value;
+      const endDate = document.getElementById('filterEndDate').value;
+      const periodEl = document.getElementById('filterPeriod');
+
+      if (startDate && endDate && startDate === endDate) {
+        if (!document.getElementById('filterStartTime').value) {
+          document.getElementById('filterStartTime').value = DEFAULT_TODAY_START_TIME;
+        }
+        if (!document.getElementById('filterEndTime').value) {
+          document.getElementById('filterEndTime').value = DEFAULT_TODAY_END_TIME;
+        }
+      }
+
+      if (periodEl.value !== 'TODAY') {
+        periodEl.value = 'CUSTOM';
+      }
+
+      syncTimeFilterState();
+      applyFilters();
+    }
+
     function parseVcfText(text, fileName) {
       const fnMatch = text.match(/FN(?:;[^:]*)?:(.+)/i);
       const telMatches = [...text.matchAll(/TEL(?:;[^:]*)?:(.+)/gi)].map(m => m[1].trim());
@@ -576,11 +731,16 @@
       senderSelect.innerHTML = '<option value="ALL">Semua Pengirim</option>' +
         senders.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
 
-      const dates = rawMessages.map(r => r.dateISO).filter(Boolean).sort();
-      if (dates.length) {
-        document.getElementById('filterStartDate').value = dates[0];
-        document.getElementById('filterEndDate').value = dates[dates.length - 1];
+      document.getElementById('filterPeriod').value = 'THIS_MONTH';
+      document.getElementById('filterStartTime').value = DEFAULT_TODAY_START_TIME;
+      document.getElementById('filterEndTime').value = DEFAULT_TODAY_END_TIME;
+
+      const range = computePeriodDateRange('THIS_MONTH');
+      if (range) {
+        document.getElementById('filterStartDate').value = range.startISO;
+        document.getElementById('filterEndDate').value = range.endISO;
       }
+      syncTimeFilterState();
     }
 
     function resetFilters() {
@@ -594,6 +754,12 @@
     }
 
     function applyFilters() {
+      syncTimeFilterState();
+
+      const timeFilterEnabled = isSingleDayTimeFilterActive();
+      const startTime = timeFilterEnabled ? (document.getElementById('filterStartTime').value || DEFAULT_TODAY_START_TIME) : null;
+      const endTime = timeFilterEnabled ? (document.getElementById('filterEndTime').value || DEFAULT_TODAY_END_TIME) : null;
+
       const startDate = document.getElementById('filterStartDate').value;
       const endDate = document.getElementById('filterEndDate').value;
       const sender = document.getElementById('filterSender').value;
@@ -609,6 +775,12 @@
         .filter(item => {
           if (startDate && item.dateISO < startDate) return false;
           if (endDate && item.dateISO > endDate) return false;
+
+          if (timeFilterEnabled) {
+            if (startTime && item.timeHM < startTime) return false;
+            if (endTime && item.timeHM > endTime) return false;
+          }
+
           if (sender !== 'ALL' && item.pengirim !== sender) return false;
 
           if (scope === 'REPLY_ONLY') {
@@ -618,9 +790,6 @@
               if (delayOp === 'gte' && item.respon_menit < delayVal) return false;
             }
           } else {
-            // Mode "Semua Percakapan TXT Asli":
-            // Jika pengguna mengubah batas menit secara khusus (bukan default 480) atau memakai operator >=,
-            // terapkan batas pada baris yang memiliki respon_menit; baris non-balasan tetap tampil agar semua chat TXT terlihat.
             if (hasExplicitDelayFilter && item.isReplyTurn && delayOp === 'gte' && item.respon_menit < delayVal) {
               return false;
             }
@@ -637,7 +806,6 @@
           }
           return true;
         })
-        // Urutkan timestamp terbaru di paling atas (pertahankan urutan asli TXT pada timestamp yang sama)
         .sort((a, b) => (b.timestampMs - a.timestampMs) || (b.seq - a.seq));
 
       currentPage = 1;
@@ -764,11 +932,11 @@
       const validReplies = getValidReplyRows();
       const total = validReplies.length;
       const buckets = {
-        m0: 0,      // 0 menit
-        m1: 0,      // 1 menit
-        m2_5: 0,    // 2 - 5 menit
-        m6_60: 0,   // 6 - 60 menit
-        mGt60: 0    // > 60 menit
+        m0: 0,
+        m1: 0,
+        m2_5: 0,
+        m6_60: 0,
+        mGt60: 0
       };
 
       for (const r of validReplies) {
