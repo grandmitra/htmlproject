@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analisa Respon & Media WhatsApp (Folder Mode)</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js untuk Grafik Perbandingan -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SheetJS untuk Export ke Excel -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    .excel-table th { position: sticky; top: 0; z-index: 10; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased">
+
+  <!-- Header -->
+  <header class="bg-emerald-700 text-white shadow-md sticky top-0 z-30">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <div class="bg-white/20 p-2 rounded-lg">
+          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-base md:text-lg font-bold leading-tight">Analisa Respon & Media WA</h1>
+          <p class="text-[11px] text-emerald-100">Mode Folder Lengkap (.txt, .vcf, Image, PDF, Dokumen) • Zero-Lag Memory</p>
+        </div>
+      </div>
+
+      <!-- Tombol Pilih Folder & Export -->
+      <div class="flex items-center gap-2">
+        <label class="cursor-pointer bg-white text-emerald-800 hover:bg-emerald-50 font-semibold text-xs md:text-sm px-3.5 py-2 rounded-lg shadow-sm flex items-center gap-2 transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+          </svg>
+          <span>Pilih Folder WA</span>
+          <input type="file" id="folderInput" webkitdirectory directory multiple class="hidden" />
+        </label>
+
+        <button id="btnExport" disabled onclick="exportToExcel()" class="bg-emerald-900/60 disabled:opacity-40 hover:bg-emerald-900 text-white font-medium text-xs md:text-sm px-3.5 py-2 rounded-lg flex items-center gap-1.5 transition cursor-pointer disabled:cursor-not-allowed">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span class="hidden sm:inline">Export Excel</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-3 md:px-4 py-5 space-y-5">
+
+    <!-- Empty State -->
+    <div id="emptyState" class="bg-white border-2 border-dashed border-emerald-300 rounded-2xl p-8 text-center shadow-sm">
+      <div class="w-14 h-14 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center mx-auto mb-3">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+        </svg>
+      </div>
+      <h2 class="text-lg font-bold text-slate-800">Pilih Folder Hasil Export WhatsApp</h2>
+      <p class="text-sm text-slate-500 max-w-xl mx-auto mt-1">
+        Klik tombol <b>"Pilih Folder WA"</b> di atas lalu pilih folder hasil ekstrak.
+        Sistem hanya membaca teks chat & kontak (.vcf) sehingga tetap <b>sangat ringan</b> walau berisi ratusan foto, PDF, atau presentasi.
+      </p>
+      <div class="mt-4">
+        <label class="cursor-pointer inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm px-5 py-2.5 rounded-xl shadow transition">
+          <span>Buka Folder Sekarang</span>
+          <input type="file" id="folderInputHero" webkitdirectory directory multiple class="hidden" />
+        </label>
+      </div>
+    </div>
+
+    <!-- Main Dashboard -->
+    <div id="dashboardContent" class="hidden space-y-5">
+
+      <!-- Info Folder & Filter Panel -->
+      <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md" id="folderNameBadge">Folder: -</span>
+            <span class="text-xs text-slate-500 ml-2" id="folderStatsText">0 file terdeteksi</span>
+          </div>
+          <button onclick="resetFilters()" class="text-xs text-slate-500 hover:text-emerald-700 underline">Reset Semua Filter</button>
+        </div>
+
+        <!-- Grid Filter -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Dari Tanggal</label>
+            <input type="date" id="filterStartDate" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Sampai Tanggal</label>
+            <input type="date" id="filterEndDate" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Pengirim (Pembalas)</label>
+            <select id="filterSender" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+              <option value="ALL">Semua Pengirim</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Kondisi Jeda Respon</label>
+            <select id="filterDelayOp" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+              <option value="lte">Di bawah / Maksimal (≤)</option>
+              <option value="gte">Di atas / Minimal (≥)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Batas Menit (Kosong = Semua)</label>
+            <input type="number" id="filterDelayVal" value="720" min="0" placeholder="Misal: 60 atau 720" oninput="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-600 mb-1">Filter Lampiran Media</label>
+            <select id="filterMedia" onchange="applyFilters()" class="w-full text-xs border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white">
+              <option value="ALL">Semua Chat (Teks & Media)</option>
+              <option value="HAS_MEDIA">Hanya Ada Lampiran Media</option>
+              <option value="IMAGE">Gambar / Foto (.jpg/.png)</option>
+              <option value="VCF">Kontak (.vcf)</option>
+              <option value="DOC">Dokumen / Video / Audio Lain</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Scorecard KPI -->
+      <section class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-medium text-slate-500">Total Balasan Valid</p>
+          <p class="text-xl md:text-2xl font-bold text-slate-800 mt-1" id="kpiTotal">0</p>
+          <p class="text-[10px] text-slate-400 mt-0.5">Pergantian pengirim</p>
+        </div>
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-medium text-slate-500">Rata-rata Respon</p>
+          <p class="text-xl md:text-2xl font-bold text-emerald-700 mt-1" id="kpiMean">0 mnt</p>
+          <p class="text-[10px] text-slate-400 mt-0.5" id="kpiMeanHour">0 jam</p>
+        </div>
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-medium text-slate-500">Median (Nilai Tengah)</p>
+          <p class="text-xl md:text-2xl font-bold text-blue-700 mt-1" id="kpiMedian">0 mnt</p>
+          <p class="text-[10px] text-slate-400 mt-0.5">Paling akurat (bebas outlier)</p>
+        </div>
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-medium text-slate-500">Respon Tercepat</p>
+          <p class="text-xl md:text-2xl font-bold text-teal-600 mt-1" id="kpiMin">0 mnt</p>
+          <p class="text-[10px] text-slate-400 mt-0.5">Jeda minimum</p>
+        </div>
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-[11px] font-medium text-slate-500">Respon Terlama</p>
+          <p class="text-xl md:text-2xl font-bold text-amber-600 mt-1" id="kpiMax">0 mnt</p>
+          <p class="text-[10px] text-slate-400 mt-0.5" id="kpiMaxHour">0 jam</p>
+        </div>
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm cursor-pointer hover:border-purple-400 transition" onclick="openFolderFilesModal()">
+          <p class="text-[11px] font-medium text-slate-500">Media di Folder ↗</p>
+          <p class="text-xl md:text-2xl font-bold text-purple-700 mt-1" id="kpiMediaCount">0</p>
+          <p class="text-[10px] text-slate-400 mt-0.5" id="kpiMediaBreakdown">0 img • 0 vcf</p>
+        </div>
+      </section>
+
+      <!-- Grafik & Ringkasan -->
+      <section class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div class="lg:col-span-7 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h3 class="text-sm font-bold text-slate-800">Grafik Perbandingan Kecepatan Respon Antar Pengirim</h3>
+              <p class="text-[11px] text-slate-500">Perbandingan Rata-rata (Mean) vs Nilai Tengah (Median) dalam satuan menit</p>
+            </div>
+          </div>
+          <div class="relative flex-1 min-h-[240px]">
+            <canvas id="senderChart"></canvas>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col justify-between space-y-4">
+          <div>
+            <h3 class="text-sm font-bold text-slate-800 mb-2">Ringkasan Per Pengirim</h3>
+            <div class="overflow-x-auto border border-slate-200 rounded-lg">
+              <table class="w-full text-xs text-left">
+                <thead class="bg-slate-100 text-slate-700 font-semibold">
+                  <tr>
+                    <th class="px-2.5 py-2">Pengirim</th>
+                    <th class="px-2 py-2 text-right">Balasan</th>
+                    <th class="px-2 py-2 text-right">Rata2</th>
+                    <th class="px-2 py-2 text-right">Median</th>
+                  </tr>
+                </thead>
+                <tbody id="summaryTableBody" class="divide-y divide-slate-100"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Ringkasan File Media dalam Folder -->
+          <div class="bg-slate-50 p-3 rounded-lg border border-slate-200/80">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-xs font-bold text-slate-700">Isi File Non-Chat dalam Folder</span>
+              <button onclick="openFolderFilesModal()" class="text-[11px] font-semibold text-emerald-700 hover:underline cursor-pointer">Lihat & Buka Daftar File →</button>
+            </div>
+            <div id="mediaChipsContainer" class="flex flex-wrap gap-1.5 text-[11px]"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Tabel Detail Percakapan -->
+      <section class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-3.5 border-b border-slate-200 flex flex-wrap items-center justify-between gap-3 bg-slate-50/70">
+          <!-- Search dengan Clear Text -->
+          <div class="relative w-full sm:w-80">
+            <input type="text" id="searchInput" oninput="handleSearchInput()" placeholder="Cari pesan, nama pengirim, atau nama file..." class="w-full text-xs pl-8 pr-8 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white" />
+            <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <button id="clearSearchBtn" onclick="clearSearch()" title="Clear text" class="hidden absolute right-2 top-1.5 text-slate-400 hover:text-rose-600 p-0.5 rounded-full">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Paging By -->
+          <div class="flex items-center gap-2 text-xs text-slate-600 ml-auto">
+            <span>Tampilkan:</span>
+            <select id="pageSizeSelect" onchange="changePageSize()" class="border border-slate-300 rounded-lg px-2 py-1.5 bg-white font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <option value="15">15 baris</option>
+              <option value="30" selected>30 baris</option>
+              <option value="50">50 baris</option>
+              <option value="100">100 baris</option>
+              <option value="999999">Semua</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Desktop Excel Table View -->
+        <div class="hidden md:block overflow-x-auto max-h-[540px]">
+          <table class="w-full text-xs text-left border-collapse excel-table">
+            <thead class="bg-emerald-800 text-white font-semibold">
+              <tr>
+                <th class="px-3 py-2.5 border-r border-emerald-700 w-10 text-center">#</th>
+                <th class="px-3 py-2.5 border-r border-emerald-700 whitespace-nowrap">timestamp</th>
+                <th class="px-3 py-2.5 border-r border-emerald-700">pengirim</th>
+                <th class="px-3 py-2.5 border-r border-emerald-700 min-w-[260px]">pesan & lampiran media</th>
+                <th class="px-3 py-2.5 border-r border-emerald-700">pengirim_prev</th>
+                <th class="px-3 py-2.5 border-r border-emerald-700 whitespace-nowrap">waktu_prev</th>
+                <th class="px-3 py-2.5 text-right whitespace-nowrap">respon_menit</th>
+              </tr>
+            </thead>
+            <tbody id="desktopTableBody" class="divide-y divide-slate-200 bg-white"></tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Card View -->
+        <div id="mobileCardContainer" class="md:hidden divide-y divide-slate-200 bg-slate-50/50"></div>
+
+        <!-- Footer Pagination -->
+        <div class="p-3 border-t border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
+          <div id="paginationInfo">Menampilkan 0 - 0 dari 0 data</div>
+          <div class="flex items-center gap-1.5">
+            <button id="prevPageBtn" onclick="prevPage()" class="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-100 disabled:opacity-40 font-medium">← Sebelumnya</button>
+            <span id="pageIndicator" class="px-2 font-semibold">Hal 1 / 1</span>
+            <button id="nextPageBtn" onclick="nextPage()" class="px-3 py-1.5 border border-slate-300 rounded-lg bg-white hover:bg-slate-100 disabled:opacity-40 font-medium">Berikutnya →</button>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Modal Preview Media & Daftar File Folder -->
+  <div id="previewModal" class="hidden fixed inset-0 z-50 bg-slate-900/65 backdrop-blur-xs flex items-center justify-center p-3 md:p-5" onclick="if(event.target===this) closeModal()">
+    <div id="modalDialog" class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[90vh]">
+      <div class="px-4 py-3 bg-slate-100 border-b border-slate-200 flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0">
+          <button id="modalBackBtn" onclick="openFolderFilesModal()" class="hidden shrink-0 text-xs font-semibold bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-lg transition cursor-pointer">
+            ← Daftar File
+          </button>
+          <h4 id="modalTitle" class="text-sm font-bold text-slate-800 truncate">Preview Lampiran</h4>
+        </div>
+        <button onclick="closeModal()" class="shrink-0 text-slate-500 hover:text-rose-600 p-1 rounded-lg cursor-pointer">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <div id="modalBody" class="p-4 overflow-y-auto text-xs text-slate-700 flex-1"></div>
+    </div>
+  </div>
+
+  <script>
+    let rawResponses = [];
+    let filteredResponses = [];
+    let folderFilesMap = new Map();
+    let folderStats = { folderName: '', totalFiles: 0, images: 0, vcfs: 0, docs: 0, others: 0, fileList: [] };
+    let vcfCache = new Map();
+    let currentPage = 1;
+    let pageSize = 30;
+    let chartInstance = null;
+    let activeBlobUrl = null; // Menyimpan Blob URL aktif agar dibersihkan saat modal ditutup
+
+    document.getElementById('folderInput').addEventListener('change', handleFolderSelect);
+    document.getElementById('folderInputHero').addEventListener('change', handleFolderSelect);
+
+    async function handleFolderSelect(event) {
+      const files = Array.from(event.target.files || []);
+      if (!files.length) return;
+
+      folderFilesMap.clear();
+      vcfCache.clear();
+      folderStats = { folderName: '', totalFiles: files.length, images: 0, vcfs: 0, docs: 0, others: 0, fileList: [] };
+
+      const firstPath = files[0].webkitRelativePath || '';
+      folderStats.folderName = firstPath.includes('/') ? firstPath.split('/')[0] : 'Folder Terpilih';
+
+      let chatTxtFile = null;
+      const vcfFiles = [];
+
+      for (const file of files) {
+        const nameLower = file.name.toLowerCase();
+        folderFilesMap.set(nameLower, file);
+
+        if (nameLower.endsWith('.txt') && !chatTxtFile) {
+          chatTxtFile = file;
+        } else if (nameLower.endsWith('.vcf')) {
+          folderStats.vcfs++;
+          vcfFiles.push(file);
+          folderStats.fileList.push({ name: file.name, type: 'VCF Contact', size: file.size, file });
+        } else if (/\.(jpg|jpeg|png|webp|gif)$/i.test(nameLower)) {
+          folderStats.images++;
+          folderStats.fileList.push({ name: file.name, type: 'Image', size: file.size, file });
+        } else if (/\.(pdf|doc|docx|xls|xlsx|ppt|pptx|mp4|opus|mp3|ogg|zip|rar)$/i.test(nameLower)) {
+          folderStats.docs++;
+          folderStats.fileList.push({ name: file.name, type: 'Media/Dokumen', size: file.size, file });
+        } else if (!nameLower.endsWith('.txt')) {
+          folderStats.others++;
+          folderStats.fileList.push({ name: file.name, type: 'Lainnya', size: file.size, file });
+        }
+      }
+
+      // Urutkan daftar file berdasarkan abjad
+      folderStats.fileList.sort((a, b) => a.name.localeCompare(b.name));
+
+      if (!chatTxtFile) {
+        alert('Tidak ditemukan file riwayat chat (.txt) di dalam folder tersebut!');
+        return;
+      }
+
+      for (const vcf of vcfFiles) {
+        try {
+          const text = await vcf.text();
+          vcfCache.set(vcf.name.toLowerCase(), parseVcfText(text, vcf.name));
+        } catch (e) {}
+      }
+
+      const chatText = await chatTxtFile.text();
+      rawResponses = parseWhatsAppChat(chatText);
+
+      if (!rawResponses.length) {
+        alert('Data chat tidak terbaca atau belum ada pergantian balasan antar pengirim.');
+        return;
+      }
+
+      document.getElementById('emptyState').classList.add('hidden');
+      document.getElementById('dashboardContent').classList.remove('hidden');
+      document.getElementById('btnExport').disabled = false;
+
+      document.getElementById('folderNameBadge').textContent = `📁 ${folderStats.folderName}`;
+      document.getElementById('folderStatsText').textContent =
+        `${folderStats.totalFiles} file (${folderStats.images} gambar, ${folderStats.vcfs} kontak .vcf, ${folderStats.docs + folderStats.others} dok/media)`;
+
+      populateFilterControls();
+      renderFolderMediaChips();
+      applyFilters();
+    }
+
+    function parseWhatsAppChat(text) {
+      const lines = text.split(/\r?\n/);
+      const androidRegex = /^(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\s-\s([^:]+):\s(.*)$/;
+      const iosRegex = /^\[(\d{1,2}\/\d{1,2}\/\d{2,4})[,\s]+(\d{1,2}[.:]\d{2})(?:[.:]\d{2})?\]\s([^:]+):\s(.*)$/;
+
+      const messages = [];
+      for (let rawLine of lines) {
+        const line = rawLine.replace(/[\u200e\u200f\ufeff]/g, '').trim();
+        if (!line) continue;
+
+        let match = line.match(androidRegex) || line.match(iosRegex);
+        if (match) {
+          const [, dateStr, timeStr, sender, msg] = match;
+          const dt = parseDateTime(dateStr, timeStr);
+          if (dt) {
+            messages.push({
+              timestamp: dt,
+              timestampStr: formatDateTime(dt),
+              dateISO: formatDateISO(dt),
+              sender: sender.trim(),
+              message: msg.trim()
+            });
+          }
+        } else if (messages.length > 0) {
+          messages[messages.length - 1].message += '\n' + line;
+        }
+      }
+
+      const responses = [];
+      for (let i = 1; i < messages.length; i++) {
+        const curr = messages[i];
+        const prev = messages[i - 1];
+
+        if (curr.sender !== prev.sender) {
+          const diffMinutes = Math.round((curr.timestamp - prev.timestamp) / 60000);
+          const mediaInfo = detectAttachmentInMessage(curr.message);
+
+          responses.push({
+            timestamp: curr.timestampStr,
+            dateISO: curr.dateISO,
+            pengirim: curr.sender,
+            pesan: curr.message,
+            pengirim_prev: prev.sender,
+            waktu_prev: prev.timestampStr,
+            respon_menit: diffMinutes < 0 ? 0 : diffMinutes,
+            media: mediaInfo
+          });
+        }
+      }
+      return responses;
+    }
+
+    function detectAttachmentInMessage(msg) {
+      const attachedMatch = msg.match(/([^\n<>:"/\\|?*]+\.[a-zA-Z0-9]{2,5})\s*\(file terlampir\)/i)
+                         || msg.match(/<attached:\s*([^>]+)>/i)
+                         || msg.match(/([^\n]+\.vcf)\b/i);
+
+      if (attachedMatch) {
+        const fileName = attachedMatch[1].trim();
+        const fileObj = folderFilesMap.get(fileName.toLowerCase()) || null;
+        const ext = fileName.split('.').pop().toLowerCase();
+        let category = 'DOC';
+        if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) category = 'IMAGE';
+        else if (ext === 'vcf') category = 'VCF';
+
+        return { fileName, fileObj, category, existsInFolder: !!fileObj };
+      }
+      return null;
+    }
+
+    function parseDateTime(dateStr, timeStr) {
+      const parts = dateStr.split('/');
+      if (parts.length !== 3) return null;
+      let day = parseInt(parts[0], 10);
+      let month = parseInt(parts[1], 10) - 1;
+      let year = parseInt(parts[2], 10);
+      if (year < 100) year += 2000;
+
+      const tParts = timeStr.replace('.', ':').split(':');
+      const hour = parseInt(tParts[0], 10);
+      const minute = parseInt(tParts[1], 10);
+      return new Date(year, month, day, hour, minute, 0);
+    }
+
+    function formatDateTime(dt) {
+      const pad = n => String(n).padStart(2, '0');
+      return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    }
+
+    function formatDateISO(dt) {
+      const pad = n => String(n).padStart(2, '0');
+      return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+    }
+
+    function parseVcfText(text, fileName) {
+      const fnMatch = text.match(/FN(?:;[^:]*)?:(.+)/i);
+      const telMatches = [...text.matchAll(/TEL(?:;[^:]*)?:(.+)/gi)].map(m => m[1].trim());
+      const orgMatch = text.match(/ORG(?:;[^:]*)?:(.+)/i);
+      return {
+        fileName,
+        fullName: fnMatch ? fnMatch[1].trim() : fileName.replace(/\.vcf$/i, ''),
+        phones: telMatches.length ? telMatches : ['-'],
+        org: orgMatch ? orgMatch[1].trim() : ''
+      };
+    }
+
+    function populateFilterControls() {
+      const senders = [...new Set(rawResponses.map(r => r.pengirim))].sort();
+      const senderSelect = document.getElementById('filterSender');
+      senderSelect.innerHTML = '<option value="ALL">Semua Pengirim</option>' +
+        senders.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
+
+      const dates = rawResponses.map(r => r.dateISO).sort();
+      if (dates.length) {
+        document.getElementById('filterStartDate').value = dates[0];
+        document.getElementById('filterEndDate').value = dates[dates.length - 1];
+      }
+    }
+
+    function resetFilters() {
+      populateFilterControls();
+      document.getElementById('filterDelayOp').value = 'lte';
+      document.getElementById('filterDelayVal').value = '720';
+      document.getElementById('filterMedia').value = 'ALL';
+      clearSearch();
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const startDate = document.getElementById('filterStartDate').value;
+      const endDate = document.getElementById('filterEndDate').value;
+      const sender = document.getElementById('filterSender').value;
+      const delayOp = document.getElementById('filterDelayOp').value;
+      const delayValRaw = document.getElementById('filterDelayVal').value;
+      const delayVal = delayValRaw !== '' ? parseFloat(delayValRaw) : null;
+      const mediaFilter = document.getElementById('filterMedia').value;
+      const query = document.getElementById('searchInput').value.trim().toLowerCase();
+
+      filteredResponses = rawResponses.filter(item => {
+        if (startDate && item.dateISO < startDate) return false;
+        if (endDate && item.dateISO > endDate) return false;
+        if (sender !== 'ALL' && item.pengirim !== sender) return false;
+
+        if (delayVal !== null && !isNaN(delayVal)) {
+          if (delayOp === 'lte' && item.respon_menit > delayVal) return false;
+          if (delayOp === 'gte' && item.respon_menit < delayVal) return false;
+        }
+
+        if (mediaFilter === 'HAS_MEDIA' && !item.media) return false;
+        if (mediaFilter === 'IMAGE' && (!item.media || item.media.category !== 'IMAGE')) return false;
+        if (mediaFilter === 'VCF' && (!item.media || item.media.category !== 'VCF')) return false;
+        if (mediaFilter === 'DOC' && (!item.media || item.media.category !== 'DOC')) return false;
+
+        if (query) {
+          const hay = `${item.pengirim} ${item.pengirim_prev} ${item.pesan} ${item.timestamp}`.toLowerCase();
+          if (!hay.includes(query)) return false;
+        }
+        return true;
+      });
+
+      currentPage = 1;
+      updateKPIs();
+      updateSenderSummaryAndChart();
+      renderTableAndCards();
+    }
+
+    function updateKPIs() {
+      const n = filteredResponses.length;
+      document.getElementById('kpiTotal').textContent = n.toLocaleString('id-ID');
+      const totalNonChat = folderStats.fileList.length;
+      document.getElementById('kpiMediaCount').textContent = totalNonChat.toLocaleString('id-ID');
+      document.getElementById('kpiMediaBreakdown').textContent = `${folderStats.images} img • ${folderStats.vcfs} vcf • ${folderStats.docs + folderStats.others} dok`;
+
+      if (n === 0) {
+        ['kpiMean', 'kpiMedian', 'kpiMin', 'kpiMax'].forEach(id => document.getElementById(id).textContent = '0 mnt');
+        document.getElementById('kpiMeanHour').textContent = '0 jam';
+        document.getElementById('kpiMaxHour').textContent = '0 jam';
+        return;
+      }
+
+      const values = filteredResponses.map(r => r.respon_menit).sort((a, b) => a - b);
+      const sum = values.reduce((a, b) => a + b, 0);
+      const mean = sum / n;
+      const median = n % 2 === 1 ? values[Math.floor(n / 2)] : (values[n / 2 - 1] + values[n / 2]) / 2;
+      const min = values[0];
+      const max = values[n - 1];
+
+      document.getElementById('kpiMean').textContent = `${mean.toFixed(1)} mnt`;
+      document.getElementById('kpiMeanHour').textContent = `≈ ${(mean / 60).toFixed(2)} jam`;
+      document.getElementById('kpiMedian').textContent = `${median.toFixed(1)} mnt`;
+      document.getElementById('kpiMin').textContent = `${min} mnt`;
+      document.getElementById('kpiMax').textContent = `${max.toLocaleString('id-ID')} mnt`;
+      document.getElementById('kpiMaxHour').textContent = `≈ ${(max / 60).toFixed(1)} jam`;
+    }
+
+    function updateSenderSummaryAndChart() {
+      const grouped = {};
+      for (const r of filteredResponses) {
+        if (!grouped[r.pengirim]) grouped[r.pengirim] = [];
+        grouped[r.pengirim].push(r.respon_menit);
+      }
+
+      const summaryRows = Object.entries(grouped).map(([sender, arr]) => {
+        arr.sort((a, b) => a - b);
+        const count = arr.length;
+        const mean = arr.reduce((a, b) => a + b, 0) / count;
+        const median = count % 2 === 1 ? arr[Math.floor(count / 2)] : (arr[count / 2 - 1] + arr[count / 2]) / 2;
+        return { sender, count, mean: Number(mean.toFixed(1)), median: Number(median.toFixed(1)) };
+      }).sort((a, b) => b.count - a.count);
+
+      const tbody = document.getElementById('summaryTableBody');
+      tbody.innerHTML = summaryRows.length ? summaryRows.map(row => `
+        <tr class="hover:bg-emerald-50/60 cursor-pointer" onclick="quickFilterSender('${escapeHtml(row.sender)}')">
+          <td class="px-2.5 py-2 font-semibold text-slate-800 truncate max-w-[140px]" title="${escapeHtml(row.sender)}">${escapeHtml(row.sender)}</td>
+          <td class="px-2 py-2 text-right font-medium">${row.count}</td>
+          <td class="px-2 py-2 text-right text-emerald-700 font-semibold">${row.mean} mnt</td>
+          <td class="px-2 py-2 text-right text-blue-700 font-semibold">${row.median} mnt</td>
+        </tr>
+      `).join('') : '<tr><td colspan="4" class="px-3 py-4 text-center text-slate-400">Tidak ada data</td></tr>';
+
+      const ctx = document.getElementById('senderChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: summaryRows.map(r => r.sender),
+          datasets: [
+            {
+              label: 'Rata-rata Respon (Menit)',
+              data: summaryRows.map(r => r.mean),
+              backgroundColor: 'rgba(5, 150, 105, 0.8)',
+              borderRadius: 6
+            },
+            {
+              label: 'Median Respon (Menit)',
+              data: summaryRows.map(r => r.median),
+              backgroundColor: 'rgba(37, 99, 235, 0.8)',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { font: { size: 11 } } }
+          },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Menit', font: { size: 11 } } },
+            x: { ticks: { font: { size: 11 } } }
+          }
+        }
+      });
+    }
+
+    function quickFilterSender(senderName) {
+      const sel = document.getElementById('filterSender');
+      sel.value = (sel.value === senderName) ? 'ALL' : senderName;
+      applyFilters();
+    }
+
+    function renderFolderMediaChips() {
+      const container = document.getElementById('mediaChipsContainer');
+      const vcfNames = [...vcfCache.values()].slice(0, 4).map(v => `👤 ${v.fullName}`);
+      let html = `
+        <span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded font-medium">🖼️ ${folderStats.images} Gambar</span>
+        <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-medium">📇 ${folderStats.vcfs} Kontak (.vcf)</span>
+        <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium">📎 ${folderStats.docs + folderStats.others} Dok/Media</span>
+      `;
+      if (vcfNames.length) {
+        html += vcfNames.map(n => `<span class="bg-white border border-slate-200 text-slate-600 px-2 py-0.5 rounded">${escapeHtml(n)}</span>`).join('');
+      }
+      container.innerHTML = html;
+    }
+
+    function renderTableAndCards() {
+      const total = filteredResponses.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+
+      const startIdx = (currentPage - 1) * pageSize;
+      const endIdx = Math.min(startIdx + pageSize, total);
+      const slice = filteredResponses.slice(startIdx, endIdx);
+
+      const tbody = document.getElementById('desktopTableBody');
+      tbody.innerHTML = slice.length ? slice.map((row, idx) => {
+        const badgeColor = row.respon_menit <= 5 ? 'bg-emerald-100 text-emerald-800'
+                         : row.respon_menit <= 60 ? 'bg-blue-100 text-blue-800'
+                         : 'bg-amber-100 text-amber-800';
+        const mediaBadge = renderMediaActionBadge(row.media);
+
+        return `
+          <tr class="hover:bg-slate-50 transition">
+            <td class="px-3 py-2 border-r border-slate-200 text-center text-slate-400 font-mono">${startIdx + idx + 1}</td>
+            <td class="px-3 py-2 border-r border-slate-200 whitespace-nowrap font-mono text-slate-600">${row.timestamp}</td>
+            <td class="px-3 py-2 border-r border-slate-200 font-semibold text-slate-800">${escapeHtml(row.pengirim)}</td>
+            <td class="px-3 py-2 border-r border-slate-200 text-slate-700">
+              <div class="whitespace-pre-line break-words max-w-md">${escapeHtml(row.pesan)}</div>
+              ${mediaBadge}
+            </td>
+            <td class="px-3 py-2 border-r border-slate-200 text-slate-600">${escapeHtml(row.pengirim_prev)}</td>
+            <td class="px-3 py-2 border-r border-slate-200 whitespace-nowrap font-mono text-slate-500">${row.waktu_prev}</td>
+            <td class="px-3 py-2 text-right whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded-full font-bold ${badgeColor}">${row.respon_menit}</span>
+            </td>
+          </tr>
+        `;
+      }).join('') : '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">Tidak ada percakapan yang cocok dengan filter.</td></tr>';
+
+      const mobileContainer = document.getElementById('mobileCardContainer');
+      mobileContainer.innerHTML = slice.length ? slice.map((row) => {
+        const badgeColor = row.respon_menit <= 5 ? 'bg-emerald-100 text-emerald-800'
+                         : row.respon_menit <= 60 ? 'bg-blue-100 text-blue-800'
+                         : 'bg-amber-100 text-amber-800';
+        const mediaBadge = renderMediaActionBadge(row.media);
+
+        return `
+          <div class="p-3.5 bg-white space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="font-bold text-xs text-slate-800">${escapeHtml(row.pengirim)}</span>
+              <span class="text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeColor}">Respon: ${row.respon_menit} mnt</span>
+            </div>
+            <p class="text-xs text-slate-700 whitespace-pre-line break-words bg-slate-50 p-2.5 rounded-lg border border-slate-100">${escapeHtml(row.pesan)}</p>
+            ${mediaBadge}
+            <div class="flex flex-wrap items-center justify-between text-[10px] text-slate-400 pt-1">
+              <span>Balas ke: <b class="text-slate-600">${escapeHtml(row.pengirim_prev)}</b> (${row.waktu_prev})</span>
+              <span class="font-mono">${row.timestamp}</span>
+            </div>
+          </div>
+        `;
+      }).join('') : '<div class="p-6 text-center text-xs text-slate-400">Tidak ada percakapan yang cocok dengan filter.</div>';
+
+      document.getElementById('paginationInfo').textContent =
+        total ? `Menampilkan ${startIdx + 1} - ${endIdx} dari ${total.toLocaleString('id-ID')} baris` : 'Menampilkan 0 data';
+      document.getElementById('pageIndicator').textContent = `Hal ${currentPage} / ${totalPages}`;
+      document.getElementById('prevPageBtn').disabled = currentPage <= 1;
+      document.getElementById('nextPageBtn').disabled = currentPage >= totalPages;
+    }
+
+    function renderMediaActionBadge(media) {
+      if (!media) return '';
+      const safeName = escapeHtml(media.fileName);
+      if (!media.existsInFolder) {
+        return `<div class="mt-1.5 inline-flex items-center gap-1 text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded border border-slate-200">📎 ${safeName} (tidak ada di folder)</div>`;
+      }
+      const icon = media.category === 'IMAGE' ? '🖼️' : media.category === 'VCF' ? '📇' : '📄';
+      return `
+        <button data-filename="${safeName}" onclick="previewMediaFile(this.dataset.filename, false)" class="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-semibold bg-emerald-50 hover:bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-md border border-emerald-200 transition cursor-pointer">
+          <span>${icon} Lihat ${safeName}</span>
+        </button>
+      `;
+    }
+
+    function revokeActiveBlob() {
+      if (activeBlobUrl) {
+        URL.revokeObjectURL(activeBlobUrl);
+        activeBlobUrl = null;
+      }
+    }
+
+    // Preview On-Demand (Mendukung Image, VCF, PDF, Audio/Video, serta tombol Download untuk PPTX/ZIP/DOCX)
+    function previewMediaFile(fileName, fromFolderList = false) {
+      const file = folderFilesMap.get(fileName.toLowerCase());
+      if (!file) return;
+
+      revokeActiveBlob();
+
+      const modal = document.getElementById('previewModal');
+      const title = document.getElementById('modalTitle');
+      const body = document.getElementById('modalBody');
+      const backBtn = document.getElementById('modalBackBtn');
+
+      backBtn.classList.toggle('hidden', !fromFolderList);
+      title.textContent = file.name;
+
+      const ext = file.name.split('.').pop().toLowerCase();
+      const sizeStr = file.size >= 1048576
+        ? `${(file.size / 1048576).toFixed(2)} MB`
+        : `${(file.size / 1024).toFixed(1)} KB`;
+
+      if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
+        activeBlobUrl = URL.createObjectURL(file);
+        body.innerHTML = `
+          <div class="space-y-3 text-center">
+            <img src="${activeBlobUrl}" class="max-h-[68vh] mx-auto rounded-lg shadow border border-slate-200" alt="${escapeHtml(file.name)}" />
+            <div class="flex items-center justify-center gap-3 text-[11px] text-slate-500">
+              <span>Ukuran: <b>${sizeStr}</b></span>
+              <a href="${activeBlobUrl}" download="${escapeHtml(file.name)}" class="text-emerald-700 font-semibold hover:underline">⬇ Download Gambar</a>
+            </div>
+          </div>
+        `;
+      } else if (ext === 'vcf') {
+        const info = vcfCache.get(file.name.toLowerCase());
+        activeBlobUrl = URL.createObjectURL(file);
+        body.innerHTML = info ? `
+          <div class="space-y-3 p-1">
+            <div class="p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <p class="text-[11px] text-blue-600 font-semibold uppercase tracking-wide">Kartu Kontak (vCard)</p>
+              <p class="text-lg font-bold text-slate-800 mt-0.5">${escapeHtml(info.fullName)}</p>
+              ${info.org ? `<p class="text-xs text-slate-600 mt-1">Instansi / Perusahaan: <b>${escapeHtml(info.org)}</b></p>` : ''}
+            </div>
+            <div class="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-1.5">
+              <p class="text-[11px] text-slate-500 font-semibold">Nomor Telepon:</p>
+              ${info.phones.map(p => `
+                <div class="flex items-center justify-between bg-white px-3 py-2 rounded-lg border border-slate-200">
+                  <span class="font-mono text-sm font-bold text-emerald-700">${escapeHtml(p)}</span>
+                  <button onclick="navigator.clipboard.writeText('${escapeHtml(p)}'); this.textContent='Tersalin!';" class="text-[11px] bg-slate-100 hover:bg-emerald-100 text-slate-700 px-2.5 py-1 rounded font-medium cursor-pointer">Salin</button>
+                </div>
+              `).join('')}
+            </div>
+            <div class="text-right">
+              <a href="${activeBlobUrl}" download="${escapeHtml(file.name)}" class="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-700 hover:underline">⬇ Simpan Kontak (.vcf)</a>
+            </div>
+          </div>
+        ` : '<p class="text-center py-6 text-slate-500">Detail kontak tidak terbaca.</p>';
+      } else if (ext === 'pdf') {
+        activeBlobUrl = URL.createObjectURL(file);
+        body.innerHTML = `
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-lg border border-slate-200">
+              <span class="text-[11px] text-slate-600">Dokumen PDF • Ukuran: <b>${sizeStr}</b></span>
+              <div class="flex items-center gap-3">
+                <a href="${activeBlobUrl}" target="_blank" rel="noopener" class="text-[11px] font-semibold text-blue-700 hover:underline">↗ Buka di Tab Baru</a>
+                <a href="${activeBlobUrl}" download="${escapeHtml(file.name)}" class="text-[11px] font-semibold text-emerald-700 hover:underline">⬇ Download PDF</a>
+              </div>
+            </div>
+            <iframe src="${activeBlobUrl}" class="w-full h-[65vh] rounded-lg border border-slate-300" title="${escapeHtml(file.name)}"></iframe>
+          </div>
+        `;
+      } else if (['mp4', 'webm', 'ogg'].includes(ext)) {
+        activeBlobUrl = URL.createObjectURL(file);
+        body.innerHTML = `
+          <div class="space-y-2 text-center">
+            <video src="${activeBlobUrl}" controls class="max-h-[65vh] mx-auto rounded-lg shadow bg-black"></video>
+            <p class="text-[11px] text-slate-500">Ukuran: <b>${sizeStr}</b></p>
+          </div>
+        `;
+      } else if (['mp3', 'opus', 'wav', 'm4a'].includes(ext)) {
+        activeBlobUrl = URL.createObjectURL(file);
+        body.innerHTML = `
+          <div class="p-6 text-center space-y-3">
+            <p class="font-semibold text-slate-800">🎵 Rekaman Audio / Voice Note</p>
+            <audio src="${activeBlobUrl}" controls class="w-full max-w-md mx-auto"></audio>
+            <p class="text-[11px] text-slate-500">Ukuran: <b>${sizeStr}</b></p>
+          </div>
+        `;
+      } else {
+        // File Office (.pptx, .xlsx, .docx) atau arsip (.zip)
+        activeBlobUrl = URL.createObjectURL(file);
+        body.innerHTML = `
+          <div class="p-6 text-center space-y-3">
+            <div class="w-12 h-12 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center mx-auto text-xl">📁</div>
+            <div>
+              <p class="font-bold text-sm text-slate-800 break-all">${escapeHtml(file.name)}</p>
+              <p class="text-xs text-slate-500 mt-1">Tipe: <b>.${ext.toUpperCase()}</b> • Ukuran: <b>${sizeStr}</b></p>
+              <p class="text-[11px] text-slate-400 mt-1">Browser tidak menampilkan pratinjau langsung untuk format .${ext}, silakan buka/unduh file ke perangkat Anda.</p>
+            </div>
+            <div class="pt-2">
+              <a href="${activeBlobUrl}" download="${escapeHtml(file.name)}" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow transition">
+                ⬇ Buka / Download File (${sizeStr})
+              </a>
+            </div>
+          </div>
+        `;
+      }
+      modal.classList.remove('hidden');
+    }
+
+    // Modal Daftar File Media dalam Folder (Dengan Klik Preview & Search Filter)
+    function openFolderFilesModal() {
+      revokeActiveBlob();
+      const modal = document.getElementById('previewModal');
+      document.getElementById('modalBackBtn').classList.add('hidden');
+      document.getElementById('modalTitle').textContent = `Daftar File Media di Folder (${folderStats.fileList.length})`;
+
+      document.getElementById('modalBody').innerHTML = `
+        <div class="space-y-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <input type="text" id="modalFileSearch" oninput="filterModalFileList()" placeholder="Cari nama file, .pdf, .vcf, .png, .pptx..." class="w-full sm:w-80 text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:outline-none" />
+            <span class="text-[11px] text-slate-500">Klik nama file untuk melihat preview / membuka file</span>
+          </div>
+          <div class="overflow-x-auto border border-slate-200 rounded-xl max-h-[62vh]">
+            <table class="w-full text-xs text-left">
+              <thead class="bg-slate-100 font-semibold text-slate-700 sticky top-0">
+                <tr>
+                  <th class="p-2.5 w-10">#</th>
+                  <th class="p-2.5">Nama File (Klik untuk Buka)</th>
+                  <th class="p-2.5">Tipe</th>
+                  <th class="p-2.5 text-right">Ukuran</th>
+                </tr>
+              </thead>
+              <tbody id="modalFileTableBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      `;
+
+      renderModalFileRows(folderStats.fileList);
+      modal.classList.remove('hidden');
+    }
+
+    function filterModalFileList() {
+      const q = (document.getElementById('modalFileSearch')?.value || '').trim().toLowerCase();
+      const filtered = q
+        ? folderStats.fileList.filter(f => f.name.toLowerCase().includes(q) || f.type.toLowerCase().includes(q))
+        : folderStats.fileList;
+      renderModalFileRows(filtered);
+    }
+
+    function renderModalFileRows(list) {
+      const tbody = document.getElementById('modalFileTableBody');
+      if (!tbody) return;
+
+      tbody.innerHTML = list.length ? list.map((f, i) => {
+        const icon = f.type === 'Image' ? '🖼️' : f.type === 'VCF Contact' ? '📇' : f.name.toLowerCase().endsWith('.pdf') ? '📕' : '📄';
+        const safeName = escapeHtml(f.name);
+        return `
+          <tr class="hover:bg-emerald-50/70 transition">
+            <td class="py-2 px-2.5 text-slate-400 font-mono">${i + 1}</td>
+            <td class="py-2 px-2.5">
+              <button data-filename="${safeName}" onclick="previewMediaFile(this.dataset.filename, true)" class="text-left font-semibold text-emerald-700 hover:text-emerald-900 hover:underline flex items-start gap-1.5 cursor-pointer break-all">
+                <span class="shrink-0">${icon}</span>
+                <span>${safeName}</span>
+              </button>
+            </td>
+            <td class="py-2 px-2.5 text-slate-500 whitespace-nowrap">${f.type}</td>
+            <td class="py-2 px-2.5 text-right font-mono text-slate-500 whitespace-nowrap">${(f.size / 1024).toFixed(1)} KB</td>
+          </tr>
+        `;
+      }).join('') : '<tr><td colspan="4" class="p-6 text-center text-slate-400">Tidak ada file yang cocok.</td></tr>';
+    }
+
+    function closeModal() {
+      revokeActiveBlob();
+      document.getElementById('previewModal').classList.add('hidden');
+    }
+
+    function handleSearchInput() {
+      const val = document.getElementById('searchInput').value;
+      document.getElementById('clearSearchBtn').classList.toggle('hidden', !val);
+      applyFilters();
+    }
+
+    function clearSearch() {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('clearSearchBtn').classList.add('hidden');
+      applyFilters();
+    }
+
+    function changePageSize() {
+      pageSize = parseInt(document.getElementById('pageSizeSelect').value, 10);
+      currentPage = 1;
+      renderTableAndCards();
+    }
+
+    function prevPage() {
+      if (currentPage > 1) { currentPage--; renderTableAndCards(); }
+    }
+
+    function nextPage() {
+      const totalPages = Math.ceil(filteredResponses.length / pageSize);
+      if (currentPage < totalPages) { currentPage++; renderTableAndCards(); }
+    }
+
+    function exportToExcel() {
+      if (!filteredResponses.length) return;
+
+      const detailData = filteredResponses.map(r => ({
+        timestamp: r.timestamp,
+        pengirim: r.pengirim,
+        pesan: r.pesan,
+        lampiran_media: r.media ? r.media.fileName : '',
+        pengirim_prev: r.pengirim_prev,
+        waktu_prev: r.waktu_prev,
+        respon_menit: r.respon_menit
+      }));
+
+      const grouped = {};
+      for (const r of filteredResponses) {
+        if (!grouped[r.pengirim]) grouped[r.pengirim] = [];
+        grouped[r.pengirim].push(r.respon_menit);
+      }
+      const summaryData = Object.entries(grouped).map(([pengirim, arr]) => {
+        arr.sort((a, b) => a - b);
+        const n = arr.length;
+        const mean = arr.reduce((a, b) => a + b, 0) / n;
+        const median = n % 2 === 1 ? arr[Math.floor(n / 2)] : (arr[n / 2 - 1] + arr[n / 2]) / 2;
+        return {
+          pengirim,
+          jumlah_balasan: n,
+          rata_rata_menit: Number(mean.toFixed(2)),
+          median_menit: Number(median.toFixed(2)),
+          tercepat_menit: arr[0],
+          terlama_menit: arr[n - 1]
+        };
+      });
+
+      const mediaData = folderStats.fileList.map(f => ({
+        nama_file: f.name,
+        kategori: f.type,
+        ukuran_kb: Number((f.size / 1024).toFixed(1)),
+        detail_kontak_vcf: vcfCache.has(f.name.toLowerCase())
+          ? `${vcfCache.get(f.name.toLowerCase()).fullName} (${vcfCache.get(f.name.toLowerCase()).phones.join(', ')})`
+          : ''
+      }));
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(detailData), 'Detail_Respon');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), 'Ringkasan_Pengirim');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(mediaData), 'Daftar_Media_Folder');
+
+      const safeFolder = (folderStats.folderName || 'WA').replace(/[^a-zA-Z0-9_-]/g, '_');
+      XLSX.writeFile(wb, `Analisa_WA_${safeFolder}.xlsx`);
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+  </script>
+</body>
+</html>
