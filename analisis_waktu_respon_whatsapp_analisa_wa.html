@@ -83,14 +83,14 @@
       <!-- Info Folder & Filter Panel -->
       <section class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-3">
-          <div>
+          <div class="flex flex-wrap items-center gap-2">
             <span class="text-xs font-semibold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md" id="folderNameBadge">Folder: -</span>
-            <span class="text-xs text-slate-500 ml-2" id="folderStatsText">0 file terdeteksi</span>
+            <span class="text-xs text-slate-500" id="folderStatsText">0 file terdeteksi</span>
           </div>
           <button onclick="resetFilters()" class="text-xs text-slate-500 hover:text-emerald-700 underline cursor-pointer">Reset Semua Filter</button>
         </div>
 
-        <!-- Baris 1: Periode & Jam Khusus 1 Hari / Hari Ini -->
+        <!-- Baris 1: Periode & Jam Default 08:30 sd 17:30 untuk Semua Filter Tanggal -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 bg-slate-50/80 p-3 rounded-xl border border-slate-200/80">
           <div>
             <label class="block text-[11px] font-semibold text-slate-600 mb-1">Periode Waktu</label>
@@ -115,18 +115,22 @@
           </div>
 
           <div>
-            <label id="labelStartTime" class="block text-[11px] font-semibold text-slate-400 mb-1">Dari Jam (1 Hari)</label>
-            <input type="time" id="filterStartTime" value="08:30" disabled onchange="applyFilters()" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-100 text-slate-400 disabled:cursor-not-allowed transition" />
+            <label id="labelStartTime" class="block text-[11px] font-semibold text-emerald-800 mb-1">Dari Jam</label>
+            <input type="time" id="filterStartTime" value="08:30" onchange="applyFilters()" class="w-full text-xs border border-emerald-400 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white text-slate-800 font-medium transition" />
           </div>
 
           <div>
-            <label id="labelEndTime" class="block text-[11px] font-semibold text-slate-400 mb-1">Sampai Dengan Jam</label>
-            <input type="time" id="filterEndTime" value="17:30" disabled onchange="applyFilters()" class="w-full text-xs border border-slate-200 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-slate-100 text-slate-400 disabled:cursor-not-allowed transition" />
+            <label id="labelEndTime" class="block text-[11px] font-semibold text-emerald-800 mb-1">Sampai Dengan Jam</label>
+            <input type="time" id="filterEndTime" value="17:30" onchange="applyFilters()" class="w-full text-xs border border-emerald-400 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-emerald-500 focus:outline-none bg-white text-slate-800 font-medium transition" />
           </div>
 
-          <div class="flex items-end">
-            <div id="timeFilterStatusBadge" class="w-full text-center text-[11px] px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-400 font-medium">
-              Jam: Nonaktif (Pilih 1 Hari)
+          <div class="flex flex-col justify-end gap-1">
+            <label class="inline-flex items-center gap-1.5 text-[11px] text-slate-600 cursor-pointer select-none">
+              <input type="checkbox" id="enableTimeFilter" checked onchange="toggleTimeFilterInputs()" class="rounded text-emerald-600 focus:ring-emerald-500" />
+              <span>Aktifkan Filter Jam</span>
+            </label>
+            <div id="timeFilterStatusBadge" class="w-full text-center text-[11px] px-2.5 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold">
+              Jam: 08:30 – 17:30
             </div>
           </div>
         </div>
@@ -221,14 +225,22 @@
           </div>
         </div>
 
-        <!-- Grafik Doughnut Komposisi Lama Waktu Respon -->
+        <!-- Grafik Doughnut Komposisi Lama Waktu Respon (Interaktif Filter) -->
         <div class="lg:col-span-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col">
-          <div class="mb-2">
-            <h3 class="text-sm font-bold text-slate-800">Komposisi Lama Waktu Respon</h3>
-            <p class="text-[11px] text-slate-500">Persentase sebaran durasi balasan (0 mnt, 1 mnt, dst.)</p>
+          <div class="mb-2 flex items-start justify-between gap-2">
+            <div>
+              <h3 class="text-sm font-bold text-slate-800">Komposisi Lama Waktu Respon</h3>
+              <p class="text-[11px] text-slate-500">Klik potongan diagram untuk memfilter tabel</p>
+            </div>
+            <button id="clearDoughnutFilterBtn" onclick="clearDoughnutFilter()" class="hidden shrink-0 text-[10px] font-semibold bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 px-2 py-1 rounded-md cursor-pointer transition">
+              ✕ Hapus Filter
+            </button>
+          </div>
+          <div id="activeDoughnutBanner" class="hidden mb-2 text-[11px] bg-emerald-50 border border-emerald-200 text-emerald-800 px-2.5 py-1 rounded-lg font-medium flex items-center justify-between">
+            <span id="activeDoughnutLabel">Filter Durasi: -</span>
           </div>
           <div class="relative flex-1 min-h-[240px]">
-            <canvas id="responseDoughnutChart"></canvas>
+            <canvas id="responseDoughnutChart" class="cursor-pointer"></canvas>
           </div>
         </div>
 
@@ -278,10 +290,10 @@
             </button>
           </div>
 
-          <div class="flex items-center gap-3 ml-auto">
-            <span class="hidden sm:inline text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md font-medium">
-              ↓ Tanggal Terbaru di Atas
-            </span>
+          <div class="flex flex-wrap items-center gap-2.5 ml-auto">
+            <button id="sortOrderBtn" onclick="toggleTimestampSort()" title="Klik untuk ubah urutan tanggal" class="text-[11px] text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2.5 py-1.5 rounded-lg font-semibold cursor-pointer transition flex items-center gap-1">
+              <span id="sortOrderLabel">↓ Tanggal Terbaru di Atas</span>
+            </button>
             <!-- Paging By -->
             <div class="flex items-center gap-2 text-xs text-slate-600">
               <span>Tampilkan:</span>
@@ -302,7 +314,12 @@
             <thead class="bg-emerald-800 text-white font-semibold">
               <tr>
                 <th class="px-3 py-2.5 border-r border-emerald-700 w-10 text-center">#</th>
-                <th class="px-3 py-2.5 border-r border-emerald-700 whitespace-nowrap">timestamp ↓</th>
+                <th onclick="toggleTimestampSort()" title="Klik untuk mengurutkan Ascending / Descending" class="px-3 py-2.5 border-r border-emerald-700 whitespace-nowrap cursor-pointer hover:bg-emerald-700 select-none transition">
+                  <div class="flex items-center justify-between gap-1.5">
+                    <span>timestamp</span>
+                    <span id="thTimestampArrow" class="bg-emerald-950/60 px-1.5 py-0.5 rounded text-[11px] font-bold">↓ DESC</span>
+                  </div>
+                </th>
                 <th class="px-3 py-2.5 border-r border-emerald-700">pengirim</th>
                 <th class="px-3 py-2.5 border-r border-emerald-700 min-w-[260px]">pesan & lampiran media</th>
                 <th class="px-3 py-2.5 border-r border-emerald-700">pengirim_prev</th>
@@ -352,11 +369,23 @@
 
   <script>
     const DEFAULT_DELAY_MINUTES = 480; // 8 jam
-    const DEFAULT_TODAY_START_TIME = '08:30';
-    const DEFAULT_TODAY_END_TIME = '17:30';
+    const DEFAULT_START_TIME = '08:30';
+    const DEFAULT_END_TIME = '17:30';
 
-    let rawMessages = [];       // Semua baris percakapan asli dari .txt
-    let filteredRows = [];      // Baris yang lolos filter untuk tabel
+    const DOUGHNUT_BUCKETS = [
+      { key: 'm0', label: '0 Menit', match: d => d === 0, color: 'rgba(16, 185, 129, 0.88)' },
+      { key: 'm1', label: '1 Menit', match: d => d === 1, color: 'rgba(59, 130, 246, 0.88)' },
+      { key: 'm2_5', label: '2 - 5 Menit', match: d => d >= 2 && d <= 5, color: 'rgba(139, 92, 246, 0.88)' },
+      { key: 'm6_60', label: '6 - 60 Menit', match: d => d >= 6 && d <= 60, color: 'rgba(245, 158, 11, 0.88)' },
+      { key: 'mGt60', label: '> 60 Menit', match: d => d > 60, color: 'rgba(239, 68, 68, 0.88)' }
+    ];
+
+    let rawMessages = [];           // Semua baris percakapan asli dari .txt
+    let baseFilteredRows = [];      // Baris lolos filter utama (sebelum filter segmen doughnut)
+    let filteredRows = [];          // Baris akhir yang tampil di tabel
+    let timestampSortOrder = 'DESC'; // Default 'DESC' (tanggal terakhir di atas), klik ubah ke 'ASC'
+    let activeDoughnutBucket = null; // null atau key dari DOUGHNUT_BUCKETS
+
     let folderFilesMap = new Map();
     let folderStats = { folderName: '', totalFiles: 0, images: 0, vcfs: 0, docs: 0, others: 0, fileList: [] };
     let vcfCache = new Map();
@@ -624,20 +653,8 @@
       return null;
     }
 
-    // Filter jam aktif jika mode "Hari Ini" ATAU tanggal mulai & sampai sama (1 hari penuh)
-    function isSingleDayTimeFilterActive() {
-      const period = document.getElementById('filterPeriod').value;
-      if (period === 'TODAY') return true;
-
-      const startDate = document.getElementById('filterStartDate').value;
-      const endDate = document.getElementById('filterEndDate').value;
-      return Boolean(startDate && endDate && startDate === endDate);
-    }
-
     function syncTimeFilterState() {
-      const period = document.getElementById('filterPeriod').value;
-      const isTimeActive = isSingleDayTimeFilterActive();
-
+      const isTimeActive = document.getElementById('enableTimeFilter').checked;
       const startTimeEl = document.getElementById('filterStartTime');
       const endTimeEl = document.getElementById('filterEndTime');
       const labelStart = document.getElementById('labelStartTime');
@@ -645,8 +662,8 @@
       const badge = document.getElementById('timeFilterStatusBadge');
 
       if (isTimeActive) {
-        if (!startTimeEl.value) startTimeEl.value = DEFAULT_TODAY_START_TIME;
-        if (!endTimeEl.value) endTimeEl.value = DEFAULT_TODAY_END_TIME;
+        if (!startTimeEl.value) startTimeEl.value = DEFAULT_START_TIME;
+        if (!endTimeEl.value) endTimeEl.value = DEFAULT_END_TIME;
 
         startTimeEl.disabled = false;
         endTimeEl.disabled = false;
@@ -656,9 +673,8 @@
         labelStart.className = 'block text-[11px] font-semibold text-emerald-800 mb-1';
         labelEnd.className = 'block text-[11px] font-semibold text-emerald-800 mb-1';
 
-        const modeTag = period === 'TODAY' ? 'Hari Ini' : '1 Hari';
-        badge.className = 'w-full text-center text-[11px] px-2.5 py-2 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold';
-        badge.textContent = `${modeTag}: ${startTimeEl.value} – ${endTimeEl.value}`;
+        badge.className = 'w-full text-center text-[11px] px-2.5 py-1.5 rounded-lg border border-emerald-300 bg-emerald-50 text-emerald-800 font-semibold';
+        badge.textContent = `Jam: ${startTimeEl.value} – ${endTimeEl.value}`;
       } else {
         startTimeEl.disabled = true;
         endTimeEl.disabled = true;
@@ -668,19 +684,19 @@
         labelStart.className = 'block text-[11px] font-semibold text-slate-400 mb-1';
         labelEnd.className = 'block text-[11px] font-semibold text-slate-400 mb-1';
 
-        badge.className = 'w-full text-center text-[11px] px-2.5 py-2 rounded-lg border border-slate-200 bg-white text-slate-400 font-medium';
-        badge.textContent = 'Jam: Nonaktif (Pilih 1 Hari)';
+        badge.className = 'w-full text-center text-[11px] px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-slate-400 font-medium';
+        badge.textContent = 'Jam: Semua Jam (00:00–23:59)';
       }
+    }
+
+    function toggleTimeFilterInputs() {
+      syncTimeFilterState();
+      applyFilters();
     }
 
     function handlePeriodChange() {
       const period = document.getElementById('filterPeriod').value;
       const range = computePeriodDateRange(period);
-
-      if (period === 'TODAY') {
-        document.getElementById('filterStartTime').value = DEFAULT_TODAY_START_TIME;
-        document.getElementById('filterEndTime').value = DEFAULT_TODAY_END_TIME;
-      }
 
       if (range) {
         document.getElementById('filterStartDate').value = range.startISO;
@@ -692,23 +708,10 @@
     }
 
     function handleManualDateChange() {
-      const startDate = document.getElementById('filterStartDate').value;
-      const endDate = document.getElementById('filterEndDate').value;
       const periodEl = document.getElementById('filterPeriod');
-
-      if (startDate && endDate && startDate === endDate) {
-        if (!document.getElementById('filterStartTime').value) {
-          document.getElementById('filterStartTime').value = DEFAULT_TODAY_START_TIME;
-        }
-        if (!document.getElementById('filterEndTime').value) {
-          document.getElementById('filterEndTime').value = DEFAULT_TODAY_END_TIME;
-        }
-      }
-
       if (periodEl.value !== 'TODAY') {
         periodEl.value = 'CUSTOM';
       }
-
       syncTimeFilterState();
       applyFilters();
     }
@@ -732,8 +735,9 @@
         senders.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join('');
 
       document.getElementById('filterPeriod').value = 'THIS_MONTH';
-      document.getElementById('filterStartTime').value = DEFAULT_TODAY_START_TIME;
-      document.getElementById('filterEndTime').value = DEFAULT_TODAY_END_TIME;
+      document.getElementById('enableTimeFilter').checked = true;
+      document.getElementById('filterStartTime').value = DEFAULT_START_TIME;
+      document.getElementById('filterEndTime').value = DEFAULT_END_TIME;
 
       const range = computePeriodDateRange('THIS_MONTH');
       if (range) {
@@ -749,16 +753,69 @@
       document.getElementById('filterDelayOp').value = 'lte';
       document.getElementById('filterDelayVal').value = String(DEFAULT_DELAY_MINUTES);
       document.getElementById('filterMedia').value = 'ALL';
+      activeDoughnutBucket = null;
+      timestampSortOrder = 'DESC';
+      updateSortUI();
       clearSearch();
       applyFilters();
     }
 
+    function toggleTimestampSort() {
+      timestampSortOrder = (timestampSortOrder === 'DESC') ? 'ASC' : 'DESC';
+      updateSortUI();
+      sortFilteredRows();
+      currentPage = 1;
+      renderTableAndCards();
+    }
+
+    function updateSortUI() {
+      const arrowEl = document.getElementById('thTimestampArrow');
+      const labelEl = document.getElementById('sortOrderLabel');
+      if (timestampSortOrder === 'DESC') {
+        if (arrowEl) arrowEl.textContent = '↓ DESC';
+        if (labelEl) labelEl.textContent = '↓ Tanggal Terbaru di Atas';
+      } else {
+        if (arrowEl) arrowEl.textContent = '↑ ASC';
+        if (labelEl) labelEl.textContent = '↑ Tanggal Terlama di Atas';
+      }
+    }
+
+    function sortFilteredRows() {
+      const dir = timestampSortOrder === 'DESC' ? -1 : 1;
+      filteredRows.sort((a, b) => {
+        const diff = a.timestampMs - b.timestampMs;
+        return diff !== 0 ? diff * dir : (a.seq - b.seq) * dir;
+      });
+    }
+
+    function clearDoughnutFilter() {
+      activeDoughnutBucket = null;
+      applyFilters();
+    }
+
+    function syncDoughnutFilterBanner() {
+      const banner = document.getElementById('activeDoughnutBanner');
+      const label = document.getElementById('activeDoughnutLabel');
+      const clearBtn = document.getElementById('clearDoughnutFilterBtn');
+
+      if (activeDoughnutBucket) {
+        const bucketObj = DOUGHNUT_BUCKETS.find(b => b.key === activeDoughnutBucket);
+        banner.classList.remove('hidden');
+        clearBtn.classList.remove('hidden');
+        label.textContent = `Filter Aktif: Durasi Respon "${bucketObj ? bucketObj.label : activeDoughnutBucket}"`;
+      } else {
+        banner.classList.add('hidden');
+        clearBtn.classList.add('hidden');
+      }
+    }
+
     function applyFilters() {
       syncTimeFilterState();
+      syncDoughnutFilterBanner();
 
-      const timeFilterEnabled = isSingleDayTimeFilterActive();
-      const startTime = timeFilterEnabled ? (document.getElementById('filterStartTime').value || DEFAULT_TODAY_START_TIME) : null;
-      const endTime = timeFilterEnabled ? (document.getElementById('filterEndTime').value || DEFAULT_TODAY_END_TIME) : null;
+      const timeFilterEnabled = document.getElementById('enableTimeFilter').checked;
+      const startTime = timeFilterEnabled ? (document.getElementById('filterStartTime').value || DEFAULT_START_TIME) : null;
+      const endTime = timeFilterEnabled ? (document.getElementById('filterEndTime').value || DEFAULT_END_TIME) : null;
 
       const startDate = document.getElementById('filterStartDate').value;
       const endDate = document.getElementById('filterEndDate').value;
@@ -771,43 +828,54 @@
       const mediaFilter = document.getElementById('filterMedia').value;
       const query = document.getElementById('searchInput').value.trim().toLowerCase();
 
-      filteredRows = rawMessages
-        .filter(item => {
-          if (startDate && item.dateISO < startDate) return false;
-          if (endDate && item.dateISO > endDate) return false;
+      baseFilteredRows = rawMessages.filter(item => {
+        if (startDate && item.dateISO < startDate) return false;
+        if (endDate && item.dateISO > endDate) return false;
 
-          if (timeFilterEnabled) {
-            if (startTime && item.timeHM < startTime) return false;
-            if (endTime && item.timeHM > endTime) return false;
+        if (timeFilterEnabled) {
+          if (startTime && item.timeHM < startTime) return false;
+          if (endTime && item.timeHM > endTime) return false;
+        }
+
+        if (sender !== 'ALL' && item.pengirim !== sender) return false;
+
+        if (scope === 'REPLY_ONLY') {
+          if (!item.isReplyTurn) return false;
+          if (hasExplicitDelayFilter) {
+            if (delayOp === 'lte' && item.respon_menit > delayVal) return false;
+            if (delayOp === 'gte' && item.respon_menit < delayVal) return false;
           }
-
-          if (sender !== 'ALL' && item.pengirim !== sender) return false;
-
-          if (scope === 'REPLY_ONLY') {
-            if (!item.isReplyTurn) return false;
-            if (hasExplicitDelayFilter) {
-              if (delayOp === 'lte' && item.respon_menit > delayVal) return false;
-              if (delayOp === 'gte' && item.respon_menit < delayVal) return false;
-            }
-          } else {
-            if (hasExplicitDelayFilter && item.isReplyTurn && delayOp === 'gte' && item.respon_menit < delayVal) {
-              return false;
-            }
+        } else {
+          if (hasExplicitDelayFilter && item.isReplyTurn && delayOp === 'gte' && item.respon_menit < delayVal) {
+            return false;
           }
+        }
 
-          if (mediaFilter === 'HAS_MEDIA' && !item.media) return false;
-          if (mediaFilter === 'IMAGE' && (!item.media || item.media.category !== 'IMAGE')) return false;
-          if (mediaFilter === 'VCF' && (!item.media || item.media.category !== 'VCF')) return false;
-          if (mediaFilter === 'DOC' && (!item.media || item.media.category !== 'DOC')) return false;
+        if (mediaFilter === 'HAS_MEDIA' && !item.media) return false;
+        if (mediaFilter === 'IMAGE' && (!item.media || item.media.category !== 'IMAGE')) return false;
+        if (mediaFilter === 'VCF' && (!item.media || item.media.category !== 'VCF')) return false;
+        if (mediaFilter === 'DOC' && (!item.media || item.media.category !== 'DOC')) return false;
 
-          if (query) {
-            const hay = `${item.pengirim} ${item.pengirim_prev} ${item.pesan} ${item.timestamp}`.toLowerCase();
-            if (!hay.includes(query)) return false;
-          }
-          return true;
-        })
-        .sort((a, b) => (b.timestampMs - a.timestampMs) || (b.seq - a.seq));
+        if (query) {
+          const hay = `${item.pengirim} ${item.pengirim_prev} ${item.pesan} ${item.timestamp}`.toLowerCase();
+          if (!hay.includes(query)) return false;
+        }
+        return true;
+      });
 
+      if (activeDoughnutBucket) {
+        const bucketObj = DOUGHNUT_BUCKETS.find(b => b.key === activeDoughnutBucket);
+        filteredRows = baseFilteredRows.filter(item =>
+          item.isReplyTurn &&
+          typeof item.respon_menit === 'number' &&
+          bucketObj &&
+          bucketObj.match(item.respon_menit)
+        );
+      } else {
+        filteredRows = [...baseFilteredRows];
+      }
+
+      sortFilteredRows();
       currentPage = 1;
       updateKPIs();
       updateSenderSummaryAndChart();
@@ -815,13 +883,13 @@
       renderTableAndCards();
     }
 
-    function getValidReplyRows() {
+    function getValidReplyRows(sourceRows = filteredRows) {
       const delayOp = document.getElementById('filterDelayOp').value;
       const delayValRaw = document.getElementById('filterDelayVal').value;
       const delayVal = delayValRaw !== '' ? parseFloat(delayValRaw) : null;
       const hasDelay = delayVal !== null && !isNaN(delayVal);
 
-      return filteredRows.filter(r => {
+      return sourceRows.filter(r => {
         if (!r.isReplyTurn || typeof r.respon_menit !== 'number') return false;
         if (hasDelay) {
           if (delayOp === 'lte' && r.respon_menit > delayVal) return false;
@@ -832,7 +900,7 @@
     }
 
     function updateKPIs() {
-      const validReplies = getValidReplyRows();
+      const validReplies = getValidReplyRows(filteredRows);
       const n = validReplies.length;
       document.getElementById('kpiTotal').textContent = n.toLocaleString('id-ID');
       document.getElementById('kpiTotalAllRows').textContent = `${filteredRows.length.toLocaleString('id-ID')} baris chat tampil`;
@@ -864,7 +932,7 @@
     }
 
     function updateSenderSummaryAndChart() {
-      const validReplies = getValidReplyRows();
+      const validReplies = getValidReplyRows(filteredRows);
       const grouped = {};
       for (const r of validReplies) {
         if (!grouped[r.pengirim]) grouped[r.pengirim] = [];
@@ -929,31 +997,30 @@
       const ctx = document.getElementById('responseDoughnutChart').getContext('2d');
       if (doughnutChartInstance) doughnutChartInstance.destroy();
 
-      const validReplies = getValidReplyRows();
-      const total = validReplies.length;
-      const buckets = {
-        m0: 0,
-        m1: 0,
-        m2_5: 0,
-        m6_60: 0,
-        mGt60: 0
-      };
+      // Hitung distribusi dari baseFilteredRows agar segmen lain tetap terlihat saat salah satu segmen diklik
+      const baseValidReplies = getValidReplyRows(baseFilteredRows);
+      const total = baseValidReplies.length;
 
-      for (const r of validReplies) {
-        const d = r.respon_menit;
-        if (d === 0) buckets.m0++;
-        else if (d === 1) buckets.m1++;
-        else if (d <= 5) buckets.m2_5++;
-        else if (d <= 60) buckets.m6_60++;
-        else buckets.mGt60++;
-      }
+      const rawCounts = DOUGHNUT_BUCKETS.map(bucket =>
+        baseValidReplies.filter(r => bucket.match(r.respon_menit)).length
+      );
 
-      const rawCounts = [buckets.m0, buckets.m1, buckets.m2_5, buckets.m6_60, buckets.mGt60];
-      const baseLabels = ['0 Menit', '1 Menit', '2 - 5 Menit', '6 - 60 Menit', '> 60 Menit'];
-      const labelsWithPct = baseLabels.map((lbl, idx) => {
+      const labelsWithPct = DOUGHNUT_BUCKETS.map((bucket, idx) => {
         const pct = total > 0 ? ((rawCounts[idx] / total) * 100).toFixed(1) : '0.0';
-        return `${lbl} (${pct}%)`;
+        const marker = activeDoughnutBucket === bucket.key ? '✓ ' : '';
+        return `${marker}${bucket.label} (${pct}%)`;
       });
+
+      const bgColors = DOUGHNUT_BUCKETS.map(bucket => {
+        if (!activeDoughnutBucket || activeDoughnutBucket === bucket.key) {
+          return bucket.color;
+        }
+        return bucket.color.replace('0.88)', '0.25)');
+      });
+
+      const offsets = DOUGHNUT_BUCKETS.map(bucket =>
+        activeDoughnutBucket === bucket.key ? 12 : 0
+      );
 
       doughnutChartInstance = new Chart(ctx, {
         type: 'doughnut',
@@ -961,24 +1028,46 @@
           labels: labelsWithPct,
           datasets: [{
             data: rawCounts,
-            backgroundColor: [
-              'rgba(16, 185, 129, 0.88)',
-              'rgba(59, 130, 246, 0.88)',
-              'rgba(139, 92, 246, 0.88)',
-              'rgba(245, 158, 11, 0.88)',
-              'rgba(239, 68, 68, 0.88)'
-            ],
+            backgroundColor: bgColors,
             borderColor: '#ffffff',
-            borderWidth: 2
+            borderWidth: 2,
+            offset: offsets
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           cutout: '58%',
+          onClick: (event, elements) => {
+            if (!elements || !elements.length) return;
+            const clickedIdx = elements[0].index;
+            const clickedBucket = DOUGHNUT_BUCKETS[clickedIdx];
+            if (!clickedBucket) return;
+
+            activeDoughnutBucket = (activeDoughnutBucket === clickedBucket.key)
+              ? null
+              : clickedBucket.key;
+            applyFilters();
+          },
+          onHover: (event, elements) => {
+            const target = event?.native?.target;
+            if (target) {
+              target.style.cursor = elements && elements.length ? 'pointer' : 'default';
+            }
+          },
           plugins: {
             legend: {
               position: 'bottom',
+              onClick: (e, legendItem) => {
+                const clickedIdx = legendItem.index;
+                const clickedBucket = DOUGHNUT_BUCKETS[clickedIdx];
+                if (!clickedBucket) return;
+
+                activeDoughnutBucket = (activeDoughnutBucket === clickedBucket.key)
+                  ? null
+                  : clickedBucket.key;
+                applyFilters();
+              },
               labels: {
                 boxWidth: 12,
                 padding: 10,
@@ -990,7 +1079,7 @@
                 label: (context) => {
                   const val = context.parsed || 0;
                   const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
-                  return ` ${val} balasan (${pct}%)`;
+                  return ` ${val} balasan (${pct}%) • Klik untuk filter`;
                 }
               }
             }
@@ -1332,7 +1421,7 @@
         respon_menit: typeof r.respon_menit === 'number' ? r.respon_menit : ''
       }));
 
-      const validReplies = getValidReplyRows();
+      const validReplies = getValidReplyRows(filteredRows);
       const grouped = {};
       for (const r of validReplies) {
         if (!grouped[r.pengirim]) grouped[r.pengirim] = [];
