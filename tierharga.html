@@ -25,7 +25,7 @@
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .modal-overlay { background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(3px); }
+        .modal-overlay { background-color: rgba(15, 23, 42, 0.55); backdrop-filter: blur(2px); }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased h-screen overflow-hidden flex">
@@ -281,15 +281,44 @@
         </div>
     </main>
 
-    <!-- Modal Quick Preview Gambar -->
-    <div id="imagePreviewModal" class="fixed inset-0 z-[60] flex items-center justify-center p-4 hidden">
-        <div class="modal-overlay fixed inset-0" onclick="closeImagePreview()"></div>
-        <div class="bg-white rounded-xl shadow-2xl max-w-4xl w-full h-[85vh] flex flex-col relative overflow-hidden z-10 border border-slate-200">
-            <div class="px-5 py-3.5 border-b border-slate-200 bg-slate-50 flex items-center justify-between gap-3">
-                <div class="min-w-0">
-                    <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-600">Quick Preview Gambar Produk</p>
-                    <h3 id="previewItemTitle" class="text-sm font-bold text-slate-800 truncate">-</h3>
+    <!-- Modal Quick Preview Gambar (Draggable + Tier Harga HJ R, HJ1, HJ2, HJ3) -->
+    <div id="imagePreviewModal" class="fixed inset-0 z-[60] hidden pointer-events-none">
+        <div class="modal-overlay fixed inset-0 pointer-events-auto" onclick="closeImagePreview()"></div>
+        <div id="draggablePreviewCard" class="pointer-events-auto fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl w-[94vw] max-w-4xl h-[85vh] min-h-[420px] flex flex-col overflow-hidden z-10 border border-slate-200 select-none">
+            <!-- Draggable Header -->
+            <div id="previewDragHandle" title="Tarik untuk menggeser modal" class="px-5 py-3 border-b border-slate-200 bg-slate-50 flex flex-wrap items-center justify-between gap-3 cursor-grab active:cursor-grabbing touch-none">
+                <div class="min-w-0 flex items-center gap-2.5">
+                    <span class="text-slate-400 flex-shrink-0" aria-hidden="true">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M7 4a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm9-12a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zm0 6a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z"></path>
+                        </svg>
+                    </span>
+                    <div class="min-w-0">
+                        <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-600">Quick Preview Gambar Produk</p>
+                        <h3 id="previewItemTitle" class="text-sm font-bold text-slate-800 truncate">-</h3>
+                    </div>
                 </div>
+
+                <!-- Nilai Tier Harga: HJ R, HJ1, HJ2, HJ3 -->
+                <div class="flex items-center gap-4 sm:gap-6 px-2">
+                    <div class="text-left">
+                        <div class="text-[11px] font-semibold text-slate-500">HJ R</div>
+                        <div id="previewPriceHJR" class="text-sm font-bold text-slate-800 tabular-nums">-</div>
+                    </div>
+                    <div class="text-left">
+                        <div class="text-[11px] font-semibold text-slate-500">HJ1</div>
+                        <div id="previewPriceHJ1" class="text-sm font-bold text-slate-800 tabular-nums">-</div>
+                    </div>
+                    <div class="text-left">
+                        <div class="text-[11px] font-semibold text-slate-500">HJ2</div>
+                        <div id="previewPriceHJ2" class="text-sm font-bold text-slate-800 tabular-nums">-</div>
+                    </div>
+                    <div class="text-left">
+                        <div class="text-[11px] font-semibold text-slate-500">HJ3</div>
+                        <div id="previewPriceHJ3" class="text-sm font-bold text-slate-800 tabular-nums">-</div>
+                    </div>
+                </div>
+
                 <div class="flex items-center gap-2 flex-shrink-0">
                     <a id="previewExternalLink" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-colors">
                         <span>Buka di Tab Baru</span>
@@ -304,6 +333,8 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Content Area -->
             <div class="flex-1 relative bg-slate-100">
                 <div id="previewLoading" class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 text-xs pointer-events-none">
                     <div class="loader mb-2"></div>
@@ -311,8 +342,10 @@
                 </div>
                 <iframe id="previewIframe" src="about:blank" onload="document.getElementById('previewLoading').classList.add('hidden')" class="w-full h-full border-0 relative z-10 bg-white"></iframe>
             </div>
+
+            <!-- Footer -->
             <div class="px-4 py-2 bg-slate-50 border-t border-slate-200 text-[11px] text-slate-500 flex justify-between items-center">
-                <span>Jika tampilan di dalam modal diblokir browser, klik <strong>Buka di Tab Baru</strong> di kanan atas.</span>
+                <span>Seret bagian header untuk memindahkan modal. Jika tampilan diblokir browser, klik <strong>Buka di Tab Baru</strong> di kanan atas.</span>
                 <span class="hidden sm:inline text-slate-400">Tekan ESC untuk menutup</span>
             </div>
         </div>
@@ -397,7 +430,13 @@
 
             // Image Quick Preview Modal
             imagePreviewModal: document.getElementById('imagePreviewModal'),
+            draggablePreviewCard: document.getElementById('draggablePreviewCard'),
+            previewDragHandle: document.getElementById('previewDragHandle'),
             previewItemTitle: document.getElementById('previewItemTitle'),
+            previewPriceHJR: document.getElementById('previewPriceHJR'),
+            previewPriceHJ1: document.getElementById('previewPriceHJ1'),
+            previewPriceHJ2: document.getElementById('previewPriceHJ2'),
+            previewPriceHJ3: document.getElementById('previewPriceHJ3'),
             previewExternalLink: document.getElementById('previewExternalLink'),
             previewLoading: document.getElementById('previewLoading'),
             previewIframe: document.getElementById('previewIframe')
@@ -425,38 +464,19 @@
             return `https://www.google.com/search?igu=1&tbm=isch&q=${encodeURIComponent(cleanDesc)}`;
         };
 
-        function openImagePreviewByIndex(filteredIndex) {
-            const row = filteredData[filteredIndex];
-            if (!row) return;
-            openImagePreview(row.DESCRIPTION || '');
-        }
-
-        function openImagePreview(description) {
-            const cleanDesc = String(description ?? '').trim();
-            if (!cleanDesc || cleanDesc === '-') return;
-
-            DOM.previewItemTitle.textContent = cleanDesc;
-            DOM.previewExternalLink.href = getGoogleImageSearchUrl(cleanDesc);
-            DOM.previewLoading.classList.remove('hidden');
-            DOM.previewIframe.src = getGoogleImageEmbedUrl(cleanDesc);
-            DOM.imagePreviewModal.classList.remove('hidden');
-        }
-
-        function closeImagePreview() {
-            DOM.imagePreviewModal.classList.add('hidden');
-            DOM.previewIframe.src = 'about:blank';
-        }
-
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && !DOM.imagePreviewModal.classList.contains('hidden')) {
-                closeImagePreview();
-            }
-        });
-
         // Format Utilities
         const formatNumber = (num) => {
             if (!num || isNaN(num)) return num || '-';
             return new Intl.NumberFormat('id-ID').format(num);
+        };
+
+        const formatTierPrice = (val) => {
+            if (val === undefined || val === null) return '-';
+            const trimmed = String(val).trim();
+            if (!trimmed || trimmed === '-' || trimmed === '0') return '-';
+            const parsed = parseNumber(trimmed);
+            if (!parsed || isNaN(parsed) || parsed <= 0) return '-';
+            return new Intl.NumberFormat('id-ID').format(parsed);
         };
         
         const parseNumber = (str) => {
@@ -466,6 +486,108 @@
             let cleanStr = str.replace(/[^\d.-]/g, '');
             return parseFloat(cleanStr) || 0;
         };
+
+        // Draggable Modal Logic
+        let isDraggingModal = false;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+
+        function resetModalPosition() {
+            const card = DOM.draggablePreviewCard;
+            card.classList.add('-translate-x-1/2', '-translate-y-1/2');
+            card.style.left = '50%';
+            card.style.top = '50%';
+        }
+
+        function initDraggableModal() {
+            const handle = DOM.previewDragHandle;
+            const card = DOM.draggablePreviewCard;
+
+            handle.addEventListener('pointerdown', (e) => {
+                // Jangan mulai drag jika klik pada tombol atau link di dalam header
+                if (e.target.closest('a, button')) return;
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+                const rect = card.getBoundingClientRect();
+                card.classList.remove('-translate-x-1/2', '-translate-y-1/2');
+                card.style.left = `${rect.left}px`;
+                card.style.top = `${rect.top}px`;
+
+                isDraggingModal = true;
+                dragOffsetX = e.clientX - rect.left;
+                dragOffsetY = e.clientY - rect.top;
+                handle.setPointerCapture(e.pointerId);
+            });
+
+            handle.addEventListener('pointermove', (e) => {
+                if (!isDraggingModal) return;
+
+                const vw = window.innerWidth;
+                const vh = window.innerHeight;
+                const rect = card.getBoundingClientRect();
+
+                const minVisibleHeader = 60;
+                let nextLeft = e.clientX - dragOffsetX;
+                let nextTop = e.clientY - dragOffsetY;
+
+                nextLeft = Math.max(-rect.width + minVisibleHeader, Math.min(nextLeft, vw - minVisibleHeader));
+                nextTop = Math.max(0, Math.min(nextTop, vh - minVisibleHeader));
+
+                card.style.left = `${nextLeft}px`;
+                card.style.top = `${nextTop}px`;
+            });
+
+            const stopDrag = (e) => {
+                if (!isDraggingModal) return;
+                isDraggingModal = false;
+                if (e && handle.hasPointerCapture(e.pointerId)) {
+                    handle.releasePointerCapture(e.pointerId);
+                }
+            };
+
+            handle.addEventListener('pointerup', stopDrag);
+            handle.addEventListener('pointercancel', stopDrag);
+        }
+
+        function openImagePreviewByIndex(filteredIndex) {
+            const row = filteredData[filteredIndex];
+            if (!row) return;
+            openImagePreview(row);
+        }
+
+        function openImagePreview(rowOrDesc) {
+            const row = (typeof rowOrDesc === 'object' && rowOrDesc !== null)
+                ? rowOrDesc
+                : { DESCRIPTION: rowOrDesc };
+
+            const cleanDesc = String(row.DESCRIPTION ?? '').trim();
+            if (!cleanDesc || cleanDesc === '-') return;
+
+            resetModalPosition();
+
+            DOM.previewItemTitle.textContent = cleanDesc;
+            DOM.previewPriceHJR.textContent = formatTierPrice(row['HJ R']);
+            DOM.previewPriceHJ1.textContent = formatTierPrice(row['HJ1']);
+            DOM.previewPriceHJ2.textContent = formatTierPrice(row['HJ2']);
+            DOM.previewPriceHJ3.textContent = formatTierPrice(row['HJ3']);
+
+            DOM.previewExternalLink.href = getGoogleImageSearchUrl(cleanDesc);
+            DOM.previewLoading.classList.remove('hidden');
+            DOM.previewIframe.src = getGoogleImageEmbedUrl(cleanDesc);
+            DOM.imagePreviewModal.classList.remove('hidden');
+        }
+
+        function closeImagePreview() {
+            isDraggingModal = false;
+            DOM.imagePreviewModal.classList.add('hidden');
+            DOM.previewIframe.src = 'about:blank';
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !DOM.imagePreviewModal.classList.contains('hidden')) {
+                closeImagePreview();
+            }
+        });
 
         // Fetch and parse data
         async function fetchData(forceRefresh = false) {
@@ -983,6 +1105,7 @@
 
         // Initialize application on load
         window.addEventListener('DOMContentLoaded', () => {
+            initDraggableModal();
             fetchData();
         });
 
