@@ -230,7 +230,7 @@
         </div>
     </div>
 
-    <!-- MODAL DETAIL ITEM -->
+    <!-- MODAL DETAIL ITEM (FLOATING FORM) -->
     <div id="item-detail-modal" class="modal fixed inset-0 z-50 flex items-center justify-center opacity-0 pointer-events-none p-4 transition-opacity duration-200">
         <div class="modal-overlay fixed inset-0" onclick="closeItemDetail()"></div>
         <div class="modal-content bg-white rounded-xl shadow-2xl max-w-5xl w-full relative transform scale-95 transition-transform duration-300 overflow-hidden z-10">
@@ -240,7 +240,14 @@
             <div class="flex flex-col md:flex-row h-full">
                 <div class="md:w-5/12 p-6 md:p-8 border-b md:border-b-0 md:border-r overflow-y-auto max-h-[85vh]">
                     <h2 class="text-2xl font-extrabold text-blue-600 mb-2"><span id="detail-kode"></span></h2>
-                    <p class="text-sm font-semibold text-gray-800 mb-6" id="detail-nama"></p>
+                    <div class="mb-6">
+                        <a id="detail-nama-link" href="#" target="_blank" rel="noopener noreferrer" title="Cari gambar item di Google" class="inline-flex items-start gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-900 hover:underline group">
+                            <span id="detail-nama"></span>
+                            <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-500 group-hover:text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                            </svg>
+                        </a>
+                    </div>
                     <h3 class="text-lg font-bold text-gray-700 mb-4">Informasi Kuantitas</h3>
                     <div class="space-y-3">
                         <div class="bg-blue-50 p-3 rounded-lg flex justify-between"><p class="font-bold text-blue-800">SOQ:</p><p class="text-xl font-extrabold text-blue-600" id="detail-soq"></p></div>
@@ -289,6 +296,22 @@ let STOK_KEY = 'Stok'; // Variabel dinamis untuk key kolom Stok
 
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRRlqRhknRPUEV01mUYHeTIjDNzblnkodAjIs_fWUaBoe1QKYPEmp9w3DxPuLyOx9gLVDMONrXNtdbj/pub?gid=1242857649&single=true&output=csv';
 const LOCAL_STORAGE_KEY = 'SOQ_DASHBOARD_DATA_CACHE_V5';
+
+function escapeHtml(val) {
+    return String(val ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function getGoogleImageSearchUrl(itemName) {
+    const cleanName = String(itemName ?? '').trim();
+    if (!cleanName || cleanName === '-') return '#';
+    const encodedQuery = encodeURIComponent(cleanName);
+    return `https://www.google.com/search?q=${encodedQuery}&tbm=isch&sourceid=chrome&ie=UTF-8&source=chrome.ctxt`;
+}
 
 function toggleSidebar() {
     const sidebar = document.getElementById('sidebar');
@@ -612,37 +635,37 @@ function updateAllFilterOptions() {
     let buyers = getOptions(i=> (!curDept || i['Dept']===curDept) && (!curSupplier || i['Supplier']===curSupplier) && (!curBrand || i['BRAND']===curBrand) && (!curCategory || i['Kategori']===curCategory) && (!curKomp || i['Komp']===curKomp) && (!curAH || String(i[keyAH] || i['count'] || '').toUpperCase().includes(curAH.toUpperCase())), 'BUYER');
     let buyerSel = document.getElementById('filter-buyer');
     buyerSel.innerHTML = '<option value="">Semua Buyer</option>';
-    buyers.forEach(b=> buyerSel.innerHTML += `<option value="${b}">${b}</option>`);
+    buyers.forEach(b=> buyerSel.innerHTML += `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`);
     buyerSel.value = buyers.includes(curBuyer) ? curBuyer : "";
 
     let depts = getOptions(i=> (!curBuyer || i['BUYER']===curBuyer) && (!curSupplier || i['Supplier']===curSupplier) && (!curBrand || i['BRAND']===curBrand) && (!curCategory || i['Kategori']===curCategory) && (!curKomp || i['Komp']===curKomp) && (!curAH || String(i[keyAH] || i['count'] || '').toUpperCase().includes(curAH.toUpperCase())), 'Dept');
     let deptSel = document.getElementById('filter-dept');
     deptSel.innerHTML = '<option value="">Semua Dept</option>';
-    depts.forEach(d=> deptSel.innerHTML += `<option value="${d}">${d}</option>`);
+    depts.forEach(d=> deptSel.innerHTML += `<option value="${escapeHtml(d)}">${escapeHtml(d)}</option>`);
     deptSel.value = depts.includes(curDept) ? curDept : "";
 
     let suppliers = getOptions(i=> (!curBuyer || i['BUYER']===curBuyer) && (!curDept || i['Dept']===curDept) && (!curBrand || i['BRAND']===curBrand) && (!curCategory || i['Kategori']===curCategory) && (!curKomp || i['Komp']===curKomp) && (!curAH || String(i[keyAH] || i['count'] || '').toUpperCase().includes(curAH.toUpperCase())), 'Supplier');
     let supSel = document.getElementById('filter-supplier');
     supSel.innerHTML = '<option value="">Semua Supplier</option>';
-    suppliers.forEach(s=> supSel.innerHTML += `<option value="${s}">${s}</option>`);
+    suppliers.forEach(s=> supSel.innerHTML += `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`);
     supSel.value = suppliers.includes(curSupplier) ? curSupplier : "";
 
     let brands = getOptions(i=> (!curBuyer || i['BUYER']===curBuyer) && (!curDept || i['Dept']===curDept) && (!curSupplier || i['Supplier']===curSupplier) && (!curCategory || i['Kategori']===curCategory) && (!curKomp || i['Komp']===curKomp) && (!curAH || String(i[keyAH] || i['count'] || '').toUpperCase().includes(curAH.toUpperCase())), 'BRAND');
     let brandSel = document.getElementById('filter-brand');
     brandSel.innerHTML = '<option value="">Semua Brand</option>';
-    brands.forEach(b=> brandSel.innerHTML += `<option value="${b}">${b}</option>`);
+    brands.forEach(b=> brandSel.innerHTML += `<option value="${escapeHtml(b)}">${escapeHtml(b)}</option>`);
     brandSel.value = brands.includes(curBrand) ? curBrand : "";
 
     let cats = getOptions(i=> (!curBuyer || i['BUYER']===curBuyer) && (!curDept || i['Dept']===curDept) && (!curSupplier || i['Supplier']===curSupplier) && (!curBrand || i['BRAND']===curBrand) && (!curKomp || i['Komp']===curKomp) && (!curAH || String(i[keyAH] || i['count'] || '').toUpperCase().includes(curAH.toUpperCase())), 'Kategori');
     let catSel = document.getElementById('filter-category');
     catSel.innerHTML = '<option value="">Semua Kategori</option>';
-    cats.forEach(c=> catSel.innerHTML += `<option value="${c}">${c}</option>`);
+    cats.forEach(c=> catSel.innerHTML += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`);
     catSel.value = cats.includes(curCategory) ? curCategory : "";
 
     let komps = getOptions(i=> (!curBuyer || i['BUYER']===curBuyer) && (!curDept || i['Dept']===curDept) && (!curSupplier || i['Supplier']===curSupplier) && (!curBrand || i['BRAND']===curBrand) && (!curCategory || i['Kategori']===curCategory) && (!curAH || String(i[keyAH] || i['count'] || '').toUpperCase().includes(curAH.toUpperCase())), 'Komp');
     let kompSel = document.getElementById('filter-komp');
     kompSel.innerHTML = '<option value="">Semua Komp</option>';
-    komps.forEach(k=> kompSel.innerHTML += `<option value="${k}">${k}</option>`);
+    komps.forEach(k=> kompSel.innerHTML += `<option value="${escapeHtml(k)}">${escapeHtml(k)}</option>`);
     kompSel.value = komps.includes(curKomp) ? curKomp : "";
 
     isUpdatingDropdowns = false;
@@ -787,24 +810,37 @@ function renderTable() {
     let start = (CURRENT_PAGE-1)*itemsPerPage, end = Math.min(start+itemsPerPage, FILTERED_DATA.length);
     let currentItems = FILTERED_DATA.slice(start, end);
     
-    currentItems.forEach(item=>{
+    currentItems.forEach((item, idx)=>{
+        let globalIndex = start + idx;
         let soq = parseNumber(item['SOQ']), soqClass = soq<0 ? 'text-red-500 font-bold' : 'text-blue-500 font-bold';
         let uom = item['UOM'] || item['Sat'] || item['ITEM_UNIT'] || '-'; 
+        let itemName = String(item['Nama Item'] || '').trim();
+        let displayItemName = itemName || '-';
+        let imgSearchUrl = getGoogleImageSearchUrl(itemName);
+
+        let itemNameCell = itemName
+            ? `<a href="${escapeHtml(imgSearchUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 hover:underline font-medium" title="Cari gambar: ${escapeHtml(itemName)}">
+                   <span class="truncate">${escapeHtml(displayItemName)}</span>
+                   <svg class="w-3.5 h-3.5 flex-shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                   </svg>
+               </a>`
+            : `<span class="text-gray-400">-</span>`;
         
         let rawSupplier = item['Supplier'] || '-';
         let displaySupplier = (currentMode === 'sales') 
             ? '<span class="filter blur-sm select-none text-gray-400" title="Disembunyikan di Sales Mode">██████████</span>' 
-            : rawSupplier;
+            : escapeHtml(rawSupplier);
 
         let row = `
             <tr class="hover:bg-gray-50 transition-colors">
-                <td class="px-3 py-2 text-xs font-medium text-blue-600 cursor-pointer hover:underline" onclick="showItemDetail('${item['Kode']}')">${item['Kode'] || '-'}</td>
-                <td class="px-3 py-2 text-xs text-gray-700 max-w-xs truncate" title="${item['Nama Item']}">${item['Nama Item'] || '-'}</td>
-                <td class="px-3 py-2 text-xs text-gray-600 font-semibold">${uom}</td>
+                <td class="px-3 py-2 text-xs font-medium text-blue-600 cursor-pointer hover:underline" onclick="showItemDetailByIndex(${globalIndex})">${escapeHtml(item['Kode'] || '-')}</td>
+                <td class="px-3 py-2 text-xs text-gray-700 max-w-xs truncate">${itemNameCell}</td>
+                <td class="px-3 py-2 text-xs text-gray-600 font-semibold">${escapeHtml(uom)}</td>
                 <td class="px-3 py-2 text-xs text-gray-500 truncate max-w-[150px]">${displaySupplier}</td>
-                <td class="px-3 py-2 text-xs text-gray-500 max-w-[120px] truncate" title="${item['BRAND']}">${item['BRAND'] || '-'}</td>
+                <td class="px-3 py-2 text-xs text-gray-500 max-w-[120px] truncate" title="${escapeHtml(item['BRAND'])}">${escapeHtml(item['BRAND'] || '-')}</td>
                 <td class="px-3 py-2 text-xs text-right text-gray-700 font-semibold">${formatNumber(item[STOK_KEY])}</td>
-                <td class="px-3 py-2 text-xs text-gray-500">${item['NO PO LAST JUN'] || '-'}</td>
+                <td class="px-3 py-2 text-xs text-gray-500">${escapeHtml(item['NO PO LAST JUN'] || '-')}</td>
                 <td class="px-3 py-2 text-xs text-right text-gray-700">${formatNumber(item['QTY PO'])}</td>
                 <td class="px-3 py-2 text-xs text-right bg-blue-50 ${soqClass}">${formatNumber(soq)}</td>
             </tr>
@@ -839,12 +875,34 @@ function renderPagination(totalPages) {
 
 function changePage(p) { CURRENT_PAGE = p; renderTable(); }
 
-function showItemDetail(kode) {
-    let item = ALL_DATA.find(i=>String(i['Kode'])===String(kode));
+function showItemDetailByIndex(index) {
+    const item = FILTERED_DATA[index];
+    if (!item) return;
+    showItemDetail(item);
+}
+
+function showItemDetail(kodeOrItem) {
+    let item = (typeof kodeOrItem === 'object' && kodeOrItem !== null)
+        ? kodeOrItem
+        : ALL_DATA.find(i => String(i['Kode']) === String(kodeOrItem));
     if(!item) return;
     
+    let itemName = String(item['Nama Item'] || '').trim();
+    let imgSearchUrl = getGoogleImageSearchUrl(itemName);
+    let namaLinkEl = document.getElementById('detail-nama-link');
+    let namaTextEl = document.getElementById('detail-nama');
+
     document.getElementById('detail-kode').textContent = item['Kode'] || '-';
-    document.getElementById('detail-nama').textContent = item['Nama Item'] || '-';
+    namaTextEl.textContent = itemName || '-';
+    if (namaLinkEl) {
+        namaLinkEl.href = imgSearchUrl;
+        if (itemName) {
+            namaLinkEl.classList.remove('pointer-events-none', 'opacity-60');
+        } else {
+            namaLinkEl.classList.add('pointer-events-none', 'opacity-60');
+        }
+    }
+
     document.getElementById('detail-uom').textContent = item['UOM'] || item['Sat'] || item['ITEM_UNIT'] || '-';
     document.getElementById('detail-soq').textContent = formatNumber(item['SOQ']);
     document.getElementById('detail-stok').textContent = formatNumber(item[STOK_KEY]);
