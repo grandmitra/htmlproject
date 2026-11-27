@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Produk Master - ElleoSys</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+  <style>
+    body { padding-bottom: 70px; background-color: #fcfcfc; }
+    .header-bar { background-color: #8b0000; color: white; padding: 10px 16px; margin-bottom: 12px; }
+    .table-container { max-height: calc(100vh - 215px); overflow-y: auto; overflow-x: auto; }
+    .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background-color: white; padding: 10px 16px; border-top: 1px solid #ccc; box-shadow: 0 -2px 5px rgba(0,0,0,0.1); z-index: 1000; }
+    .table thead th { position: sticky; top: 0; background: #f8f9fa; z-index: 50; cursor: grab; user-select: none; }
+    .table td, .table th { white-space: nowrap; font-size: 0.75rem; padding: 0.4rem; vertical-align: middle; }
+    .aksi-column { width: 100px; }
+    .aksi-column button { padding: 0.12rem 0.35rem; font-size: 0.65rem; }
+
+    .dropdown-menu.p-2 { padding: 0.5rem !important; max-height: 400px; overflow-y: auto; width: 280px !important; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border: 1px solid #dee2e6; border-radius: 8px; }
+    .dropdown-menu.p-2 .form-check { padding: 0.4rem 0.75rem; margin-bottom: 0; border-bottom: 1px solid #f8f9fa; }
+    .dropdown-header { font-size: 0.8rem; font-weight: 600; color: #8b0000; padding: 0.4rem 0.75rem; background-color: #f8f9fa; border-bottom: 1px solid #dee2e6; margin: 0 -0.5rem; text-transform: uppercase; }
+
+    #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #f8f9fa; z-index: 2000; display: flex; justify-content: center; align-items: center; }
+    .login-box { padding: 30px; background-color: white; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); max-width: 350px; width: 90%; text-align: center; }
+
+    .sortable { cursor: pointer !important; }
+    .sort-icon { margin-left: 5px; font-size: 0.8em; }
+    .fixed-column { cursor: default !important; position: sticky; left: 0; z-index: 60; background: #e9ecef !important; }
+    .fixed-column-last { cursor: default !important; position: sticky; right: 0; z-index: 60; background: #e9ecef !important; }
+    
+    .copyable { cursor: pointer; position: relative; }
+    .copyable:hover { color: #d9534f; text-decoration: underline; }
+
+    .item-link { color: #0d6efd; text-decoration: none; font-weight: 500; }
+    .item-link:hover { color: #0a58ca; text-decoration: underline; }
+    .btn-preview-img { padding: 1px 5px; font-size: 0.68rem; line-height: 1.2; }
+    
+    .select2-container--bootstrap-5 { padding: 0; }
+    .select2-container--bootstrap-5 .select2-selection--multiple { min-height: 35px; padding: 0.15rem 0.5rem; border: 1px solid #ced4da !important; }
+
+    #copyToast { position: fixed; bottom: 65px; right: 20px; z-index: 2500; display: none; }
+  </style>
+</head>
+<body>
+
+  <!-- Login Overlay -->
+  <div id="login-overlay">
+    <div class="login-box">
+      <h4 class="mb-4 text-danger fw-bold">Akses Aplikasi</h4>
+      <input type="password" class="form-control mb-3" id="passwordInput" placeholder="Masukkan Password">
+      <button class="btn btn-danger w-100" onclick="checkPassword()">Masuk</button>
+      <div id="loginMessage" class="text-danger mt-2" style="font-size: 0.9rem;"></div>
+    </div>
+  </div>
+  
+  <div id="mainApp" style="display:none;">
+
+    <!-- Header Bar -->
+    <div class="header-bar d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center gap-2">
+        <h5 class="mb-0 fw-bold">Produk Master</h5>
+        <span class="badge bg-light text-dark" id="cacheStatusBadge" style="font-size: 0.7rem;">Memuat...</span>
+      </div>
+      <div class="d-flex align-items-center">
+        <button class="btn btn-sm btn-light text-danger me-2 fw-semibold" onclick="refreshDataFromServer()" title="Ambil data terbaru dari Google Sheets CSV">
+          <i class="fas fa-sync-alt"></i> Refresh Data
+        </button>
+        <span style="font-size: 1.15rem; font-weight: 600;">ElleoSys</span>
+      </div>
+    </div>
+
+    <!-- Score Card Action & Display -->
+    <div class="container-fluid mb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <small class="text-muted" id="lastSyncInfo">Terakhir sinkron: -</small>
+      <button class="btn btn-sm btn-danger" onclick="calculateScoreCardClick()">Hitung Score Card</button>
+    </div>
+    
+    <div id="scoreCardDisplay" class="row container-fluid mb-3">
+      <div class="col-md-4 col-sm-12 mb-2">
+        <div class="card bg-light p-3 shadow-sm">
+          <h6 class="text-muted mb-1">Total Qty Stock</h6>
+          <p id="totalQtyStock" class="h4 text-danger mb-0 fw-bold">---</p>
+        </div>
+      </div>
+      <div class="col-md-4 col-sm-12 mb-2">
+        <div class="card bg-light p-3 shadow-sm">
+          <h6 class="text-muted mb-1">Total Value Stock HB</h6>
+          <p id="totalValueStockHB" class="h4 text-danger mb-0 fw-bold">---</p>
+        </div>
+      </div>
+      <div class="col-md-4 col-sm-12 mb-2">
+        <div class="card bg-light p-3 shadow-sm">
+          <h6 class="text-muted mb-1">Total Value Stock HJ</h6>
+          <p id="totalValueStockHJ" class="h4 text-danger mb-0 fw-bold">---</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filters & Search -->
+    <div class="container-fluid mb-2">
+      <div class="d-flex align-items-start flex-wrap mb-2">
+        <div class="dropdown me-2 mb-1">
+          <button class="btn btn-sm btn-info dropdown-toggle text-white fw-semibold" type="button" id="columnToggleDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-columns me-1"></i> Kolom
+          </button>
+          <ul class="dropdown-menu p-2" aria-labelledby="columnToggleDropdown" id="columnCheckboxes"></ul>
+        </div>
+        
+        <div class="filter-item me-2 mb-1" style="min-width: 150px;"><select class="form-select form-select-sm search-select" id="filterGroup1Select" multiple="multiple" data-placeholder="Group 1 (All)"></select></div>
+        <div class="filter-item me-2 mb-1" style="min-width: 150px;"><select class="form-select form-select-sm search-select" id="filterGroup2Select" multiple="multiple" data-placeholder="Group 2 (All)"></select></div>
+        <div class="filter-item me-2 mb-1" style="min-width: 150px;"><select class="form-select form-select-sm search-select" id="filterGroup3Select" multiple="multiple" data-placeholder="Group 3 (All)"></select></div>
+        <div class="filter-item me-2 mb-1" style="min-width: 150px;"><select class="form-select form-select-sm search-select" id="filterGroup4Select" multiple="multiple" data-placeholder="Group 4 (All)"></select></div>
+        <div class="filter-item me-2 mb-1" style="min-width: 150px;"><select class="form-select form-select-sm search-select" id="filterConsignmentSelect" multiple="multiple" data-placeholder="Consignment (All)"></select></div>
+        <div class="filter-item me-2 mb-1" style="min-width: 150px;"><select class="form-select form-select-sm search-select" id="filterItemTypeSelect" multiple="multiple" data-placeholder="Item Type (All)"></select></div>
+        <div class="filter-item me-2 mb-1" style="min-width: 150px;"><select class="form-select form-select-sm search-select" id="filterVendorNameSelect" multiple="multiple" data-placeholder="Vendor (All)"></select></div>
+      </div>
+
+      <div class="d-flex align-items-center flex-wrap">
+        <div class="form-check form-check-inline mb-1">
+          <input class="form-check-input" type="radio" name="searchType" id="radioNama" value="ITEM_NAME" checked>
+          <label class="form-check-label" for="radioNama">Nama Item</label>
+        </div>
+        <div class="form-check form-check-inline mb-1">
+          <input class="form-check-input" type="radio" name="searchType" id="radioBarcode" value="BARCODE_NO">
+          <label class="form-check-label" for="radioBarcode">Barcode</label>
+        </div>
+        <div class="form-check form-check-inline mb-1">
+          <input class="form-check-input" type="radio" name="searchType" id="radioKode" value="ITEM_NO">
+          <label class="form-check-label" for="radioKode">Kode</label>
+        </div>
+        <input type="text" class="form-control form-control-sm me-2 flex-grow-1 mb-1" id="searchInput" placeholder="Masukkan kata kunci (pisahkan koma untuk multi-pencarian)...">
+        <button class="btn btn-sm btn-primary me-2 mb-1" onclick="performCombinedFilter()">Cari</button>
+        <button class="btn btn-sm btn-secondary mb-1" onclick="resetData()">Reset</button>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container container-fluid">
+      <div class="table-responsive">
+        <table class="table table-bordered table-sm table-hover" id="itemTable">
+          <thead class="bg-light">
+            <tr id="tableHeaderRow">
+              <th class="fixed-column">ITEM_NO</th>
+              <th class="fixed-column"><input type="checkbox" id="checkAll"> Ada</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="38" class="text-center py-4">Memuat data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Footer Bar -->
+    <div class="footer-bar container-fluid d-flex justify-content-between align-items-center flex-wrap gap-2">
+      <div class="d-flex align-items-center flex-wrap">
+        <span class="me-2 text-nowrap small">Page: <strong id="currentPageDisplay">1</strong>/<strong id="maxPageDisplay">1</strong> (<span id="totalFilteredDisplay">0</span> item)</span>
+        <button class="btn btn-sm btn-outline-secondary me-1" onclick="changePage(1)">First</button>
+        <button class="btn btn-sm btn-outline-secondary me-1" onclick="prevPage()">Prev</button>
+        <select class="form-select form-select-sm me-1" style="width: 85px;" id="pageSizeSelect" onchange="setPageSize(this.value)">
+          <option value="5">5</option>
+          <option value="10">10</option>
+          <option value="20" selected>20</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+          <option value="all">All</option>
+        </select>
+        <button class="btn btn-sm btn-outline-secondary me-1" onclick="nextPage()">Next</button>
+      </div>
+
+      <div class="d-flex flex-wrap justify-content-end align-items-center">
+        <span class="me-2 text-nowrap small">Jml Pilih: <strong id="selectedCount">0</strong></span>
+        <button class="btn btn-success btn-sm me-1" onclick="exportSelectedToExcel()">Export Selected to Excel</button>
+        <button class="btn btn-danger btn-sm" onclick="exportToExcelClick()">Export All to CSV</button>
+      </div>
+    </div>
+  </div> 
+
+  <!-- Toast Copy Notification -->
+  <div id="copyToast" class="alert alert-dark py-2 px-3 shadow-sm small mb-0" role="alert">
+    <i class="fas fa-check-circle text-success me-1"></i> <span id="copyToastText">Tersalin!</span>
+  </div>
+
+  <!-- Modal Quick Preview Gambar -->
+  <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-content" style="height: 85vh;">
+        <div class="modal-header bg-dark text-white py-2 px-3">
+          <div class="min-w-0 pe-3">
+            <div class="text-info fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">Quick Preview Gambar Produk</div>
+            <h6 class="modal-title text-truncate mb-0" id="previewItemTitle">-</h6>
+          </div>
+          <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
+            <a id="previewExternalLink" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary">
+              Buka di Tab Baru <i class="fas fa-external-link-alt ms-1"></i>
+            </a>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+        </div>
+        <div class="modal-body p-0 position-relative bg-light">
+          <div id="previewLoading" class="position-absolute top-50 start-50 translate-middle text-center text-muted">
+            <div class="spinner-border text-danger spinner-border-sm mb-2" role="status"></div>
+            <div class="small">Memuat pratinjau Google Gambar...</div>
+          </div>
+          <iframe id="previewIframe" src="about:blank" onload="document.getElementById('previewLoading').style.display='none'" class="w-100 h-100 border-0 position-relative" style="z-index: 10;"></iframe>
+        </div>
+        <div class="modal-footer py-1 px-3 bg-light justify-content-between small text-muted">
+          <span>Jika tampilan diblokir browser, klik <strong>Buka di Tab Baru</strong> di kanan atas.</span>
+          <span>Tekan ESC untuk menutup</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Edit -->
+  <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header bg-danger text-white">
+          <h5 class="modal-title" id="editModalLabel">Edit Data Item (Lokal)</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form id="editForm" class="row">
+            <input type="hidden" id="editKode">
+
+            <h6 class="mt-2 text-danger">Data Utama & Harga</h6>
+            <div class="col-md-4 mb-3"><label for="editNamaItem" class="form-label">ITEM_NAME</label><input type="text" class="form-control" id="editNamaItem"></div>
+            <div class="col-md-4 mb-3"><label for="editBarcode" class="form-label">BARCODE_NO</label><input type="text" class="form-control" id="editBarcode"></div>
+            <div class="col-md-4 mb-3"><label for="editSat" class="form-label">ITEM_UNIT</label><input type="text" class="form-control" id="editSat"></div>
+            <div class="col-md-3 mb-3"><label for="editHargaJual" class="form-label">Harga Jual</label><input type="text" class="form-control" id="editHargaJual" placeholder="0,00"></div>
+            <div class="col-md-3 mb-3"><label for="editHargaBeli" class="form-label">Harga Beli</label><input type="text" class="form-control" id="editHargaBeli" placeholder="0,00"></div>
+            <div class="col-md-3 mb-3"><label for="editHargaPokok" class="form-label">Harga Pokok</label><input type="text" class="form-control" id="editHargaPokok" placeholder="0,00"></div>
+            <div class="col-md-3 mb-3"><label for="editDisc" class="form-label">Disc %</label><input type="text" class="form-control" id="editDisc"></div>
+            <div class="col-md-3 mb-3"><label for="editHargaPromo" class="form-label">Harga Promo</label><input type="text" class="form-control" id="editHargaPromo" placeholder="0,00"></div>
+            <div class="col-md-3 mb-3"><label for="editSellingPrice1" class="form-label">SELLING_PRICE_1</label><input type="text" class="form-control" id="editSellingPrice1" placeholder="0,00"></div>
+            <div class="col-md-3 mb-3"><label for="editQtyStock" class="form-label">Qty Stock</label><input type="text" class="form-control" id="editQtyStock" placeholder="0,00"></div>
+            
+            <h6 class="mt-4 text-danger">Data Vendor & Grup</h6>
+            <div class="col-md-3 mb-3"><label for="editVENDORNO" class="form-label">VENDOR_NO</label><input type="text" class="form-control" id="editVENDORNO"></div>
+            <div class="col-md-9 mb-3"><label for="editVENDORNAME" class="form-label">VENDOR_NAME</label><input type="text" class="form-control" id="editVENDORNAME"></div>
+            
+            <div class="col-md-3 mb-3"><label for="editGROUPNO1" class="form-label">GROUP_NO1</label><input type="text" class="form-control" id="editGROUPNO1"></div>
+            <div class="col-md-9 mb-3"><label for="editGROUPNAME1" class="form-label">GROUP_NAME1</label><input type="text" class="form-control" id="editGROUPNAME1"></div>
+            
+            <div class="col-md-3 mb-3"><label for="editGROUPNO2" class="form-label">GROUP_NO2</label><input type="text" class="form-control" id="editGROUPNO2"></div>
+            <div class="col-md-9 mb-3"><label for="editGROUPNAME2" class="form-label">GROUP_NAME2</label><input type="text" class="form-control" id="editGROUPNAME2"></div>
+
+            <div class="col-md-3 mb-3"><label for="editGROUPNO3" class="form-label">GROUP_NO3</label><input type="text" class="form-control" id="editGROUPNO3"></div>
+            <div class="col-md-9 mb-3"><label for="editGROUPNAME3" class="form-label">GROUP_NAME3</label><input type="text" class="form-control" id="editGROUPNAME3"></div>
+
+            <div class="col-md-3 mb-3"><label for="editGROUPNO4" class="form-label">GROUP_NO4</label><input type="text" class="form-control" id="editGROUPNO4"></div>
+            <div class="col-md-9 mb-3"><label for="editGROUPNAME4" class="form-label">GROUP_NAME4</label><input type="text" class="form-control" id="editGROUPNAME4"></div>
+
+            <h6 class="mt-4 text-danger">Data Stok, Tipe, Tanggal & Kalkulasi</h6>
+            <div class="col-md-3 mb-3"><label for="editMINIMALQTY" class="form-label">MINIMAL_QTY</label><input type="text" class="form-control" id="editMINIMALQTY"></div>
+            <div class="col-md-3 mb-3"><label for="editMAXIMALQTY" class="form-label">MAXIMAL_QTY</label><input type="text" class="form-control" id="editMAXIMALQTY"></div>
+            <div class="col-md-3 mb-3"><label for="editITEMTYPE" class="form-label">ITEM_TYPE</label><input type="text" class="form-control" id="editITEMTYPE"></div>
+            <div class="col-md-3 mb-3"><label for="editONCONSIGNMENT" class="form-label">ON_CONSIGNMENT</label><input type="text" class="form-control" id="editONCONSIGNMENT"></div>
+            <div class="col-md-6 mb-3"><label for="editCREATEDDATE" class="form-label">CREATED_DATE</label><input type="text" class="form-control" id="editCREATEDDATE"></div>
+            <div class="col-md-6 mb-3"><label for="editTGLDATE" class="form-label">tgl date</label><input type="text" class="form-control" id="editTGLDATE"></div>
+
+            <div class="col-md-3 mb-3"><label for="editMIN" class="form-label">MIN</label><input type="text" class="form-control" id="editMIN" placeholder="0,00"></div>
+            <div class="col-md-3 mb-3"><label for="editMAX" class="form-label">MAX</label><input type="text" class="form-control" id="editMAX" placeholder="0,00"></div>
+            <div class="col-md-3 mb-3"><label for="editMED" class="form-label">MED</label><input type="text" class="form-control" id="editMED" placeholder="0,00"></div>
+            <div class="col-md-3 mb-3"><label for="editAVG" class="form-label">AVG</label><input type="text" class="form-control" id="editAVG" placeholder="0,00"></div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+          <button type="button" class="btn btn-danger" onclick="submitEdit()">Simpan Perubahan</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libraries -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
+  <script>
+    const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2jN3PPjORxe6X7n6TLpiDP4MqJ1L6dcTziHse_NosgJpPtAIa-8gDu0HH0XECULLK05FHfAdFtXs9/pub?gid=1242857649&single=true&output=csv';
+    const STORAGE_DATA_KEY = 'elleosys_master_hpp_csv_v3';
+    const STORAGE_TIME_KEY = 'elleosys_master_hpp_time_v3';
+
+    const CSV_COLUMNS = [
+      'ITEM_NO', 'Ada', 'BARCODE_NO', 'ITEM_NAME', 'ITEM_UNIT',
+      'Harga Pokok', 'Harga Beli', 'Harga Jual', 'Margin', 'GM', 'Disc %', 'Harga Promo',
+      'Qty Stock', 'Value Stock HB', 'Value Stock HJ', 'Aging',
+      'GROUP_NO1', 'GROUP_NAME1', 'GROUP_NO2', 'GROUP_NAME2', 'GROUP_NO3', 'GROUP_NAME3', 'GROUP_NO4', 'GROUP_NAME4',
+      'ON_CONSIGNMENT', 'ITEM_TYPE', 'VENDOR_NO', 'VENDOR_NAME',
+      'SELLING_PRICE_1', 'MINIMAL_QTY', 'MAXIMAL_QTY',
+      'MIN', 'MAX', 'MED', 'AVG', 'CREATED_DATE', 'tgl date'
+    ];
+
+    let originalData = [];
+    let filteredData = [];
+    let selectedKodesSet = new Set();
+    let pageSize = 20; 
+    let currentPage = 1;
+    let maxPage = 1;
+    let dragSrcEl = null;
+    let currentSort = { column: '', direction: '' };
+    let previewModalInstance = null;
+
+    let activeFilters = {
+        'GROUP_NAME1': [], 'GROUP_NAME2': [], 'GROUP_NAME3': [], 'GROUP_NAME4': [],
+        'ON_CONSIGNMENT': [], 'ITEM_TYPE': [], 'VENDOR_NAME': []
+    };
+    
+    const FILTER_COLUMNS = [
+        { name: 'GROUP_NAME1', selectId: 'filterGroup1Select', buttonPrefix: 'Group 1' },
+        { name: 'GROUP_NAME2', selectId: 'filterGroup2Select', buttonPrefix: 'Group 2' },
+        { name: 'GROUP_NAME3', selectId: 'filterGroup3Select', buttonPrefix: 'Group 3' },
+        { name: 'GROUP_NAME4', selectId: 'filterGroup4Select', buttonPrefix: 'Group 4' },
+        { name: 'ON_CONSIGNMENT', selectId: 'filterConsignmentSelect', buttonPrefix: 'Consignment' },
+        { name: 'ITEM_TYPE', selectId: 'filterItemTypeSelect', buttonPrefix: 'Item Type' },
+        { name: 'VENDOR_NAME', selectId: 'filterVendorNameSelect', buttonPrefix: 'Vendor' },
+    ];
+    
+    const SORTABLE_COLUMNS = [
+      'ITEM_NO', 'Harga Pokok', 'Harga Beli', 'Harga Jual', 'Margin', 'GM',
+      'Harga Promo', 'SELLING_PRICE_1', 'Qty Stock', 'Value Stock HJ', 'Value Stock HB',
+      'MINIMAL_QTY', 'MAXIMAL_QTY', 'MIN', 'MAX', 'MED', 'AVG'
+    ];
+
+    let DISPLAY_HEADERS = [
+      { name: 'BARCODE_NO', dataKey: 'BARCODE_NO', class: 'column-BARCODE_NO', default: true, sortable: false },
+      { name: 'ITEM_NAME', dataKey: 'ITEM_NAME', class: 'column-ITEM_NAME', default: true, sortable: false },
+      { name: 'ITEM_UNIT', dataKey: 'ITEM_UNIT', class: 'column-ITEM_UNIT', default: true, sortable: false },
+      { name: 'Harga Pokok', dataKey: 'Harga Pokok', class: 'column-HargaPokok', default: true, sortable: true }, 
+      { name: 'Harga Beli', dataKey: 'Harga Beli', class: 'column-HargaBeli', default: true, sortable: true },
+      { name: 'Harga Jual', dataKey: 'Harga Jual', class: 'column-HargaJual', default: true, sortable: true },
+      { name: 'Margin', dataKey: 'Margin', class: 'column-Margin', default: true, sortable: true },
+      { name: 'GM', dataKey: 'GM', class: 'column-GM', default: true, sortable: true },
+      { name: 'Disc %', dataKey: 'Disc %', class: 'column-Disc', default: true, sortable: false },
+      { name: 'Harga Promo', dataKey: 'Harga Promo', class: 'column-HargaPromo', default: true, sortable: true },
+      { name: 'SELLING_PRICE_1', dataKey: 'SELLING_PRICE_1', class: 'column-SELLING_PRICE_1', default: false, sortable: true },
+      { name: 'Qty Stock', dataKey: 'Qty Stock', class: 'column-QtyStock', default: true, sortable: true },
+      { name: 'Value Stock HB', dataKey: 'Value Stock HB', class: 'column-ValueStockHB', default: false, sortable: true },
+      { name: 'Value Stock HJ', dataKey: 'Value Stock HJ', class: 'column-ValueStockHJ', default: false, sortable: true },
+      { name: 'Aging', dataKey: 'Aging', class: 'column-Aging', default: false, sortable: false },
+      { name: 'GROUP_NO1', dataKey: 'GROUP_NO1', class: 'column-GROUP_NO1', default: false, sortable: false },
+      { name: 'GROUP_NAME1', dataKey: 'GROUP_NAME1', class: 'column-GROUP_NAME1', default: false, sortable: false },
+      { name: 'GROUP_NO2', dataKey: 'GROUP_NO2', class: 'column-GROUP_NO2', default: false, sortable: false },
+      { name: 'GROUP_NAME2', dataKey: 'GROUP_NAME2', class: 'column-GROUP_NAME2', default: false, sortable: false },
+      { name: 'GROUP_NO3', dataKey: 'GROUP_NO3', class: 'column-GROUP_NO3', default: false, sortable: false },
+      { name: 'GROUP_NAME3', dataKey: 'GROUP_NAME3', class: 'column-GROUP_NAME3', default: false, sortable: false },
+      { name: 'GROUP_NO4', dataKey: 'GROUP_NO4', class: 'column-GROUP_NO4', default: false, sortable: false },
+      { name: 'GROUP_NAME4', dataKey: 'GROUP_NAME4', class: 'column-GROUP_NAME4', default: false, sortable: false },
+      { name: 'ON_CONSIGNMENT', dataKey: 'ON_CONSIGNMENT', class: 'column-ON_CONSIGNMENT', default: false, sortable: false },
+      { name: 'ITEM_TYPE', dataKey: 'ITEM_TYPE', class: 'column-ITEM_TYPE', default: false, sortable: false },
+      { name: 'VENDOR_NO', dataKey: 'VENDOR_NO', class: 'column-VENDOR_NO', default: false, sortable: false },
+      { name: 'VENDOR_NAME', dataKey: 'VENDOR_NAME', class: 'column-VENDOR_NAME', default: false, sortable: false },
+      { name: 'MINIMAL_QTY', dataKey: 'MINIMAL_QTY', class: 'column-MINIMAL_QTY', default: false, sortable: true },
+      { name: 'MAXIMAL_QTY', dataKey: 'MAXIMAL_QTY', class: 'column-MAXIMAL_QTY', default: false, sortable: true },
+      { name: 'MIN', dataKey: 'MIN', class: 'column-MIN', default: false, sortable: true },
+      { name: 'MAX', dataKey: 'MAX', class: 'column-MAX', default: false, sortable: true },
+      { name: 'MED', dataKey: 'MED', class: 'column-MED', default: false, sortable: true },
+      { name: 'AVG', dataKey: 'AVG', class: 'column-AVG', default: false, sortable: true },
+      { name: 'CREATED_DATE', dataKey: 'CREATED_DATE', class: 'column-CREATED_DATE', default: false, sortable: false },
+      { name: 'tgl date', dataKey: 'tgl date', class: 'column-tgl_date', default: false, sortable: false }
+    ];
+
+    let columnVisibility = {}; 
+    const CORRECT_PASSWORD = 'gmb123';
+
+    function normalizeHeaderKey(key) {
+        return String(key || '')
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '');
+    }
+
+    function escapeHtml(val) {
+        return String(val ?? '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function getGoogleImageSearchUrl(itemName) {
+        const cleanName = String(itemName ?? '').trim();
+        if (!cleanName || cleanName === '-') return '#';
+        return `https://www.google.com/search?q=${encodeURIComponent(cleanName)}&tbm=isch&sourceid=chrome&ie=UTF-8&source=chrome.ctxt`;
+    }
+
+    function getGoogleImageEmbedUrl(itemName) {
+        const cleanName = String(itemName ?? '').trim();
+        if (!cleanName || cleanName === '-') return 'about:blank';
+        return `https://www.google.com/search?igu=1&tbm=isch&q=${encodeURIComponent(cleanName)}`;
+    }
+
+    function openImagePreviewByKode(kode) {
+        const item = originalData.find(d => String(d['ITEM_NO']) === String(kode));
+        if (!item) return;
+        openImagePreview(item['ITEM_NAME'] || '');
+    }
+
+    function openImagePreview(itemName) {
+        const cleanName = String(itemName ?? '').trim();
+        if (!cleanName || cleanName === '-') return;
+
+        document.getElementById('previewItemTitle').textContent = cleanName;
+        document.getElementById('previewExternalLink').href = getGoogleImageSearchUrl(cleanName);
+        document.getElementById('previewLoading').style.display = 'block';
+        document.getElementById('previewIframe').src = getGoogleImageEmbedUrl(cleanName);
+
+        if (!previewModalInstance) {
+            previewModalInstance = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+        }
+        previewModalInstance.show();
+    }
+    
+    function checkPassword() {
+        const input = document.getElementById('passwordInput').value;
+        const message = document.getElementById('loginMessage');
+        const mainApp = document.getElementById('mainApp');
+        const overlay = document.getElementById('login-overlay');
+        
+        if (input === CORRECT_PASSWORD) {
+            overlay.style.display = 'none';
+            mainApp.style.display = 'block';
+            loadData(); 
+        } else {
+            message.textContent = 'Password salah. Mohon coba lagi.';
+            document.getElementById('passwordInput').value = '';
+            document.getElementById('passwordInput').focus();
+        }
+    }
+
+    function formatNumberID(value) {
+        if (value === null || value === undefined || value === '') return '0';
+        let num = parseValueForSum(value);
+        return num.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
+    function formatCurrency(value) {
+        let numValue = parseValueForSum(value);
+        if (!isNaN(numValue)) {
+            return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(numValue);
+        }
+        return value;
+    }
+    
+    function parseValueForSum(value) {
+        if (typeof value === 'number') return isNaN(value) ? 0 : value;
+        if (typeof value === 'string') {
+            let trimmed = value.trim();
+            if (!trimmed) return 0;
+            let cleanValue = trimmed.replace(/Rp\s?\.?/gi, '').replace(/[^0-9.,-]/g, '');
+            if (cleanValue.includes('.') && cleanValue.includes(',')) {
+                cleanValue = cleanValue.replace(/\./g, '').replace(',', '.');
+            } else if (cleanValue.includes(',')) {
+                cleanValue = cleanValue.replace(',', '.');
+            } else if ((cleanValue.match(/\./g) || []).length > 1) {
+                cleanValue = cleanValue.replace(/\./g, '');
+            } else if (cleanValue.includes('.')) {
+                const parts = cleanValue.split('.');
+                if (parts[1] && parts[1].length === 3) {
+                    cleanValue = cleanValue.replace(/\./g, '');
+                }
+            }
+            return parseFloat(cleanValue) || 0;
+        }
+        return 0;
+    }
+    
+    function formatPercentage(value) {
+        let numValue;
+        if (typeof value === 'number') {
+           numValue = value || 0;
+        } else if (typeof value === 'string') {
+            let cleanValue = value.replace(/%/g, '').replace(/\s/g, '').replace(/\./g, '').replace(',', '.');
+            numValue = parseFloat(cleanValue) || 0; 
+        } else {
+            return value;
+        }
+        if (numValue > 0 && numValue < 1) {
+            numValue = numValue * 100;
+        }
+        return `${numValue.toFixed(2)}%`;
+    }
+
+    function copyToClipboard(text, label = 'Teks') {
+        navigator.clipboard.writeText(text).then(() => {
+            const toast = document.getElementById('copyToast');
+            document.getElementById('copyToastText').textContent = `${label} "${text}" tersalin!`;
+            toast.style.display = 'block';
+            clearTimeout(window.copyToastTimer);
+            window.copyToastTimer = setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
+        }).catch(err => {
+            console.error('Gagal menyalin teks: ', err);
+        });
+    }
+
+    function initScoreCardDisplay() {
+        document.getElementById('totalQtyStock').textContent = '---';
+        document.getElementById('totalValueStockHB').textContent = '---';
+        document.getElementById('totalValueStockHJ').textContent = '---';
+    }
+
+    function calculateAndDisplayScoreCard() {
+        let totalQtyStock = 0;
+        let totalValueStockHB = 0;
+        let totalValueStockHJ = 0;
+
+        filteredData.forEach(item => {
+            const qty = parseValueForSum(item['Qty Stock']);
+            const hb = parseValueForSum(item['Harga Beli']) || parseValueForSum(item['Harga Pokok']);
+            const hj = parseValueForSum(item['Harga Jual']) || parseValueForSum(item['SELLING_PRICE_1']);
+
+            totalQtyStock += qty;
+            const valHB = parseValueForSum(item['Value Stock HB']) || (qty * hb);
+            const valHJ = parseValueForSum(item['Value Stock HJ']) || (qty * hj);
+            totalValueStockHB += valHB;
+            totalValueStockHJ += valHJ;
+        });
+
+        document.getElementById('totalQtyStock').textContent = totalQtyStock.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        document.getElementById('totalValueStockHB').textContent = formatCurrency(totalValueStockHB);
+        document.getElementById('totalValueStockHJ').textContent = formatCurrency(totalValueStockHJ);
+    }
+    
+    function calculateScoreCardClick() {
+        document.getElementById('totalQtyStock').textContent = '...';
+        document.getElementById('totalValueStockHB').textContent = '...';
+        document.getElementById('totalValueStockHJ').textContent = '...';
+        setTimeout(() => { calculateAndDisplayScoreCard(); }, 50);
+    }
+
+    function getUniqueValues(columnName) {
+        const unique = new Set();
+        originalData.forEach(item => {
+            const value = String(item[columnName] || '').trim();
+            if (value) unique.add(value);
+        });
+        return Array.from(unique).sort();
+    }
+    
+    function populateSelect2(filterCol) {
+        const selectElement = document.getElementById(filterCol.selectId);
+        if (!selectElement) return;
+
+        $(selectElement).empty();
+        const placeholderText = $(selectElement).data('placeholder');
+        $(selectElement).append(new Option('', '', true, true));
+
+        const uniqueValues = getUniqueValues(filterCol.name);
+        uniqueValues.forEach(value => {
+            const isSelected = activeFilters[filterCol.name].includes(value);
+            const option = new Option(value, value, isSelected, isSelected);
+            $(selectElement).append(option);
+        });
+        
+        if ($(selectElement).data('select2')) {
+            $(selectElement).select2('destroy');
+        }
+
+        $(selectElement).select2({
+            placeholder: placeholderText,
+            allowClear: true,
+            width: '100%',
+            theme: "bootstrap-5",
+            dropdownAutoWidth: true
+        });
+        
+        if (!$(selectElement).data('has-listener')) {
+            $(selectElement).on('change', function() {
+                 const selectedValues = $(this).val() || [];
+                 const colName = filterCol.name;
+                 if (selectedValues.length === 0 || (selectedValues.length === 1 && selectedValues[0] === "")) {
+                     activeFilters[colName] = [];
+                 } else {
+                     activeFilters[colName] = selectedValues.filter(val => val !== "");
+                 }
+                 performCombinedFilter();
+            });
+            $(selectElement).data('has-listener', true);
+        }
+    }
+
+    function populateFilters() {
+        FILTER_COLUMNS.forEach(filterCol => { populateSelect2(filterCol); });
+    }
+
+    function performCombinedFilter() {
+        currentPage = 1;
+        let tempFiltered = originalData.filter(item => {
+            let matchesFilter = true;
+            for (const colName in activeFilters) {
+                const filterValues = activeFilters[colName];
+                if (filterValues.length > 0) {
+                    const itemValue = String(item[colName] || '').trim();
+                    if (!filterValues.includes(itemValue)) {
+                        matchesFilter = false;
+                        break;
+                    }
+                }
+            }
+            return matchesFilter;
+        });
+
+        const searchInput = document.getElementById('searchInput').value.toLowerCase().trim();
+        const searchTypeElement = document.querySelector('input[name="searchType"]:checked');
+        const searchType = searchTypeElement ? searchTypeElement.value : 'ITEM_NAME';
+
+        if (searchInput) {
+            const terms = searchInput.split(',').map(t => t.trim()).filter(t => t.length > 0);
+            tempFiltered = tempFiltered.filter(item => {
+                const itemValue = String(item[searchType] || '').toLowerCase();
+                return terms.some(term => itemValue.includes(term));
+            });
+        }
+        
+        filteredData = tempFiltered;
+        document.getElementById('totalFilteredDisplay').textContent = filteredData.length.toLocaleString('id-ID');
+        applyPagination(filteredData);
+    }
+    
+    function resetData() {
+        document.getElementById('searchInput').value = '';
+        FILTER_COLUMNS.forEach(filterCol => {
+            activeFilters[filterCol.name] = [];
+            $(`#${filterCol.selectId}`).val(null).trigger('change'); 
+        });
+        currentPage = 1;
+        performCombinedFilter();
+    }
+
+    // Mapping fleksibel berdasarkan nama header CSV (case-insensitive & bebas spasi/simbol)
+    function processCsvRows(parsedResults) {
+        const rows = parsedResults.data || [];
+        if (rows.length === 0) return [];
+
+        const aliasMap = {
+            'itemno': 'ITEM_NO',
+            'kode': 'ITEM_NO',
+            'ada': 'Ada',
+            'barcodeno': 'BARCODE_NO',
+            'barcode': 'BARCODE_NO',
+            'itemname': 'ITEM_NAME',
+            'namaitem': 'ITEM_NAME',
+            'deskripsi': 'ITEM_NAME',
+            'description': 'ITEM_NAME',
+            'itemunit': 'ITEM_UNIT',
+            'sat': 'ITEM_UNIT',
+            'satuan': 'ITEM_UNIT',
+            'hargapokok': 'Harga Pokok',
+            'hpp': 'Harga Pokok',
+            'hargabeli': 'Harga Beli',
+            'hb': 'Harga Beli',
+            'hargajual': 'Harga Jual',
+            'hj': 'Harga Jual',
+            'margin': 'Margin',
+            'gm': 'GM',
+            'disc': 'Disc %',
+            'discpercent': 'Disc %',
+            'hargapromo': 'Harga Promo',
+            'qtystock': 'Qty Stock',
+            'stok': 'Qty Stock',
+            'valuestockhb': 'Value Stock HB',
+            'valuestockhj': 'Value Stock HJ',
+            'aging': 'Aging',
+            'groupno1': 'GROUP_NO1',
+            'groupname1': 'GROUP_NAME1',
+            'groupno2': 'GROUP_NO2',
+            'groupname2': 'GROUP_NAME2',
+            'groupno3': 'GROUP_NO3',
+            'groupname3': 'GROUP_NAME3',
+            'groupno4': 'GROUP_NO4',
+            'groupname4': 'GROUP_NAME4',
+            'onconsignment': 'ON_CONSIGNMENT',
+            'itemtype': 'ITEM_TYPE',
+            'vendorno': 'VENDOR_NO',
+            'vendorname': 'VENDOR_NAME',
+            'sellingprice1': 'SELLING_PRICE_1',
+            'minimalqty': 'MINIMAL_QTY',
+            'maximalqty': 'MAXIMAL_QTY',
+            'min': 'MIN',
+            'max': 'MAX',
+            'med': 'MED',
+            'avg': 'AVG',
+            'createddate': 'CREATED_DATE',
+            'tgldate': 'tgl date'
+        };
+
+        return rows
+            .map((rawRow, idx) => {
+                const obj = {};
+                CSV_COLUMNS.forEach(col => { obj[col] = ''; });
+
+                Object.keys(rawRow).forEach(rawKey => {
+                    const norm = normalizeHeaderKey(rawKey);
+                    const targetCol = aliasMap[norm];
+                    if (targetCol) {
+                        obj[targetCol] = rawRow[rawKey] !== undefined && rawRow[rawKey] !== null ? String(rawRow[rawKey]).trim() : '';
+                    }
+                });
+
+                if (!obj['ITEM_NO'] && (obj['ITEM_NAME'] || obj['BARCODE_NO'])) {
+                    obj['ITEM_NO'] = String(idx + 1);
+                }
+
+                // Jika Harga Jual kosong namun SELLING_PRICE_1 ada, pakai SELLING_PRICE_1
+                if (!obj['Harga Jual'] && obj['SELLING_PRICE_1']) {
+                    obj['Harga Jual'] = obj['SELLING_PRICE_1'];
+                }
+
+                const hargaJual = parseValueForSum(obj['Harga Jual']);
+                const hargaPokok = parseValueForSum(obj['Harga Pokok']) || parseValueForSum(obj['Harga Beli']);
+                if (hargaJual > 0) {
+                    const margin = hargaJual - hargaPokok;
+                    const gm = (margin / hargaJual) * 100;
+                    obj['Margin'] = margin;
+                    obj['GM'] = formatPercentage(gm);
+                } else {
+                    obj['Margin'] = 0;
+                    obj['GM'] = formatPercentage(0);
+                }
+
+                return obj;
+            })
+            .filter(item => item['ITEM_NO'] || item['ITEM_NAME'] || item['BARCODE_NO']);
+    }
+
+    function saveToLocalStorage(data, timeStr) {
+        if (!Array.isArray(data) || data.length === 0) return;
+        try {
+            localStorage.setItem(STORAGE_DATA_KEY, JSON.stringify(data));
+            if (timeStr) {
+                localStorage.setItem(STORAGE_TIME_KEY, timeStr);
+            }
+        } catch (e) {
+            console.warn("LocalStorage penuh atau tidak tersedia:", e);
+        }
+    }
+
+    function loadData() {
+        const cachedData = localStorage.getItem(STORAGE_DATA_KEY);
+        const cachedTime = localStorage.getItem(STORAGE_TIME_KEY);
+        
+        if (cachedData) {
+            try {
+                const parsed = JSON.parse(cachedData);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    originalData = parsed;
+                    document.getElementById('cacheStatusBadge').textContent = `Cache Lokal (${parsed.length} baris)`;
+                    document.getElementById('cacheStatusBadge').className = 'badge bg-success text-white';
+                    document.getElementById('lastSyncInfo').textContent = `Terakhir sinkron: ${cachedTime || '-'}`;
+                    finishDataLoad();
+                    return;
+                }
+            } catch (e) {
+                console.error("Gagal membaca cache localStorage:", e);
+            }
+        }
+        fetchDataFromServer();
+    }
+
+    async function fetchDataFromServer() {
+        document.getElementById('tableBody').innerHTML = `<tr><td colspan="38" class="text-center py-4"><div class="spinner-border spinner-border-sm text-danger me-2"></div>Mengambil data terbaru dari Google Sheets CSV...</td></tr>`;
+        document.getElementById('cacheStatusBadge').textContent = 'Mengunduh CSV...';
+        document.getElementById('cacheStatusBadge').className = 'badge bg-warning text-dark';
+
+        try {
+            const response = await fetch(CSV_URL);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const csvText = await response.text();
+
+            Papa.parse(csvText, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    originalData = processCsvRows(results);
+                    const nowStr = new Date().toLocaleString('id-ID');
+
+                    if (originalData.length > 0) {
+                        saveToLocalStorage(originalData, nowStr);
+                        document.getElementById('cacheStatusBadge').textContent = `Tersinkron (${originalData.length} baris)`;
+                        document.getElementById('cacheStatusBadge').className = 'badge bg-info text-dark';
+                        document.getElementById('lastSyncInfo').textContent = `Terakhir sinkron: ${nowStr}`;
+                    } else {
+                        document.getElementById('cacheStatusBadge').textContent = 'CSV Kosong';
+                        document.getElementById('cacheStatusBadge').className = 'badge bg-danger';
+                    }
+                    finishDataLoad();
+                },
+                error: function(err) {
+                    document.getElementById('tableBody').innerHTML = `<tr><td colspan="38" class="text-center text-danger py-4">Gagal memproses CSV: ${err.message}</td></tr>`;
+                }
+            });
+        } catch (error) {
+            document.getElementById('tableBody').innerHTML = `<tr><td colspan="38" class="text-center text-danger py-4">Gagal mengambil data CSV: ${error.message}</td></tr>`;
+            document.getElementById('cacheStatusBadge').textContent = 'Gagal Muat';
+            document.getElementById('cacheStatusBadge').className = 'badge bg-danger';
+        }
+    }
+
+    function refreshDataFromServer() {
+        localStorage.removeItem(STORAGE_DATA_KEY);
+        localStorage.removeItem(STORAGE_TIME_KEY);
+        fetchDataFromServer();
+    }
+
+    function finishDataLoad() {
+        initializeColumnVisibility();
+        populateFilters();
+        performCombinedFilter();
+    }
+    
+    function applyPagination(data) {
+        const effectivePageSize = pageSize === 'all' ? Math.max(1, data.length) : pageSize;
+        maxPage = Math.max(1, Math.ceil(data.length / effectivePageSize));
+        currentPage = Math.min(currentPage, maxPage);
+        
+        const start = (currentPage - 1) * effectivePageSize;
+        const end = pageSize === 'all' ? data.length : start + effectivePageSize;
+        const pageData = data.slice(start, end);
+
+        populateTable(pageData);
+
+        document.getElementById('currentPageDisplay').textContent = currentPage;
+        document.getElementById('maxPageDisplay').textContent = pageSize === 'all' ? 'All' : maxPage;
+    }
+    
+    function populateTable(data) {
+        const tableBody = document.getElementById('tableBody');
+        tableBody.innerHTML = '';
+        renderTableHeader();
+
+        if (data.length === 0) {
+             tableBody.innerHTML = `
+                <tr>
+                    <td colspan="${DISPLAY_HEADERS.length + 3}" class="text-center py-4">
+                        <div class="fw-semibold text-secondary mb-2">Tidak ada data ditemukan.</div>
+                        <button type="button" class="btn btn-sm btn-outline-danger me-1" onclick="resetData()">Reset Filter</button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="refreshDataFromServer()">Refresh CSV</button>
+                    </td>
+                </tr>`;
+             return;
+        }
+
+        data.forEach(item => {
+            const kodeStr = String(item['ITEM_NO'] || '');
+            const row = tableBody.insertRow();
+            row.id = `row-${kodeStr}`;
+            row.classList.add('table-row');
+            row.setAttribute('draggable', true);
+            row.addEventListener('dragstart', handleDragStart);
+            row.addEventListener('dragover', handleDragOver);
+            row.addEventListener('dragleave', handleDragLeave);
+            row.addEventListener('drop', handleDrop);
+            row.addEventListener('dragend', handleDragEnd);
+
+            const kodeCell = row.insertCell();
+            kodeCell.innerHTML = `<span class="copyable text-primary fw-bold" title="Klik untuk Salin ITEM_NO" onclick="copyToClipboard('${escapeHtml(kodeStr)}', 'ITEM_NO')">${escapeHtml(kodeStr)} <i class="fas fa-copy fa-xs"></i></span>`;
+            kodeCell.classList.add('fixed-column', 'text-nowrap');
+            kodeCell.style.textAlign = 'center';
+            
+            const checkCell = row.insertCell();
+            checkCell.classList.add('fixed-column');
+            checkCell.style.left = '85px'; 
+            const isChecked = selectedKodesSet.has(kodeStr) ? 'checked' : '';
+            checkCell.innerHTML = `<input type="checkbox" data-kode="${escapeHtml(kodeStr)}" class="item-checkbox" ${isChecked}>`;
+            checkCell.style.textAlign = 'center';
+
+            DISPLAY_HEADERS.forEach(header => {
+                if (columnVisibility[header.dataKey]) {
+                    const cell = row.insertCell();
+                    let value = item[header.dataKey] ?? '';
+                    
+                    if (header.dataKey === 'ITEM_NAME') {
+                        const namaText = String(value).trim();
+                        if (namaText) {
+                            const imgUrl = getGoogleImageSearchUrl(namaText);
+                            cell.innerHTML = `
+                                <div class="d-flex align-items-center gap-1">
+                                    <button type="button" class="btn btn-outline-primary btn-preview-img" title="Quick Preview Gambar: ${escapeHtml(namaText)}" onclick="openImagePreviewByKode('${escapeHtml(kodeStr)}')">
+                                        <i class="fas fa-image"></i>
+                                    </button>
+                                    <a href="${escapeHtml(imgUrl)}" target="_blank" rel="noopener noreferrer" class="item-link" title="Buka Google Gambar di tab baru: ${escapeHtml(namaText)}">
+                                        ${escapeHtml(namaText)} <i class="fas fa-external-link-alt" style="font-size: 0.65rem;"></i>
+                                    </a>
+                                    <span class="copyable text-muted ms-1" title="Salin ITEM_NAME" onclick="copyToClipboard('${escapeHtml(namaText)}', 'ITEM_NAME')">
+                                        <i class="fas fa-copy fa-xs"></i>
+                                    </span>
+                                </div>
+                            `;
+                        } else {
+                            cell.textContent = '-';
+                        }
+                    } else if (['Harga Pokok', 'Harga Beli', 'Harga Jual', 'Margin', 'Harga Promo', 'SELLING_PRICE_1', 'Value Stock HB', 'Value Stock HJ'].includes(header.name)) {
+                        cell.textContent = formatCurrency(value);
+                        cell.classList.add('text-end');
+                    } else if (header.name === 'GM') {
+                        cell.textContent = value;
+                        cell.classList.add('text-end');
+                    } else if (['Qty Stock', 'MINIMAL_QTY', 'MAXIMAL_QTY', 'MIN', 'MAX', 'MED', 'AVG'].includes(header.name)) {
+                        cell.textContent = formatNumberID(value);
+                        cell.classList.add('text-end');
+                    } else if (['BARCODE_NO', 'ITEM_UNIT'].includes(header.name)) {
+                        cell.textContent = value;
+                        cell.classList.add('text-center');
+                    } else if (['Disc %'].includes(header.name)) {
+                        cell.textContent = value !== '' ? `${value}%` : '';
+                        cell.classList.add('text-end');
+                    } else {
+                        cell.textContent = value;
+                    }
+                    cell.classList.add(header.class);
+                    cell.dataset.key = header.dataKey;
+                }
+            });
+
+            const aksiCell = row.insertCell();
+            aksiCell.classList.add('fixed-column-last', 'aksi-column', 'text-center');
+            aksiCell.innerHTML = `
+                <button class="btn btn-warning btn-sm" onclick="showEditModal('${escapeHtml(kodeStr)}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteItem('${escapeHtml(kodeStr)}')">Hapus</button>
+            `;
+            
+            const itemCheckbox = row.querySelector('.item-checkbox');
+            if (itemCheckbox) {
+                itemCheckbox.addEventListener('change', (e) => {
+                    if (e.target.checked) selectedKodesSet.add(kodeStr);
+                    else selectedKodesSet.delete(kodeStr);
+                    updateSelectedCount();
+                });
+            }
+        });
+        updateSelectedCount();
+    }
+    
+    function renderTableHeader() {
+        const headerRow = document.getElementById('tableHeaderRow');
+        headerRow.innerHTML = ''; 
+
+        headerRow.innerHTML += `<th class="fixed-column sortable" data-key="ITEM_NO">ITEM_NO <span class="sort-icon"></span></th>`;
+        headerRow.innerHTML += `<th class="fixed-column" style="left: 85px;"><input type="checkbox" id="checkAll"> Ada</th>`;
+
+        DISPLAY_HEADERS.forEach(header => {
+            if (columnVisibility[header.dataKey]) {
+                const sortClass = header.sortable ? 'sortable' : '';
+                headerRow.innerHTML += `<th class="${header.class} ${sortClass}" data-key="${header.dataKey}">${header.name} <span class="sort-icon"></span></th>`;
+            }
+        });
+        
+        headerRow.innerHTML += `<th class="fixed-column-last">Aksi</th>`;
+        
+        document.getElementById('checkAll').addEventListener('change', checkAllListener);
+        document.querySelectorAll('.sortable').forEach(th => {
+            th.removeEventListener('click', handleSort);
+            th.addEventListener('click', handleSort);
+        });
+        updateSortIcons();
+    }
+    
+    function initializeColumnVisibility() {
+        DISPLAY_HEADERS.forEach(header => {
+            columnVisibility[header.dataKey] = localStorage.getItem(`colVis_v3_${header.dataKey}`) !== null 
+                ? (localStorage.getItem(`colVis_v3_${header.dataKey}`) === 'true')
+                : header.default; 
+        });
+        renderColumnCheckboxes();
+        columnVisibility['ITEM_NO'] = true; 
+        columnVisibility['Ada'] = true;
+    }
+    
+    function renderColumnCheckboxes() {
+        const checkboxContainer = document.getElementById('columnCheckboxes');
+        checkboxContainer.innerHTML = ''; 
+
+        const columnGroups = {
+            'Data Utama': DISPLAY_HEADERS.filter(header => ['BARCODE_NO', 'ITEM_NAME', 'ITEM_UNIT'].includes(header.name)),
+            'Harga & Stok': DISPLAY_HEADERS.filter(header => ['Harga Pokok', 'Harga Beli', 'Harga Jual', 'Margin', 'GM', 'Disc %', 'Harga Promo', 'SELLING_PRICE_1', 'Qty Stock', 'Value Stock HB', 'Value Stock HJ', 'Aging'].includes(header.name)),
+            'Data Vendor & Grup': DISPLAY_HEADERS.filter(header => header.name.includes('GROUP_') || header.name.includes('VENDOR_')),
+            'Stok, Statistik & Tanggal': DISPLAY_HEADERS.filter(header => ['MINIMAL_QTY', 'MAXIMAL_QTY', 'ITEM_TYPE', 'ON_CONSIGNMENT', 'MIN', 'MAX', 'MED', 'AVG', 'CREATED_DATE', 'tgl date'].includes(header.name))
+        };
+
+        Object.keys(columnGroups).forEach((groupName, index) => {
+            const groupColumns = columnGroups[groupName];
+            if (groupColumns.length > 0) {
+                const headerLi = document.createElement('li');
+                headerLi.innerHTML = `<div class="dropdown-header">${groupName}</div>`;
+                checkboxContainer.appendChild(headerLi);
+
+                groupColumns.forEach(header => {
+                    const isChecked = columnVisibility[header.dataKey];
+                    const safeName = header.dataKey.replace(/\s/g, '_').replace(/[^a-zA-Z0-9]/g, '');
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <div class="form-check">
+                            <input class="form-check-input column-toggle" type="checkbox" id="toggle-${safeName}" data-key="${header.dataKey}" ${isChecked ? 'checked' : ''}>
+                            <label class="form-check-label" for="toggle-${safeName}">${header.name}</label>
+                        </div>`;
+                    li.querySelector('.column-toggle').addEventListener('change', toggleColumn);
+                    checkboxContainer.appendChild(li);
+                });
+
+                if (index < Object.keys(columnGroups).length - 1) {
+                    const separator = document.createElement('li');
+                    separator.innerHTML = '<hr class="my-1">';
+                    checkboxContainer.appendChild(separator);
+                }
+            }
+        });
+    }
+
+    function toggleColumn(event) {
+        const dataKey = event.target.dataset.key;
+        const isVisible = event.target.checked;
+        columnVisibility[dataKey] = isVisible;
+        localStorage.setItem(`colVis_v3_${dataKey}`, isVisible);
+        applyPagination(filteredData);
+    }
+    
+    function changePage(page) {
+        if (page === 'next' && currentPage < maxPage) currentPage++;
+        else if (page === 'prev' && currentPage > 1) currentPage--;
+        else if (typeof page === 'number') currentPage = Math.max(1, Math.min(page, maxPage));
+        applyPagination(filteredData);
+    }
+    
+    function nextPage() { changePage(currentPage + 1); }
+    function prevPage() { changePage(currentPage - 1); }
+    
+    function setPageSize(size) {
+        pageSize = size === 'all' ? 'all' : parseInt(size);
+        currentPage = 1; 
+        applyPagination(filteredData);
+    }
+
+    function checkAllListener(event) {
+        const isChecked = event.target.checked;
+        document.querySelectorAll('.item-checkbox').forEach(checkbox => {
+            checkbox.checked = isChecked;
+            const kode = checkbox.dataset.kode;
+            if (isChecked) selectedKodesSet.add(kode);
+            else selectedKodesSet.delete(kode);
+        });
+        updateSelectedCount();
+    }
+    
+    function updateSelectedCount() {
+        document.getElementById('selectedCount').textContent = selectedKodesSet.size;
+    }
+    
+    function getSelectedItems() {
+        return originalData.filter(item => selectedKodesSet.has(String(item['ITEM_NO'])));
+    }
+    
+    function exportSelectedToExcel() {
+      const selectedItems = getSelectedItems();
+      if (selectedItems.length === 0) {
+        alert('Pilih setidaknya satu item untuk diexport.');
+        return;
+      }
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(selectedItems);
+      XLSX.utils.book_append_sheet(wb, ws, "Selected Items");
+      const dateStr = new Date().toISOString().slice(0,10);
+      XLSX.writeFile(wb, `Master_HPP_Selected_${dateStr}.xlsx`);
+    }
+
+    function exportToExcelClick() {
+      if (filteredData.length === 0) {
+        alert('Tidak ada data untuk diexport.');
+        return;
+      }
+      const ws = XLSX.utils.json_to_sheet(filteredData);
+      const csvOutput = XLSX.utils.sheet_to_csv(ws);
+      const blob = new Blob([csvOutput], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const dateStr = new Date().toISOString().slice(0,10);
+      a.href = url;
+      a.download = `Master_HPP_All_${dateStr}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function handleSort(event) {
+        let th = event.currentTarget;
+        const key = th.dataset.key;
+        if (key === 'Ada') return; 
+
+        let direction = 'asc';
+        if (currentSort.column === key) {
+            direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+        }
+        currentSort = { column: key, direction: direction };
+        
+        filteredData.sort((a, b) => {
+            const valA = a[key];
+            const valB = b[key];
+            const isNumeric = SORTABLE_COLUMNS.includes(key);
+
+            if (isNumeric) {
+                let numA = parseValueForSum(valA);
+                let numB = parseValueForSum(valB);
+                return direction === 'asc' ? numA - numB : numB - numA;
+            } else {
+                return direction === 'asc' ? String(valA).localeCompare(String(valB)) : String(valB).localeCompare(String(valA));
+            }
+        });
+
+        applyPagination(filteredData);
+        updateSortIcons();
+    }
+    
+    function updateSortIcons() {
+        document.querySelectorAll('.sortable').forEach(th => {
+            const icon = th.querySelector('.sort-icon');
+            if (icon) icon.textContent = ''; 
+        });
+
+        const activeTh = document.querySelector(`.sortable[data-key="${currentSort.column}"]`);
+        if (activeTh) {
+            let icon = activeTh.querySelector('.sort-icon');
+            if (!icon) {
+                icon = document.createElement('span');
+                icon.classList.add('sort-icon');
+                activeTh.appendChild(icon);
+            }
+            icon.textContent = currentSort.direction === 'asc' ? '▲' : '▼';
+        }
+    }
+    
+    function handleDragStart(e) {
+        e.target.style.opacity = '0.4';
+        dragSrcEl = e.target;
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', e.target.innerHTML);
+    }
+
+    function handleDragOver(e) {
+        if (e.preventDefault) e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    }
+
+    function handleDragLeave(e) { e.target.classList.remove('over'); }
+
+    function handleDrop(e) {
+        e.stopPropagation();
+        if (dragSrcEl !== e.target && e.target.tagName === 'TD') {
+            const targetRow = e.target.closest('tr');
+            if (targetRow && dragSrcEl) {
+                const tableBody = document.getElementById('tableBody');
+                const rows = Array.from(tableBody.querySelectorAll('tr'));
+                const draggedIndex = rows.indexOf(dragSrcEl);
+                const targetIndex = rows.indexOf(targetRow);
+                
+                if (draggedIndex > targetIndex) tableBody.insertBefore(dragSrcEl, targetRow);
+                else tableBody.insertBefore(dragSrcEl, targetRow.nextSibling);
+                
+                const effectivePageSize = pageSize === 'all' ? filteredData.length : pageSize;
+                const pagedStartIndex = (currentPage - 1) * effectivePageSize;
+                const draggedItem = filteredData[pagedStartIndex + draggedIndex];
+                filteredData.splice(pagedStartIndex + draggedIndex, 1); 
+                filteredData.splice(pagedStartIndex + targetIndex, 0, draggedItem);
+                
+                applyPagination(filteredData);
+            }
+        }
+        return false;
+    }
+
+    function handleDragEnd(e) {
+        e.target.style.opacity = '1';
+        document.querySelectorAll('#itemTable tbody tr').forEach(row => row.classList.remove('over'));
+    }
+
+    function showEditModal(kode) {
+        const item = originalData.find(d => String(d['ITEM_NO']) === String(kode));
+        if (!item) { alert('Item tidak ditemukan.'); return; }
+
+        document.getElementById('editKode').value = item['ITEM_NO'] || '';
+        document.getElementById('editNamaItem').value = item['ITEM_NAME'] || '';
+        document.getElementById('editBarcode').value = item['BARCODE_NO'] || '';
+        document.getElementById('editSat').value = item['ITEM_UNIT'] || '';
+        
+        document.getElementById('editHargaJual').value = parseValueForSum(item['Harga Jual']);
+        document.getElementById('editHargaBeli').value = parseValueForSum(item['Harga Beli']);
+        document.getElementById('editHargaPokok').value = parseValueForSum(item['Harga Pokok']);
+        document.getElementById('editDisc').value = item['Disc %'] || '';
+        document.getElementById('editHargaPromo').value = parseValueForSum(item['Harga Promo']);
+        document.getElementById('editSellingPrice1').value = parseValueForSum(item['SELLING_PRICE_1']);
+        document.getElementById('editQtyStock').value = parseValueForSum(item['Qty Stock']);
+        
+        document.getElementById('editVENDORNO').value = item['VENDOR_NO'] || '';
+        document.getElementById('editVENDORNAME').value = item['VENDOR_NAME'] || '';
+        document.getElementById('editGROUPNO1').value = item['GROUP_NO1'] || '';
+        document.getElementById('editGROUPNAME1').value = item['GROUP_NAME1'] || '';
+        document.getElementById('editGROUPNO2').value = item['GROUP_NO2'] || '';
+        document.getElementById('editGROUPNAME2').value = item['GROUP_NAME2'] || '';
+        document.getElementById('editGROUPNO3').value = item['GROUP_NO3'] || '';
+        document.getElementById('editGROUPNAME3').value = item['GROUP_NAME3'] || '';
+        document.getElementById('editGROUPNO4').value = item['GROUP_NO4'] || '';
+        document.getElementById('editGROUPNAME4').value = item['GROUP_NAME4'] || '';
+        
+        document.getElementById('editMINIMALQTY').value = parseValueForSum(item['MINIMAL_QTY']);
+        document.getElementById('editMAXIMALQTY').value = parseValueForSum(item['MAXIMAL_QTY']);
+        document.getElementById('editITEMTYPE').value = item['ITEM_TYPE'] || '';
+        document.getElementById('editONCONSIGNMENT').value = item['ON_CONSIGNMENT'] || '';
+        document.getElementById('editCREATEDDATE').value = item['CREATED_DATE'] || '';
+        document.getElementById('editTGLDATE').value = item['tgl date'] || '';
+
+        document.getElementById('editMIN').value = parseValueForSum(item['MIN']);
+        document.getElementById('editMAX').value = parseValueForSum(item['MAX']);
+        document.getElementById('editMED').value = parseValueForSum(item['MED']);
+        document.getElementById('editAVG').value = parseValueForSum(item['AVG']);
+        
+        const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+        editModal.show();
+    }
+
+    function submitEdit() {
+        const kode = document.getElementById('editKode').value;
+        const idx = originalData.findIndex(d => String(d['ITEM_NO']) === String(kode));
+        if (idx === -1) {
+            alert('Item tidak ditemukan.');
+            return;
+        }
+
+        const hargaJual = parseValueForSum(document.getElementById('editHargaJual').value);
+        const hargaPokok = parseValueForSum(document.getElementById('editHargaPokok').value);
+        const margin = hargaJual > 0 ? hargaJual - hargaPokok : 0;
+        const gm = hargaJual > 0 ? (margin / hargaJual) * 100 : 0;
+
+        originalData[idx] = {
+            ...originalData[idx],
+            'ITEM_NAME': document.getElementById('editNamaItem').value,
+            'BARCODE_NO': document.getElementById('editBarcode').value,
+            'ITEM_UNIT': document.getElementById('editSat').value,
+            'Harga Jual': hargaJual,
+            'Harga Beli': parseValueForSum(document.getElementById('editHargaBeli').value),
+            'Harga Pokok': hargaPokok,
+            'Margin': margin,
+            'GM': formatPercentage(gm),
+            'Disc %': document.getElementById('editDisc').value,
+            'Harga Promo': parseValueForSum(document.getElementById('editHargaPromo').value),
+            'SELLING_PRICE_1': parseValueForSum(document.getElementById('editSellingPrice1').value),
+            'Qty Stock': parseValueForSum(document.getElementById('editQtyStock').value),
+            'VENDOR_NO': document.getElementById('editVENDORNO').value,
+            'VENDOR_NAME': document.getElementById('editVENDORNAME').value,
+            'GROUP_NO1': document.getElementById('editGROUPNO1').value,
+            'GROUP_NAME1': document.getElementById('editGROUPNAME1').value,
+            'GROUP_NO2': document.getElementById('editGROUPNO2').value,
+            'GROUP_NAME2': document.getElementById('editGROUPNAME2').value,
+            'GROUP_NO3': document.getElementById('editGROUPNO3').value,
+            'GROUP_NAME3': document.getElementById('editGROUPNAME3').value,
+            'GROUP_NO4': document.getElementById('editGROUPNO4').value,
+            'GROUP_NAME4': document.getElementById('editGROUPNAME4').value,
+            'MINIMAL_QTY': parseValueForSum(document.getElementById('editMINIMALQTY').value),
+            'MAXIMAL_QTY': parseValueForSum(document.getElementById('editMAXIMALQTY').value),
+            'ITEM_TYPE': document.getElementById('editITEMTYPE').value,
+            'ON_CONSIGNMENT': document.getElementById('editONCONSIGNMENT').value,
+            'CREATED_DATE': document.getElementById('editCREATEDDATE').value,
+            'tgl date': document.getElementById('editTGLDATE').value,
+            'MIN': parseValueForSum(document.getElementById('editMIN').value),
+            'MAX': parseValueForSum(document.getElementById('editMAX').value),
+            'MED': parseValueForSum(document.getElementById('editMED').value),
+            'AVG': parseValueForSum(document.getElementById('editAVG').value),
+        };
+
+        saveToLocalStorage(originalData, null);
+        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+        performCombinedFilter();
+    }
+
+    function deleteItem(kode) {
+        if (confirm(`Hapus item dengan ITEM_NO ${kode} dari tampilan lokal?`)) {
+            originalData = originalData.filter(d => String(d['ITEM_NO']) !== String(kode));
+            selectedKodesSet.delete(String(kode));
+            saveToLocalStorage(originalData, null);
+            performCombinedFilter();
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchEl = document.getElementById('searchInput');
+        if (searchEl) {
+            searchEl.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') performCombinedFilter();
+            });
+        }
+
+        const previewModalEl = document.getElementById('imagePreviewModal');
+        if (previewModalEl) {
+            previewModalEl.addEventListener('hidden.bs.modal', () => {
+                document.getElementById('previewIframe').src = 'about:blank';
+            });
+        }
+    });
+
+    window.onload = function() {
+        const passwordInput = document.getElementById('passwordInput');
+        if (passwordInput) {
+            passwordInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') checkPassword();
+            });
+            document.getElementById('login-overlay').style.display = 'flex';
+            passwordInput.focus();
+        }
+        initScoreCardDisplay();
+    };
+  </script>
+</body>
+</html>
