@@ -166,8 +166,13 @@
 
             <!-- SEARCH & PAGING BAR -->
             <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-col sm:flex-row justify-between items-center gap-4">
-                <div class="w-full sm:w-80">
-                    <input type="text" id="search-term" oninput="applyFilters()" placeholder="Cari Kode / Nama Item..." class="w-full rounded-md border-gray-300 shadow-sm text-sm border p-2 focus:ring-blue-500 focus:border-blue-500">
+                <div class="w-full sm:w-80 relative">
+                    <input type="text" id="search-term" oninput="handleSearchInput()" placeholder="Cari Kode / Nama Item..." class="w-full rounded-md border-gray-300 shadow-sm text-sm border p-2 pr-8 focus:ring-blue-500 focus:border-blue-500">
+                    <button type="button" id="clear-search-btn" onclick="clearSearchInput()" title="Hapus teks pencarian" class="hidden absolute inset-y-0 right-0 px-2.5 flex items-center text-gray-400 hover:text-gray-700 focus:outline-none">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
                 </div>
                 <div class="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-end">
                     <div class="flex items-center space-x-2">
@@ -240,13 +245,19 @@
             <div class="flex flex-col md:flex-row h-full">
                 <div class="md:w-5/12 p-6 md:p-8 border-b md:border-b-0 md:border-r overflow-y-auto max-h-[85vh]">
                     <h2 class="text-2xl font-extrabold text-blue-600 mb-2"><span id="detail-kode"></span></h2>
-                    <div class="mb-6">
-                        <a id="detail-nama-link" href="#" target="_blank" rel="noopener noreferrer" title="Cari gambar item di Google" class="inline-flex items-start gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-900 hover:underline group">
+                    <div class="mb-6 flex items-start gap-2">
+                        <a id="detail-nama-link" href="#" target="_blank" rel="noopener noreferrer" title="Cari gambar item di tab baru" class="inline-flex items-start gap-1.5 text-sm font-semibold text-blue-700 hover:text-blue-900 hover:underline group flex-1">
                             <span id="detail-nama"></span>
                             <svg class="w-4 h-4 mt-0.5 flex-shrink-0 text-blue-500 group-hover:text-blue-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                             </svg>
                         </a>
+                        <button type="button" id="detail-quick-preview-btn" onclick="openCurrentDetailQuickPreview()" title="Quick Preview Gambar" class="inline-flex items-center gap-1 px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[11px] font-semibold flex-shrink-0 transition-colors">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Preview
+                        </button>
                     </div>
                     <h3 class="text-lg font-bold text-gray-700 mb-4">Informasi Kuantitas</h3>
                     <div class="space-y-3">
@@ -281,6 +292,46 @@
         </div>
     </div>
 
+    <!-- MODAL QUICK PREVIEW GAMBAR -->
+    <div id="image-preview-modal" class="modal fixed inset-0 z-[60] flex items-center justify-center opacity-0 pointer-events-none p-4 transition-opacity duration-200">
+        <div class="modal-overlay fixed inset-0" onclick="closeImagePreview()"></div>
+        <div class="modal-content bg-white rounded-xl shadow-2xl max-w-4xl w-full h-[85vh] flex flex-col relative transform scale-95 transition-transform duration-300 overflow-hidden z-10">
+            <div class="px-5 py-3.5 border-b border-gray-200 bg-gray-50 flex items-center justify-between gap-3">
+                <div class="min-w-0">
+                    <p class="text-[11px] font-bold uppercase tracking-wider text-indigo-600">Quick Preview Gambar Produk</p>
+                    <h3 id="preview-item-title" class="text-sm font-bold text-gray-800 truncate">-</h3>
+                </div>
+                <div class="flex items-center space-x-2 flex-shrink-0">
+                    <a id="preview-external-link" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-sm transition-colors">
+                        <span>Buka di Tab Baru</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                    </a>
+                    <button type="button" onclick="closeImagePreview()" title="Tutup Preview (Esc)" class="p-1.5 rounded-full text-gray-500 hover:text-gray-800 hover:bg-gray-200 transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="flex-1 relative bg-gray-100">
+                <div id="preview-loading" class="absolute inset-0 flex flex-col items-center justify-center text-gray-500 text-xs pointer-events-none">
+                    <svg class="animate-spin h-6 w-6 text-indigo-600 mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>Memuat pratinjau Google Gambar...</span>
+                </div>
+                <iframe id="preview-iframe" src="about:blank" onload="document.getElementById('preview-loading').classList.add('hidden')" class="w-full h-full border-0 relative z-10 bg-white"></iframe>
+            </div>
+            <div class="px-4 py-2 bg-gray-50 border-t border-gray-200 text-[11px] text-gray-500 flex justify-between items-center">
+                <span>Jika tampilan gambar diblokir oleh kebijakan browser, klik tombol <strong>Buka di Tab Baru</strong> di kanan atas.</span>
+                <span class="hidden sm:inline text-gray-400">Tekan ESC untuk menutup</span>
+            </div>
+        </div>
+    </div>
+
 <script>
 let ALL_DATA = [];
 let FILTERED_DATA = [];
@@ -292,7 +343,8 @@ let isUpdatingDropdowns = false;
 let keyAH = 'count';
 let currentMode = 'sales';
 let sidebarVisible = true;
-let STOK_KEY = 'Stok'; // Variabel dinamis untuk key kolom Stok
+let STOK_KEY = 'Stok';
+let currentDetailItemName = '';
 
 const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRRlqRhknRPUEV01mUYHeTIjDNzblnkodAjIs_fWUaBoe1QKYPEmp9w3DxPuLyOx9gLVDMONrXNtdbj/pub?gid=1242857649&single=true&output=csv';
 const LOCAL_STORAGE_KEY = 'SOQ_DASHBOARD_DATA_CACHE_V5';
@@ -311,6 +363,83 @@ function getGoogleImageSearchUrl(itemName) {
     if (!cleanName || cleanName === '-') return '#';
     const encodedQuery = encodeURIComponent(cleanName);
     return `https://www.google.com/search?q=${encodedQuery}&tbm=isch&sourceid=chrome&ie=UTF-8&source=chrome.ctxt`;
+}
+
+function getGoogleImageEmbedUrl(itemName) {
+    const cleanName = String(itemName ?? '').trim();
+    if (!cleanName || cleanName === '-') return 'about:blank';
+    const encodedQuery = encodeURIComponent(cleanName);
+    return `https://www.google.com/search?igu=1&tbm=isch&q=${encodedQuery}`;
+}
+
+function openImagePreviewByIndex(index) {
+    const item = FILTERED_DATA[index];
+    if (!item) return;
+    openImagePreview(item['Nama Item'] || '');
+}
+
+function openCurrentDetailQuickPreview() {
+    if (!currentDetailItemName) return;
+    openImagePreview(currentDetailItemName);
+}
+
+function openImagePreview(itemName) {
+    const cleanName = String(itemName ?? '').trim();
+    if (!cleanName || cleanName === '-') return;
+
+    const modal = document.getElementById('image-preview-modal');
+    const titleEl = document.getElementById('preview-item-title');
+    const extLinkEl = document.getElementById('preview-external-link');
+    const loadingEl = document.getElementById('preview-loading');
+    const iframeEl = document.getElementById('preview-iframe');
+
+    titleEl.textContent = cleanName;
+    extLinkEl.href = getGoogleImageSearchUrl(cleanName);
+    loadingEl.classList.remove('hidden');
+    iframeEl.src = getGoogleImageEmbedUrl(cleanName);
+
+    modal.classList.remove('opacity-0', 'pointer-events-none');
+}
+
+function closeImagePreview() {
+    const modal = document.getElementById('image-preview-modal');
+    const iframeEl = document.getElementById('preview-iframe');
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    iframeEl.src = 'about:blank';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        const previewModal = document.getElementById('image-preview-modal');
+        if (previewModal && !previewModal.classList.contains('pointer-events-none')) {
+            closeImagePreview();
+            return;
+        }
+        const detailModal = document.getElementById('item-detail-modal');
+        if (detailModal && !detailModal.classList.contains('pointer-events-none')) {
+            closeItemDetail();
+        }
+    }
+});
+
+function handleSearchInput() {
+    const input = document.getElementById('search-term');
+    const clearBtn = document.getElementById('clear-search-btn');
+    if (input.value.length > 0) {
+        clearBtn.classList.remove('hidden');
+    } else {
+        clearBtn.classList.add('hidden');
+    }
+    applyFilters();
+}
+
+function clearSearchInput() {
+    const input = document.getElementById('search-term');
+    const clearBtn = document.getElementById('clear-search-btn');
+    input.value = '';
+    clearBtn.classList.add('hidden');
+    input.focus();
+    applyFilters(true);
 }
 
 function toggleSidebar() {
@@ -546,7 +675,6 @@ function parseCSV(csvText) {
     
     let headers = parseCSVRow(lines[0]);
     
-    // Deteksi otomatis key kolom stok jika tidak persis bernama "Stok"
     STOK_KEY = headers.find(h => h && (h.toLowerCase() === 'stok' || h.toLowerCase() === 'soh' || h.toLowerCase().includes('stok'))) || 'Stok';
 
     let result = [];
@@ -761,6 +889,7 @@ function resetFilters() {
     document.getElementById('filter-valsoq-min').value='';
     document.getElementById('filter-valsoq-max').value='';
     document.getElementById('search-term').value='';
+    document.getElementById('clear-search-btn').classList.add('hidden');
     document.getElementById('perPage').value='10';
     SORT_COLUMN='SOQ'; SORT_DIRECTION='desc';
     updateAllFilterOptions();
@@ -819,12 +948,19 @@ function renderTable() {
         let imgSearchUrl = getGoogleImageSearchUrl(itemName);
 
         let itemNameCell = itemName
-            ? `<a href="${escapeHtml(imgSearchUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 hover:underline font-medium" title="Cari gambar: ${escapeHtml(itemName)}">
-                   <span class="truncate">${escapeHtml(displayItemName)}</span>
-                   <svg class="w-3.5 h-3.5 flex-shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-                   </svg>
-               </a>`
+            ? `<div class="flex items-center gap-1.5 min-w-0">
+                   <button type="button" onclick="openImagePreviewByIndex(${globalIndex})" title="Quick Preview Gambar: ${escapeHtml(itemName)}" class="p-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-600 border border-indigo-200 flex-shrink-0 transition-colors">
+                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                       </svg>
+                   </button>
+                   <a href="${escapeHtml(imgSearchUrl)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-blue-700 hover:text-blue-900 hover:underline font-medium min-w-0" title="Buka Google Gambar di tab baru: ${escapeHtml(itemName)}">
+                       <span class="truncate">${escapeHtml(displayItemName)}</span>
+                       <svg class="w-3 h-3 flex-shrink-0 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                       </svg>
+                   </a>
+               </div>`
             : `<span class="text-gray-400">-</span>`;
         
         let rawSupplier = item['Supplier'] || '-';
@@ -835,7 +971,7 @@ function renderTable() {
         let row = `
             <tr class="hover:bg-gray-50 transition-colors">
                 <td class="px-3 py-2 text-xs font-medium text-blue-600 cursor-pointer hover:underline" onclick="showItemDetailByIndex(${globalIndex})">${escapeHtml(item['Kode'] || '-')}</td>
-                <td class="px-3 py-2 text-xs text-gray-700 max-w-xs truncate">${itemNameCell}</td>
+                <td class="px-3 py-2 text-xs text-gray-700 max-w-xs">${itemNameCell}</td>
                 <td class="px-3 py-2 text-xs text-gray-600 font-semibold">${escapeHtml(uom)}</td>
                 <td class="px-3 py-2 text-xs text-gray-500 truncate max-w-[150px]">${displaySupplier}</td>
                 <td class="px-3 py-2 text-xs text-gray-500 max-w-[120px] truncate" title="${escapeHtml(item['BRAND'])}">${escapeHtml(item['BRAND'] || '-')}</td>
@@ -888,9 +1024,11 @@ function showItemDetail(kodeOrItem) {
     if(!item) return;
     
     let itemName = String(item['Nama Item'] || '').trim();
+    currentDetailItemName = itemName;
     let imgSearchUrl = getGoogleImageSearchUrl(itemName);
     let namaLinkEl = document.getElementById('detail-nama-link');
     let namaTextEl = document.getElementById('detail-nama');
+    let previewBtnEl = document.getElementById('detail-quick-preview-btn');
 
     document.getElementById('detail-kode').textContent = item['Kode'] || '-';
     namaTextEl.textContent = itemName || '-';
@@ -898,8 +1036,10 @@ function showItemDetail(kodeOrItem) {
         namaLinkEl.href = imgSearchUrl;
         if (itemName) {
             namaLinkEl.classList.remove('pointer-events-none', 'opacity-60');
+            if (previewBtnEl) previewBtnEl.classList.remove('hidden');
         } else {
             namaLinkEl.classList.add('pointer-events-none', 'opacity-60');
+            if (previewBtnEl) previewBtnEl.classList.add('hidden');
         }
     }
 
