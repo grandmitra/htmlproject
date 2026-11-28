@@ -74,7 +74,6 @@
                     <button onclick="clearDeptFilter()" class="text-xs text-blue-600 hover:text-blue-800">Clear</button>
                 </div>
                 <div id="deptSlicerContainer" class="space-y-2 max-h-40 overflow-y-auto pr-2 border border-slate-200 rounded-lg p-2 bg-slate-50">
-                    <!-- Checkboxes will be injected here -->
                     <div class="text-sm text-slate-500 italic">Memuat departemen...</div>
                 </div>
             </div>
@@ -86,7 +85,6 @@
                     <button onclick="clearKatFilter()" class="text-xs text-blue-600 hover:text-blue-800">Clear</button>
                 </div>
                 <div id="katSlicerContainer" class="space-y-2 max-h-40 overflow-y-auto pr-2 border border-slate-200 rounded-lg p-2 bg-slate-50">
-                    <!-- Checkboxes will be injected here -->
                     <div class="text-sm text-slate-500 italic">Memuat kategori...</div>
                 </div>
             </div>
@@ -220,11 +218,11 @@
                                 <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">SKU</th>
                                 <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider min-w-[240px]">Description</th>
                                 <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">UOM</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap text-right">HJ R</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap text-right">HJ1</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap text-right">HJ2</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap text-right">HJ3</th>
-                                <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">BP Code</th>
+                                <th class="px-4 py-3 text-xs font-bold text-slate-900 uppercase tracking-wider whitespace-nowrap text-right">HJ R</th>
+                                <th class="px-4 py-3 text-xs font-bold text-green-600 uppercase tracking-wider whitespace-nowrap text-right">HJ1</th>
+                                <th class="px-4 py-3 text-xs font-bold text-amber-500 uppercase tracking-wider whitespace-nowrap text-right">HJ2</th>
+                                <th class="px-4 py-3 text-xs font-bold text-red-600 uppercase tracking-wider whitespace-nowrap text-right">HJ3</th>
+                                <th class="px-4 py-3 text-xs font-bold text-blue-600 uppercase tracking-wider whitespace-nowrap">Code</th>
                                 <th class="px-4 py-3 text-xs font-semibold text-blue-600 uppercase tracking-wider whitespace-nowrap text-right bg-blue-50">Qty Stok</th>
                                 <th class="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider whitespace-nowrap">Kat</th>
                             </tr>
@@ -281,7 +279,7 @@
         </div>
     </main>
 
-    <!-- Modal Quick Preview Gambar (Draggable + Tier Harga HJ R, HJ1, HJ2, HJ3) -->
+    <!-- Modal Quick Preview Gambar (Draggable + Tier Harga HJ R, HJ1, HJ2, HJ3 + Code) -->
     <div id="imagePreviewModal" class="fixed inset-0 z-[60] hidden pointer-events-none">
         <div class="modal-overlay fixed inset-0 pointer-events-auto" onclick="closeImagePreview()"></div>
         <div id="draggablePreviewCard" class="pointer-events-auto fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-white rounded-xl shadow-2xl w-[94vw] max-w-4xl h-[85vh] min-h-[420px] flex flex-col overflow-hidden z-10 border border-slate-200 select-none">
@@ -299,23 +297,27 @@
                     </div>
                 </div>
 
-                <!-- Nilai Tier Harga: HJ R, HJ1, HJ2, HJ3 -->
-                <div class="flex items-center gap-4 sm:gap-6 px-2">
+                <!-- Nilai Tier Harga: HJ R, HJ1, HJ2, HJ3 & Code -->
+                <div class="flex flex-wrap items-center gap-4 sm:gap-5 px-2">
                     <div class="text-left">
-                        <div class="text-[11px] font-semibold text-slate-500">HJ R</div>
-                        <div id="previewPriceHJR" class="text-sm font-bold text-slate-800 tabular-nums">-</div>
+                        <div class="text-[11px] font-semibold text-slate-900">HJ R</div>
+                        <div id="previewPriceHJR" class="text-sm font-bold text-slate-900 tabular-nums">-</div>
                     </div>
                     <div class="text-left">
-                        <div class="text-[11px] font-semibold text-slate-500">HJ1</div>
-                        <div id="previewPriceHJ1" class="text-sm font-bold text-slate-800 tabular-nums">-</div>
+                        <div class="text-[11px] font-semibold text-green-600">HJ1</div>
+                        <div id="previewPriceHJ1" class="text-sm font-bold text-green-600 tabular-nums">-</div>
                     </div>
                     <div class="text-left">
-                        <div class="text-[11px] font-semibold text-slate-500">HJ2</div>
-                        <div id="previewPriceHJ2" class="text-sm font-bold text-slate-800 tabular-nums">-</div>
+                        <div class="text-[11px] font-semibold text-amber-500">HJ2</div>
+                        <div id="previewPriceHJ2" class="text-sm font-bold text-amber-500 tabular-nums">-</div>
                     </div>
                     <div class="text-left">
-                        <div class="text-[11px] font-semibold text-slate-500">HJ3</div>
-                        <div id="previewPriceHJ3" class="text-sm font-bold text-slate-800 tabular-nums">-</div>
+                        <div class="text-[11px] font-semibold text-red-600">HJ3</div>
+                        <div id="previewPriceHJ3" class="text-sm font-bold text-red-600 tabular-nums">-</div>
+                    </div>
+                    <div class="text-left border-l border-slate-200 pl-4">
+                        <div class="text-[11px] font-semibold text-blue-600">Code</div>
+                        <div id="previewItemCode" class="text-sm font-bold text-blue-600">-</div>
                     </div>
                 </div>
 
@@ -437,6 +439,7 @@
             previewPriceHJ1: document.getElementById('previewPriceHJ1'),
             previewPriceHJ2: document.getElementById('previewPriceHJ2'),
             previewPriceHJ3: document.getElementById('previewPriceHJ3'),
+            previewItemCode: document.getElementById('previewItemCode'),
             previewExternalLink: document.getElementById('previewExternalLink'),
             previewLoading: document.getElementById('previewLoading'),
             previewIframe: document.getElementById('previewIframe')
@@ -450,6 +453,14 @@
                 .replace(/>/g, '&gt;')
                 .replace(/"/g, '&quot;')
                 .replace(/'/g, '&#39;');
+        };
+
+        // Mengambil nilai Code murni sebagai text tanpa diformat angka
+        const getCodeText = (row) => {
+            if (!row || typeof row !== 'object') return '-';
+            const rawCode = row.Code ?? row.code ?? row.CODE ?? '';
+            const trimmed = String(rawCode).trim();
+            return trimmed !== '' ? trimmed : '-';
         };
 
         const getGoogleImageSearchUrl = (description) => {
@@ -482,7 +493,6 @@
         const parseNumber = (str) => {
             if (!str) return 0;
             if (typeof str === 'number') return str;
-            // Remove non-numeric characters except dots and commas, then attempt to parse
             let cleanStr = str.replace(/[^\d.-]/g, '');
             return parseFloat(cleanStr) || 0;
         };
@@ -504,7 +514,6 @@
             const card = DOM.draggablePreviewCard;
 
             handle.addEventListener('pointerdown', (e) => {
-                // Jangan mulai drag jika klik pada tombol atau link di dalam header
                 if (e.target.closest('a, button')) return;
                 if (e.pointerType === 'mouse' && e.button !== 0) return;
 
@@ -570,6 +579,7 @@
             DOM.previewPriceHJ1.textContent = formatTierPrice(row['HJ1']);
             DOM.previewPriceHJ2.textContent = formatTierPrice(row['HJ2']);
             DOM.previewPriceHJ3.textContent = formatTierPrice(row['HJ3']);
+            DOM.previewItemCode.textContent = getCodeText(row);
 
             DOM.previewExternalLink.href = getGoogleImageSearchUrl(cleanDesc);
             DOM.previewLoading.classList.remove('hidden');
@@ -594,7 +604,6 @@
             showLoading(true, forceRefresh ? 'Mengambil data dari server...' : 'Memuat data...');
             
             try {
-                // Check local storage first if not forcing refresh
                 if (!forceRefresh) {
                     const cachedData = localStorage.getItem(STORAGE_KEY);
                     const cacheTime = localStorage.getItem(STORAGE_TIME_KEY);
@@ -608,20 +617,16 @@
                     }
                 }
 
-                // Fetch from CSV
                 const response = await fetch(CSV_URL);
                 if (!response.ok) throw new Error('Network response was not ok');
                 const csvText = await response.text();
 
-                // Parse CSV using PapaParse
                 Papa.parse(csvText, {
                     header: true,
                     skipEmptyLines: true,
                     complete: function(results) {
-                        // Filter out completely empty rows that might slip through
                         rawData = results.data.filter(row => row.SKU || row.DESCRIPTION);
                         
-                        // Save to LocalStorage
                         try {
                             localStorage.setItem(STORAGE_KEY, JSON.stringify(rawData));
                             const now = new Date().toLocaleString('id-ID');
@@ -648,7 +653,6 @@
         }
 
         function processRawData() {
-            // Extract unique departments & categories for Slicer
             uniqueDepartments.clear();
             uniqueCategories.clear();
             
@@ -664,7 +668,7 @@
             renderDeptSlicer();
             renderKatSlicer();
             renderTahapFilter();
-            applyFilters(); // Initial render
+            applyFilters();
         }
 
         function renderDeptSlicer() {
@@ -675,7 +679,6 @@
                 return;
             }
 
-            // Sort alphabetically
             const sortedDepts = Array.from(uniqueDepartments).sort();
 
             sortedDepts.forEach(dept => {
@@ -694,7 +697,6 @@
                 DOM.deptSlicerContainer.insertAdjacentHTML('beforeend', html);
             });
 
-            // Add event listeners to new checkboxes
             document.querySelectorAll('.dept-checkbox').forEach(cb => {
                 cb.addEventListener('change', (e) => {
                     if (e.target.checked) {
@@ -713,7 +715,6 @@
             applyFilters();
         }
 
-        // Render Kat Slicer
         function renderKatSlicer() {
             DOM.katSlicerContainer.innerHTML = '';
             
@@ -758,7 +759,6 @@
             applyFilters();
         }
 
-        // Harga (HJ1) Filter Setup
         const handlePriceChange = () => {
             minPriceFilter = DOM.minPriceInput.value !== '' ? parseFloat(DOM.minPriceInput.value) : null;
             maxPriceFilter = DOM.maxPriceInput.value !== '' ? parseFloat(DOM.maxPriceInput.value) : null;
@@ -783,36 +783,28 @@
             applyFilters();
         }
 
-        // Qty Stok Filter Setup
         DOM.qtyFilterSelect.addEventListener('change', (e) => {
             selectedQtyFilter = e.target.value;
             applyFilters();
         });
 
-        // Global Reset All
         function resetAllFilters() {
-            // Text Search
             DOM.searchInput.value = '';
             DOM.clearSearchBtn.classList.add('hidden');
             
-            // Dept
             selectedDepartments.clear();
             document.querySelectorAll('.dept-checkbox').forEach(cb => cb.checked = false);
             
-            // Kat
             selectedCategories.clear();
             document.querySelectorAll('.kat-checkbox').forEach(cb => cb.checked = false);
             
-            // Tahap
             selectedTahap = null;
             DOM.tahapDescInfo.innerHTML = `Pilih tahap untuk memfilter material spesifik.`;
             renderTahapFilter();
             
-            // Qty
             DOM.qtyFilterSelect.value = 'all';
             selectedQtyFilter = 'all';
             
-            // Harga
             DOM.minPriceInput.value = '';
             DOM.maxPriceInput.value = '';
             minPriceFilter = null;
@@ -821,7 +813,6 @@
             applyFilters();
         }
 
-        // Tahap Proyek Filter Logic
         function renderTahapFilter() {
             DOM.tahapFilterContainer.innerHTML = '';
             tahapData.forEach(t => {
@@ -837,7 +828,7 @@
                 btn.title = `${t.desc} \nMaterial: ${t.keywords.join(', ')}`;
                 
                 btn.onclick = () => {
-                    selectedTahap = isActive ? null : t.id; // Toggle selection
+                    selectedTahap = isActive ? null : t.id;
                     
                     if (selectedTahap) {
                         DOM.tahapDescInfo.innerHTML = `<strong class="text-slate-700">${t.id} - ${t.desc}</strong><br/>Filter: <span class="italic">${t.keywords.join(', ')}</span>`;
@@ -860,11 +851,9 @@
             applyFilters();
         }
 
-        // Event listener for search
         DOM.searchInput.addEventListener('input', (e) => {
             const val = e.target.value;
             DOM.clearSearchBtn.classList.toggle('hidden', val.length === 0);
-            // Debounce lightly
             clearTimeout(window.searchTimeout);
             window.searchTimeout = setTimeout(() => {
                 applyFilters();
@@ -878,52 +867,42 @@
         }
 
         function applyFilters() {
-            currentPage = 1; // Reset to page 1 on new filter
+            currentPage = 1;
             const searchText = DOM.searchInput.value.toLowerCase();
             
-            // Split search text by comma for multi-filter (OR logic)
-            // e.g., "mcb, besi" -> ["mcb", "besi"]
             const searchTerms = searchText.split(',')
                 .map(term => term.trim())
                 .filter(term => term.length > 0);
 
             filteredData = rawData.filter(row => {
-                // 1. Department Filter
                 if (selectedDepartments.size > 0 && !selectedDepartments.has(row.Departement?.trim())) {
                     return false;
                 }
                 
-                // 2. Kategori (KAT) Filter
                 if (selectedCategories.size > 0 && !selectedCategories.has(row.Kat?.trim())) {
                     return false;
                 }
 
-                // 3. Multi-text Search Filter on Description
                 if (searchTerms.length > 0) {
                     const desc = (row.DESCRIPTION || '').toLowerCase();
-                    // Match if description includes ANY of the search terms (OR Logic)
                     const matchFound = searchTerms.some(term => desc.includes(term));
                     if (!matchFound) return false;
                 }
                 
-                // 4. Tahap (T1-T15) Filter
                 if (selectedTahap) {
                     const tahap = tahapData.find(t => t.id === selectedTahap);
                     if (tahap) {
                         const desc = (row.DESCRIPTION || '').toUpperCase();
-                        // Match if description includes ANY of the keywords from selected Tahap
                         const matchFound = tahap.keywords.some(kw => desc.includes(kw));
                         if (!matchFound) return false;
                     }
                 }
 
-                // 5. Qty Stok Filter
                 const qty = parseNumber(row['Qty Stok']);
                 if (selectedQtyFilter === '>0' && qty <= 0) return false;
                 if (selectedQtyFilter === '=0' && qty !== 0) return false;
                 if (selectedQtyFilter === '<0' && qty >= 0) return false;
 
-                // 6. Rentang Harga (HJ1) Filter
                 const hj1 = parseNumber(row['HJ1']);
                 if (minPriceFilter !== null && hj1 < minPriceFilter) return false;
                 if (maxPriceFilter !== null && hj1 > maxPriceFilter) return false;
@@ -969,7 +948,6 @@
                 DOM.tableBody.parentElement.classList.remove('hidden');
             }
 
-            // Pagination Math
             const totalPages = Math.ceil(filteredData.length / rowsPerPage);
             if (currentPage > totalPages) currentPage = totalPages;
             if (currentPage < 1) currentPage = 1;
@@ -978,15 +956,12 @@
             const endIndex = Math.min(startIndex + rowsPerPage, filteredData.length);
             const pageData = filteredData.slice(startIndex, endIndex);
 
-            // Render Rows
             pageData.forEach((row, index) => {
                 const globalIndex = startIndex + index;
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-blue-50 transition-colors group';
-                // Zebra striping
                 if (index % 2 !== 0) tr.classList.add('bg-slate-50/50');
 
-                // Determine if Qty is low for styling (example logic, assuming < 5 is low)
                 const qty = parseNumber(row['Qty Stok']);
                 const qtyClass = qty <= 0 ? 'text-red-600 font-bold bg-red-50' : 
                                (qty < 10 ? 'text-orange-600 font-bold' : 'text-slate-800 font-medium bg-blue-50/30 group-hover:bg-transparent');
@@ -1014,11 +989,11 @@
                     <td class="px-4 py-3 text-sm font-medium text-slate-800 whitespace-nowrap">${escapeHtml(row.SKU || '-')}</td>
                     <td class="px-4 py-3 text-sm text-slate-700 max-w-xs">${descCell}</td>
                     <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">${escapeHtml(row.UOM || '-')}</td>
-                    <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap text-right">${formatNumber(row['HJ R'])}</td>
-                    <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap text-right">${formatNumber(row['HJ1'])}</td>
-                    <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap text-right">${formatNumber(row['HJ2'])}</td>
-                    <td class="px-4 py-3 text-sm text-slate-700 whitespace-nowrap text-right">${formatNumber(row['HJ3'])}</td>
-                    <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">${escapeHtml(row['Buying Price code'] || '-')}</td>
+                    <td class="px-4 py-3 text-sm font-semibold text-slate-900 whitespace-nowrap text-right">${formatNumber(row['HJ R'])}</td>
+                    <td class="px-4 py-3 text-sm font-semibold text-green-600 whitespace-nowrap text-right">${formatNumber(row['HJ1'])}</td>
+                    <td class="px-4 py-3 text-sm font-semibold text-amber-500 whitespace-nowrap text-right">${formatNumber(row['HJ2'])}</td>
+                    <td class="px-4 py-3 text-sm font-semibold text-red-600 whitespace-nowrap text-right">${formatNumber(row['HJ3'])}</td>
+                    <td class="px-4 py-3 text-sm font-semibold text-blue-600 whitespace-nowrap">${escapeHtml(getCodeText(row))}</td>
                     <td class="px-4 py-3 text-sm text-right whitespace-nowrap ${qtyClass}">${formatNumber(qty)}</td>
                     <td class="px-4 py-3 text-sm text-slate-600 whitespace-nowrap">
                         <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-800">
@@ -1054,7 +1029,6 @@
         function changePage(direction) {
             currentPage += direction;
             renderTable();
-            // Scroll to top of table
             DOM.tableBody.parentElement.scrollTop = 0;
         }
 
@@ -1066,18 +1040,11 @@
             
             showLoading(true, 'Menyiapkan file Excel...');
 
-            // Allow UI to update before processing heavy task
             setTimeout(() => {
                 try {
-                    // Create a new workbook
                     const wb = XLSX.utils.book_new();
-                    // Convert JSON to worksheet
                     const ws = XLSX.utils.json_to_sheet(filteredData);
-                    
-                    // Add worksheet to workbook
                     XLSX.utils.book_append_sheet(wb, ws, "Data Inventory");
-                    
-                    // Generate file and trigger download
                     const dateStr = new Date().toISOString().slice(0,10);
                     XLSX.writeFile(wb, `Inventory_Export_${dateStr}.xlsx`);
                 } catch (error) {
