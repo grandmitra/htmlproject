@@ -41,6 +41,64 @@
     .select2-container--bootstrap-5 .select2-selection--multiple { min-height: 35px; padding: 0.15rem 0.5rem; border: 1px solid #ced4da !important; }
 
     #copyToast { position: fixed; bottom: 65px; right: 20px; z-index: 2500; display: none; }
+
+    /* Draggable Quick Preview Modal */
+    #imagePreviewModal {
+      position: fixed;
+      inset: 0;
+      z-index: 2200;
+      display: none;
+      pointer-events: none;
+    }
+    #imagePreviewModal.is-open {
+      display: block;
+    }
+    .preview-backdrop {
+      position: fixed;
+      inset: 0;
+      background-color: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(2px);
+      pointer-events: auto;
+    }
+    #draggablePreviewCard {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(94vw, 1140px);
+      height: min(85vh, 780px);
+      min-height: 420px;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.35);
+      border: 1px solid #dee2e6;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      pointer-events: auto;
+      z-index: 2;
+    }
+    #previewDragHandle {
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+    #previewDragHandle:active {
+      cursor: grabbing;
+    }
+    .preview-metric-label {
+      font-size: 0.68rem;
+      color: #cbd5e1;
+      font-weight: 600;
+      line-height: 1.1;
+    }
+    .preview-metric-value {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #ffffff;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.25;
+    }
   </style>
 </head>
 <body>
@@ -183,33 +241,58 @@
     <i class="fas fa-check-circle text-success me-1"></i> <span id="copyToastText">Tersalin!</span>
   </div>
 
-  <!-- Modal Quick Preview Gambar -->
-  <div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-      <div class="modal-content" style="height: 85vh;">
-        <div class="modal-header bg-dark text-white py-2 px-3">
-          <div class="min-w-0 pe-3">
+  <!-- Modal Quick Preview Gambar (Draggable + Nilai Harga Beli, Harga Jual, Margin, GM) -->
+  <div id="imagePreviewModal" role="dialog" aria-modal="true" aria-labelledby="previewItemTitle">
+    <div class="preview-backdrop" onclick="closeImagePreview()"></div>
+    <div id="draggablePreviewCard">
+      <div id="previewDragHandle" title="Tarik untuk menggeser modal" class="bg-dark text-white py-2 px-3 border-bottom border-secondary d-flex flex-wrap align-items-center justify-content-between gap-3">
+        <div class="d-flex align-items-center gap-2 min-w-0">
+          <i class="fas fa-grip-vertical text-secondary"></i>
+          <div class="min-w-0">
             <div class="text-info fw-bold text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">Quick Preview Gambar Produk</div>
-            <h6 class="modal-title text-truncate mb-0" id="previewItemTitle">-</h6>
-          </div>
-          <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
-            <a id="previewExternalLink" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary">
-              Buka di Tab Baru <i class="fas fa-external-link-alt ms-1"></i>
-            </a>
-            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <h6 class="text-truncate mb-0 fw-bold" id="previewItemTitle">-</h6>
           </div>
         </div>
-        <div class="modal-body p-0 position-relative bg-light">
-          <div id="previewLoading" class="position-absolute top-50 start-50 translate-middle text-center text-muted">
-            <div class="spinner-border text-danger spinner-border-sm mb-2" role="status"></div>
-            <div class="small">Memuat pratinjau Google Gambar...</div>
+
+        <!-- Nilai: Harga Beli, Harga Jual, Margin, GM -->
+        <div class="d-flex align-items-center gap-3 gap-md-4 px-2">
+          <div>
+            <div class="preview-metric-label">Harga Beli</div>
+            <div id="previewHargaBeli" class="preview-metric-value">-</div>
           </div>
-          <iframe id="previewIframe" src="about:blank" onload="document.getElementById('previewLoading').style.display='none'" class="w-100 h-100 border-0 position-relative" style="z-index: 10;"></iframe>
+          <div>
+            <div class="preview-metric-label">Harga Jual</div>
+            <div id="previewHargaJual" class="preview-metric-value">-</div>
+          </div>
+          <div>
+            <div class="preview-metric-label">Margin</div>
+            <div id="previewMargin" class="preview-metric-value">-</div>
+          </div>
+          <div>
+            <div class="preview-metric-label">GM</div>
+            <div id="previewGM" class="preview-metric-value">-</div>
+          </div>
         </div>
-        <div class="modal-footer py-1 px-3 bg-light justify-content-between small text-muted">
-          <span>Jika tampilan diblokir browser, klik <strong>Buka di Tab Baru</strong> di kanan atas.</span>
-          <span>Tekan ESC untuk menutup</span>
+
+        <div class="d-flex align-items-center gap-2 ms-auto flex-shrink-0">
+          <a id="previewExternalLink" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary">
+            Buka di Tab Baru <i class="fas fa-external-link-alt ms-1"></i>
+          </a>
+          <button type="button" class="btn btn-close btn-close-white" onclick="closeImagePreview()" aria-label="Close" title="Tutup Preview (Esc)"></button>
         </div>
+      </div>
+
+      <div class="flex-grow-1 position-relative bg-light">
+        <div id="previewLoading" class="position-absolute top-50 start-50 translate-middle text-center text-muted">
+          <div class="spinner-border text-danger spinner-border-sm mb-2" role="status"></div>
+          <div class="small">Memuat pratinjau Google Gambar...</div>
+        </div>
+        <iframe id="previewIframe" src="about:blank" onload="document.getElementById('previewLoading').style.display='none'" class="w-100 h-100 border-0 position-relative bg-white" style="z-index: 10;"></iframe>
+      </div>
+
+      <div class="py-1 px-3 bg-light border-top d-flex justify-content-between align-items-center small text-muted">
+        <span>Seret header untuk memindahkan modal. Jika tampilan diblokir browser, klik <strong>Buka di Tab Baru</strong> di kanan atas.</span>
+        <span class="d-none d-sm-inline">Tekan ESC untuk menutup</span>
       </div>
     </div>
   </div>
@@ -306,7 +389,11 @@
     let maxPage = 1;
     let dragSrcEl = null;
     let currentSort = { column: '', direction: '' };
-    let previewModalInstance = null;
+
+    // State Draggable Modal
+    let isDraggingPreviewModal = false;
+    let previewDragOffsetX = 0;
+    let previewDragOffsetY = 0;
 
     let activeFilters = {
         'GROUP_NAME1': [], 'GROUP_NAME2': [], 'GROUP_NAME3': [], 'GROUP_NAME4': [],
@@ -398,25 +485,115 @@
         return `https://www.google.com/search?igu=1&tbm=isch&q=${encodeURIComponent(cleanName)}`;
     }
 
+    function formatPreviewAmount(val) {
+        if (val === undefined || val === null || String(val).trim() === '') return '-';
+        const num = parseValueForSum(val);
+        if (isNaN(num)) return '-';
+        return num.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
+    function formatPreviewGM(val) {
+        if (val === undefined || val === null || String(val).trim() === '') return '-';
+        if (typeof val === 'string' && val.includes('%')) return val.trim();
+        const num = parseFloat(String(val).replace(',', '.'));
+        if (isNaN(num)) return '-';
+        return `${num.toFixed(2)}%`;
+    }
+
+    function resetPreviewModalPosition() {
+        const card = document.getElementById('draggablePreviewCard');
+        if (!card) return;
+        card.style.left = '50%';
+        card.style.top = '50%';
+        card.style.transform = 'translate(-50%, -50%)';
+    }
+
+    function initDraggablePreviewModal() {
+        const handle = document.getElementById('previewDragHandle');
+        const card = document.getElementById('draggablePreviewCard');
+        if (!handle || !card) return;
+
+        handle.addEventListener('pointerdown', (e) => {
+            if (e.target.closest('a, button')) return;
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+            const rect = card.getBoundingClientRect();
+            card.style.transform = 'none';
+            card.style.left = `${rect.left}px`;
+            card.style.top = `${rect.top}px`;
+
+            isDraggingPreviewModal = true;
+            previewDragOffsetX = e.clientX - rect.left;
+            previewDragOffsetY = e.clientY - rect.top;
+            handle.setPointerCapture(e.pointerId);
+        });
+
+        handle.addEventListener('pointermove', (e) => {
+            if (!isDraggingPreviewModal) return;
+
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const rect = card.getBoundingClientRect();
+            const minVisibleHeader = 60;
+
+            let nextLeft = e.clientX - previewDragOffsetX;
+            let nextTop = e.clientY - previewDragOffsetY;
+
+            nextLeft = Math.max(-rect.width + minVisibleHeader, Math.min(nextLeft, vw - minVisibleHeader));
+            nextTop = Math.max(0, Math.min(nextTop, vh - minVisibleHeader));
+
+            card.style.left = `${nextLeft}px`;
+            card.style.top = `${nextTop}px`;
+        });
+
+        const stopDrag = (e) => {
+            if (!isDraggingPreviewModal) return;
+            isDraggingPreviewModal = false;
+            if (e && handle.hasPointerCapture(e.pointerId)) {
+                handle.releasePointerCapture(e.pointerId);
+            }
+        };
+
+        handle.addEventListener('pointerup', stopDrag);
+        handle.addEventListener('pointercancel', stopDrag);
+    }
+
     function openImagePreviewByKode(kode) {
         const item = originalData.find(d => String(d['ITEM_NO']) === String(kode));
         if (!item) return;
-        openImagePreview(item['ITEM_NAME'] || '');
+        openImagePreview(item);
     }
 
-    function openImagePreview(itemName) {
-        const cleanName = String(itemName ?? '').trim();
+    function openImagePreview(itemOrName) {
+        const item = (typeof itemOrName === 'object' && itemOrName !== null)
+            ? itemOrName
+            : { ITEM_NAME: itemOrName };
+
+        const cleanName = String(item['ITEM_NAME'] ?? '').trim();
         if (!cleanName || cleanName === '-') return;
 
+        resetPreviewModalPosition();
+
         document.getElementById('previewItemTitle').textContent = cleanName;
+        document.getElementById('previewHargaBeli').textContent = formatPreviewAmount(item['Harga Beli']);
+        document.getElementById('previewHargaJual').textContent = formatPreviewAmount(item['Harga Jual']);
+        document.getElementById('previewMargin').textContent = formatPreviewAmount(item['Margin']);
+        document.getElementById('previewGM').textContent = formatPreviewGM(item['GM']);
+
         document.getElementById('previewExternalLink').href = getGoogleImageSearchUrl(cleanName);
         document.getElementById('previewLoading').style.display = 'block';
         document.getElementById('previewIframe').src = getGoogleImageEmbedUrl(cleanName);
 
-        if (!previewModalInstance) {
-            previewModalInstance = new bootstrap.Modal(document.getElementById('imagePreviewModal'));
+        document.getElementById('imagePreviewModal').classList.add('is-open');
+    }
+
+    function closeImagePreview() {
+        isDraggingPreviewModal = false;
+        const modalEl = document.getElementById('imagePreviewModal');
+        if (modalEl) {
+            modalEl.classList.remove('is-open');
         }
-        previewModalInstance.show();
+        document.getElementById('previewIframe').src = 'about:blank';
     }
     
     function checkPassword() {
@@ -1291,6 +1468,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        initDraggablePreviewModal();
+
         const searchEl = document.getElementById('searchInput');
         if (searchEl) {
             searchEl.addEventListener('keypress', (e) => {
@@ -1298,12 +1477,14 @@
             });
         }
 
-        const previewModalEl = document.getElementById('imagePreviewModal');
-        if (previewModalEl) {
-            previewModalEl.addEventListener('hidden.bs.modal', () => {
-                document.getElementById('previewIframe').src = 'about:blank';
-            });
-        }
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const modalEl = document.getElementById('imagePreviewModal');
+                if (modalEl && modalEl.classList.contains('is-open')) {
+                    closeImagePreview();
+                }
+            }
+        });
     });
 
     window.onload = function() {
